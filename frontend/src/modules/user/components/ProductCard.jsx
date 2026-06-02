@@ -153,16 +153,16 @@ const ProductCard = ({ product, index = 0, variant = 'grid' }) => {
           )}
         </Link>
 
-        <div className="flex items-center justify-between gap-3 md:gap-4 min-w-0 pt-1 md:pt-2">
+        <div className="flex items-end justify-between gap-2 md:gap-4 min-w-0 pt-1 md:pt-2 mt-auto">
           <Link to={`/products/${productId}`} className="min-w-0 flex-1 flex flex-col hover:opacity-80 transition-opacity">
             <div className="flex flex-col md:flex-row md:items-baseline md:gap-2 min-w-0">
-              <span className={`text-[15px] md:text-xl font-black tracking-tight whitespace-nowrap ${isList ? 'text-[#B71C1C]' : 'text-black'}`}>
+              <span className={`text-[16px] md:text-xl font-black tracking-tight whitespace-nowrap ${isList ? 'text-[#B71C1C]' : 'text-black'}`}>
                 ₹{displayPriceString}
                 {isList && <span className="ml-1 text-[9px] md:text-[11px] text-gray-400 font-medium">incl. GST</span>}
               </span>
               {originalPrice > displayPrice && (
-                <span className="text-[10px] md:text-sm text-gray-300 line-through font-medium whitespace-nowrap">
-                  {isList && "MRP:"}₹{originalPriceString}
+                <span className="text-[10px] md:text-sm text-gray-300 line-through font-medium whitespace-nowrap mt-0.5 md:mt-0">
+                  {isList && "MRP: "}₹{originalPriceString}
                 </span>
               )}
               {isList && originalPrice > displayPrice && (
@@ -179,34 +179,34 @@ const ProductCard = ({ product, index = 0, variant = 'grid' }) => {
             
             {/* Express Delivery Badge (List View Enhancement) */}
             {isList && (
-              <div className="mt-1 md:mt-2">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#F3E5F5] text-[#7B1FA2] rounded-full">
+              <div className="mt-1.5 md:mt-2">
+                <div className="inline-flex items-center gap-1 px-2.5 md:px-3 py-1 md:py-1 bg-[#F3E5F5] text-[#7B1FA2] rounded-full shadow-sm">
                   <span className="text-[10px] md:text-[12px] font-black animate-pulse">⚡</span>
-                  <span className="text-[9px] md:text-[11px] font-black uppercase tracking-wider">Delivery in 4 hours</span>
+                  <span className="text-[8px] md:text-[10px] font-black uppercase tracking-wider">Delivery in 4 hours</span>
                 </div>
               </div>
             )}
             
             {/* Stock Status Indicator */}
-            {!isList && <StockIndicator stock={product.countInStock} />}
+            {!isList && <div className="mt-1"><StockIndicator stock={product.countInStock} /></div>}
           </Link>
 
           {quantity === 0 ? (
             <button
               onClick={(e) => { e.preventDefault(); addToCart(product); }}
-              className="bg-[#702D8B] text-white px-6 md:px-8 py-2.5 md:py-3.5 rounded-xl text-xs md:text-sm font-bold shadow-lg hover:bg-[#5d2574] transition-all active:scale-95 whitespace-nowrap flex-shrink-0"
+              className="bg-[#702D8B] text-white px-5 md:px-8 py-2 md:py-3.5 rounded-xl text-[11px] md:text-sm font-bold shadow-md hover:bg-[#5d2574] transition-all active:scale-95 whitespace-nowrap flex-shrink-0 mb-0.5"
             >
               Add
             </button>
           ) : (
-            <div className="flex items-center gap-1 bg-soft-oatmeal/5 rounded-xl md:rounded-2xl p-0.5 md:p-1 border border-soft-oatmeal/10 shadow-inner flex-shrink-0 max-w-[100px] md:max-w-[150px]">
+            <div className="flex items-center gap-1 bg-soft-oatmeal/5 rounded-xl md:rounded-2xl p-0.5 md:p-1 border border-soft-oatmeal/10 shadow-inner flex-shrink-0 max-w-[90px] md:max-w-[150px] mb-0.5">
               <button
                 onClick={(e) => { e.preventDefault(); updateQuantity(productId, quantity - 1); }}
                 className="w-7 h-7 md:w-10 md:h-10 flex items-center justify-center text-gray-400 hover:text-deep-espresso transition-all active:scale-90 rounded-lg md:rounded-2xl border border-transparent outline-none"
               >
                 <FiMinus className="w-3 h-3 md:w-4 md:h-4" />
               </button>
-              <span className="min-w-[14px] md:min-w-[32px] text-center text-[10px] md:text-lg font-semibold text-deep-espresso">
+              <span className="min-w-[16px] md:min-w-[32px] text-center text-[11px] md:text-lg font-semibold text-deep-espresso">
                 {quantity}
               </span>
               <button

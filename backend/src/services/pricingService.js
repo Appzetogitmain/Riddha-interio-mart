@@ -17,8 +17,21 @@ exports.calculateCartPricing = async (items) => {
 
   for (const item of items) {
     const productId = item.product || item._id;
-    const product = await Product.findById(productId);
+    if (!productId) {
+      console.error('[pricingService] Item missing productId:', item);
+      throw new Error('Invalid cart item: missing product ID');
+    }
+    
+    let product;
+    try {
+      product = await Product.findById(productId);
+    } catch (err) {
+      console.error(`[pricingService] Invalid Product ID format: ${productId}`, err.message);
+      throw new Error(`Invalid Product ID format: ${productId}`);
+    }
+
     if (!product) {
+      console.error(`[pricingService] Product not found in database: ${productId}`);
       throw new Error(`Product not found with ID: ${productId}`);
     }
 

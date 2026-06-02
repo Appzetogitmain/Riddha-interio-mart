@@ -63,6 +63,8 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Protect against NoSQL injection
 app.use((req, res, next) => {
+  // In Express 5, req.query is a getter. We need to make it writable
+  // so express-mongo-sanitize can reassign it.
   Object.defineProperty(req, 'query', {
     value: { ...req.query },
     writable: true,

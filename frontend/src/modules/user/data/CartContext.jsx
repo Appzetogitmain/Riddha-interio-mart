@@ -21,7 +21,14 @@ export const CartProvider = ({ children }) => {
   useEffect(() => {
     const savedCart = localStorage.getItem('riddha_cart');
     if (savedCart) {
-      setCart(JSON.parse(savedCart));
+      try {
+        const parsed = JSON.parse(savedCart);
+        // Self-heal: remove items that don't have a valid ID
+        const validCart = parsed.filter(item => item && (item._id || item.id));
+        setCart(validCart);
+      } catch (e) {
+        console.error('Failed to parse cart from local storage', e);
+      }
     }
   }, []);
 
@@ -45,11 +52,13 @@ export const CartProvider = ({ children }) => {
       const response = await api.get('/cart');
       if (response.data.success) {
         // Map backend structure (product object) to frontend structure
-        const mappedCart = response.data.data.items.map(item => ({
-          ...item.product,
-          quantity: item.quantity,
-          _id: item.product._id // Ensure _id is clear
-        }));
+        const mappedCart = response.data.data.items
+          .filter(item => item.product != null)
+          .map(item => ({
+            ...item.product,
+            quantity: item.quantity,
+            _id: item.product._id // Ensure _id is clear
+          }));
         setCart(mappedCart);
       }
     } catch (err) {
@@ -166,8 +175,20 @@ export const CartProvider = ({ children }) => {
         return;
       }
       try {
+        const validItems = cart.filter(item => item && (item._id || item.id));
+        if (validItems.length === 0) {
+          setPricingBreakdown({
+            subtotal: 0,
+            discountAmount: 0,
+            taxAmount: 0,
+            shippingPrice: 0,
+            totalPrice: 0
+          });
+          return;
+        }
+
         const payload = {
-          orderItems: cart.map(item => ({
+          orderItems: validItems.map(item => ({
             product: item._id || item.id,
             quantity: item.quantity
           }))

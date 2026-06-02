@@ -118,24 +118,26 @@ const SellerSignup = () => {
     }
   };
   return (
-    <div className="min-h-screen bg-white flex flex-col md:flex-row font-['Outfit'] overflow-hidden">
+    <div className="min-h-screen w-full flex font-['Outfit'] bg-[radial-gradient(circle_at_top_left,rgba(24,157,145,0.06),transparent_30%),radial-gradient(circle_at_bottom_right,rgba(227,102,102,0.08),transparent_28%),linear-gradient(180deg,#f8fafc_0%,#f1f5f9_100%)] items-center justify-center lg:p-8">
+      <div className="flex w-full lg:max-w-[1100px] lg:h-[85vh] lg:min-h-[650px] bg-white lg:rounded-3xl lg:shadow-2xl overflow-hidden relative lg:border lg:border-slate-100 flex-col lg:flex-row">
+      
       {/* Left Section: Branding & Visual */}
       <motion.div 
         initial={{ opacity: 0, x: -50 }}
         animate={{ opacity: 1, x: 0 }}
-        className="hidden md:flex w-[35%] bg-[#FDF8F8] flex-col items-center justify-center p-16 relative overflow-hidden"
+        className="hidden lg:flex w-[35%] bg-[#FDF8F8] flex-col items-center justify-center p-12 relative overflow-hidden border-r border-slate-100"
       >
         <div className="relative z-10 w-full max-w-sm space-y-12">
           <Link to="/" className="inline-block">
-            <img src={logo} alt="Logo" className="h-24 md:h-28 w-auto object-contain" />
+            <img src={logo} alt="Logo" className="h-24 lg:h-28 w-auto object-contain" />
           </Link>
 
           <div className="space-y-6">
-            <h1 className="text-6xl font-semibold text-slate-900 leading-tight tracking-tighter">
+            <h1 className="text-5xl lg:text-6xl font-semibold text-slate-900 leading-tight tracking-tighter">
               Join the <br />
               <span className="text-[#E36666] font-serif">Family.</span>
             </h1>
-            <p className="text-slate-400 font-medium text-lg leading-relaxed">
+            <p className="text-slate-400 font-medium text-base lg:text-lg leading-relaxed">
               Scale your interior business with India's most trusted partner network.
             </p>
           </div>
@@ -159,18 +161,18 @@ const SellerSignup = () => {
       </motion.div>
 
       {/* Right Section: Form */}
-      <div className="flex-1 min-h-screen bg-white flex flex-col items-center justify-start md:justify-center p-0 md:p-8 overflow-y-auto">
+      <div className="flex-1 bg-white flex flex-col items-center justify-start lg:justify-center p-0 lg:p-6 overflow-y-auto">
         <motion.div 
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="w-full md:max-w-[700px] flex flex-col px-6 py-12 md:py-8"
+          className="w-full lg:max-w-[700px] flex flex-col px-6 py-12 lg:py-8"
         >
           {/* Mobile Logo */}
-          <div className="md:hidden flex justify-center mb-10">
+          <div className="lg:hidden flex justify-center mb-10">
             <img src={logo} alt="Logo" className="h-24 w-auto object-contain" />
           </div>
 
-          <div className="mb-6 flex flex-col md:flex-row items-center justify-between gap-2 md:gap-0">
+          <div className="mb-6 flex flex-col lg:flex-row items-center justify-between gap-2 lg:gap-0">
             <h2 className="text-2xl md:text-2xl font-semibold text-slate-900 tracking-tight text-center md:text-left">
               {step === 'signup' ? 'Seller Registration' : 'Verify Phone'}
             </h2>
@@ -471,6 +473,7 @@ const SellerSignup = () => {
              </Link>
           </div>
         </motion.div>
+      </div>
       </div>
     </div>
   );

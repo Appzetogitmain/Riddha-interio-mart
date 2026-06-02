@@ -30,29 +30,93 @@ const sendTokenResponse = async (user, statusCode, res) => {
     // Set access_token and refresh_token in httpOnly cookies
     tokenService.setAuthCookies(res, accessToken, refreshToken);
 
-    // Send response exposing tokens in the body for development and fallback local storage support
+    // Process FCM Token if provided in request body
+    const { token: fcmToken, platform = 'web' } = req ? (req.body || {}) : {};
+    if (fcmToken) {
+      try {
+        const FCMToken = require('../models/FCMToken');
+        let userModel = 'User';
+        if (role === 'admin') userModel = 'Admin';
+        else if (role === 'seller') userModel = 'Seller';
+        else if (role === 'delivery') userModel = 'Delivery';
+
+        let tokenDoc = await FCMToken.findOne({ token: fcmToken });
+        if (tokenDoc) {
+          tokenDoc.user = userId;
+          tokenDoc.userModel = userModel;
+          tokenDoc.platform = platform;
+          tokenDoc.lastUsedAt = Date.now();
+          await tokenDoc.save();
+        } else {
+          await FCMToken.create({
+            user: userId,
+            userModel,
+            token: fcmToken,
+            platform,
+            lastUsedAt: Date.now()
+          });
+        }
+        
+        const userTokensCount = await FCMToken.countDocuments({ user: userId, userModel });
+        if (userTokensCount > 10) {
+          const oldestTokens = await FCMToken.find({ user: userId, userModel })
+            .sort({ lastUsedAt: 1 })
+            .limit(userTokensCount - 10);
+          const oldestIds = oldestTokens.map(doc => doc._id);
+          await FCMToken.deleteMany({ _id: { $in: oldestIds } });
+        }
+      } catch (fcmErr) {
+        console.error('FCM Token registration error during login:', fcmErr.message);
+      }
+    }
+
+    // Fetch Wallet Balance based on role
+    let walletAmount = 0;
+    try {
+      if (role === 'user') {
+        const Wallet = require('../models/Wallet');
+        const wallet = await Wallet.findOne({ user: userId });
+        if (wallet) walletAmount = wallet.balance;
+      } else if (role === 'seller') {
+        const SellerWallet = require('../models/SellerWallet');
+        const wallet = await SellerWallet.findOne({ seller: userId });
+        if (wallet) walletAmount = wallet.balance;
+      } else if (role === 'delivery') {
+        const DeliveryWallet = require('../models/DeliveryWallet');
+        const wallet = await DeliveryWallet.findOne({ deliveryPersonnel: userId });
+        if (wallet) walletAmount = wallet.balance;
+      }
+    } catch (walletErr) {
+      console.error('Wallet fetch error:', walletErr.message);
+    }
+
+    // Send response in the requested format
     res.status(statusCode).json({
       success: true,
-      token: accessToken,
-      refreshToken: refreshToken,
-      user: {
-        id: user._id,
-        fullName: user.fullName,
-        email: user.email,
-        role: role,
-        token: accessToken, // Nested token for frontend compatibility
-        // Include common fields
-        avatar: user.avatar || "",
-        phone: user.phone || "",
-        // Include role-specific fields
-        shopName: user.shopName || "",
-        shopAddress: user.shopAddress || "",
-        vehicleType: user.vehicleType || "",
-        vehicleNumber: user.vehicleNumber || "",
-        isVerified: user.isVerified || false,
-        approvalStatus: user.approvalStatus || "",
-        type: user.type || "standard",
-        permissions: user.permissions || {}
+      message: "Login successful",
+      data: {
+        token: accessToken,
+        refreshToken: refreshToken, // keeping refresh token in data
+        user: {
+          id: user._id,
+          name: user.fullName || user.name || "",
+          phone: user.phone || "",
+          email: user.email,
+          walletAmount: walletAmount,
+          refCode: user.referralCode || "",
+          status: user.isBlocked ? "Blocked" : (user.status || "Active"),
+          // Including other role-specific and common fields for compatibility
+          role: role,
+          avatar: user.avatar || "",
+          shopName: user.shopName || "",
+          shopAddress: user.shopAddress || "",
+          vehicleType: user.vehicleType || "",
+          vehicleNumber: user.vehicleNumber || "",
+          isVerified: user.isVerified || false,
+          approvalStatus: user.approvalStatus || "",
+          type: user.type || "standard",
+          permissions: user.permissions || {}
+        }
       }
     });
   } catch (err) {

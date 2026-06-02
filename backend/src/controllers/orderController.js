@@ -926,8 +926,9 @@ exports.calculateOrderPricing = async (req, res, next) => {
       data: pricing
     });
   } catch (error) {
-    console.error('Pricing calculation error:', error);
-    return res.status(500).json({ success: false, message: error.message });
+    console.error('Pricing calculation error:', error.message);
+    const statusCode = error.message.includes('not found') || error.message.includes('Invalid') ? 400 : 500;
+    return res.status(statusCode).json({ success: false, message: error.message });
   }
 };
 

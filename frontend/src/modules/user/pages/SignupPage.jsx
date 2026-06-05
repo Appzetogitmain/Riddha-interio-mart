@@ -5,7 +5,7 @@ import { FiArrowLeft, FiUser, FiMail, FiLock, FiEye, FiEyeOff, FiCheck, FiPhone,
 import { FaGoogle, FaFacebookF, FaXTwitter } from 'react-icons/fa6';
 import Button from '../../../shared/components/Button';
 import LOGIN_BG from '../../../assets/login_bg_fretshop.png';
-import { uploadImage } from '../../../shared/utils/upload';
+import { uploadImage, uploadRegistrationDocument } from '../../../shared/utils/upload';
 import api from '../../../shared/utils/api';
 import logo from '../../../assets/transparent_logo.png';
 
@@ -60,7 +60,10 @@ const SignupPage = () => {
     
     setUploadingDocs(prev => ({ ...prev, [docType]: true }));
     try {
-      const url = await uploadImage(file);
+      const role = getRole();
+      const url = role === 'delivery' 
+        ? await uploadRegistrationDocument(file)
+        : await uploadImage(file);
       setDocuments(prev => ({ ...prev, [docType]: url }));
     } catch (err) {
       console.error(`Failed to upload ${docType}:`, err);
@@ -181,8 +184,12 @@ const SignupPage = () => {
       });
 
       if (response.data.success) {
-        setRegisteredEmail(formData.email);
-        setStep('otp');
+        if (role === 'delivery') {
+          setStep('success');
+        } else {
+          setRegisteredEmail(formData.email);
+          setStep('otp');
+        }
         setError('');
       }
     } catch (err) {
@@ -637,7 +644,7 @@ const SignupPage = () => {
                       Already have account? <span onClick={() => navigate(getLoginPath())} className="text-[#189D91] cursor-pointer font-semibold border-b border-[#189D91]/30 pb-0.5 ml-1">LOG IN</span>
                     </p>
                   </form>
-                ) : (
+                ) : step === 'otp' ? (
                   <form onSubmit={handleVerifyOtp} className="space-y-4">
                     <div className="text-center mb-6">
                       <h3 className="text-xl md:text-2xl font-black text-deep-espresso md:text-white mb-2">Verify Your Email</h3>
@@ -671,6 +678,25 @@ const SignupPage = () => {
                       Didn't receive it? <button type="button" onClick={handleResendOtp} className="text-[#189D91] md:text-warm-sand cursor-pointer font-black border-b border-[#189D91]/30 md:border-warm-sand/30 pb-0.5 ml-1 hover:text-black md:hover:text-white transition-colors">RESEND OTP</button>
                     </p>
                   </form>
+                ) : (
+                  <div className="text-center space-y-6 py-4">
+                    <div className="w-20 h-20 bg-teal-500/10 rounded-full flex items-center justify-center mx-auto mb-4 text-[#189D91] md:text-warm-sand">
+                      <FiCheckCircle size={40} />
+                    </div>
+                    <h3 className="text-xl md:text-2xl font-semibold text-deep-espresso md:text-white mb-2 font-display italic font-serif">Application Submitted!</h3>
+                    <p className="text-xs text-gray-500 md:text-white/70 leading-relaxed max-w-sm mx-auto font-medium">
+                      Your delivery partner account has been successfully registered and is pending admin review.
+                    </p>
+                    <p className="text-[10px] text-gray-400 md:text-white/40 leading-relaxed max-w-sm mx-auto font-normal">
+                      We will verify your documents (RC, Driving License, Aadhar Card, etc.) and update your approval status shortly.
+                    </p>
+                    <Button
+                      onClick={() => navigate('/delivery/login')}
+                      className="w-full h-12 md:h-11 mt-4 rounded-full md:rounded-lg bg-[#189D91] md:bg-warm-sand hover:bg-black md:hover:bg-white text-white md:hover:text-deep-espresso font-semibold text-xs md:text-[10px] uppercase tracking-[0.2em] shadow-2xl transition-all active:scale-[0.98]"
+                    >
+                      Back to Login
+                    </Button>
+                  </div>
                 )}
               </div>
             </motion.div>

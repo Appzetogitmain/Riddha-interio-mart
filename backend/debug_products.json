@@ -1,19 +1,11 @@
 {
-  "timestamp": "2026-05-30T07:44:32.206Z",
-  "query": {},
-  "builtFilter": {
-    "isApproved": true,
-    "isActive": true,
-    "seller": {
-      "$nin": [
-        "6a13f55aa0df05ee424a7c4b",
-        "6a10057431fa10db6ebdaaff",
-        "6a0ffa1a0a9ba187d1855673",
-        "6a0d647e24ccaade805a2ca0"
-      ]
-    }
+  "timestamp": "2026-06-03T08:59:30.334Z",
+  "query": {
+    "isActive": "all",
+    "isApproved": "all"
   },
-  "resultCount": 5,
+  "builtFilter": {},
+  "resultCount": 7,
   "results": [
     {
       "_id": "6a157979815311dd3743db2e",
@@ -23,9 +15,20 @@
       "subsubcategory": ""
     },
     {
+      "_id": "6a13f5725ccf49b0baf34346",
+      "name": "Fintech Test Table",
+      "category": "Test Category"
+    },
+    {
       "_id": "6a115739107b7b663108dd7c",
       "name": "Test ModularKitchen Product 1",
       "category": "ModularKitchen"
+    },
+    {
+      "_id": "6a1005c8a399239b828b5441",
+      "name": "Test Terracotta Vase",
+      "category": "Flooring",
+      "subcategory": "Terracotta Tiles"
     },
     {
       "_id": "6a0e9e4f8cf557a669106462",

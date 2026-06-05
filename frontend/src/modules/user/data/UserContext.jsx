@@ -27,9 +27,14 @@ export const UserProvider = ({ children }) => {
       const savedUser = localStorage.getItem('riddha_user');
       if (savedUser) {
         try {
+          const currentUser = JSON.parse(savedUser);
           const res = await api.get('/auth/me');
           if (res.data.success && res.data.user) {
-            setUser(res.data.user);
+            setUser({
+              ...currentUser,
+              ...res.data.user,
+              token: currentUser.token
+            });
           }
         } catch (err) {
           console.error('[UserContext] Session sync failed. Clearing profile.');
@@ -45,7 +50,9 @@ export const UserProvider = ({ children }) => {
     if (user) {
       localStorage.setItem('riddha_user', JSON.stringify(user));
       setIsLoggedIn(true);
-      fetchAddresses();
+      if (user.role === 'user') {
+        fetchAddresses();
+      }
     } else {
       localStorage.removeItem('riddha_user');
       setIsLoggedIn(false);

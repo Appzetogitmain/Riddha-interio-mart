@@ -70,7 +70,13 @@ const LoginPage = () => {
       });
 
       if (response.data.success) {
-        const { token, user } = response.data;
+        const authData = response.data.data || response.data;
+        const { token, user } = authData;
+
+        if (!token || !user) {
+          throw new Error('Login response is missing session details.');
+        }
+
         login({ ...user, token });
         if (role === 'admin') navigate('/admin/dashboard');
         else if (role === 'seller') navigate('/seller/dashboard');

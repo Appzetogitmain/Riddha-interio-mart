@@ -1,6 +1,8 @@
 {
-  "timestamp": "2026-05-30T07:44:32.206Z",
-  "query": {},
+  "timestamp": "2026-05-30T08:44:09.322Z",
+  "query": {
+    "limit": "1"
+  },
   "builtFilter": {
     "isApproved": true,
     "isActive": true,
@@ -13,7 +15,7 @@
       ]
     }
   },
-  "resultCount": 5,
+  "resultCount": 1,
   "results": [
     {
       "_id": "6a157979815311dd3743db2e",
@@ -21,30 +23,6 @@
       "category": "Test Category",
       "subcategory": "",
       "subsubcategory": ""
-    },
-    {
-      "_id": "6a115739107b7b663108dd7c",
-      "name": "Test ModularKitchen Product 1",
-      "category": "ModularKitchen"
-    },
-    {
-      "_id": "6a0e9e4f8cf557a669106462",
-      "name": "Swan Neck Golden Faucet",
-      "category": "Bath",
-      "subcategory": "",
-      "subsubcategory": ""
-    },
-    {
-      "_id": "6a0e9b1c8cf557a669106024",
-      "name": "Carrara Marble Slab",
-      "category": "Flooring",
-      "subcategory": "Carrara Marble"
-    },
-    {
-      "_id": "6a0e9b1c8cf557a669106022",
-      "name": "Traditional Terracotta Tile",
-      "category": "Flooring",
-      "subcategory": "Terracotta Tiles"
     }
   ]
 }

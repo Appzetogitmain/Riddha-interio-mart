@@ -1,54 +1,74 @@
 {
-  "timestamp": "2026-06-10T05:10:45.205Z",
+  "timestamp": "2026-06-10T05:18:50.768Z",
   "query": {
     "isApproved": "pending",
     "isActive": "all"
   },
   "builtFilter": {
-    "isApproved": false
+    "isApproved": true,
+    "isActive": true,
+    "seller": {
+      "$nin": [
+        "6a100b07a3cc06ac3f65be01",
+        "6a10057431fa10db6ebdaaff",
+        "6a0d647e24ccaade805a2ca0"
+      ]
+    }
   },
-  "resultCount": 8,
+  "resultCount": 10,
   "results": [
     {
-      "_id": "6a28153fcc75d9dddcce318e",
-      "name": "Sheetal Premium Item 5",
-      "category": "Carrara Marble"
-    },
-    {
-      "_id": "6a28153fcc75d9dddcce318d",
-      "name": "Sheetal Premium Item 4",
-      "category": "Carrara Marble"
-    },
-    {
-      "_id": "6a28153fcc75d9dddcce318c",
-      "name": "Sheetal Premium Item 3",
-      "category": "Carrara Marble"
-    },
-    {
-      "_id": "6a28153dcc75d9dddcce3189",
-      "name": "Sheetal Premium Item 5",
-      "category": "Carrara Marble"
-    },
-    {
-      "_id": "6a28153dcc75d9dddcce3188",
-      "name": "Sheetal Premium Item 4",
-      "category": "Carrara Marble"
-    },
-    {
-      "_id": "6a280eefcc75d9dddcce3079",
-      "name": "Sheetal Premium Item 3",
-      "category": "Carrara Marble"
-    },
-    {
-      "_id": "6a280eefcc75d9dddcce3078",
+      "_id": "6a28153fcc75d9dddcce318b",
       "name": "Sheetal Premium Item 2",
       "category": "Carrara Marble"
     },
     {
-      "_id": "6a23ace7614854ee3ba48311",
-      "name": "Graphite ton",
-      "category": "Wall Solutions",
+      "_id": "6a28153fcc75d9dddcce318a",
+      "name": "Sheetal Premium Item 1",
+      "category": "Carrara Marble"
+    },
+    {
+      "_id": "6a28153dcc75d9dddcce3187",
+      "name": "Sheetal Premium Item 3",
+      "category": "Carrara Marble"
+    },
+    {
+      "_id": "6a28153ccc75d9dddcce3186",
+      "name": "Sheetal Premium Item 2",
+      "category": "Carrara Marble"
+    },
+    {
+      "_id": "6a28153ccc75d9dddcce3185",
+      "name": "Sheetal Premium Item 1",
+      "category": "Carrara Marble"
+    },
+    {
+      "_id": "6a280eefcc75d9dddcce307b",
+      "name": "Sheetal Premium Item 5",
+      "category": "Carrara Marble"
+    },
+    {
+      "_id": "6a280eefcc75d9dddcce307a",
+      "name": "Sheetal Premium Item 4",
+      "category": "Carrara Marble"
+    },
+    {
+      "_id": "6a280eeecc75d9dddcce3077",
+      "name": "Sheetal Premium Item 1",
+      "category": "Carrara Marble"
+    },
+    {
+      "_id": "6a26b59d8ed1bca80e591e9c",
+      "name": "Swan Neck Golden Faucet",
+      "category": "Bath",
       "subcategory": "",
+      "subsubcategory": ""
+    },
+    {
+      "_id": "6a23ee5b614854ee3ba485c7",
+      "name": "red fort",
+      "category": "Flooring",
+      "subcategory": "Terracotta Tiles",
       "subsubcategory": ""
     }
   ]

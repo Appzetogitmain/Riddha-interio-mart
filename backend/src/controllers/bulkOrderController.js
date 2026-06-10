@@ -68,6 +68,40 @@ exports.createBulkOrder = async (req, res) => {
   }
 };
 
+// ── Get bulk orders for a seller (only items belonging to them) ───────────
+exports.getSellerBulkOrders = async (req, res) => {
+  try {
+    const sellerId = req.user._id;
+
+    // Find all products owned by this seller
+    const sellerProducts = await Product.find({ seller: sellerId, sellerType: 'Seller' })
+      .select('_id name')
+      .lean();
+
+    if (!sellerProducts.length) {
+      return res.status(200).json({ success: true, data: [] });
+    }
+
+    const productIds    = sellerProducts.map(p => p._id);
+    const productNames  = new Map(sellerProducts.map(p => [String(p._id), p.name]));
+
+    // Find bulk orders that contain at least one of this seller's products
+    const bulkOrders = await BulkOrder.find({
+      'items.product': { $in: productIds }
+    }).sort({ createdAt: -1 }).lean();
+
+    // Strip each order to only the seller's items
+    const result = bulkOrders.map(order => ({
+      ...order,
+      items: order.items.filter(i => i.product && productIds.some(pid => String(pid) === String(i.product)))
+    }));
+
+    res.status(200).json({ success: true, data: result });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
+
 // ── Get all bulk orders (Admin) ────────────────────────────────────────────
 exports.getAllBulkOrders = async (req, res) => {
   try {

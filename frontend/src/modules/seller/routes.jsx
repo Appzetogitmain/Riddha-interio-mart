@@ -27,6 +27,7 @@ const Customers = React.lazy(() => import('./pages/Customers'));
 const Marketing = React.lazy(() => import('./pages/Marketing'));
 const HelpCenter = React.lazy(() => import('./pages/HelpCenter'));
 const SellerTerms = React.lazy(() => import('./pages/SellerTerms'));
+const SellerBulkOrders = React.lazy(() => import('./pages/SellerBulkOrders'));
 
 const SellerRoutes = () => {
   return (
@@ -62,6 +63,7 @@ const SellerRoutes = () => {
         <Route path="/customers" element={<Customers />} />
         <Route path="/marketing" element={<Marketing />} />
         <Route path="/help" element={<HelpCenter />} />
+        <Route path="/bulk-orders" element={<SellerBulkOrders />} />
       </Route>
     </Routes>
   );

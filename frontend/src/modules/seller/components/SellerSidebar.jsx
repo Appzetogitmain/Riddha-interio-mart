@@ -21,6 +21,7 @@ import {
   PlusCircle,
   Search,
   Truck,
+  ShoppingBag
 } from "lucide-react";
 import { useUser } from "../../user/data/UserContext";
 import api from "../../../shared/utils/api";
@@ -39,7 +40,15 @@ const menuItems = [
       { path: "/seller/catalog", label: "Browse Catalog" },
     ],
   },
-  { path: "/seller/orders", icon: ShoppingCart, label: "Orders" },
+  {
+    label: "Orders",
+    icon: ShoppingCart,
+    path: "/seller/orders",
+    children: [
+      { path: "/seller/orders",       label: "All Orders"   },
+      { path: "/seller/bulk-orders",  label: "Bulk Orders"  },
+    ]
+  },
   { path: "/seller/stock-management", icon: Boxes, label: "Inventory" },
   { path: "/seller/customers", icon: Users, label: "Customers" },
   { path: "/seller/reports/sales", icon: BarChart3, label: "Analytics" },

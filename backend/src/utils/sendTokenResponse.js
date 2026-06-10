@@ -83,8 +83,8 @@ const sendTokenResponse = async (user, statusCode, res) => {
         if (wallet) walletAmount = wallet.balance;
       } else if (role === 'delivery') {
         const DeliveryWallet = require('../models/DeliveryWallet');
-        const wallet = await DeliveryWallet.findOne({ deliveryPersonnel: userId });
-        if (wallet) walletAmount = wallet.balance;
+        const wallet = await DeliveryWallet.findOne({ deliveryPartner: userId });
+        if (wallet) walletAmount = wallet.earningsBalance || 0;
       }
     } catch (walletErr) {
       console.error('Wallet fetch error:', walletErr.message);

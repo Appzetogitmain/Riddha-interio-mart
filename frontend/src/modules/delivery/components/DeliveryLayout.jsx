@@ -52,6 +52,21 @@ const DeliveryLayout = () => {
   const [updatingStatus, setUpdatingStatus] = React.useState(false);
   const navigate = useNavigate();
 
+  const storedUser = JSON.parse(localStorage.getItem('riddha_user') || 'null');
+  const activeUser = user || storedUser;
+  const hasValidDeliverySession =
+    Boolean(activeUser?.token) && activeUser?.role === 'delivery';
+
+  React.useEffect(() => {
+    if (!hasValidDeliverySession) {
+      navigate('/delivery/login', { replace: true });
+    }
+  }, [hasValidDeliverySession, navigate]);
+
+  if (!hasValidDeliverySession) {
+    return null;
+  }
+
   const handleLogout = () => {
     logout();
     navigate('/delivery/login');

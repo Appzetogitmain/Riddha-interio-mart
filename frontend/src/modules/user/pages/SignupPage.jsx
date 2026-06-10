@@ -92,8 +92,8 @@ const SignupPage = () => {
   const location = useLocation();
   const { login } = useUser();
 
-  // Delivery: login-first, then slide up signup
-  const [showSignupForm, setShowSignupForm] = useState(false);
+  // Delivery: login-first, then slide up signup (default to signup if path is specifically /signup)
+  const [showSignupForm, setShowSignupForm] = useState(() => location.pathname.endsWith('/signup'));
   const [dlId, setDlId] = useState('');
   const [dlPwd, setDlPwd] = useState('');
   const [dlShowPwd, setDlShowPwd] = useState(false);

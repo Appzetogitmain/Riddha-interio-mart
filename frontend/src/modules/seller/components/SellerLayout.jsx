@@ -25,6 +25,21 @@ const SellerLayout = () => {
   const { logout, user } = useUser();
   const navigate = useNavigate();
 
+  const storedUser = JSON.parse(localStorage.getItem('riddha_user') || 'null');
+  const activeUser = user || storedUser;
+  const hasValidSellerSession =
+    Boolean(activeUser?.token) && activeUser?.role === 'seller';
+
+  useEffect(() => {
+    if (!hasValidSellerSession) {
+      navigate('/seller/login', { replace: true });
+    }
+  }, [hasValidSellerSession, navigate]);
+
+  if (!hasValidSellerSession) {
+    return null;
+  }
+
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 20);

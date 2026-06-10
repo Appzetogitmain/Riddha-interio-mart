@@ -126,7 +126,7 @@ const SellerLoginForm = () => {
             <div className="space-y-1 md:space-y-0.5">
               <div className="flex justify-between items-center ml-1">
                 <label className="text-[10px] md:text-[8px] font-semibold uppercase tracking-widest text-slate-400">Password</label>
-                <Link to="/forgot-password" size="sm" className="text-[10px] md:text-[8px] font-semibold uppercase tracking-widest text-[#E36666] hover:underline underline-offset-4">
+                <Link to="/forgot-password?role=seller" size="sm" className="text-[10px] md:text-[8px] font-semibold uppercase tracking-widest text-[#E36666] hover:underline underline-offset-4">
                   Forgot?
                 </Link>
               </div>

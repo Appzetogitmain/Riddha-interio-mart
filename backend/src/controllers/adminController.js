@@ -236,6 +236,18 @@ exports.suspendSeller = async (req, res, next) => {
       console.error('Failed to queue seller suspension email:', emailErr.message);
     }
 
+    try {
+      const { notifySellerAccountSuspended } = require('../socket');
+      await notifySellerAccountSuspended(seller._id, {
+        message: `Your seller account for "${seller.shopName || seller.fullName}" has been suspended by the admin team.`,
+        sellerId: seller._id,
+        shopName: seller.shopName,
+        status: 'suspended'
+      });
+    } catch (notifyErr) {
+      console.error('Failed to notify seller about suspension:', notifyErr.message);
+    }
+
     res.status(200).json({ success: true, data: seller });
   } catch (err) {
     next(err);

@@ -4,6 +4,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { LuCheck, LuX, LuClock, LuBriefcase, LuMail, LuPhone, LuMapPin } from 'react-icons/lu';
 import api from '../../../shared/utils/api';
 
+const getDocumentUrl = (path) => {
+  if (!path) return '';
+  if (path.startsWith('http://') || path.startsWith('https://')) return path;
+  const cleanPath = path.replace(/\\/g, '/');
+  const apiBase = api.defaults.baseURL || `http://${window.location.hostname}:5000/api`;
+  const backendBase = apiBase.replace(/\/api$/, '');
+  return `${backendBase}/${cleanPath}`;
+};
+
 const PendingSellers = () => {
   const [sellers, setSellers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -135,7 +144,60 @@ const PendingSellers = () => {
                       </div>
                     </div>
 
-                    <div className="pt-4 flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-warm-sand/40 italic">
+                    {/* Compliance & Documents */}
+                    {(seller.gstNumber || seller.panNumber || seller.gstDoc || seller.panDoc || seller.shopDoc) && (
+                      <div className="pt-4 border-t border-soft-oatmeal/50 space-y-3">
+                        <div className="text-[10px] font-black uppercase tracking-widest text-warm-sand/60">Compliance Details</div>
+                        <div className="grid grid-cols-2 gap-2">
+                          {seller.gstNumber && (
+                            <div className="bg-soft-oatmeal/5 p-2 rounded-xl border border-soft-oatmeal/20">
+                              <span className="text-[9px] font-black uppercase tracking-widest text-warm-sand block">GSTIN</span>
+                              <span className="font-mono text-xs font-bold text-deep-espresso">{seller.gstNumber}</span>
+                            </div>
+                          )}
+                          {seller.panNumber && (
+                            <div className="bg-soft-oatmeal/5 p-2 rounded-xl border border-soft-oatmeal/20">
+                              <span className="text-[9px] font-black uppercase tracking-widest text-warm-sand block">PAN</span>
+                              <span className="font-mono text-xs font-bold text-deep-espresso">{seller.panNumber}</span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex flex-wrap gap-2 pt-1">
+                          {seller.gstDoc && (
+                            <a 
+                              href={getDocumentUrl(seller.gstDoc)} 
+                              target="_blank" 
+                              rel="noopener noreferrer" 
+                              className="px-2.5 py-1.5 bg-[#189D91]/10 text-[#189D91] hover:bg-[#189D91] hover:text-white rounded-lg text-[10px] font-black uppercase tracking-wider transition-colors inline-block"
+                            >
+                              GST Doc
+                            </a>
+                          )}
+                          {seller.panDoc && (
+                            <a 
+                              href={getDocumentUrl(seller.panDoc)} 
+                              target="_blank" 
+                              rel="noopener noreferrer" 
+                              className="px-2.5 py-1.5 bg-[#189D91]/10 text-[#189D91] hover:bg-[#189D91] hover:text-white rounded-lg text-[10px] font-black uppercase tracking-wider transition-colors inline-block"
+                            >
+                              PAN Doc
+                            </a>
+                          )}
+                          {seller.shopDoc && (
+                            <a 
+                              href={getDocumentUrl(seller.shopDoc)} 
+                              target="_blank" 
+                              rel="noopener noreferrer" 
+                              className="px-2.5 py-1.5 bg-[#189D91]/10 text-[#189D91] hover:bg-[#189D91] hover:text-white rounded-lg text-[10px] font-black uppercase tracking-wider transition-colors inline-block"
+                            >
+                              Shop Doc
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="pt-4 flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-warm-sand/40 italic border-t border-soft-oatmeal/50">
                       <span>Joined {new Date(seller.createdAt).toLocaleDateString()}</span>
                       <span>Pending Verification</span>
                     </div>

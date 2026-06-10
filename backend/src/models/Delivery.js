@@ -83,6 +83,14 @@ const DeliverySchema = new mongoose.Schema({
     longitude: { type: Number, default: 75.7873 },
     updatedAt: { type: Date }
   },
+  resetPasswordOtp: String,
+  resetPasswordOtpExpire: Date,
+  otpLastSentAt: Date,
+  otpFailedAttempts: {
+    type: Number,
+    default: 0
+  },
+  otpLockedUntil: Date,
   createdAt: {
     type: Date,
     default: Date.now
@@ -94,6 +102,14 @@ DeliverySchema.pre('save', async function() {
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
 });
+
+DeliverySchema.methods.getResetPasswordOtp = function() {
+  const crypto = require('crypto');
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  this.resetPasswordOtp = crypto.createHash('sha256').update(otp).digest('hex');
+  this.resetPasswordOtpExpire = Date.now() + 10 * 60 * 1000;
+  return otp;
+};
 
 DeliverySchema.methods.getSignedJwtToken = function() {
   return jwt.sign({ id: this._id, role: 'delivery' }, process.env.JWT_SECRET, { expiresIn: '30d' });

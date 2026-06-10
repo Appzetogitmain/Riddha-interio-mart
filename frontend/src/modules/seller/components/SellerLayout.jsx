@@ -75,10 +75,6 @@ const SellerLayout = () => {
           <div className="flex items-center gap-2 md:gap-5">
             {/* Action Buttons */}
             <div className="flex items-center gap-1 md:gap-2 mr-2">
-              <button className="p-2.5 text-slate-500 hover:bg-slate-100 rounded-xl transition-colors relative group">
-                <MessageSquare size={20} />
-                <span className="absolute top-2 right-2 w-2 h-2 bg-seller-primary rounded-full border-2 border-white"></span>
-              </button>
               <NotificationDropdown 
                 isMobile={false} 
                 buttonClassName="p-2.5 text-slate-500 hover:bg-slate-100 rounded-xl transition-colors relative"

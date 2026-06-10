@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageWrapper from '../components/PageWrapper';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiPlus, FiX, FiCheck, FiEdit3, FiTrash2, FiImage, FiLayers, FiSave, FiChevronDown, FiInfo } from 'react-icons/fi';
+import { FiPlus, FiX, FiEdit3, FiTrash2, FiImage, FiSave, FiChevronDown, FiInfo } from 'react-icons/fi';
 import api from '../../../shared/utils/api';
 
 const SubcategoryModal = ({ category, subcategory, isOpen, onClose, onSave }) => {
@@ -235,7 +235,6 @@ const ManageCategories = () => {
   const [editingSubcategory, setEditingSubcategory] = useState({ category: null, sub: null, index: -1 });
   const [expandedIds, setExpandedIds] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [viewMode, setViewMode] = useState('grid'); 
   const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, categoryId: null, categoryName: null });
   const [errorModal, setErrorModal] = useState({ isOpen: false, title: '', message: '' });
 
@@ -313,18 +312,6 @@ const ManageCategories = () => {
           >
             <FiPlus size={16} /> Add Category
           </button>
-
-          <div className="flex bg-soft-oatmeal/10 p-1 rounded-xl">
-            {['grid', 'tree', 'list'].map(mode => (
-              <button 
-                key={mode}
-                onClick={() => setViewMode(mode)}
-                className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${viewMode === mode ? 'bg-white text-deep-espresso shadow-sm' : 'text-warm-sand/60'}`}
-              >
-                {mode.charAt(0).toUpperCase() + mode.slice(1)} View
-              </button>
-            ))}
-          </div>
 
           <div className="flex-1 min-w-[200px] relative">
             <input 

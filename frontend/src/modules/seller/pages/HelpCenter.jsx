@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import PageWrapper from '../components/PageWrapper';
 import { 
   HelpCircle, 
@@ -27,10 +27,12 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 import { uploadImage } from '../../../shared/utils/upload';
 import api from '../../../shared/utils/api';
 
 const HelpCenter = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('faqs');
   const [searchQuery, setSearchQuery] = useState('');
   const [tickets, setTickets] = useState([]);
@@ -53,6 +55,8 @@ const HelpCenter = () => {
   const [isReplying, setIsReplying] = useState(false);
 
   const [email, setEmail] = useState('');
+  const imageUploadInputRef = useRef(null);
+  const pdfUploadInputRef = useRef(null);
 
   const faqs = [
     {
@@ -98,7 +102,41 @@ const HelpCenter = () => {
       detail: "+91 1800-RIDDHA", 
       icon: <Phone size={24} />, 
       color: "bg-emerald-50 text-emerald-600",
-      action: () => { toast.success("Hotline Support: +91 1800-743-342"); }
+      action: () => { window.location.href = 'tel:+911800743342'; }
+    },
+  ];
+
+  const quickResources = [
+    {
+      label: "Seller Handbook",
+      icon: <FileText size={16} />,
+      color: "text-blue-600",
+      action: () => {
+        setSearchQuery('');
+        setActiveTab('faqs');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    },
+    {
+      label: "Ticket Dashboard",
+      icon: <LifeBuoy size={16} />,
+      color: "text-rose-600",
+      action: () => {
+        setActiveTab('tickets');
+        fetchTickets(false);
+      }
+    },
+    {
+      label: "Policies & Terms",
+      icon: <Shield size={16} />,
+      color: "text-emerald-600",
+      action: () => navigate('/seller/terms')
+    },
+    {
+      label: "Growth Recommendations",
+      icon: <Zap size={16} />,
+      color: "text-amber-600",
+      action: () => navigate('/seller/recommendations')
     },
   ];
 
@@ -144,7 +182,8 @@ const HelpCenter = () => {
 
   // File Upload Stream
   const handleAttachmentUpload = async (e) => {
-    const files = Array.from(e.target.files);
+    const input = e.target;
+    const files = Array.from(input.files || []);
     if (!files.length) return;
 
     setIsUploading(true);
@@ -164,9 +203,10 @@ const HelpCenter = () => {
       }
     } catch (err) {
       console.error(err);
-      toast.error('File upload failed. Ensure they are valid image/document formats.');
+      toast.error(err.response?.data?.error || err.response?.data?.message || 'File upload failed. Use gallery images or PDF files only.');
     } finally {
       setIsUploading(false);
+      input.value = '';
     }
   };
 
@@ -433,15 +473,10 @@ const HelpCenter = () => {
                          <Book size={20} className="text-seller-primary" /> Quick Resources
                       </h3>
                       <div className="space-y-3">
-                         {[
-                           { label: "Seller Handbook", icon: <FileText size={16} />, color: "text-blue-600" },
-                           { label: "Video Tutorials", icon: <PlayCircle size={16} />, color: "text-rose-600" },
-                           { label: "Policies & Terms", icon: <Shield size={16} />, color: "text-emerald-600" },
-                           { label: "Growth Secrets", icon: <Zap size={16} />, color: "text-amber-600" },
-                         ].map((item, i) => (
+                         {quickResources.map((item, i) => (
                            <button 
                              key={i} 
-                             onClick={() => toast.success(`Opening ${item.label} (Mock documentation portal)`)}
+                             onClick={item.action}
                              className="w-full flex items-center justify-between p-4 rounded-2xl bg-slate-50/50 hover:bg-white border border-transparent hover:border-slate-100 transition-all group"
                            >
                               <div className="flex items-center gap-3">
@@ -703,6 +738,7 @@ const HelpCenter = () => {
                   {/* Attachments Section */}
                   <div className="space-y-3">
                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Attach Screenshots or Docs</label>
+                    <p className="text-[10px] font-semibold text-slate-400">Upload images from gallery/files or attach PDF documents.</p>
                     
                     <div className="flex flex-wrap gap-4 items-center">
                       {/* Upload Button */}
@@ -712,15 +748,37 @@ const HelpCenter = () => {
                         ) : (
                           <>
                             <Paperclip size={16} className="text-slate-400 group-hover:text-seller-primary" />
-                            <span className="text-[9px] font-bold text-slate-400 mt-1 uppercase tracking-wider">Add File</span>
+                            <span className="text-[9px] font-bold text-slate-400 mt-1 uppercase tracking-wider">Add Image</span>
                           </>
                         )}
-                        <input 
-                          type="file" 
-                          className="hidden" 
+                        <input
+                          type="file"
+                          ref={imageUploadInputRef}
+                          className="hidden"
                           onChange={handleAttachmentUpload}
                           disabled={isUploading}
-                          accept="image/*,application/pdf"
+                          accept=".jpg,.jpeg,.png,.webp,.heic,.heif"
+                          multiple
+                        />
+                      </label>
+
+                      <label className={`h-16 w-28 rounded-xl border border-dashed border-slate-200 bg-slate-50 hover:bg-[#E36666]/5 hover:border-seller-primary/30 flex flex-col items-center justify-center cursor-pointer transition-all ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}>
+                        {isUploading ? (
+                          <Loader2 size={16} className="text-seller-primary animate-spin" />
+                        ) : (
+                          <>
+                            <FileText size={16} className="text-slate-400" />
+                            <span className="text-[9px] font-bold text-slate-400 mt-1 uppercase tracking-wider">Add PDF</span>
+                          </>
+                        )}
+                        <input
+                          type="file"
+                          ref={pdfUploadInputRef}
+                          className="hidden"
+                          onChange={handleAttachmentUpload}
+                          disabled={isUploading}
+                          accept=".pdf"
+                          multiple
                         />
                       </label>
 

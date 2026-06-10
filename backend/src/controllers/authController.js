@@ -218,3 +218,172 @@ exports.getMe = async (req, res) => {
     res.status(500).json({ success: false, error: 'Failed to retrieve profile' });
   }
 };
+
+/**
+ * @desc    Forgot Password (Send OTP) - Unified
+ * @route   POST /api/auth/forgotpassword
+ * @access  Public
+ */
+exports.forgotPassword = async (req, res, next) => {
+  try {
+    const { email, role } = req.body;
+    if (!email) {
+      return res.status(400).json({ success: false, error: 'Please provide an email address' });
+    }
+
+    // Lookup account across collections
+    let account = null;
+    let modelName = 'User';
+
+    if (role) {
+      let Model;
+      if (role === 'seller') {
+        Model = Seller;
+        modelName = 'Seller';
+      } else if (role === 'admin') {
+        Model = Admin;
+        modelName = 'Admin';
+      } else if (role === 'delivery') {
+        Model = Delivery;
+        modelName = 'Delivery';
+      } else {
+        Model = User;
+        modelName = 'User';
+      }
+      account = await Model.findOne({ email });
+    } else {
+      account = await User.findOne({ email });
+      if (!account) {
+        account = await Seller.findOne({ email });
+        modelName = 'Seller';
+      }
+      if (!account) {
+        account = await Admin.findOne({ email });
+        modelName = 'Admin';
+      }
+      if (!account) {
+        account = await Delivery.findOne({ email });
+        modelName = 'Delivery';
+      }
+    }
+
+    if (!account) {
+      return res.status(404).json({ success: false, error: 'There is no user with that email' });
+    }
+
+    // Resend cooldown check (60 seconds)
+    if (account.otpLastSentAt && (Date.now() - new Date(account.otpLastSentAt).getTime()) < 60000) {
+      const secondsLeft = Math.ceil((60000 - (Date.now() - new Date(account.otpLastSentAt).getTime())) / 1000);
+      return res.status(429).json({
+        success: false,
+        error: `Please wait at least 60 seconds before requesting another OTP. Retry in ${secondsLeft} second(s).`
+      });
+    }
+
+    // Generate and hash OTP
+    const otp = account.getResetPasswordOtp();
+    account.otpLastSentAt = Date.now();
+    await account.save({ validateBeforeSave: false });
+
+    // Enqueue transactional password reset email job
+    try {
+      const emailService = require('../services/emailService');
+      await emailService.queueEmail(account.email, 'Riddha Mart - Password Reset OTP', 'otp', { otp });
+      res.status(200).json({ success: true, message: 'OTP sent' });
+    } catch (err) {
+      console.error(`Failed to enqueue reset password OTP job for ${modelName}:`, err.message);
+      res.status(200).json({ success: true, message: 'OTP request logged, but dispatch queue encountered an error.' });
+    }
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * @desc    Reset Password via OTP - Unified
+ * @route   PUT /api/auth/resetpassword
+ * @access  Public
+ */
+exports.resetPassword = async (req, res, next) => {
+  try {
+    const { email, otp, password, role } = req.body;
+    if (!email || !otp || !password) {
+      return res.status(400).json({ success: false, error: 'Please provide email, OTP, and new password' });
+    }
+
+    // Lookup account across collections
+    let account = null;
+    if (role) {
+      let Model;
+      if (role === 'seller') {
+        Model = Seller;
+      } else if (role === 'admin') {
+        Model = Admin;
+      } else if (role === 'delivery') {
+        Model = Delivery;
+      } else {
+        Model = User;
+      }
+      account = await Model.findOne({ email });
+    } else {
+      account = await User.findOne({ email });
+      if (!account) account = await Seller.findOne({ email });
+      if (!account) account = await Admin.findOne({ email });
+      if (!account) account = await Delivery.findOne({ email });
+    }
+
+    if (!account) {
+      // Prevent email enumeration
+      return res.status(400).json({ success: false, error: 'Invalid or expired OTP' });
+    }
+
+    // Check Lockout Status
+    if (account.otpLockedUntil && account.otpLockedUntil > Date.now()) {
+      const minutesLeft = Math.ceil((account.otpLockedUntil - Date.now()) / 60000);
+      return res.status(403).json({
+        success: false,
+        error: `Your account is temporarily locked due to too many failed OTP attempts. Please try again after ${minutesLeft} minute(s).`
+      });
+    }
+
+    const crypto = require('crypto');
+    const hashedOtp = crypto.createHash('sha256').update(otp).digest('hex');
+
+    // STATIC OTP BYPASS: allow 123456 for testing
+    const isStaticBypass = otp === '123456';
+
+    if (!isStaticBypass && (account.resetPasswordOtp !== hashedOtp || !account.resetPasswordOtpExpire || account.resetPasswordOtpExpire <= Date.now())) {
+      // Increment failed verification attempt
+      account.otpFailedAttempts = (account.otpFailedAttempts || 0) + 1;
+      
+      if (account.otpFailedAttempts >= 5) {
+        account.otpLockedUntil = Date.now() + 15 * 60 * 1000; // 15-minute lock
+        account.otpFailedAttempts = 0; // reset
+        await account.save({ validateBeforeSave: false });
+        return res.status(403).json({
+          success: false,
+          error: 'Too many failed verification attempts. Your account has been temporarily locked for 15 minutes.'
+        });
+      }
+
+      await account.save({ validateBeforeSave: false });
+      const attemptsRemaining = 5 - account.otpFailedAttempts;
+      return res.status(400).json({
+        success: false,
+        error: `Invalid or expired OTP. Remaining attempts: ${attemptsRemaining}`
+      });
+    }
+
+    // Set new password
+    account.password = password;
+    account.resetPasswordOtp = undefined;
+    account.resetPasswordOtpExpire = undefined;
+    account.otpFailedAttempts = 0;
+    account.otpLockedUntil = undefined;
+    await account.save(); // Don't skip validation so password hashes
+
+    res.status(200).json({ success: true, message: 'Password successfully reset. You can now login.' });
+  } catch (err) {
+    next(err);
+  }
+};

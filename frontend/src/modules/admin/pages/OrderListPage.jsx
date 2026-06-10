@@ -12,9 +12,11 @@ import {
   LuClipboardList,
   LuUser,
   LuChevronRight,
-  LuX
+  LuX,
+  LuDownload
 } from "react-icons/lu";
-import { FiCheckCircle, FiXCircle, FiFlag, FiSearch, FiFilter } from "react-icons/fi";
+import { FiCheckCircle, FiXCircle, FiFlag } from "react-icons/fi";
+import { toast } from "react-hot-toast";
 
 const initialOrders = [
   {
@@ -97,6 +99,10 @@ const OrderListPage = ({ specificStatus }) => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("all");
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [sellerFilter, setSellerFilter] = useState('all');
+  const [paymentFilter, setPaymentFilter] = useState('all');
+  const [assignmentFilter, setAssignmentFilter] = useState('all');
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
@@ -130,6 +136,34 @@ const OrderListPage = ({ specificStatus }) => {
   };
 
   const location = useLocation();
+
+  const exportToExcel = async () => {
+    if (filteredOrders.length === 0) {
+      toast.error('No orders available to export.');
+      return;
+    }
+    try {
+      const XLSX = await import('xlsx');
+      const dataToExport = filteredOrders.map(order => ({
+        'Order ID': order.orderId || (order._id ? `ORD-${order._id.slice(-6).toUpperCase()}` : 'ORD-NEW'),
+        'Customer Name': order.user?.fullName || 'Guest User',
+        'Seller': order.sellerType === 'Admin' ? 'Riddha Mart' : (order.seller?.shopName || order.seller?.fullName || "Mart Direct"),
+        'Total Price (₹)': order.totalPrice || 0,
+        'Payment Method': order.paymentMethod || 'Online',
+        'Status': order.status || 'Pending',
+        'Date': order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'Just now'
+      }));
+
+      const ws = XLSX.utils.json_to_sheet(dataToExport);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Orders");
+      XLSX.writeFile(wb, `Admin_Orders_Report_${new Date().toLocaleDateString().replace(/\//g, '-')}.xlsx`);
+      toast.success('Orders report exported successfully!');
+    } catch (err) {
+      console.error('Failed to export orders:', err);
+      toast.error('Failed to export orders report.');
+    }
+  };
 
   useEffect(() => {
     fetchOrders();
@@ -179,30 +213,56 @@ const OrderListPage = ({ specificStatus }) => {
       const customerName = order.user?.fullName || "Guest";
       const orderId = order._id || "";
       const sellerName = order.seller?.shopName || order.seller?.fullName || "";
+      const orderPayment = (order.paymentMethod || 'Online').toLowerCase();
+      const isAssigned = Boolean(order.deliveryBoy) || (order.deliveryStatus && order.deliveryStatus !== 'None');
 
       const matchesSearch =
         customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         orderId.toLowerCase().includes(searchTerm.toLowerCase()) ||
         sellerName.toLowerCase().includes(searchTerm.toLowerCase());
 
+      const matchesSeller =
+        sellerFilter === 'all' ||
+        (sellerFilter === 'direct' && order.sellerType === 'Admin') ||
+        (sellerFilter === 'marketplace' && order.sellerType !== 'Admin');
+
+      const matchesPayment =
+        paymentFilter === 'all' ||
+        (paymentFilter === 'online' && orderPayment.includes('online')) ||
+        (paymentFilter === 'cod' && orderPayment.includes('cod')) ||
+        (paymentFilter === 'wallet' && orderPayment.includes('wallet'));
+
+      const matchesAssignment =
+        assignmentFilter === 'all' ||
+        (assignmentFilter === 'assigned' && isAssigned) ||
+        (assignmentFilter === 'unassigned' && !isAssigned);
+
       const matchesTab = 
         activeTab === 'all' || 
         (activeTab === 'direct' && order.sellerType === 'Admin') ||
         (activeTab === 'marketplace' && order.sellerType !== 'Admin');
 
-      if (!matchesTab) return false;
+      if (!matchesTab || !matchesSeller || !matchesPayment || !matchesAssignment) return false;
 
       // If viewing "All Orders" page or no specific status required
       if (currentStatus?.toLowerCase().includes('all') || !currentStatus) {
         return matchesSearch;
       }
 
-      return (
-        matchesSearch &&
-        order.status?.toLowerCase() === currentStatus?.toLowerCase()
-      );
+      return matchesSearch && order.status?.toLowerCase() === currentStatus?.toLowerCase();
     });
-  }, [searchTerm, currentStatus, activeTab, orders]);
+  }, [searchTerm, currentStatus, activeTab, orders, sellerFilter, paymentFilter, assignmentFilter]);
+
+  const hasActiveFilters =
+    sellerFilter !== 'all' || paymentFilter !== 'all' || assignmentFilter !== 'all' || searchTerm.trim().length > 0;
+
+  const resetFilters = () => {
+    setSearchTerm('');
+    setSellerFilter('all');
+    setPaymentFilter('all');
+    setAssignmentFilter('all');
+    setIsFilterOpen(false);
+  };
 
   return (
     <PageWrapper>
@@ -252,11 +312,78 @@ const OrderListPage = ({ specificStatus }) => {
               className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl pl-11 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-warm-sand/20 transition-all text-sm"
             />
           </div>
-          <button className="flex items-center justify-center gap-2 border border-soft-oatmeal text-deep-espresso px-6 py-3 md:py-0 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-soft-oatmeal/20 transition-all">
+          <button
+            onClick={() => setIsFilterOpen(v => !v)}
+            className={`flex items-center justify-center gap-2 px-6 py-3 md:py-0 rounded-xl font-bold text-xs uppercase tracking-widest transition-all border ${
+              isFilterOpen || hasActiveFilters
+                ? 'border-red-800 bg-red-50 text-red-800'
+                : 'border-soft-oatmeal text-deep-espresso hover:bg-soft-oatmeal/20'
+            }`}
+          >
             <LuFilter size={16} />
-            Filters
+            Filters {hasActiveFilters ? '(Active)' : ''}
+          </button>
+          {hasActiveFilters && (
+            <button
+              onClick={resetFilters}
+              className="flex items-center justify-center gap-2 border border-red-200 text-red-700 bg-red-50 hover:bg-red-100 px-5 py-3 md:py-0 rounded-xl font-bold text-xs uppercase tracking-widest transition-all"
+            >
+              <LuX size={16} />
+              Reset
+            </button>
+          )}
+          <button
+            onClick={exportToExcel}
+            className="flex items-center justify-center gap-2 bg-red-800 text-white px-6 py-3.5 md:py-0 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-deep-espresso transition-all shadow-md shadow-red-900/20 active:scale-95 cursor-pointer"
+          >
+            <LuDownload size={16} />
+            Export Report
           </button>
         </div>
+
+        {isFilterOpen && (
+          <div className="bg-white p-6 rounded-2xl border border-soft-oatmeal shadow-md grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest">Seller Type</label>
+              <select
+                value={sellerFilter}
+                onChange={(e) => setSellerFilter(e.target.value)}
+                className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none cursor-pointer font-medium"
+              >
+                <option value="all">All Sellers</option>
+                <option value="direct">Riddha Mart / Direct</option>
+                <option value="marketplace">Marketplace Sellers</option>
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest">Payment Method</label>
+              <select
+                value={paymentFilter}
+                onChange={(e) => setPaymentFilter(e.target.value)}
+                className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none cursor-pointer font-medium"
+              >
+                <option value="all">All Methods</option>
+                <option value="online">Online</option>
+                <option value="cod">Cash on Delivery</option>
+                <option value="wallet">Wallet / Manual</option>
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest">Delivery Assignment</label>
+              <select
+                value={assignmentFilter}
+                onChange={(e) => setAssignmentFilter(e.target.value)}
+                className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none cursor-pointer font-medium"
+              >
+                <option value="all">All Orders</option>
+                <option value="assigned">Assigned</option>
+                <option value="unassigned">Unassigned</option>
+              </select>
+            </div>
+          </div>
+        )}
 
         <div className="bg-white rounded-2xl border border-soft-oatmeal shadow-md overflow-hidden">
           <div className="overflow-x-auto">

@@ -1,49 +1,38 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FiFileText } from 'react-icons/fi';
-
-const sections = [
-  {
-    title: '1. Acceptance of Terms',
-    content: 'By accessing and using the Riddha Interio Mart website and services, you agree to be bound by these Terms & Conditions. If you do not agree with any part of these terms, please do not use our services.',
-  },
-  {
-    title: '2. Products & Pricing',
-    content: 'All products listed on our website are subject to availability. Prices are displayed in INR and may be updated without prior notice. We strive to ensure accuracy in product descriptions and images, but slight variations may occur.',
-  },
-  {
-    title: '3. Orders & Payment',
-    content: 'By placing an order, you confirm that the information provided is accurate. We accept payments via UPI, net banking, credit/debit cards, and cash on delivery. Orders are confirmed only upon successful payment verification.',
-  },
-  {
-    title: '4. Shipping & Delivery',
-    content: 'Delivery timelines vary by product type and location. Standard delivery typically takes 5–10 business days. Large or custom items may require additional time. We will notify you of any delays.',
-  },
-  {
-    title: '5. Intellectual Property',
-    content: 'All content on this website — including text, images, logos, and design elements — is the property of Riddha Interio Mart and is protected by applicable copyright and trademark laws. Unauthorized use is prohibited.',
-  },
-  {
-    title: '6. Limitation of Liability',
-    content: 'Riddha Interio Mart shall not be liable for any indirect, incidental, or consequential damages arising out of the use of our website or products. Our total liability is limited to the value of the product purchased.',
-  },
-  {
-    title: '7. Governing Law',
-    content: 'These Terms & Conditions are governed by the laws of India. Any disputes shall be subject to the exclusive jurisdiction of the courts in Mumbai, Maharashtra.',
-  },
-  {
-    title: '8. Changes to Terms',
-    content: 'We reserve the right to update these Terms & Conditions at any time. Continued use of our services after changes are posted constitutes acceptance of the revised terms.',
-  },
-];
+import api from '../../../shared/utils/api';
 
 const Terms = () => {
+  const [content, setContent] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const fetchTerms = async () => {
+      try {
+        setIsLoading(true);
+        const { data } = await api.get('/terms/user');
+        if (data.success && data.data) {
+          setContent(data.data.content || '');
+        }
+      } catch (err) {
+        console.error('Failed to fetch user terms:', err);
+        setError('Failed to load terms and conditions.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchTerms();
+  }, []);
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
-      className="py-16 md:py-24"
+      className="py-16 md:py-24 bg-soft-oatmeal/5 min-h-screen"
     >
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-12">
         {/* Header */}
@@ -61,24 +50,32 @@ const Terms = () => {
             Terms & Conditions
           </h1>
           <p className="text-deep-espresso/50 text-base font-light leading-relaxed">
-            Last updated: March 2026
+            Please review the Terms & Conditions governing our services.
           </p>
         </motion.div>
 
         {/* Content */}
         <div className="space-y-6">
-          {sections.map((section, index) => (
-            <motion.div
-              key={section.title}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15 + index * 0.06 }}
-              className="bg-white border border-soft-oatmeal/30 rounded-2xl p-6 md:p-8"
-            >
-              <h3 className="text-lg font-display font-bold text-deep-espresso mb-3">{section.title}</h3>
-              <p className="text-deep-espresso/60 text-sm font-medium leading-relaxed">{section.content}</p>
-            </motion.div>
-          ))}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="bg-white border border-soft-oatmeal/30 rounded-[32px] p-8 md:p-12 shadow-xl shadow-soft-oatmeal/10"
+          >
+            {isLoading ? (
+              <div className="flex justify-center items-center h-48">
+                <div className="w-8 h-8 border-4 border-dusty-cocoa border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            ) : error ? (
+              <div className="bg-red-50 text-red-600 p-6 rounded-2xl text-center border border-red-100 text-sm font-medium">
+                {error}
+              </div>
+            ) : (
+              <div className="text-deep-espresso/80 text-sm md:text-base font-medium leading-relaxed whitespace-pre-wrap">
+                {content}
+              </div>
+            )}
+          </motion.div>
         </div>
       </div>
     </motion.div>

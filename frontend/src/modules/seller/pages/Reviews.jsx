@@ -6,6 +6,7 @@ import api from '../../../shared/utils/api';
 
 const SellerReviews = () => {
   const [reviews, setReviews] = useState([]);
+  const [feedback, setFeedback] = useState('');
   const [stats, setStats] = useState({
     avgRating: 0,
     totalReviews: 0,
@@ -13,6 +14,50 @@ const SellerReviews = () => {
     reviewGrowth: '+0%',
     happyCustomers: '0%'
   });
+
+  const getSellerName = () => {
+    try {
+      const raw = localStorage.getItem('riddha_user');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        const userObj = parsed.user || parsed;
+        if (userObj && (userObj.storeName || userObj.name)) {
+          return userObj.storeName || userObj.name;
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    return 'Riddha Seller';
+  };
+
+  const handleSendFeedback = () => {
+    if (!feedback.trim()) {
+      toast.error('Please enter your feedback before submitting.');
+      return;
+    }
+
+    try {
+      const recommendations = JSON.parse(localStorage.getItem('seller_recommendations') || '[]');
+      const newFeedback = {
+        id: Date.now(),
+        subject: 'Direct Feedback',
+        category: 'other',
+        description: feedback.trim(),
+        priority: 'medium',
+        sellerName: getSellerName(),
+        createdAt: new Date().toISOString(),
+        status: 'pending'
+      };
+      localStorage.setItem('seller_recommendations', JSON.stringify([newFeedback, ...recommendations]));
+      
+      setFeedback('');
+      toast.success('Your feedback has been sent to the admin!');
+    } catch (err) {
+      console.error('Failed to submit feedback:', err);
+      toast.error('Failed to send feedback.');
+    }
+  };
 
   useEffect(() => {
     const fetchReviews = async () => {
@@ -248,13 +293,13 @@ const SellerReviews = () => {
           </div>
           <div className="flex-1 space-y-4">
              <textarea 
+               value={feedback}
+               onChange={(e) => setFeedback(e.target.value)}
                placeholder="Write your recommendation or feedback for the admin here..."
                className="w-full h-40 bg-gray-50 border border-gray-100 focus:border-seller-primary focus:bg-white rounded-[32px] p-8 outline-none text-sm font-medium transition-all resize-none"
              ></textarea>
              <button 
-               onClick={() => {
-                 toast.success('Your feedback has been sent to the admin!');
-               }}
+               onClick={handleSendFeedback}
                className="w-full md:w-auto px-12 py-4 bg-slate-900 text-white rounded-2xl text-[11px] font-bold uppercase tracking-widest hover:bg-seller-primary transition-all shadow-lg active:scale-95"
              >
                Send to Admin

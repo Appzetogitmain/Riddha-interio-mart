@@ -64,12 +64,26 @@ exports.getProducts = async (req, res, next) => {
     if (!isAdmin) {
       filter.isApproved = true;
       filter.isActive = true;
-      
+
       // Filter out products from unverified sellers
       const unverifiedSellers = await Seller.find({ isVerified: { $ne: true } }).select('_id');
-      const unverifiedSellerIds = unverifiedSellers.map(s => s._id);
-      filter.seller = { $nin: unverifiedSellerIds };
+      const unverifiedSellerIds = unverifiedSellers.map(s => s._id.toString());
+
+      if (req.query.seller) {
+        if (unverifiedSellerIds.includes(req.query.seller.toString())) {
+          // If the requested seller is unverified, don't show any products
+          const mongoose = require('mongoose');
+          filter.seller = new mongoose.Types.ObjectId();
+        } else {
+          filter.seller = req.query.seller;
+        }
+      } else {
+        filter.seller = { $nin: unverifiedSellers.map(s => s._id) };
+      }
     } else {
+      if (req.query.seller) {
+        filter.seller = req.query.seller;
+      }
       if (req.query.isActive !== undefined && req.query.isActive !== 'all') {
         filter.isActive = req.query.isActive === 'true' || req.query.isActive === true;
       }
@@ -416,6 +430,20 @@ exports.deleteProduct = async (req, res, next) => {
     }
 
     await Product.findByIdAndDelete(req.params.id);
+
+    try {
+      if (product.seller && req.user && req.user.role === 'admin') {
+        const { notifySellerProductDeleted } = require('../socket');
+        await notifySellerProductDeleted(product.seller, {
+          message: `Your product "${product.name}" was deleted by the admin team.`,
+          productId: product._id,
+          productName: product.name,
+          deletedBy: req.user.fullName || req.user.name || 'Admin'
+        });
+      }
+    } catch (notifyErr) {
+      console.error('Failed to notify seller about product deletion:', notifyErr.message);
+    }
 
     // Log the deletion action if it's done by admin
     if (req.user && req.user.role === 'admin') {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiPackage, FiX, FiArrowRight, FiTruck, FiLayers } from 'react-icons/fi';
+import { FiPackage, FiX, FiArrowRight, FiTruck, FiBriefcase, FiLayers } from 'react-icons/fi';
 import { connectSocket, disconnectSocket } from '../../../shared/utils/socket';
 import { useNavigate } from 'react-router-dom';
 
@@ -45,6 +45,12 @@ const AdminNotifications = ({ token }) => {
       setActiveNotification({ ...payload, type: 'delivery_reg' });
     });
 
+    socket.on('seller:new_registration', (payload) => {
+      console.log('SELLER:NEW_REGISTRATION received in Admin panel:', payload);
+      playSound();
+      setActiveNotification({ ...payload, type: 'seller_reg' });
+    });
+
     socket.on('delivery:response', (payload) => {
       console.log('DELIVERY:RESPONSE received in Admin panel:', payload);
       playSound();
@@ -69,6 +75,7 @@ const AdminNotifications = ({ token }) => {
       socket.off('order:new');
       socket.off('product:new_request');
       socket.off('delivery:new_registration');
+      socket.off('seller:new_registration');
       socket.off('delivery:response');
       socket.off('batch:new');
       socket.off('connect');
@@ -80,6 +87,7 @@ const AdminNotifications = ({ token }) => {
      if (activeNotification.type === 'batch') return <FiLayers size={28} className="animate-bounce" />;
      if (activeNotification.type === 'product') return <FiPackage size={28} className="animate-bounce" />;
      if (activeNotification.type === 'delivery_reg' || activeNotification.type === 'delivery_resp') return <FiTruck size={28} className="animate-bounce" />;
+     if (activeNotification.type === 'seller_reg') return <FiBriefcase size={28} className="animate-bounce" />;
      return <FiPackage size={28} className="animate-bounce" />;
   };
 
@@ -87,6 +95,7 @@ const AdminNotifications = ({ token }) => {
      if (activeNotification.type === 'batch') return 'bg-violet-50 text-violet-600';
      if (activeNotification.type === 'product') return 'bg-amber-50 text-amber-600';
      if (activeNotification.type === 'delivery_reg') return 'bg-blue-50 text-blue-600';
+     if (activeNotification.type === 'seller_reg') return 'bg-teal-50 text-teal-600';
      if (activeNotification.type === 'delivery_resp') return activeNotification.status === 'Accepted' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600';
      return 'bg-brand-pink/5 text-red-800';
   };
@@ -105,6 +114,7 @@ const AdminNotifications = ({ token }) => {
             <div className={`absolute top-0 left-0 w-full h-1.5 ${
               activeNotification.type === 'batch' ? 'bg-violet-600' :
               activeNotification.type === 'delivery_reg' ? 'bg-blue-600' :
+              activeNotification.type === 'seller_reg' ? 'bg-teal-500' :
               activeNotification.type === 'delivery_resp' ? (activeNotification.status === 'Accepted' ? 'bg-emerald-500' : 'bg-rose-500') :
               activeNotification.type === 'product' ? 'bg-amber-500' :
               'bg-gradient-to-r from-red-800 to-deep-espresso'
@@ -122,6 +132,7 @@ const AdminNotifications = ({ token }) => {
                     {activeNotification.type === 'batch' ? 'New Product Batch' :
                      activeNotification.type === 'product' ? 'Product Approval' :
                      activeNotification.type === 'delivery_reg' ? 'New Fleet Request' :
+                     activeNotification.type === 'seller_reg' ? 'New Seller Request' :
                      activeNotification.type === 'delivery_resp' ? 'Delivery Response' :
                      'Incoming Order'}
                   </h3>
@@ -137,6 +148,7 @@ const AdminNotifications = ({ token }) => {
                     ? `${activeNotification.totalProducts} product${activeNotification.totalProducts !== 1 ? 's' : ''} need review`
                     : activeNotification.type === 'product' ? activeNotification.message
                     : activeNotification.type === 'delivery_reg' ? `${activeNotification.fullName} wants to join`
+                    : activeNotification.type === 'seller_reg' ? `${activeNotification.fullName} wants to join`
                     : activeNotification.type === 'delivery_resp' ? `Order ${activeNotification.status}`
                     : `₹${activeNotification.totalPrice?.toLocaleString()} Order Received`}
                </p>
@@ -146,12 +158,14 @@ const AdminNotifications = ({ token }) => {
                        activeNotification.type === 'batch' ? 'bg-violet-500' :
                        activeNotification.type === 'product' ? 'bg-amber-500' :
                        activeNotification.type === 'delivery_reg' ? 'bg-blue-500' :
+                       activeNotification.type === 'seller_reg' ? 'bg-teal-500' :
                        activeNotification.type === 'delivery_resp' ? (activeNotification.status === 'Accepted' ? 'bg-emerald-500' : 'bg-rose-500') :
                        'bg-green-500'
                      }`}></span>
                      {activeNotification.type === 'batch' ? (activeNotification.shopName || activeNotification.sellerName) :
                       activeNotification.type === 'product' ? activeNotification.sellerName :
                       activeNotification.type === 'delivery_reg' ? activeNotification.vehicleType :
+                      activeNotification.type === 'seller_reg' ? activeNotification.shopName :
                       activeNotification.type === 'delivery_resp' ? activeNotification.deliveryBoyName :
                       (activeNotification.customerName || 'Premium Client')}
                   </span>
@@ -159,6 +173,7 @@ const AdminNotifications = ({ token }) => {
                   <span>{activeNotification.type === 'batch' ? 'Batch Submission' :
                          activeNotification.type === 'product' ? 'Draft Product' :
                          activeNotification.type === 'delivery_reg' ? activeNotification.phone :
+                         activeNotification.type === 'seller_reg' ? (activeNotification.phone || activeNotification.email) :
                          activeNotification.type === 'delivery_resp' ? `Order ID: ...${activeNotification.orderId?.slice(-6)}` :
                          (activeNotification.shippingCity || 'Global')}</span>
                   {activeNotification.type === 'order' && (
@@ -178,15 +193,18 @@ const AdminNotifications = ({ token }) => {
                           navigate('/admin/inventory');
                         } else if (activeNotification.type === 'delivery_reg') {
                           navigate('/admin/delivery/pending');
+                        } else if (activeNotification.type === 'seller_reg') {
+                          navigate('/admin/sellers/pending');
                         } else {
                           navigate(`/admin/orders/view/${activeNotification.orderId}`);
                         }
                         setActiveNotification(null);
-                    }}
+                     }}
                     className={`flex-1 text-[10px] font-black uppercase tracking-widest py-3 rounded-xl transition-all flex items-center justify-center gap-2 ${
                       activeNotification.type === 'batch' ? 'bg-violet-600 text-white hover:bg-violet-700' :
                       activeNotification.type === 'product' ? 'bg-amber-600 text-white hover:bg-amber-700' :
                       activeNotification.type === 'delivery_reg' ? 'bg-blue-600 text-white hover:bg-blue-700' :
+                      activeNotification.type === 'seller_reg' ? 'bg-teal-600 text-white hover:bg-teal-700' :
                       activeNotification.type === 'delivery_resp' ? (activeNotification.status === 'Accepted' ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white') :
                       'bg-deep-espresso text-white hover:bg-red-900'
                     }`}
@@ -194,6 +212,7 @@ const AdminNotifications = ({ token }) => {
                     {activeNotification.type === 'batch' ? 'Review Batch' :
                      activeNotification.type === 'product' ? 'Review Product' :
                      activeNotification.type === 'delivery_reg' ? 'Review Partner' :
+                     activeNotification.type === 'seller_reg' ? 'Review Seller' :
                      activeNotification.type === 'delivery_resp' ? 'View Order' :
                      'Process Now'} <FiArrowRight size={14} />
                   </button>

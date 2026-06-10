@@ -24,6 +24,7 @@ const DeliveryRoutes = () => {
       <Route path="/" element={<DeliveryLanding />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignupPage />} />
+      <Route path="/terms" element={<TermsConditions />} />
       <Route element={<DeliveryLayout />}>
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/orders" element={<Orders />} />
@@ -36,7 +37,6 @@ const DeliveryRoutes = () => {
         <Route path="/settings" element={<Settings />} />
         <Route path="/help" element={<HelpSupport />} />
         <Route path="/about" element={<About />} />
-        <Route path="/terms" element={<TermsConditions />} />
         <Route path="/notifications" element={<Notifications />} />
       </Route>
     </Routes>

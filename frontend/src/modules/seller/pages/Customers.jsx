@@ -205,23 +205,6 @@ const Customers = () => {
              </div>
            )}
         </div>
-
-        {/* Retention Professional Card */}
-        <div className="bg-white rounded-[2.5rem] p-8 md:p-12 border border-slate-100 shadow-2xl shadow-slate-200/50 relative overflow-hidden group">
-           <div className="absolute top-0 right-0 w-80 h-80 bg-seller-primary/5 rounded-full blur-[80px] -mr-40 -mt-40 group-hover:bg-seller-primary/10 transition-all duration-1000"></div>
-           <div className="absolute bottom-0 left-0 w-64 h-64 bg-slate-50 rounded-full blur-[60px] -ml-32 -mb-32"></div>
-           
-           <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
-              <div className="space-y-4 text-center md:text-left">
-                 <div className="px-4 py-1.5 bg-seller-primary/10 text-seller-primary text-[9px] font-black uppercase tracking-[0.2em] rounded-xl border border-seller-primary/10 inline-block">Retention Hub</div>
-                 <h3 className="text-3xl md:text-4xl font-black tracking-tight leading-none text-slate-900">Automate your <span className="text-seller-primary italic">customer retention</span></h3>
-                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest max-w-md leading-relaxed">Deploy targeted campaigns to your high-value platinum tier customers with 1-click execution.</p>
-              </div>
-              <button className="px-10 py-5 bg-seller-primary text-white rounded-[1.8rem] font-black text-[10px] uppercase tracking-widest shadow-2xl shadow-seller-primary/20 hover:bg-seller-dark hover:scale-[1.02] active:scale-95 transition-all whitespace-nowrap">
-                 Launch Analytics Campaign
-              </button>
-           </div>
-        </div>
       </div>
     </PageWrapper>
   );

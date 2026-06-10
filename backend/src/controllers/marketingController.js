@@ -2,6 +2,19 @@ const Coupon = require('../models/Coupon');
 const Campaign = require('../models/Campaign');
 const paginate = require('../utils/paginate');
 
+const isValidDate = (value) => {
+  const date = new Date(value);
+  return !Number.isNaN(date.getTime());
+};
+
+const getIsoDateOnly = (value) => {
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  return value.includes('T') ? value.split('T')[0] : value;
+};
+
 // ==========================================
 // 🎟️ COUPON SERVICES
 // ==========================================
@@ -12,9 +25,19 @@ const paginate = require('../utils/paginate');
 exports.createCoupon = async (req, res) => {
   try {
     const { code, discountType, discountValue, minPurchaseAmount, maxDiscountAmount, usageLimit, expiryDate } = req.body;
+    const expiryDateOnly = getIsoDateOnly(expiryDate);
+    const todayIsoDate = new Date().toISOString().split('T')[0];
 
     if (!code || !discountType || !discountValue || !expiryDate) {
       return res.status(400).json({ success: false, message: 'Please provide all required fields.' });
+    }
+
+    if (!expiryDateOnly || !isValidDate(expiryDate)) {
+      return res.status(400).json({ success: false, message: 'Please provide a valid coupon expiry date.' });
+    }
+
+    if (expiryDateOnly < todayIsoDate) {
+      return res.status(400).json({ success: false, message: 'Coupon expiry date cannot be in the past.' });
     }
 
     // Check if coupon code already exists
@@ -31,7 +54,7 @@ exports.createCoupon = async (req, res) => {
       minPurchaseAmount: minPurchaseAmount || 0,
       maxDiscountAmount,
       usageLimit: usageLimit || 100,
-      expiryDate: new Date(expiryDate)
+      expiryDate: new Date(`${expiryDateOnly}T23:59:59.999Z`)
     });
 
     res.status(201).json({
@@ -103,9 +126,19 @@ exports.deleteCoupon = async (req, res) => {
 exports.createCampaign = async (req, res) => {
   try {
     const { title, type, discountPercentage, products, budget, startDate, endDate } = req.body;
+    const parsedStartDate = new Date(startDate);
+    const parsedEndDate = new Date(endDate);
 
     if (!title || !type || !discountPercentage || !budget || !startDate || !endDate) {
       return res.status(400).json({ success: false, message: 'Please provide all required fields.' });
+    }
+
+    if (!isValidDate(startDate) || !isValidDate(endDate)) {
+      return res.status(400).json({ success: false, message: 'Please provide valid campaign start and end dates.' });
+    }
+
+    if (parsedStartDate >= parsedEndDate) {
+      return res.status(400).json({ success: false, message: 'Sale start date should be earlier than sale end date.' });
     }
 
     // Reach count simulation based on budget size (for realistic mockup data representation)
@@ -118,10 +151,10 @@ exports.createCampaign = async (req, res) => {
       discountPercentage,
       products: products || [],
       budget,
-      startDate: new Date(startDate),
-      endDate: new Date(endDate),
+      startDate: parsedStartDate,
+      endDate: parsedEndDate,
       reachCount: simulatedReach,
-      status: new Date(startDate) > new Date() ? 'Scheduled' : 'Active'
+      status: parsedStartDate > new Date() ? 'Scheduled' : 'Active'
     });
 
     res.status(201).json({

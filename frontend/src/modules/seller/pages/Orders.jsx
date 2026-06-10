@@ -24,6 +24,7 @@ import { useNavigate } from "react-router-dom";
 import api from "../../../shared/utils/api";
 import { motion, AnimatePresence } from "framer-motion";
 import OrderCard from "../components/OrderCard";
+import { toast } from "react-hot-toast";
 
 const Orders = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -35,7 +36,37 @@ const Orders = () => {
   const [assigning, setAssigning] = useState(false);
   const [activeTab, setActiveTab] = useState('All');
   const [expandedOrderId, setExpandedOrderId] = useState(null);
+  const [showRangeModal, setShowRangeModal] = useState(false);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const navigate = useNavigate();
+
+  const exportToExcel = async () => {
+    if (filteredOrders.length === 0) {
+      toast.error("No orders available to export.");
+      return;
+    }
+    try {
+      const XLSX = await import('xlsx');
+      const dataToExport = filteredOrders.map(order => ({
+        'Order ID': order._id ? `#ORD-${order._id.slice(-8).toUpperCase()}` : '-',
+        'Date': new Date(order.createdAt).toLocaleDateString('en-GB'),
+        'Customer Name': order.shippingAddress?.fullName || 'Guest',
+        'City': order.shippingAddress?.city || '-',
+        'Total Price (₹)': order.totalPrice || 0,
+        'Payment Method': order.paymentMethod || '-',
+        'Status': order.status || '-'
+      }));
+      const ws = XLSX.utils.json_to_sheet(dataToExport);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Orders");
+      XLSX.writeFile(wb, `Seller_Orders_Report_${new Date().toLocaleDateString().replace(/\//g, '-')}.xlsx`);
+      toast.success("Orders report exported successfully!");
+    } catch (err) {
+      console.error('Failed to export orders:', err);
+      toast.error('Failed to export orders report.');
+    }
+  };
 
   const fetchOrders = async () => {
     try {
@@ -97,7 +128,23 @@ const Orders = () => {
     const matchesSearch = order._id.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          order.shippingAddress.fullName.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesTab = activeTab === 'All' || order.status === activeTab;
-    return matchesSearch && matchesTab;
+    
+    let matchesDate = true;
+    if (startDate) {
+      const orderDate = new Date(order.createdAt);
+      orderDate.setHours(0,0,0,0);
+      const start = new Date(startDate);
+      start.setHours(0,0,0,0);
+      matchesDate = matchesDate && (orderDate >= start);
+    }
+    if (endDate) {
+      const orderDate = new Date(order.createdAt);
+      orderDate.setHours(23,59,59,999);
+      const end = new Date(endDate);
+      end.setHours(23,59,59,999);
+      matchesDate = matchesDate && (orderDate <= end);
+    }
+    return matchesSearch && matchesTab && matchesDate;
   });
 
   const tabs = ['All', 'Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
@@ -163,11 +210,17 @@ const Orders = () => {
             />
           </div>
           <div className="flex gap-2 w-full md:w-auto shrink-0">
-            <button className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-700 px-4 py-2.5 rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-slate-50 transition-all shadow-sm">
+            <button 
+              onClick={() => setShowRangeModal(true)}
+              className={`flex-1 md:flex-none flex items-center justify-center gap-2 bg-white border px-4 py-2.5 rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-slate-50 transition-all shadow-sm ${startDate || endDate ? 'border-seller-primary text-seller-primary ring-2 ring-seller-primary/10 font-bold' : 'border-slate-200 text-slate-700'}`}
+            >
               <Calendar size={12} />
-              Range
+              {startDate || endDate ? 'Filter Active' : 'Range'}
             </button>
-            <button className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-seller-primary text-white px-5 py-2.5 rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-seller-dark transition-all shadow-lg shadow-seller-primary/20">
+            <button 
+              onClick={exportToExcel}
+              className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-seller-primary text-white px-5 py-2.5 rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-seller-dark transition-all shadow-lg shadow-seller-primary/20"
+            >
               <Download size={12} />
               Export
             </button>
@@ -350,6 +403,79 @@ const Orders = () => {
 
                 <div className="p-8 bg-slate-50/50 border-t border-slate-100 text-center">
                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed">Partner selection is prioritized by real-time distance and capacity.</p>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* Date Range Modal */}
+        <AnimatePresence>
+          {showRangeModal && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setShowRangeModal(false)}
+                className="absolute inset-0 bg-slate-900/60 backdrop-blur-md"
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                className="relative w-full max-w-md bg-white rounded-[2.5rem] shadow-2xl overflow-hidden z-10 border border-slate-100"
+                onClick={e => e.stopPropagation()}
+              >
+                <div className="p-8 border-b border-slate-50 flex items-center justify-between">
+                  <div>
+                    <h3 className="text-2xl font-bold text-slate-900 tracking-tight">Select Date Range</h3>
+                    <p className="text-sm font-medium text-slate-500 mt-1">Filter orders by transaction date</p>
+                  </div>
+                  <button onClick={() => setShowRangeModal(false)} className="p-2 hover:bg-slate-100 rounded-xl transition-colors">
+                    <X size={24} className="text-slate-400" />
+                  </button>
+                </div>
+
+                <div className="p-8 space-y-5">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-450 uppercase tracking-wider block pl-1">Start Date</label>
+                    <input 
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 focus:outline-none focus:border-seller-primary/30 transition-all"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-450 uppercase tracking-wider block pl-1">End Date</label>
+                    <input 
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 focus:outline-none focus:border-seller-primary/30 transition-all"
+                    />
+                  </div>
+                </div>
+
+                <div className="p-8 bg-slate-50/50 border-t border-slate-100 flex items-center gap-3">
+                  <button 
+                    onClick={() => {
+                      setStartDate("");
+                      setEndDate("");
+                      setShowRangeModal(false);
+                    }}
+                    className="flex-1 py-4 border border-slate-200 rounded-xl text-xs font-black uppercase tracking-widest text-slate-500 hover:bg-slate-100 transition-colors"
+                  >
+                    Reset & Clear
+                  </button>
+                  <button 
+                    onClick={() => setShowRangeModal(false)}
+                    className="flex-1 py-4 bg-seller-primary text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-seller-dark transition-all shadow-lg shadow-seller-primary/20"
+                  >
+                    Apply Filter
+                  </button>
                 </div>
               </motion.div>
             </div>

@@ -82,7 +82,7 @@ const NavItem = ({ item, isOpen, onClose, expanded, onToggle, disabled }) => {
     <div className="mb-2">
       <div
         className={`
-          flex items-center justify-between p-3 rounded-xl transition-all duration-300 group ${disabled ? 'opacity-50 cursor-not-allowed pointer-events-none' : 'cursor-pointer'} border border-white/5
+          flex items-center justify-between p-3 rounded-xl transition-all duration-300 group ${disabled ? "opacity-50 cursor-not-allowed pointer-events-none" : "cursor-pointer"} border border-white/5
           ${
             isActive && !disabled
               ? "bg-red-800 text-white shadow-xl shadow-red-900/20 border-white/10 scale-[1.02]"
@@ -239,7 +239,7 @@ const SellerSidebar = ({ isOpen, onClose }) => {
         {/* Footer info */}
         <div className="relative z-10 p-6 border-t border-white/10 text-white/50 text-xs mt-auto">
           <p className="font-medium text-white/80">
-            © 2026 Riddha Interio Mart
+            © 2026 Riddha Interior Mart
           </p>
           <p className="mt-1 text-[10px] tracking-wide uppercase">
             Seller Panel v1.0

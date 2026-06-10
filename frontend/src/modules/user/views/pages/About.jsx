@@ -1,11 +1,26 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { FiAward, FiHeart, FiStar } from 'react-icons/fi';
+import React from "react";
+import { motion } from "framer-motion";
+import { FiAward, FiHeart, FiStar } from "react-icons/fi";
 
 const values = [
-  { icon: FiAward, title: 'Premium Quality', description: 'We source only the finest materials from trusted manufacturers worldwide.' },
-  { icon: FiHeart, title: 'Customer First', description: 'Your satisfaction is our priority — from selection to installation.' },
-  { icon: FiStar, title: 'Expert Guidance', description: 'Our design consultants bring years of interior design expertise to every project.' },
+  {
+    icon: FiAward,
+    title: "Premium Quality",
+    description:
+      "We source only the finest materials from trusted manufacturers worldwide.",
+  },
+  {
+    icon: FiHeart,
+    title: "Customer First",
+    description:
+      "Your satisfaction is our priority — from selection to installation.",
+  },
+  {
+    icon: FiStar,
+    title: "Expert Guidance",
+    description:
+      "Our design consultants bring years of interior design expertise to every project.",
+  },
 ];
 
 const About = () => {
@@ -24,14 +39,18 @@ const About = () => {
           transition={{ delay: 0.1 }}
           className="mb-16 space-y-4 max-w-3xl"
         >
-          <span className="text-xs uppercase tracking-[0.2em] font-bold text-warm-sand">Our Story</span>
+          <span className="text-xs uppercase tracking-[0.2em] font-bold text-warm-sand">
+            Our Story
+          </span>
           <h1 className="text-4xl md:text-5xl font-display font-bold tracking-tight text-deep-espresso">
-            About Riddha Interio Mart
+            About Riddha Interior Mart
           </h1>
           <p className="text-deep-espresso/50 text-lg font-light leading-relaxed">
-            Riddha Interio Mart is your destination for transforming living spaces into luxurious sanctuaries.
-            We bring together premium tiles, designer paints, handcrafted furniture, and elegant home décor
-            under one roof — curated for those who appreciate quality craftsmanship and timeless design.
+            Riddha Interior Mart is your destination for transforming living
+            spaces into luxurious sanctuaries. We bring together premium tiles,
+            designer paints, handcrafted furniture, and elegant home décor under
+            one roof — curated for those who appreciate quality craftsmanship
+            and timeless design.
           </p>
         </motion.div>
 
@@ -42,11 +61,14 @@ const About = () => {
           transition={{ delay: 0.2 }}
           className="bg-white border border-soft-oatmeal/30 rounded-2xl p-8 md:p-12 mb-12"
         >
-          <h2 className="text-2xl font-display font-bold text-deep-espresso mb-4">Our Mission</h2>
+          <h2 className="text-2xl font-display font-bold text-deep-espresso mb-4">
+            Our Mission
+          </h2>
           <p className="text-deep-espresso/60 text-base leading-relaxed max-w-3xl">
-            To make premium interior solutions accessible and enjoyable. We believe every home deserves
-            the finest materials and thoughtful design — and we're here to make that journey effortless,
-            inspiring, and deeply personal.
+            To make premium interior solutions accessible and enjoyable. We
+            believe every home deserves the finest materials and thoughtful
+            design — and we're here to make that journey effortless, inspiring,
+            and deeply personal.
           </p>
         </motion.div>
 
@@ -63,8 +85,12 @@ const About = () => {
               <div className="w-12 h-12 rounded-xl bg-golden-glow/50 flex items-center justify-center mb-5">
                 <item.icon className="h-5 w-5 text-warm-sand" />
               </div>
-              <h3 className="text-lg font-display font-bold text-deep-espresso mb-2">{item.title}</h3>
-              <p className="text-deep-espresso/50 text-sm font-medium leading-relaxed">{item.description}</p>
+              <h3 className="text-lg font-display font-bold text-deep-espresso mb-2">
+                {item.title}
+              </h3>
+              <p className="text-deep-espresso/50 text-sm font-medium leading-relaxed">
+                {item.description}
+              </p>
             </motion.div>
           ))}
         </div>

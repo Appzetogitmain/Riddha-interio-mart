@@ -52,6 +52,9 @@ const ALLOWED_SIGNATURES = {
   '25504446': { mime: 'application/pdf', ext: ['.pdf'] }
 };
 
+const ALLOWED_HEIF_EXTENSIONS = ['.heic', '.heif'];
+const ALLOWED_HEIF_BRANDS = ['heic', 'heix', 'hevc', 'hevx', 'heim', 'heis', 'mif1', 'msf1'];
+
 /**
  * Validates the binary header signature of a file.
  * Also handles MP4 / MOV checks (which contain 'ftyp' markers within the first 12 bytes).
@@ -78,8 +81,14 @@ const validateFileSignature = (filePath, originalExt) => {
     return originalExt.toLowerCase() === '.webp';
   }
 
-  // 2. Check MP4 / MOV formats (starts with 'ftyp' at bytes 4-8)
+  // 2. Check HEIC / HEIF formats (ISO BMFF with HEIF brands)
   const ftypHex = buffer.toString('hex', 4, 8);
+  const isoBrand = buffer.toString('ascii', 8, 12).toLowerCase();
+  if (ftypHex === '66747970' && ALLOWED_HEIF_BRANDS.includes(isoBrand)) {
+    return ALLOWED_HEIF_EXTENSIONS.includes(originalExt.toLowerCase());
+  }
+
+  // 3. Check MP4 / MOV formats (starts with 'ftyp' at bytes 4-8)
   if (ftypHex === '66747970') { // 'ftyp' in ASCII
     const allowedVideoExts = ['.mp4', '.mov', '.avi'];
     return allowedVideoExts.includes(originalExt.toLowerCase());
@@ -96,11 +105,11 @@ const uploadParser = multer({
   },
   fileFilter: (req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();
-    const allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.mp4', '.mov', '.avi', '.pdf'];
+    const allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif', '.mp4', '.mov', '.avi', '.pdf'];
 
     // Extension validation
     if (!allowedExtensions.includes(ext)) {
-      return cb(new Error(`Extension not allowed: ${ext}. Supported types: Images (JPG, PNG, WEBP), Videos (MP4, MOV), and PDFs.`), false);
+      return cb(new Error(`Extension not allowed: ${ext}. Supported types: Images (JPG, PNG, WEBP, HEIC, HEIF), Videos (MP4, MOV), and PDFs.`), false);
     }
     cb(null, true);
   }

@@ -48,6 +48,14 @@ const AdminSchema = new mongoose.Schema({
     minlength: 6,
     select: false
   },
+  resetPasswordOtp: String,
+  resetPasswordOtpExpire: Date,
+  otpLastSentAt: Date,
+  otpFailedAttempts: {
+    type: Number,
+    default: 0
+  },
+  otpLockedUntil: Date,
   createdAt: {
     type: Date,
     default: Date.now
@@ -59,6 +67,14 @@ AdminSchema.pre('save', async function() {
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
 });
+
+AdminSchema.methods.getResetPasswordOtp = function() {
+  const crypto = require('crypto');
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  this.resetPasswordOtp = crypto.createHash('sha256').update(otp).digest('hex');
+  this.resetPasswordOtpExpire = Date.now() + 10 * 60 * 1000;
+  return otp;
+};
 
 AdminSchema.methods.getSignedJwtToken = function() {
   return jwt.sign({ id: this._id, role: 'admin' }, process.env.JWT_SECRET, { expiresIn: '30d' });

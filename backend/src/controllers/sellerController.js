@@ -1,6 +1,7 @@
 const Seller = require('../models/Seller');
 const sendTokenResponse = require('../utils/sendTokenResponse');
 const checkEmailExists = require('../utils/checkEmailExists');
+const { notifyAdminNewSeller } = require('../socket');
 
 // @desc    Register Seller
 // @route   POST /api/auth/seller/register
@@ -37,6 +38,19 @@ exports.registerSeller = async (req, res, next) => {
 
     const otp = seller.getVerificationOtp();
     await seller.save({ validateBeforeSave: false });
+
+    // Notify Admin about new seller registration
+    try {
+      notifyAdminNewSeller({
+        id: seller._id,
+        fullName: seller.fullName,
+        email: seller.email,
+        phone: seller.phone,
+        shopName: seller.shopName
+      });
+    } catch (e) {
+      console.error('Failed to send admin notification for new seller registration:', e);
+    }
 
     try {
       const emailService = require('../services/emailService');

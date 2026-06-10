@@ -41,6 +41,7 @@ import {
 } from 'recharts';
 import { useNavigate } from 'react-router-dom';
 import api from '../../../shared/utils/api';
+import { toast } from 'react-hot-toast';
 
 const COLORS = ['#E36666', '#9333EA', '#4F46E5', '#F59E0B', '#10B981', '#F43F5E', '#3B82F6', '#14B8A6'];
 
@@ -52,6 +53,38 @@ const SalesReport = () => {
   const [chartData, setChartData] = useState([]);
   const [pieData, setPieData] = useState([]);
   const [bestSellers, setBestSellers] = useState([]);
+
+  const handleGenerateReport = async () => {
+    try {
+      const XLSX = await import('xlsx');
+      const wb = XLSX.utils.book_new();
+
+      const trendExport = chartData.map(item => ({
+        'Date Period': item.name,
+        'Sales Count': item.sales,
+        'Revenue (₹)': item.revenue,
+        'Units Sold': item.units
+      }));
+      const wsTrends = XLSX.utils.json_to_sheet(trendExport);
+      XLSX.utils.book_append_sheet(wb, wsTrends, "Sales & Revenue Trends");
+
+      if (bestSellers.length > 0) {
+        const productExport = bestSellers.map(item => ({
+          'Product Name': item.name,
+          'Total Revenue': item.price,
+          'Quantity Sold': item.rating
+        }));
+        const wsProducts = XLSX.utils.json_to_sheet(productExport);
+        XLSX.utils.book_append_sheet(wb, wsProducts, "Best Sellers");
+      }
+
+      XLSX.writeFile(wb, `Seller_Ecosystem_Report_${new Date().toLocaleDateString().replace(/\//g, '-')}.xlsx`);
+      toast.success("Ecosystem report generated successfully!");
+    } catch (err) {
+      console.error('Failed to generate report:', err);
+      toast.error('Failed to generate data report.');
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -121,7 +154,10 @@ const SalesReport = () => {
            </div>
            
            {/* Simple & Professional Action Bar */}
-           <div className="relative z-10 bg-slate-50 rounded-2xl p-4 flex items-center justify-between border border-slate-100 group-hover:border-seller-primary/30 transition-all">
+           <div 
+              onClick={handleGenerateReport}
+              className="relative z-10 bg-slate-50 rounded-2xl p-4 flex items-center justify-between border border-slate-100 group-hover:border-seller-primary/30 transition-all cursor-pointer"
+           >
               <div className="flex items-center gap-3">
                  <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-seller-primary shadow-sm">
                     <FileText size={18} />
@@ -131,7 +167,10 @@ const SalesReport = () => {
                     <p className="text-[8px] font-semibold text-slate-400 uppercase tracking-widest">Full ecosystem performance export</p>
                  </div>
               </div>
-              <button className="w-10 h-10 rounded-full bg-seller-primary text-white flex items-center justify-center shadow-lg shadow-seller-primary/20 hover:scale-105 active:scale-95 transition-all">
+              <button 
+                 onClick={(e) => { e.stopPropagation(); handleGenerateReport(); }}
+                 className="w-10 h-10 rounded-full bg-seller-primary text-white flex items-center justify-center shadow-lg shadow-seller-primary/20 hover:scale-105 active:scale-95 transition-all"
+              >
                  <Plus size={18} />
               </button>
            </div>
@@ -272,7 +311,10 @@ const SalesReport = () => {
                  ))}
               </div>
               
-              <button className="w-full py-4 bg-seller-primary text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-seller-primary/20 hover:bg-seller-dark transition-all">
+              <button 
+                 onClick={handleGenerateReport}
+                 className="w-full py-4 bg-seller-primary text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-seller-primary/20 hover:bg-seller-dark transition-all"
+              >
                  View Complete Report
               </button>
            </div>

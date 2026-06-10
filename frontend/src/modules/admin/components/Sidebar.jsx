@@ -316,10 +316,10 @@ const NavItem = ({
   }
 
   const hasChildren = item.children && item.children.length > 0;
-  const isSelfActive = location.pathname === item.path;
+  const isSelfActive = location.pathname === item.path || (item.label === "Order Management" && location.pathname.startsWith("/admin/orders"));
   const isChildActive =
     hasChildren &&
-    item.children.some((child) => location.pathname === child.path);
+    item.children.some((child) => location.pathname === child.path || (item.label === "Order Management" && location.pathname.startsWith("/admin/orders")));
   const isActive = isSelfActive || isChildActive;
 
   const itemBadgeCount = item.showBadge && !hasChildren
@@ -462,7 +462,13 @@ const Sidebar = ({ isOpen, onClose }) => {
     const initial = {};
     menuGroups.forEach((group) => {
       group.items.forEach((item) => {
-        if (item.children?.some((child) => location.pathname === child.path)) {
+        const hasMatchingChild = item.children?.some((child) => {
+          if (item.label === "Order Management" && location.pathname.startsWith("/admin/orders")) {
+            return true;
+          }
+          return location.pathname === child.path;
+        });
+        if (hasMatchingChild) {
           initial[item.label] = true;
         }
       });

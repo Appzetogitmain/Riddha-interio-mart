@@ -10,7 +10,6 @@ import {
   Mail, 
   Phone, 
   CheckCircle2, 
-  Trash2, 
   Save, 
   MapPin, 
   CreditCard, 
@@ -22,10 +21,8 @@ import {
   Briefcase,
   BarChart3,
   Globe,
-  Award,
   Zap,
   Lock,
-  RefreshCw,
   Bell,
   HelpCircle,
   FileText
@@ -66,6 +63,16 @@ const SellerProfile = () => {
     joinDate: "N/A"
   });
 
+  const [bankData, setBankData] = useState({
+    accountHolderName: "",
+    accountNumber: "",
+    ifscCode: "",
+    bankName: ""
+  });
+  const [isEditingBank, setIsEditingBank] = useState(false);
+  const [isSavingBank, setIsSavingBank] = useState(false);
+  const hasBankDetails = bankData.accountNumber && bankData.accountNumber.trim() !== '';
+
   const fetchProfile = useCallback(async () => {
     try {
       setLoading(true);
@@ -89,6 +96,14 @@ const SellerProfile = () => {
           rating: 4.8, 
           joinDate: s.createdAt ? new Date(s.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : "N/A"
         });
+        if (s.bankDetails) {
+          setBankData({
+            accountHolderName: s.bankDetails.accountHolderName || "",
+            accountNumber: s.bankDetails.accountNumber || "",
+            ifscCode: s.bankDetails.ifscCode || "",
+            bankName: s.bankDetails.bankName || ""
+          });
+        }
       }
 
       if (analyticsRes?.data?.success) {
@@ -123,6 +138,7 @@ const SellerProfile = () => {
       });
       if (data.success && data.data) {
         setIsEditing(false);
+        toast.success('Profile updated successfully.');
         setUser({ 
           ...currentUser, 
           fullName: data.data.fullName, 
@@ -135,6 +151,33 @@ const SellerProfile = () => {
       toast.error(err.response?.data?.message || 'Failed to update profile.');
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleSaveBank = async (e) => {
+    if (e) e.preventDefault();
+    if (!bankData.accountNumber.trim() || !bankData.ifscCode.trim() || !bankData.bankName.trim()) {
+      toast.error('Please fill in all required bank details fields.');
+      return;
+    }
+    setIsSavingBank(true);
+    try {
+      const { data } = await api.put('/auth/seller/profile', {
+        bankDetails: {
+          accountHolderName: bankData.accountHolderName,
+          accountNumber: bankData.accountNumber,
+          ifscCode: bankData.ifscCode.toUpperCase(),
+          bankName: bankData.bankName
+        }
+      });
+      if (data.success) {
+        setIsEditingBank(false);
+        toast.success('Bank details saved successfully.');
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to save bank details.');
+    } finally {
+      setIsSavingBank(false);
     }
   };
 
@@ -175,13 +218,12 @@ const SellerProfile = () => {
     <PageWrapper>
       <div className="max-w-6xl mx-auto space-y-8 pb-20 px-4 md:px-0">
         
-        {/* Profile Header Card - High Density Enterprise */}
+        {/* Profile Header Card */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="bg-white rounded-[2rem] md:rounded-[2.5rem] overflow-hidden shadow-2xl shadow-slate-200/50 border border-slate-100 relative"
         >
-          {/* Cover Area with Premium Banner */}
           <div className="h-32 md:h-48 relative overflow-hidden">
              <img src={sellerBanner} className="absolute inset-0 w-full h-full object-cover" alt="Banner" />
              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent"></div>
@@ -266,78 +308,40 @@ const SellerProfile = () => {
                      <div className="w-10 h-10 bg-seller-light/40 rounded-xl flex items-center justify-center text-seller-primary">
                         <Pencil size={20} />
                      </div>
-                     <h3 className="text-lg md:text-xl font-semibold text-slate-900 tracking-tight">Personal & Business Info</h3>
+                     <h3 className="text-lg md:text-xl font-semibold text-slate-900 tracking-tight">Personal &amp; Business Info</h3>
                   </div>
                   
                   <form onSubmit={handleSave} className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
                      <div className="space-y-1.5">
                         <label className="text-[10px] font-semibold text-slate-600 uppercase tracking-wider ml-1">Shop Name</label>
-                        <input 
-                           type="text" 
-                           value={profileData.shopName}
-                           onChange={(e) => setProfileData({...profileData, shopName: e.target.value})}
-                           className="w-full bg-slate-50 border-none rounded-xl px-5 py-3.5 text-sm font-semibold focus:ring-2 focus:ring-seller-primary/10 transition-all outline-none"
-                        />
+                        <input type="text" value={profileData.shopName} onChange={(e) => setProfileData({...profileData, shopName: e.target.value})} className="w-full bg-slate-50 border-none rounded-xl px-5 py-3.5 text-sm font-semibold focus:ring-2 focus:ring-seller-primary/10 transition-all outline-none" />
                      </div>
                      <div className="space-y-1.5">
                         <label className="text-[10px] font-semibold text-slate-600 uppercase tracking-wider ml-1">Full Name</label>
-                        <input 
-                           type="text" 
-                           value={profileData.fullName}
-                           onChange={(e) => setProfileData({...profileData, fullName: e.target.value})}
-                           className="w-full bg-slate-50 border-none rounded-xl px-5 py-3.5 text-sm font-semibold focus:ring-2 focus:ring-seller-primary/10 transition-all outline-none"
-                        />
+                        <input type="text" value={profileData.fullName} onChange={(e) => setProfileData({...profileData, fullName: e.target.value})} className="w-full bg-slate-50 border-none rounded-xl px-5 py-3.5 text-sm font-semibold focus:ring-2 focus:ring-seller-primary/10 transition-all outline-none" />
                      </div>
                      <div className="space-y-1.5">
                         <label className="text-[10px] font-semibold text-slate-600 uppercase tracking-wider ml-1">Email Address</label>
-                        <input 
-                           type="email" 
-                           value={profileData.email}
-                           onChange={(e) => setProfileData({...profileData, email: e.target.value})}
-                           className="w-full bg-slate-50 border-none rounded-xl px-5 py-3.5 text-sm font-semibold focus:ring-2 focus:ring-seller-primary/10 transition-all outline-none"
-                        />
+                        <input type="email" value={profileData.email} onChange={(e) => setProfileData({...profileData, email: e.target.value})} className="w-full bg-slate-50 border-none rounded-xl px-5 py-3.5 text-sm font-semibold focus:ring-2 focus:ring-seller-primary/10 transition-all outline-none" />
                      </div>
                      <div className="space-y-1.5">
                         <label className="text-[10px] font-semibold text-slate-600 uppercase tracking-wider ml-1">Phone Number</label>
-                        <input 
-                           type="tel" 
-                           value={profileData.phone}
-                           onChange={(e) => setProfileData({...profileData, phone: e.target.value})}
-                           className="w-full bg-slate-50 border-none rounded-xl px-5 py-3.5 text-sm font-semibold focus:ring-2 focus:ring-seller-primary/10 transition-all outline-none"
-                        />
+                        <input type="tel" value={profileData.phone} onChange={(e) => setProfileData({...profileData, phone: e.target.value})} className="w-full bg-slate-50 border-none rounded-xl px-5 py-3.5 text-sm font-semibold focus:ring-2 focus:ring-seller-primary/10 transition-all outline-none" />
                      </div>
                      <div className="space-y-1.5 md:col-span-2">
                         <label className="text-[10px] font-semibold text-slate-600 uppercase tracking-wider ml-1">Store Address</label>
-                        <textarea 
-                           value={profileData.shopAddress}
-                           onChange={(e) => setProfileData({...profileData, shopAddress: e.target.value})}
-                           className="w-full bg-slate-50 border-none rounded-xl px-5 py-3.5 text-sm font-semibold focus:ring-2 focus:ring-seller-primary/10 transition-all outline-none h-28 resize-none"
-                        />
+                        <textarea value={profileData.shopAddress} onChange={(e) => setProfileData({...profileData, shopAddress: e.target.value})} className="w-full bg-slate-50 border-none rounded-xl px-5 py-3.5 text-sm font-semibold focus:ring-2 focus:ring-seller-primary/10 transition-all outline-none h-28 resize-none" />
                      </div>
                      <div className="space-y-1.5">
                         <label className="text-[10px] font-semibold text-slate-600 uppercase tracking-wider ml-1">GSTIN Number</label>
-                        <input 
-                           type="text" 
-                           value={profileData.gstNumber}
-                           onChange={(e) => setProfileData({...profileData, gstNumber: e.target.value})}
-                           className="w-full bg-slate-50 border-none rounded-xl px-5 py-3.5 text-sm font-semibold focus:ring-2 focus:ring-seller-primary/10 transition-all outline-none"
-                        />
+                        <input type="text" value={profileData.gstNumber} onChange={(e) => setProfileData({...profileData, gstNumber: e.target.value})} className="w-full bg-slate-50 border-none rounded-xl px-5 py-3.5 text-sm font-semibold focus:ring-2 focus:ring-seller-primary/10 transition-all outline-none" />
                      </div>
                      <div className="space-y-1.5">
                         <label className="text-[10px] font-semibold text-slate-600 uppercase tracking-wider ml-1">PAN Card Number</label>
-                        <input 
-                           type="text" 
-                           value={profileData.panNumber}
-                           onChange={(e) => setProfileData({...profileData, panNumber: e.target.value})}
-                           className="w-full bg-slate-50 border-none rounded-xl px-5 py-3.5 text-sm font-semibold focus:ring-2 focus:ring-seller-primary/10 transition-all outline-none"
-                        />
+                        <input type="text" value={profileData.panNumber} onChange={(e) => setProfileData({...profileData, panNumber: e.target.value})} className="w-full bg-slate-50 border-none rounded-xl px-5 py-3.5 text-sm font-semibold focus:ring-2 focus:ring-seller-primary/10 transition-all outline-none" />
                      </div>
                      <div className="md:col-span-2 pt-2">
-                         <button 
-                            type="submit" 
-                            disabled={isSaving}
-                            className="w-full py-4 bg-seller-primary text-white rounded-xl font-semibold text-[10px] uppercase tracking-widest shadow-xl shadow-seller-primary/20 hover:bg-seller-dark transition-all flex items-center justify-center gap-3"
-                         >
+                         <button type="submit" disabled={isSaving} className="w-full py-4 bg-seller-primary text-white rounded-xl font-semibold text-[10px] uppercase tracking-widest shadow-xl shadow-seller-primary/20 hover:bg-seller-dark transition-all flex items-center justify-center gap-3">
                            {isSaving ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save size={18} />}
                            {isSaving ? 'Processing...' : 'Apply Changes'}
                         </button>
@@ -351,15 +355,10 @@ const SellerProfile = () => {
                   animate={{ opacity: 1, x: 0 }}
                   className="space-y-6 md:space-y-8"
                 >
-                  {/* Enhanced Stats Row - Dashboard Compact */}
+                  {/* Stats Row */}
                   <div className="grid grid-cols-3 gap-3 md:gap-6">
                      {[
-                       { 
-                         label: 'Revenue', 
-                         value: stats.revenue >= 100000 ? `₹${(stats.revenue / 100000).toFixed(1)}L` : `₹${stats.revenue.toLocaleString()}`, 
-                         icon: <ShoppingBag size={18} />, 
-                         color: 'text-seller-primary', bg: 'bg-seller-primary/5' 
-                       },
+                       { label: 'Revenue', value: stats.revenue >= 100000 ? `₹${(stats.revenue / 100000).toFixed(1)}L` : `₹${stats.revenue.toLocaleString()}`, icon: <ShoppingBag size={18} />, color: 'text-seller-primary', bg: 'bg-seller-primary/5' },
                        { label: 'Rating', value: `${stats.rating}/5`, icon: <Star size={18} />, color: 'text-amber-500', bg: 'bg-amber-50' },
                        { label: 'Service', value: `${stats.service}%`, icon: <Zap size={18} />, color: 'text-emerald-600', bg: 'bg-emerald-50' }
                      ].map((stat, i) => (
@@ -375,13 +374,12 @@ const SellerProfile = () => {
                      ))}
                   </div>
 
-                  {/* Merchant Details Card - High Density */}
+                  {/* Merchant Details Card */}
                   <div className="bg-white p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] border border-slate-100 shadow-sm space-y-8 relative overflow-hidden">
                      <h3 className="text-base md:text-lg font-semibold text-slate-900 tracking-tight flex items-center gap-3">
                         <div className="w-1.5 h-5 md:h-6 bg-seller-primary rounded-full" />
                         Merchant Identification
                      </h3>
-                     
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-y-5 md:gap-y-6 gap-x-8 md:gap-x-10">
                         {[
                           { label: 'Registered Email', value: profileData.email, icon: <Mail size={14} /> },
@@ -402,11 +400,11 @@ const SellerProfile = () => {
                      </div>
                   </div>
 
-                  {/* Compliance Section - High Fidelity */}
+                  {/* Compliance Section */}
                   <div className="bg-slate-50/50 p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] border border-slate-200/50 space-y-6">
                      <div className="flex items-center justify-between">
                         <h3 className="text-[10px] md:text-xs font-semibold text-slate-900 uppercase tracking-[0.2em] flex items-center gap-2">
-                           <Lock size={14} className="text-seller-primary" /> Security & Compliance
+                           <Lock size={14} className="text-seller-primary" /> Security &amp; Compliance
                         </h3>
                         <span className="px-2 py-0.5 bg-emerald-100 text-emerald-600 text-[7px] md:text-[8px] font-semibold uppercase tracking-widest rounded-md border border-emerald-200/50">Lvl 3 Secure</span>
                      </div>
@@ -429,9 +427,113 @@ const SellerProfile = () => {
                 </motion.div>
               )}
             </AnimatePresence>
+
+            {/* Bank Account Details Card — always visible */}
+            <div className="bg-white p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] border border-slate-100 shadow-sm space-y-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-1.5 h-5 md:h-6 bg-seller-primary rounded-full" />
+                  <h3 className="text-base md:text-lg font-semibold text-slate-900 tracking-tight">Bank Account Details</h3>
+                </div>
+                <button
+                  onClick={() => setIsEditingBank(!isEditingBank)}
+                  className={`px-4 py-2 rounded-xl font-semibold text-[9px] uppercase tracking-widest transition-all border ${
+                    isEditingBank
+                      ? 'bg-slate-50 text-slate-500 border-slate-200'
+                      : 'bg-seller-primary text-white border-seller-primary hover:bg-seller-dark active:scale-95'
+                  }`}
+                >
+                  {isEditingBank ? 'Cancel' : hasBankDetails ? 'Edit Details' : 'Add Details'}
+                </button>
+              </div>
+
+              {/* Warning if bank details not set */}
+              {!hasBankDetails && !isEditingBank && (
+                <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+                  <div className="w-5 h-5 rounded-full bg-amber-500 text-white flex items-center justify-center text-[9px] font-black shrink-0 mt-0.5">!</div>
+                  <div>
+                    <p className="text-xs font-bold text-amber-800">Bank details required for withdrawals</p>
+                    <p className="text-[10px] text-amber-700 mt-0.5">Add your bank account details before requesting a payout from your wallet.</p>
+                  </div>
+                </div>
+              )}
+
+              {isEditingBank ? (
+                <form onSubmit={handleSaveBank} className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-semibold text-slate-600 uppercase tracking-wider ml-1">Account Holder Name</label>
+                    <input
+                      type="text"
+                      value={bankData.accountHolderName}
+                      onChange={(e) => setBankData({...bankData, accountHolderName: e.target.value})}
+                      placeholder="Full name as on bank account"
+                      className="w-full bg-slate-50 border-none rounded-xl px-5 py-3.5 text-sm font-semibold focus:ring-2 focus:ring-seller-primary/10 transition-all outline-none"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-semibold text-slate-600 uppercase tracking-wider ml-1">Bank Name <span className="text-red-400">*</span></label>
+                    <input
+                      type="text"
+                      required
+                      value={bankData.bankName}
+                      onChange={(e) => setBankData({...bankData, bankName: e.target.value})}
+                      placeholder="e.g. State Bank of India"
+                      className="w-full bg-slate-50 border-none rounded-xl px-5 py-3.5 text-sm font-semibold focus:ring-2 focus:ring-seller-primary/10 transition-all outline-none"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-semibold text-slate-600 uppercase tracking-wider ml-1">Account Number <span className="text-red-400">*</span></label>
+                    <input
+                      type="text"
+                      required
+                      value={bankData.accountNumber}
+                      onChange={(e) => setBankData({...bankData, accountNumber: e.target.value.replace(/\D/g, '')})}
+                      placeholder="Enter account number"
+                      className="w-full bg-slate-50 border-none rounded-xl px-5 py-3.5 text-sm font-semibold focus:ring-2 focus:ring-seller-primary/10 transition-all outline-none font-mono"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-semibold text-slate-600 uppercase tracking-wider ml-1">IFSC Code <span className="text-red-400">*</span></label>
+                    <input
+                      type="text"
+                      required
+                      value={bankData.ifscCode}
+                      onChange={(e) => setBankData({...bankData, ifscCode: e.target.value.toUpperCase()})}
+                      placeholder="e.g. SBIN0001234"
+                      maxLength={11}
+                      className="w-full bg-slate-50 border-none rounded-xl px-5 py-3.5 text-sm font-semibold focus:ring-2 focus:ring-seller-primary/10 transition-all outline-none font-mono"
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <button
+                      type="submit"
+                      disabled={isSavingBank}
+                      className="w-full py-4 bg-seller-primary text-white rounded-xl font-semibold text-[10px] uppercase tracking-widest shadow-xl shadow-seller-primary/20 hover:bg-seller-dark transition-all flex items-center justify-center gap-3"
+                    >
+                      {isSavingBank ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save size={18} />}
+                      {isSavingBank ? 'Saving...' : 'Save Bank Details'}
+                    </button>
+                  </div>
+                </form>
+              ) : hasBankDetails ? (
+                <div className="grid grid-cols-2 gap-y-4 gap-x-6">
+                  {[
+                    { label: 'Account Holder', value: bankData.accountHolderName || 'N/A' },
+                    { label: 'Bank Name', value: bankData.bankName },
+                    { label: 'Account Number', value: 'X'.repeat(Math.max(0, bankData.accountNumber.length - 4)) + bankData.accountNumber.slice(-4) },
+                    { label: 'IFSC Code', value: bankData.ifscCode },
+                  ].map((field, i) => (
+                    <div key={i} className="space-y-0.5">
+                      <p className="text-[9px] font-semibold text-slate-400 uppercase tracking-widest">{field.label}</p>
+                      <p className="text-sm font-semibold text-slate-900 font-mono">{field.value}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+            </div>
           </div>
 
-          {/* Quick Actions Sidebar - Professional Hub */}
+          {/* Quick Actions Sidebar */}
           <div className="space-y-6">
             <div className="bg-white p-6 md:p-8 rounded-[2rem] md:rounded-[2.2rem] border border-slate-100 shadow-xl shadow-slate-200/20 space-y-6">
                <div className="space-y-0.5">
@@ -466,11 +568,9 @@ const SellerProfile = () => {
                  onClick={() => logout()}
                  className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-slate-800 text-white hover:bg-slate-700 transition-all font-semibold text-[9px] uppercase tracking-widest mt-2 shadow-xl shadow-slate-900/10"
                >
-                  <LogOut size={14} /> Terminate Session
+                <LogOut size={14} /> Terminate Session
                </button>
             </div>
-
-
           </div>
         </div>
       </div>

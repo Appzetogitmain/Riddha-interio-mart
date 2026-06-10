@@ -5,6 +5,7 @@ import { useRBAC } from '../data/RBACContext';
 import { permissionsMap, DEFAULT_ASSISTANT_PERMISSIONS } from '../data/permissionsMap';
 import PageWrapper from '../components/PageWrapper';
 import { motion } from 'framer-motion';
+import { toast } from 'react-hot-toast';
 
 const CreateAssistantPage = () => {
   const navigate = useNavigate();
@@ -52,18 +53,25 @@ const CreateAssistantPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!canManageTeam) return;
+
+    if (/^\d+$/.test(formData.name.trim())) {
+      toast.error('Assistant name cannot consist only of numbers.');
+      return;
+    }
     
     try {
       setIsSubmitting(true);
       if (isEditing) {
         await updateAssistant(id, formData);
+        toast.success('Assistant updated successfully!');
       } else {
         await addAssistant(formData);
+        toast.success('Assistant created successfully!');
       }
       navigate('/admin/team');
     } catch (err) {
       console.error('Submission failed:', err);
-      alert(err.response?.data?.error || 'Operation failed. Please try again.');
+      toast.error(err.response?.data?.error || 'Operation failed. Please try again.');
     } finally {
       setIsSubmitting(false);
     }

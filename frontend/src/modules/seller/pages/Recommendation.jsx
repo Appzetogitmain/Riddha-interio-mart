@@ -22,10 +22,11 @@ const Recommendation = () => {
     
     // Save to localStorage for demo purposes (so Admin can see it)
     const recommendations = JSON.parse(localStorage.getItem('seller_recommendations') || '[]');
+    const userData = JSON.parse(localStorage.getItem('riddha_user') || '{}');
     const newRecommendation = {
       ...formData,
       id: Date.now(),
-      sellerName: 'Riddha Seller', // Mock seller name
+      sellerName: userData.storeName || userData.fullName || 'Riddha Seller',
       createdAt: new Date().toISOString(),
       status: 'pending'
     };

@@ -137,7 +137,7 @@ const ManageSellerListPage = () => {
             <span className="text-[9px] font-black uppercase tracking-widest bg-soft-oatmeal text-warm-sand px-2.5 py-1 rounded-lg border border-soft-oatmeal/50">Admin</span>
           </div>
 
-          <div className="p-4 space-y-4 flex-1 overflow-y-auto pb-20">
+          <div className="p-4 space-y-4 flex-1 overflow-y-auto pb-32">
             {/* Profile Avatar Card */}
             <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
               <div className="w-14 h-14 rounded-full bg-slate-100 border-2 border-[#189D91]/20 flex items-center justify-center font-bold text-[#189D91] text-lg overflow-hidden shrink-0">
@@ -293,7 +293,7 @@ const ManageSellerListPage = () => {
             </div>
           </div>
 
-          <div className="p-4 space-y-4 flex-1 overflow-y-auto pb-20">
+          <div className="p-4 space-y-4 flex-1 overflow-y-auto pb-32">
             {/* OTHER DETAILS BAR */}
             <div className="bg-gradient-to-r from-slate-100 to-slate-200/50 p-2.5 rounded-xl border border-slate-200 flex items-center justify-center gap-1">
               <span className="text-[9px] font-bold text-slate-700 uppercase tracking-widest">🛡️ Verified Business Partner</span>
@@ -456,7 +456,7 @@ const ManageSellerListPage = () => {
   return (
     <PageWrapper>
       {/* 🖥️ DESKTOP VIEW (Large screens) */}
-      <div className="hidden lg:block max-w-7xl mx-auto space-y-6">
+      <div className="hidden lg:block max-w-7xl mx-auto space-y-6 pb-32">
         {/* Header */}
         <div className="flex items-center justify-between gap-4">
           <div className="space-y-1">
@@ -549,8 +549,10 @@ const ManageSellerListPage = () => {
                       </td>
                     </tr>
                   ) : (
-                    filteredSellers.map((seller) => (
-                      <tr
+                    filteredSellers.map((seller, idx) => {
+                      const isLastRows = filteredSellers.length > 2 && idx >= filteredSellers.length - 2;
+                      return (
+                        <tr
                         key={seller._id}
                         className="hover:bg-soft-oatmeal/5 transition-colors group"
                       >
@@ -628,7 +630,7 @@ const ManageSellerListPage = () => {
                           {activeMenu === seller._id && (
                             <>
                               <div className="fixed inset-0 z-10" onClick={() => setActiveMenu(null)}></div>
-                              <div className="absolute right-6 top-14 w-52 bg-white rounded-2xl shadow-2xl border border-soft-oatmeal py-2 z-20 overflow-hidden animate-in fade-in zoom-in duration-200">
+                              <div className={`absolute right-6 w-52 bg-white rounded-2xl shadow-2xl border border-soft-oatmeal py-2 z-20 overflow-hidden animate-in fade-in zoom-in duration-200 ${isLastRows ? 'bottom-12' : 'top-14'}`}>
                                 {seller.status === 'Pending' && (
                                   <button 
                                     onClick={() => handleStatusUpdate(seller._id, 'approve')}
@@ -674,7 +676,8 @@ const ManageSellerListPage = () => {
                           )}
                         </td>
                       </tr>
-                    ))
+                    );
+                  })
                   )}
                 </tbody>
               </table>
@@ -696,7 +699,7 @@ const ManageSellerListPage = () => {
           <span className="text-[9px] font-black uppercase tracking-widest bg-soft-oatmeal text-warm-sand px-2.5 py-1 rounded-lg border border-soft-oatmeal/50">Admin</span>
         </div>
 
-        <div className="p-4 space-y-4 flex-1 overflow-y-auto pb-20">
+        <div className="p-4 space-y-4 flex-1 overflow-y-auto pb-32">
           {/* Search & Filter bar row */}
           <div className="flex gap-2 shrink-0">
             <div className="relative flex-grow">

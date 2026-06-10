@@ -160,7 +160,7 @@ exports.getSellerMe = async (req, res, next) => {
 // @desc    Update Seller Profile
 exports.updateSellerProfile = async (req, res, next) => {
   try {
-    const { fullName, email, phone, shopName, shopAddress, avatar, gstNumber, panNumber, hsnNumber } = req.body;
+    const { fullName, email, phone, shopName, shopAddress, avatar, gstNumber, panNumber, hsnNumber, bankDetails } = req.body;
     
     const seller = await Seller.findById(req.user.id);
     if (!seller) return res.status(404).json({ success: false, error: 'Seller not found' });
@@ -185,6 +185,16 @@ exports.updateSellerProfile = async (req, res, next) => {
       hsnNumber: hsnNumber !== undefined ? hsnNumber : seller.hsnNumber
     };
 
+    // Merge bankDetails fields individually to allow partial updates
+    if (bankDetails) {
+      fieldsToUpdate.bankDetails = {
+        accountHolderName: bankDetails.accountHolderName !== undefined ? bankDetails.accountHolderName : (seller.bankDetails && seller.bankDetails.accountHolderName) || '',
+        accountNumber: bankDetails.accountNumber !== undefined ? bankDetails.accountNumber : (seller.bankDetails && seller.bankDetails.accountNumber) || '',
+        ifscCode: bankDetails.ifscCode !== undefined ? bankDetails.ifscCode : (seller.bankDetails && seller.bankDetails.ifscCode) || '',
+        bankName: bankDetails.bankName !== undefined ? bankDetails.bankName : (seller.bankDetails && seller.bankDetails.bankName) || ''
+      };
+    }
+
     const updatedSeller = await Seller.findByIdAndUpdate(req.user.id, fieldsToUpdate, {
       new: true,
       runValidators: true
@@ -195,6 +205,7 @@ exports.updateSellerProfile = async (req, res, next) => {
     next(err);
   }
 };
+
 
 // @desc    Get seller's stock management report
 // @route   GET /api/auth/seller/stock-status

@@ -182,7 +182,7 @@ const NotificationDropdown = ({ isMobile = false, buttonClassName = '', viewAllP
   const defaultViewAllPath = isSeller
     ? '/seller/notifications'
     : isAdmin
-      ? '/admin/settings'
+      ? '/admin/notifications'
       : '/notifications';
 
   return (
@@ -208,7 +208,7 @@ const NotificationDropdown = ({ isMobile = false, buttonClassName = '', viewAllP
             animate={{ opacity: 1, y: 0,  scale: 1    }}
             exit={{   opacity: 0, y: 10,  scale: 0.95 }}
             transition={{ duration: 0.18 }}
-            className={`absolute ${isMobile ? 'right-0 w-80' : 'right-0 w-96'} mt-3 glass rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50`}
+            className={`absolute ${isMobile ? 'right-0 w-80' : 'right-0 w-96'} mt-3 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50`}
           >
             <AnimatePresence mode="wait">
               {selected ? (

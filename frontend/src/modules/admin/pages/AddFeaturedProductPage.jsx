@@ -145,23 +145,6 @@ const AddFeaturedProductPage = () => {
                     <LuImage size={18} className="group-hover:scale-110 transition-transform" />
                     <span className="text-[10px] font-black uppercase tracking-[0.2em]">Upload Local File</span>
                   </button>
-
-                  <div className="relative flex items-center py-2">
-                    <div className="flex-grow border-t border-soft-oatmeal/40"></div>
-                    <span className="flex-shrink mx-4 text-[8px] font-black uppercase tracking-[0.3em] text-warm-sand/40">OR</span>
-                    <div className="flex-grow border-t border-soft-oatmeal/40"></div>
-                  </div>
-
-                  <div className="relative">
-                    <LuImage className="absolute left-4 top-1/2 -translate-y-1/2 text-warm-sand/40" size={16} />
-                    <input 
-                      type="url" 
-                      value={newProduct.image.startsWith('data:') ? '' : newProduct.image}
-                      onChange={(e) => setNewProduct({...newProduct, image: e.target.value})}
-                      className="w-full bg-white/50 border border-soft-oatmeal rounded-xl pl-12 pr-4 py-3 text-xs focus:outline-none focus:ring-2 focus:ring-warm-sand/20 transition-all font-medium placeholder:text-warm-sand/20"
-                      placeholder="Paste remote URL instead..."
-                    />
-                  </div>
                 </div>
               </div>
             </div>

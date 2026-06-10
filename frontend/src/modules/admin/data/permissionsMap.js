@@ -45,10 +45,12 @@ export const permissionsMap = {
     'Manage T&C': 'content',
     'Bulk Orders': 'orders',
     'Settings': 'settings',
+    'Product Reviews': 'settings',
     'Referral System': 'referrals',
     'Team Management': 'team',
     'Payments': 'payments',
-    'Seller Requests': 'seller_requests'
+    'Seller Requests': 'seller_requests',
+    'Seller Payouts': 'payments'
   }
 };
 

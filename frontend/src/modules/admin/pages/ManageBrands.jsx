@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   FiPlus, FiX, FiCheck, FiEdit3, FiTrash2, FiImage, FiLayers,
   FiSave, FiInfo, FiExternalLink, FiChevronDown, FiEye, FiEyeOff,
-  FiSearch, FiFilter, FiDownload, FiMoreVertical, FiCopy
+  FiSearch, FiFilter
 } from 'react-icons/fi';
 import api from '../../../shared/utils/api';
 import { uploadImage } from '../../../shared/utils/upload';
@@ -668,9 +668,6 @@ const ManageBrands = () => {
                   <option value="banners">Banners</option>
                 </select>
               </div>
-              <button className="p-2.5 bg-white border border-soft-oatmeal/60 rounded-lg text-warm-sand hover:text-deep-espresso transition-all" title="Export CSV">
-                <FiDownload size={14} />
-              </button>
             </div>
           </div>
         </div>
@@ -786,9 +783,6 @@ const ManageBrands = () => {
                   <p className="text-[10px] font-bold text-deep-espresso">{brands.length} Partners</p>
                   <p className="text-[8px] text-warm-sand uppercase font-black tracking-tighter">Directory v2.4</p>
                 </div>
-                <button className="px-5 py-2 bg-white border border-soft-oatmeal/60 rounded-full text-[8px] font-black uppercase tracking-widest text-deep-espresso hover:bg-soft-oatmeal/20 transition-all flex items-center gap-2">
-                  <FiCopy /> Copy
-                </button>
               </div>
            </div>
         </div>

@@ -131,7 +131,7 @@ const FeedbackManagement = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black uppercase italic tracking-tight text-gray-900">
-            Feedback <span className="text-teal-600">Management</span>
+            Product <span className="text-teal-600">Reviews</span>
           </h1>
           <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mt-1">Platform-wide review oversight</p>
         </div>

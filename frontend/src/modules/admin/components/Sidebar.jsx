@@ -30,7 +30,8 @@ import {
   FiDollarSign,
   FiZap,
   FiActivity,
-  FiLayers
+  FiLayers,
+  FiMessageSquare
 } from "react-icons/fi";
 import logoImage from "../../../assets/transparent_logo.png";
 
@@ -282,10 +283,15 @@ const menuGroups = [
             icon: FiGrid,
             label: "Seller Payments",
           },
+          {
+            path: "/admin/payments/seller-payouts",
+            icon: FiDollarSign,
+            label: "Seller Payouts",
+          },
         ],
       },
       { path: "/admin/settings", icon: FiSettings, label: "Settings" },
-      { path: "/admin/feedback", icon: FiSettings, label: "Feedback" },
+      { path: "/admin/feedback", icon: FiMessageSquare, label: "Product Reviews" },
       {
         path: "/admin/seller-recommendations",
         icon: FiZap,

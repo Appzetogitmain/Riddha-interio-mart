@@ -67,7 +67,16 @@ class ErrorBoundary extends React.Component {
 
               <button
                 onClick={() => {
-                  window.location.assign('/');
+                  const path = window.location.pathname;
+                  if (path.startsWith('/seller')) {
+                    window.location.assign('/seller/dashboard');
+                  } else if (path.startsWith('/admin')) {
+                    window.location.assign('/admin/dashboard');
+                  } else if (path.startsWith('/delivery')) {
+                    window.location.assign('/delivery/dashboard');
+                  } else {
+                    window.location.assign('/');
+                  }
                 }}
                 className="flex items-center justify-center gap-2 bg-gray-100 text-gray-800 px-5 py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-gray-200 transition-all hover:scale-[1.02]"
               >

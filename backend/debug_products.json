@@ -1,53 +1,30 @@
 {
-  "timestamp": "2026-06-03T08:59:30.334Z",
+  "timestamp": "2026-06-09T13:25:41.868Z",
   "query": {
-    "isActive": "all",
-    "isApproved": "all"
+    "isApproved": "pending",
+    "isActive": "all"
   },
-  "builtFilter": {},
-  "resultCount": 7,
+  "builtFilter": {
+    "isApproved": false
+  },
+  "resultCount": 3,
   "results": [
     {
-      "_id": "6a157979815311dd3743db2e",
-      "name": "test name",
-      "category": "Test Category",
+      "_id": "6a280eefcc75d9dddcce3079",
+      "name": "Sheetal Premium Item 3",
+      "category": "Carrara Marble"
+    },
+    {
+      "_id": "6a280eefcc75d9dddcce3078",
+      "name": "Sheetal Premium Item 2",
+      "category": "Carrara Marble"
+    },
+    {
+      "_id": "6a23ace7614854ee3ba48311",
+      "name": "Graphite ton",
+      "category": "Wall Solutions",
       "subcategory": "",
       "subsubcategory": ""
-    },
-    {
-      "_id": "6a13f5725ccf49b0baf34346",
-      "name": "Fintech Test Table",
-      "category": "Test Category"
-    },
-    {
-      "_id": "6a115739107b7b663108dd7c",
-      "name": "Test ModularKitchen Product 1",
-      "category": "ModularKitchen"
-    },
-    {
-      "_id": "6a1005c8a399239b828b5441",
-      "name": "Test Terracotta Vase",
-      "category": "Flooring",
-      "subcategory": "Terracotta Tiles"
-    },
-    {
-      "_id": "6a0e9e4f8cf557a669106462",
-      "name": "Swan Neck Golden Faucet",
-      "category": "Bath",
-      "subcategory": "",
-      "subsubcategory": ""
-    },
-    {
-      "_id": "6a0e9b1c8cf557a669106024",
-      "name": "Carrara Marble Slab",
-      "category": "Flooring",
-      "subcategory": "Carrara Marble"
-    },
-    {
-      "_id": "6a0e9b1c8cf557a669106022",
-      "name": "Traditional Terracotta Tile",
-      "category": "Flooring",
-      "subcategory": "Terracotta Tiles"
     }
   ]
 }

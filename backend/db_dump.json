@@ -1,22 +1,9 @@
 [
   {
-    "_id": "6a0e9b1c8cf557a669106022",
-    "name": "Traditional Terracotta Tile",
-    "category": "Flooring",
-    "subcategory": "Terracotta Tiles"
-  },
-  {
     "_id": "6a0e9b1c8cf557a669106024",
     "name": "Carrara Marble Slab",
     "category": "Flooring",
     "subcategory": "Carrara Marble"
-  },
-  {
-    "_id": "6a0e9e4f8cf557a669106462",
-    "name": "Swan Neck Golden Faucet",
-    "category": "Bath",
-    "subcategory": "",
-    "subsubcategory": ""
   },
   {
     "_id": "6a1005c8a399239b828b5441",
@@ -40,5 +27,103 @@
     "category": "Test Category",
     "subcategory": "",
     "subsubcategory": ""
+  },
+  {
+    "_id": "6a229b6b4f777143d2932aeb",
+    "name": "Granite",
+    "category": "Flooring",
+    "subcategory": "Granite Flooring",
+    "subsubcategory": "Black Galaxy"
+  },
+  {
+    "_id": "6a22b399614854ee3ba47e3b",
+    "name": "stone",
+    "category": "OutDoor",
+    "subcategory": "",
+    "subsubcategory": ""
+  },
+  {
+    "_id": "6a22b8c2614854ee3ba47f40",
+    "name": "shine",
+    "category": "lighting",
+    "subcategory": "Designer Lighting",
+    "subsubcategory": ""
+  },
+  {
+    "_id": "6a22b965614854ee3ba47f67",
+    "name": "Swan Neck Golden",
+    "category": "Carrara Marble",
+    "subcategory": "",
+    "subsubcategory": ""
+  },
+  {
+    "_id": "6a23ace7614854ee3ba48311",
+    "name": "Graphite ton",
+    "category": "Wall Solutions",
+    "subcategory": "",
+    "subsubcategory": ""
+  },
+  {
+    "_id": "6a23aed4614854ee3ba48327",
+    "name": "Swan Neck Golden Faucet",
+    "category": "Bath",
+    "subcategory": "",
+    "subsubcategory": ""
+  },
+  {
+    "_id": "6a23c5e5614854ee3ba484d6",
+    "name": "Smart Recessed LED Panel",
+    "category": "Lighting",
+    "subcategory": "",
+    "subsubcategory": ""
+  },
+  {
+    "_id": "6a23d0e5614854ee3ba48527",
+    "name": "stoness",
+    "category": "Carrara Marble"
+  },
+  {
+    "_id": "6a23d12e614854ee3ba48529",
+    "name": "fcxf",
+    "category": "furniture"
+  },
+  {
+    "_id": "6a23ee5b614854ee3ba485c7",
+    "name": "red fort",
+    "category": "Flooring",
+    "subcategory": "Terracotta Tiles",
+    "subsubcategory": ""
+  },
+  {
+    "_id": "6a26b59d8ed1bca80e591e9c",
+    "name": "Swan Neck Golden Faucet",
+    "category": "Bath",
+    "subcategory": "",
+    "subsubcategory": ""
+  },
+  {
+    "_id": "6a280eeecc75d9dddcce3077",
+    "name": "Sheetal Premium Item 1",
+    "category": "Carrara Marble"
+  },
+  {
+    "_id": "6a280eefcc75d9dddcce3078",
+    "name": "Sheetal Premium Item 2",
+    "category": "Carrara Marble"
+  },
+  {
+    "_id": "6a280eefcc75d9dddcce3079",
+    "name": "Sheetal Premium Item 3",
+    "category": "Carrara Marble"
+  },
+  {
+    "_id": "6a280eefcc75d9dddcce307a",
+    "name": "Sheetal Premium Item 4",
+    "category": "Carrara Marble"
+  },
+  {
+    "_id": "6a280eefcc75d9dddcce307b",
+    "name": "Sheetal Premium Item 5",
+    "category": "Carrara Marble"
   }
 ]

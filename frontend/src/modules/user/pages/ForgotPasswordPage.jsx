@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiMail, FiLock, FiEye, FiEyeOff } from 'react-icons/fi';
 import Button from '../../../shared/components/Button';
@@ -18,6 +18,9 @@ const ForgotPasswordPage = () => {
   const [successMsg, setSuccessMsg] = useState('');
 
   const navigate = useNavigate();
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const role = queryParams.get('role') || 'user';
 
   const handleSendOtp = async (e) => {
     e.preventDefault();
@@ -26,7 +29,7 @@ const ForgotPasswordPage = () => {
     setLoading(true);
     setError('');
     try {
-      const response = await api.post('/auth/forgotpassword', { email });
+      const response = await api.post('/auth/forgotpassword', { email, role });
       if (response.data.success) {
         setStep(2);
         setSuccessMsg('An OTP has been sent to your email.');
@@ -50,10 +53,14 @@ const ForgotPasswordPage = () => {
     setLoading(true);
     setError('');
     try {
-      const response = await api.put('/auth/resetpassword', { email, otp, password });
+      const response = await api.put('/auth/resetpassword', { email, otp, password, role });
       if (response.data.success) {
         alert('Password successfully reset! Please login with your new password.');
-        navigate('/login');
+        if (role === 'seller') {
+          navigate('/seller/login-form');
+        } else {
+          navigate('/login');
+        }
       }
     } catch (err) {
       setError(err.response?.data?.error || 'Could not reset password. Invalid or expired OTP.');
@@ -173,7 +180,16 @@ const ForgotPasswordPage = () => {
         )}
 
         <div className="mt-8 text-center">
-          <button onClick={() => navigate(-1)} className="text-[10px] font-black uppercase tracking-widest text-white/40 hover:text-white transition-colors border-b border-transparent hover:border-white pb-1">
+          <button 
+            onClick={() => {
+              if (role === 'seller') {
+                navigate('/seller/login-form');
+              } else {
+                navigate('/login');
+              }
+            }} 
+            className="text-[10px] font-black uppercase tracking-widest text-white/40 hover:text-white transition-colors border-b border-transparent hover:border-white pb-1"
+          >
             Back to Login
           </button>
         </div>

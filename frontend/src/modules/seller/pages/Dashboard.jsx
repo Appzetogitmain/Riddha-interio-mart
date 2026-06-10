@@ -34,7 +34,8 @@ import {
   Pie,
   Cell
 } from 'recharts';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'react-hot-toast';
 
 const Dashboard = () => {
   const [timeRange, setTimeRange] = useState('monthly');
@@ -51,7 +52,36 @@ const Dashboard = () => {
     lowStockProducts: []
   });
   const [loading, setLoading] = useState(true);
+  const [showChartOptions, setShowChartOptions] = useState(false);
   const navigate = useNavigate();
+
+  const exportChartToExcel = async () => {
+    setShowChartOptions(false);
+    const dataToExport = (revenueTrends.length > 0 ? revenueTrends : [
+      { date: '01 May', revenue: 4000 },
+      { date: '05 May', revenue: 3000 },
+      { date: '10 May', revenue: 5000 },
+      { date: '15 May', revenue: 4500 },
+      { date: '20 May', revenue: 6500 },
+      { date: '25 May', revenue: 5500 },
+      { date: '30 May', revenue: 8000 },
+    ]).map(item => ({
+      'Date Period': item.date,
+      'Revenue Amount (₹)': item.revenue
+    }));
+
+    try {
+      const XLSX = await import('xlsx');
+      const ws = XLSX.utils.json_to_sheet(dataToExport);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Revenue Trends");
+      XLSX.writeFile(wb, `Revenue_Analytics_Report_${new Date().toLocaleDateString().replace(/\//g, '-')}.xlsx`);
+      toast.success("Revenue report exported successfully!");
+    } catch (err) {
+      console.error('Failed to export chart:', err);
+      toast.error('Failed to export chart data.');
+    }
+  };
 
   const fetchAnalytics = async () => {
     try {
@@ -201,9 +231,44 @@ const Dashboard = () => {
                 <h3 className="text-lg font-semibold text-slate-900">Revenue Analytics</h3>
                 <p className="text-sm text-slate-500">Daily performance trends</p>
               </div>
-              <button className="p-2 hover:bg-slate-50 rounded-lg text-slate-400 transition-colors">
-                <MoreVertical size={20} />
-              </button>
+              <div className="relative">
+                <button 
+                  onClick={(e) => { e.stopPropagation(); setShowChartOptions(!showChartOptions); }}
+                  className="p-2 hover:bg-slate-50 rounded-lg text-slate-400 transition-colors cursor-pointer"
+                >
+                  <MoreVertical size={20} />
+                </button>
+                <AnimatePresence>
+                  {showChartOptions && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setShowChartOptions(false)} />
+                      <motion.div
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden z-50 p-1.5"
+                      >
+                        <button
+                          onClick={() => {
+                            setShowChartOptions(false);
+                            fetchAnalytics();
+                            toast.success("Analytics data refreshed!");
+                          }}
+                          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors text-left cursor-pointer"
+                        >
+                          Refresh Insights
+                        </button>
+                        <button
+                          onClick={exportChartToExcel}
+                          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors text-left cursor-pointer"
+                        >
+                          Export Chart Data
+                        </button>
+                      </motion.div>
+                    </>
+                  )}
+                </AnimatePresence>
+              </div>
             </div>
             
             <div className="h-[350px] w-full">
@@ -311,7 +376,10 @@ const Dashboard = () => {
                   <h3 className="text-lg font-semibold text-slate-900">Top Selling Products</h3>
                   <p className="text-sm text-slate-500">Based on recent sales volume</p>
                 </div>
-                <button className="text-sm font-semibold text-seller-primary hover:underline flex items-center gap-1 group">
+                <button 
+                  onClick={() => navigate('/seller/reports/sales')}
+                  className="text-sm font-semibold text-seller-primary hover:underline flex items-center gap-1 group cursor-pointer"
+                >
                   View All <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
                 </button>
              </div>
@@ -394,22 +462,7 @@ const Dashboard = () => {
               ))}
             </div>
 
-            {/* Newsletter/Sync Card - Professional White Design */}
-            <div className="bg-white rounded-[2.5rem] p-8 text-slate-900 relative overflow-hidden group mb-8 border border-slate-100 shadow-xl shadow-slate-200/40">
-              <div className="absolute top-0 right-0 w-24 h-24 bg-seller-primary/5 rounded-full blur-2xl -mr-12 -mt-12"></div>
-              <h4 className="text-lg font-semibold mb-2 relative z-10">Stay Synchronized!</h4>
-              <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-widest mb-6 relative z-10 leading-relaxed max-w-[200px]">
-                 Get real-time market updates and trend alerts.
-              </p>
-              <div className="relative z-10">
-                 <input 
-                   type="email" 
-                   placeholder="Email address"
-                   className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3 px-4 text-xs placeholder-slate-400 focus:outline-none focus:bg-white transition-all mb-3 text-slate-700"
-                 />
-                 <button className="w-full py-3 bg-seller-primary text-white rounded-xl font-semibold text-[10px] uppercase tracking-widest hover:bg-seller-dark transition-all shadow-lg shadow-seller-primary/20">Subscribe Now</button>
-              </div>
-            </div>
+
             
             <div className="p-6 border-t border-slate-100 bg-slate-50/50">
               <button 

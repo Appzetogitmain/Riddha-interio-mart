@@ -79,7 +79,7 @@ const ActivityPage = () => {
     setError(null);
 
     try {
-      const params = new URLSearchParams({ page: currentPage, limit: LIMIT });
+      const params = new URLSearchParams({ page: currentPage, limit: LIMIT, _ts: Date.now().toString() });
       if (currentFilter !== 'all') params.append('type', currentFilter);
 
       const { data } = await api.get(`/auth/admin/activity-logs?${params.toString()}`);

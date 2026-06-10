@@ -72,6 +72,14 @@ const SellerSchema = new mongoose.Schema({
   },
   phoneVerificationOtp: String,
   phoneVerificationOtpExpire: Date,
+  resetPasswordOtp: String,
+  resetPasswordOtpExpire: Date,
+  otpLastSentAt: Date,
+  otpFailedAttempts: {
+    type: Number,
+    default: 0
+  },
+  otpLockedUntil: Date,
   bankDetails: {
     accountHolderName: { type: String, default: "" },
     accountNumber: { type: String, default: "" },
@@ -95,6 +103,14 @@ SellerSchema.methods.getVerificationOtp = function() {
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
   this.phoneVerificationOtp = crypto.createHash('sha256').update(otp).digest('hex');
   this.phoneVerificationOtpExpire = Date.now() + 10 * 60 * 1000;
+  return otp;
+};
+
+SellerSchema.methods.getResetPasswordOtp = function() {
+  const crypto = require('crypto');
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  this.resetPasswordOtp = crypto.createHash('sha256').update(otp).digest('hex');
+  this.resetPasswordOtpExpire = Date.now() + 10 * 60 * 1000;
   return otp;
 };
 

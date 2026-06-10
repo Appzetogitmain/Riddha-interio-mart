@@ -256,9 +256,6 @@ const AnalyticsPage = () => {
               )}
             </div>
 
-            <button className="w-full mt-5 py-3 rounded-xl border border-slate-200 hover:border-[#189D91] hover:bg-teal-50/20 text-[10px] font-bold uppercase tracking-widest text-slate-600 hover:text-[#189D91] transition-all">
-              View Full Leaderboard
-            </button>
           </div>
           
         </div>

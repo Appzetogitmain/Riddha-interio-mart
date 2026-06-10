@@ -1,16 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { NavLink, useLocation, useNavigate, Link } from 'react-router-dom';
-import { motion as Motion, AnimatePresence } from 'framer-motion';
-import { useUser } from '../../user/data/UserContext';
-import api from '../../../shared/utils/api';
-import { useRBAC } from '../data/RBACContext';
-import { permissionsMap } from '../data/permissionsMap';
-import { 
-  FiLayout, 
-  FiBox, 
-  FiTag, 
-  FiSettings, 
-  FiX, 
+import React, { useState, useEffect } from "react";
+import { NavLink, useLocation, useNavigate, Link } from "react-router-dom";
+import { motion as Motion, AnimatePresence } from "framer-motion";
+import { useUser } from "../../user/data/UserContext";
+import api from "../../../shared/utils/api";
+import { useRBAC } from "../data/RBACContext";
+import { permissionsMap } from "../data/permissionsMap";
+import {
+  FiLayout,
+  FiBox,
+  FiTag,
+  FiSettings,
+  FiX,
   FiChevronRight,
   FiGrid,
   FiStar,
@@ -29,212 +29,342 @@ import {
   FiShield,
   FiDollarSign,
   FiZap,
-  FiActivity
-} from 'react-icons/fi';
-import logoImage from '../../../assets/transparent_logo.png';
+  FiActivity,
+} from "react-icons/fi";
+import logoImage from "../../../assets/transparent_logo.png";
 
 const menuGroups = [
   {
-    title: 'Core Control',
+    title: "Core Control",
     items: [
-      { path: '/admin', icon: FiLayout, label: 'Dashboard' },
-      { path: '/admin/analytics', icon: FiTrendingUp, label: 'Analytics' },
-      { path: '/admin/activity', icon: FiActivity, label: 'System Logs' },
-    ]
+      { path: "/admin", icon: FiLayout, label: "Dashboard" },
+      { path: "/admin/analytics", icon: FiTrendingUp, label: "Analytics" },
+      { path: "/admin/activity", icon: FiActivity, label: "System Logs" },
+    ],
   },
   {
-    title: 'Operations',
+    title: "Operations",
     items: [
-      { 
-        label: 'Inventory', 
-        icon: FiBox, 
-        path: '/admin/inventory',
+      {
+        label: "Inventory",
+        icon: FiBox,
+        path: "/admin/inventory",
         children: [
-          { path: '/admin/inventory', icon: FiGrid, label: 'All Products' },
-          { path: '/admin/inventory/pending', icon: FiClock, label: 'Pending Approval', showBadge: true, badgeType: 'product' },
-        ]
-      },
-      { path: '/admin/orders/tracking', icon: FiMapPin, label: 'Order Tracking' },
-      { 
-        label: 'Delivery Management', 
-        icon: FiTruck, 
-        path: '/admin/delivery',
-        children: [
-          { path: '/admin/delivery/pending', icon: FiClock, label: 'Pending Deliveries', showBadge: true, badgeType: 'delivery' },
-          { path: '/admin/delivery', icon: FiGrid, label: 'Manage Delivery' },
-          { path: '/admin/delivery/assign', icon: FiTruck, label: 'Assign Delivery' },
-        ]
-      },
-      { 
-        label: 'Create Listing', 
-        icon: FiPlus, 
-        path: '/admin/inventory/add-flow',
-        children: [
-          { path: '/admin/inventory/add', icon: FiPlus, label: 'Create Order' },
-          { path: '/admin/catalog', icon: FiPackage, label: 'Select from Catalog' },
-        ]
-      },
-      { path: '/admin/stock-management', icon: FiTrendingUp, label: 'Stock Management' },
-      { 
-        label: 'Order Management', 
-        icon: FiClipboard, 
-        path: '/admin/orders/all',
-        children: [
-          { path: '/admin/orders/all', icon: FiGrid, label: 'All Orders' },
-          { path: '/admin/orders/pending', icon: FiClock, label: 'Pending Orders' },
-        ]
-      },
-      { 
-        label: 'Product Catalog', 
-        icon: FiBox, 
-        path: '/admin/catalog',
-        children: [
-          { path: '/admin/catalog', icon: FiGrid, label: 'Master Catalog' },
-          { path: '/admin/catalog/add', icon: FiPlus, label: 'New Master Item' },
-          { path: '/admin/bulk-upload', icon: FiPlus, label: 'Bulk Upload' },
-        ]
-      },
-      { 
-        label: 'Manage Categories', 
-        icon: FiGrid, 
-        path: '/admin/manage-categories',
-        children: [
-          { path: '/admin/manage-categories', icon: FiGrid, label: 'All Categories' },
-          { path: '/admin/manage-categories/add', icon: FiPlus, label: 'Add Category' },
-        ]
-      },
-    ]
-  },
-  {
-    title: 'Partners & Clients',
-    items: [
-      { 
-        label: 'Seller Management', 
-        icon: FiUsers, 
-        path: '/admin/sellers',
-        children: [
-          { path: '/admin/sellers/pending', icon: FiGrid, label: 'Pending Sellers', showBadge: true },
-          { path: '/admin/sellers/active', icon: FiGrid, label: 'Active Sellers' },
-        ]
-      },
-      { 
-        label: 'Customer Management', 
-        icon: FiUsers, 
-        path: '/admin/customers',
-        children: [
-          { path: '/admin/customers/individual', icon: FiGrid, label: 'Individual Customers' },
-          { path: '/admin/customers/enterpriser', icon: FiGrid, label: 'Enterprisers' },
-        ]
-      },
-    ]
-  },
-  {
-    title: 'Marketing & Content',
-    items: [
-      { path: '/admin/manage-hero', icon: FiImage, label: 'Home Banner' },
-      { path: '/admin/manage-promo', icon: FiPercent, label: 'Promo Banner' },
-      { 
-        label: 'Section', 
-        icon: FiGrid, 
-        path: '/admin/manage-section',
-        children: [
-          { path: '/admin/manage-section', icon: FiGrid, label: 'All Section' },
-          { path: '/admin/manage-section/create', icon: FiPlus, label: 'Create Section' },
-        ]
+          { path: "/admin/inventory", icon: FiGrid, label: "All Products" },
+          {
+            path: "/admin/inventory/pending",
+            icon: FiClock,
+            label: "Pending Approval",
+            showBadge: true,
+            badgeType: "product",
+          },
+        ],
       },
       {
-        label: 'Favourite Section',
-        icon: FiStar,
-        path: '/admin/manage-favourites',
-        children: [
-          { path: '/admin/manage-favourites', icon: FiGrid, label: 'All Favourite Sections' },
-          { path: '/admin/manage-favourites/create', icon: FiPlus, label: 'Create Favourite Section' },
-        ]
+        path: "/admin/orders/tracking",
+        icon: FiMapPin,
+        label: "Order Tracking",
       },
-      { 
-        label: 'Top Brands', 
-        icon: FiTag, 
-        path: '/admin/manage-brands',
+      {
+        label: "Delivery Management",
+        icon: FiTruck,
+        path: "/admin/delivery",
         children: [
-          { path: '/admin/manage-brands', icon: FiGrid, label: 'All Brands' },
-          { path: '/admin/manage-brands/add', icon: FiPlus, label: 'Add Brand' },
-        ]
+          {
+            path: "/admin/delivery/pending",
+            icon: FiClock,
+            label: "Pending Deliveries",
+            showBadge: true,
+            badgeType: "delivery",
+          },
+          { path: "/admin/delivery", icon: FiGrid, label: "Manage Delivery" },
+          {
+            path: "/admin/delivery/assign",
+            icon: FiTruck,
+            label: "Assign Delivery",
+          },
+        ],
       },
-      { 
-        label: 'Featured Highlights', 
-        icon: FiStar, 
-        path: '/admin/manage-featured',
+      {
+        label: "Create Listing",
+        icon: FiPlus,
+        path: "/admin/inventory/add-flow",
         children: [
-          { path: '/admin/manage-featured', icon: FiGrid, label: 'All Featured' },
-          { path: '/admin/manage-featured/add', icon: FiPlus, label: 'Add Featured Product' },
-        ]
+          { path: "/admin/inventory/add", icon: FiPlus, label: "Create Order" },
+          {
+            path: "/admin/catalog",
+            icon: FiPackage,
+            label: "Select from Catalog",
+          },
+        ],
       },
-    ]
+      {
+        path: "/admin/stock-management",
+        icon: FiTrendingUp,
+        label: "Stock Management",
+      },
+      {
+        label: "Order Management",
+        icon: FiClipboard,
+        path: "/admin/orders/all",
+        children: [
+          { path: "/admin/orders/all", icon: FiGrid, label: "All Orders" },
+          {
+            path: "/admin/orders/pending",
+            icon: FiClock,
+            label: "Pending Orders",
+          },
+        ],
+      },
+      {
+        label: "Product Catalog",
+        icon: FiBox,
+        path: "/admin/catalog",
+        children: [
+          { path: "/admin/catalog", icon: FiGrid, label: "Master Catalog" },
+          {
+            path: "/admin/catalog/add",
+            icon: FiPlus,
+            label: "New Master Item",
+          },
+          { path: "/admin/bulk-upload", icon: FiPlus, label: "Bulk Upload" },
+        ],
+      },
+      {
+        label: "Manage Categories",
+        icon: FiGrid,
+        path: "/admin/manage-categories",
+        children: [
+          {
+            path: "/admin/manage-categories",
+            icon: FiGrid,
+            label: "All Categories",
+          },
+          {
+            path: "/admin/manage-categories/add",
+            icon: FiPlus,
+            label: "Add Category",
+          },
+        ],
+      },
+    ],
   },
   {
-    title: 'Financial & Core System',
+    title: "Partners & Clients",
     items: [
-      { path: '/admin/bulk-orders', icon: FiPackage, label: 'Bulk Orders' },
-      { 
-        label: 'Payments', 
-        icon: FiDollarSign, 
-        path: '/admin/payments',
+      {
+        label: "Seller Management",
+        icon: FiUsers,
+        path: "/admin/sellers",
         children: [
-          { path: '/admin/payments/users', icon: FiGrid, label: 'User Payments' },
-          { path: '/admin/payments/delivery', icon: FiGrid, label: 'Delivery Payments' },
-          { path: '/admin/payments/sellers', icon: FiGrid, label: 'Seller Payments' },
-        ]
+          {
+            path: "/admin/sellers/pending",
+            icon: FiGrid,
+            label: "Pending Sellers",
+            showBadge: true,
+          },
+          {
+            path: "/admin/sellers/active",
+            icon: FiGrid,
+            label: "Active Sellers",
+          },
+        ],
       },
-      { path: '/admin/settings', icon: FiSettings, label: 'Settings' },
-      { path: '/admin/feedback', icon: FiSettings, label: 'Feedback' },
-      { path: '/admin/seller-recommendations', icon: FiZap, label: 'Seller Requests' },
-      { path: '/admin/referrals', icon: FiGift, label: 'Referral System' },
-      { path: '/admin/team', icon: FiShield, label: 'Team Management' },
-    ]
-  }
+      {
+        label: "Customer Management",
+        icon: FiUsers,
+        path: "/admin/customers",
+        children: [
+          {
+            path: "/admin/customers/individual",
+            icon: FiGrid,
+            label: "Individual Customers",
+          },
+          {
+            path: "/admin/customers/enterpriser",
+            icon: FiGrid,
+            label: "Enterprisers",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    title: "Marketing & Content",
+    items: [
+      { path: "/admin/manage-hero", icon: FiImage, label: "Home Banner" },
+      { path: "/admin/manage-promo", icon: FiPercent, label: "Promo Banner" },
+      {
+        label: "Section",
+        icon: FiGrid,
+        path: "/admin/manage-section",
+        children: [
+          { path: "/admin/manage-section", icon: FiGrid, label: "All Section" },
+          {
+            path: "/admin/manage-section/create",
+            icon: FiPlus,
+            label: "Create Section",
+          },
+        ],
+      },
+      {
+        label: "Favourite Section",
+        icon: FiStar,
+        path: "/admin/manage-favourites",
+        children: [
+          {
+            path: "/admin/manage-favourites",
+            icon: FiGrid,
+            label: "All Favourite Sections",
+          },
+          {
+            path: "/admin/manage-favourites/create",
+            icon: FiPlus,
+            label: "Create Favourite Section",
+          },
+        ],
+      },
+      {
+        label: "Top Brands",
+        icon: FiTag,
+        path: "/admin/manage-brands",
+        children: [
+          { path: "/admin/manage-brands", icon: FiGrid, label: "All Brands" },
+          {
+            path: "/admin/manage-brands/add",
+            icon: FiPlus,
+            label: "Add Brand",
+          },
+        ],
+      },
+      {
+        label: "Featured Highlights",
+        icon: FiStar,
+        path: "/admin/manage-featured",
+        children: [
+          {
+            path: "/admin/manage-featured",
+            icon: FiGrid,
+            label: "All Featured",
+          },
+          {
+            path: "/admin/manage-featured/add",
+            icon: FiPlus,
+            label: "Add Featured Product",
+          },
+        ],
+      },
+      { path: "/admin/terms", icon: FiClipboard, label: "Manage T&C" },
+    ],
+  },
+  {
+    title: "Financial & Core System",
+    items: [
+      { path: "/admin/bulk-orders", icon: FiPackage, label: "Bulk Orders" },
+      {
+        label: "Payments",
+        icon: FiDollarSign,
+        path: "/admin/payments",
+        children: [
+          {
+            path: "/admin/payments/users",
+            icon: FiGrid,
+            label: "User Payments",
+          },
+          {
+            path: "/admin/payments/delivery",
+            icon: FiGrid,
+            label: "Delivery Payments",
+          },
+          {
+            path: "/admin/payments/sellers",
+            icon: FiGrid,
+            label: "Seller Payments",
+          },
+        ],
+      },
+      { path: "/admin/settings", icon: FiSettings, label: "Settings" },
+      { path: "/admin/feedback", icon: FiSettings, label: "Feedback" },
+      {
+        path: "/admin/seller-recommendations",
+        icon: FiZap,
+        label: "Seller Requests",
+      },
+      { path: "/admin/referrals", icon: FiGift, label: "Referral System" },
+      { path: "/admin/team", icon: FiShield, label: "Team Management" },
+    ],
+  },
 ];
 
-const NavItem = ({ item, onClose, expanded, onToggle, sellersCount, deliveryCount, productCount }) => {
+const NavItem = ({
+  item,
+  onClose,
+  expanded,
+  onToggle,
+  sellersCount,
+  deliveryCount,
+  productCount,
+}) => {
   const { hasPermission, role } = useRBAC();
   const location = useLocation();
   const permissionKey = permissionsMap.menuMapping[item.label];
-  
+
   if (permissionKey && !hasPermission(permissionKey)) {
     return null;
   }
 
   const hasChildren = item.children && item.children.length > 0;
   const isSelfActive = location.pathname === item.path;
-  const isChildActive = hasChildren && item.children.some(child => location.pathname === child.path);
+  const isChildActive =
+    hasChildren &&
+    item.children.some((child) => location.pathname === child.path);
   const isActive = isSelfActive || isChildActive;
 
   const headerContent = (
     <div className="flex items-center gap-3 w-full text-left">
-      <item.icon size={17} className={`transition-all duration-300 ${isActive ? 'scale-110 text-[var(--color-primary)]' : 'text-slate-400 group-hover:scale-110 group-hover:text-slate-700'}`} />
-      <span className={`text-[12px] font-semibold tracking-wide transition-colors ${isActive ? 'text-slate-900 font-bold' : 'text-slate-600 group-hover:text-slate-900'}`}>{item.label}</span>
+      <item.icon
+        size={17}
+        className={`transition-all duration-300 ${isActive ? "scale-110 text-[var(--color-primary)]" : "text-slate-400 group-hover:scale-110 group-hover:text-slate-700"}`}
+      />
+      <span
+        className={`text-[12px] font-semibold tracking-wide transition-colors ${isActive ? "text-slate-900 font-bold" : "text-slate-600 group-hover:text-slate-900"}`}
+      >
+        {item.label}
+      </span>
     </div>
   );
 
   return (
     <div className="mb-1">
-      <div 
+      <div
         className={`
           flex items-center justify-between px-4 py-2.5 rounded-lg transition-all duration-200 group border-l-4 cursor-pointer
-          ${isActive 
-            ? 'bg-slate-50/80 border-[var(--color-primary)] text-slate-900 shadow-sm' 
-            : 'border-transparent hover:bg-slate-50/40 text-slate-600 hover:text-slate-900'}
+          ${
+            isActive
+              ? "bg-slate-50/80 border-[var(--color-primary)] text-slate-900 shadow-sm"
+              : "border-transparent hover:bg-slate-50/40 text-slate-600 hover:text-slate-900"
+          }
         `}
       >
-        <div className="flex-1" onClick={() => { if (window.innerWidth < 1024 && !hasChildren) onClose(); }}>
+        <div
+          className="flex-1"
+          onClick={() => {
+            if (window.innerWidth < 1024 && !hasChildren) onClose();
+          }}
+        >
           {item.path ? (
-            <NavLink to={item.path} end={item.path === '/admin'} className="w-full block">
+            <NavLink
+              to={item.path}
+              end={item.path === "/admin"}
+              className="w-full block"
+            >
               {headerContent}
             </NavLink>
           ) : (
             <div className="w-full">{headerContent}</div>
           )}
         </div>
-        
+
         {hasChildren && (
           <Motion.div
             className="p-1 hover:bg-slate-100 rounded transition-colors cursor-pointer"
@@ -245,7 +375,10 @@ const NavItem = ({ item, onClose, expanded, onToggle, sellersCount, deliveryCoun
               onToggle(item.label);
             }}
           >
-            <FiChevronRight size={13} className={`transition-colors ${isActive ? 'text-slate-800' : 'text-slate-400'}`} />
+            <FiChevronRight
+              size={13}
+              className={`transition-colors ${isActive ? "text-slate-800" : "text-slate-400"}`}
+            />
           </Motion.div>
         )}
       </div>
@@ -254,33 +387,40 @@ const NavItem = ({ item, onClose, expanded, onToggle, sellersCount, deliveryCoun
         {hasChildren && expanded && (
           <Motion.div
             initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
+            animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2, ease: 'easeInOut' }}
+            transition={{ duration: 0.2, ease: "easeInOut" }}
             className="overflow-hidden bg-slate-50/40 rounded-lg mt-0.5"
           >
             <div className="ml-5 pl-2 border-l border-slate-200 mt-1 space-y-0.5 py-1">
               {item.children.map((child) => {
                 let count = 0;
-                if (child.badgeType === 'delivery') count = deliveryCount;
-                else if (child.badgeType === 'product') count = productCount;
+                if (child.badgeType === "delivery") count = deliveryCount;
+                else if (child.badgeType === "product") count = productCount;
                 else count = sellersCount;
-                
+
                 const isChildActive = location.pathname === child.path;
 
                 return (
                   <NavLink
                     key={child.path + child.label}
                     to={child.path}
-                    onClick={() => { if (window.innerWidth < 1024) onClose(); }}
+                    onClick={() => {
+                      if (window.innerWidth < 1024) onClose();
+                    }}
                     className={`
                       flex items-center gap-3 px-3 py-2 rounded-md text-[11px] tracking-wide transition-all duration-200 group
-                      ${isChildActive 
-                        ? 'text-[var(--color-accent-pink)] font-bold bg-slate-100/60' 
-                        : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/45'}
+                      ${
+                        isChildActive
+                          ? "text-[var(--color-accent-pink)] font-bold bg-slate-100/60"
+                          : "text-slate-500 hover:text-slate-900 hover:bg-slate-50/45"
+                      }
                     `}
                   >
-                    <child.icon size={12} className={`transition-transform duration-200 group-hover:scale-110 ${isChildActive ? 'text-[var(--color-accent-pink)]' : 'text-slate-400'}`} />
+                    <child.icon
+                      size={12}
+                      className={`transition-transform duration-200 group-hover:scale-110 ${isChildActive ? "text-[var(--color-accent-pink)]" : "text-slate-400"}`}
+                    />
                     <span>{child.label}</span>
                     {child.showBadge && count > 0 && (
                       <span className="ml-auto px-2 py-0.5 bg-[var(--color-accent-pink)] text-white text-[9px] font-bold rounded-full flex items-center justify-center animate-pulse">
@@ -305,9 +445,9 @@ const Sidebar = ({ isOpen, onClose }) => {
   const { role } = useRBAC();
   const [expandedItems, setExpandedItems] = useState(() => {
     const initial = {};
-    menuGroups.forEach(group => {
-      group.items.forEach(item => {
-        if (item.children?.some(child => location.pathname === child.path)) {
+    menuGroups.forEach((group) => {
+      group.items.forEach((item) => {
+        if (item.children?.some((child) => location.pathname === child.path)) {
           initial[item.label] = true;
         }
       });
@@ -323,16 +463,20 @@ const Sidebar = ({ isOpen, onClose }) => {
     const fetchPendingCounts = async () => {
       try {
         const [sellersRes, deliveryRes, productRes] = await Promise.all([
-          api.get('/auth/admin/sellers/pending'),
-          api.get('/delivery'),
-          api.get('/products', { params: { isApproved: 'pending', isActive: 'all' } })
+          api.get("/auth/admin/sellers/pending"),
+          api.get("/delivery"),
+          api.get("/products", {
+            params: { isApproved: "pending", isActive: "all" },
+          }),
         ]);
         setSellersCount(sellersRes.data.data.length);
-        const pendingPartners = deliveryRes.data.data.filter(p => p.approvalStatus === 'Pending');
+        const pendingPartners = deliveryRes.data.data.filter(
+          (p) => p.approvalStatus === "Pending",
+        );
         setDeliveryCount(pendingPartners.length);
         setProductCount(productRes.data.data.length);
       } catch (err) {
-        console.error('Failed to fetch counts for sidebar:', err);
+        console.error("Failed to fetch counts for sidebar:", err);
       }
     };
     fetchPendingCounts();
@@ -341,15 +485,15 @@ const Sidebar = ({ isOpen, onClose }) => {
   }, []);
 
   const toggleExpand = (label) => {
-    setExpandedItems(prev => ({
+    setExpandedItems((prev) => ({
       ...prev,
-      [label]: !prev[label]
+      [label]: !prev[label],
     }));
   };
 
   const handleLogout = () => {
     logout();
-    navigate('/admin/login');
+    navigate("/admin/login");
   };
 
   return (
@@ -372,19 +516,22 @@ const Sidebar = ({ isOpen, onClose }) => {
         className={`
           fixed lg:static top-0 left-0 h-screen w-[290px] lg:shrink-0 bg-white text-slate-800 z-50 flex flex-col shadow-2xl lg:shadow-none overflow-hidden border-r border-slate-200/60
           transition-transform duration-300 ease-in-out
-          ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+          ${isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
         `}
       >
         {/* Header / Workspace Branding with Real Brand Logo */}
         <div className="relative z-10 h-20 px-6 flex items-center justify-between border-b border-slate-100 bg-white">
           <Link to="/admin" className="flex items-center w-full">
-            <img 
-              src={logoImage} 
-              alt="Riddha Interio Mart" 
-              className="h-16 w-auto object-contain max-w-[220px]" 
+            <img
+              src={logoImage}
+              alt="Riddha Interior Mart"
+              className="h-16 w-auto object-contain max-w-[220px]"
             />
           </Link>
-          <button onClick={onClose} className="lg:hidden text-slate-400 hover:text-slate-600 transition-colors">
+          <button
+            onClick={onClose}
+            className="lg:hidden text-slate-400 hover:text-slate-600 transition-colors"
+          >
             <FiX size={20} />
           </button>
         </div>
@@ -398,10 +545,10 @@ const Sidebar = ({ isOpen, onClose }) => {
               </h3>
               <div className="space-y-0.5">
                 {group.items.map((item) => (
-                  <NavItem 
-                    key={item.label} 
-                    item={item} 
-                    onClose={onClose} 
+                  <NavItem
+                    key={item.label}
+                    item={item}
+                    onClose={onClose}
                     expanded={expandedItems[item.label]}
                     onToggle={toggleExpand}
                     sellersCount={sellersCount}
@@ -421,7 +568,9 @@ const Sidebar = ({ isOpen, onClose }) => {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
             </span>
-            <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">System Monitor</span>
+            <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">
+              System Monitor
+            </span>
           </div>
           <div className="flex items-center justify-between mt-2.5">
             <div className="text-left">
@@ -439,14 +588,18 @@ const Sidebar = ({ isOpen, onClose }) => {
         <div className="relative z-10 p-4 border-t border-slate-100 bg-slate-50 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-[var(--color-primary)] to-[var(--color-accent-pink)] flex items-center justify-center text-white text-xs font-bold shadow-sm">
-              {user?.fullName?.charAt(0) || 'A'}
+              {user?.fullName?.charAt(0) || "A"}
             </div>
             <div className="flex flex-col">
-              <p className="text-xs font-bold text-slate-800 truncate max-w-[130px]">{user?.fullName || 'Super Admin'}</p>
-              <p className="text-[8px] text-[var(--color-accent-pink)] font-extrabold uppercase tracking-wider">Master Acc</p>
+              <p className="text-xs font-bold text-slate-800 truncate max-w-[130px]">
+                {user?.fullName || "Super Admin"}
+              </p>
+              <p className="text-[8px] text-[var(--color-accent-pink)] font-extrabold uppercase tracking-wider">
+                Master Acc
+              </p>
             </div>
           </div>
-          <button 
+          <button
             onClick={handleLogout}
             className="p-1.5 rounded-lg bg-white border border-slate-200 text-slate-400 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-100 transition-all cursor-pointer"
             title="Sign Out"

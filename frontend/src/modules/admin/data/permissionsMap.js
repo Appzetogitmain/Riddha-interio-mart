@@ -42,6 +42,7 @@ export const permissionsMap = {
     'Favourite Section': 'content',
     'Top Brands': 'content',
     'Featured Highlights': 'content',
+    'Manage T&C': 'content',
     'Bulk Orders': 'orders',
     'Settings': 'settings',
     'Referral System': 'referrals',

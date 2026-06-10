@@ -50,6 +50,7 @@ const SellerTransactionsPage = React.lazy(() => import('./pages/SellerTransactio
 const ManageSellerListPage = React.lazy(() => import('./pages/ManageSellerListPage'));
 const FeedbackManagement = React.lazy(() => import('./pages/FeedbackManagement'));
 const SellerRecommendationManagement = React.lazy(() => import('./pages/SellerRecommendationManagement'));
+const ManageTerms = React.lazy(() => import('./pages/ManageTerms'));
 import { RBACProvider } from './data/RBACContext';
 
 const AdminRoutes = () => {
@@ -135,6 +136,7 @@ const AdminRoutes = () => {
             <Route path="/manage-brands/add" element={<AddBrandPage />} />
             <Route path="/manage-grid" element={<ManageCategoryGrid />} />
             <Route path="/manage-grid/add" element={<AddCategoryGridItemPage />} />
+            <Route path="/terms" element={<ManageTerms />} />
           </Route>
 
           {/* Referrals */}

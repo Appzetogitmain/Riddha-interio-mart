@@ -4,6 +4,7 @@ import PageWrapper from '../components/PageWrapper';
 import { LuSearch, LuPlus, LuTrash2, LuPen, LuFilter, LuBox, LuCheck, LuX } from 'react-icons/lu';
 import { FiTrash2, FiEdit3, FiInfo } from 'react-icons/fi';
 import api from '../../../shared/utils/api';
+import { toast } from 'react-hot-toast';
 
 const CatalogPage = () => {
   const navigate = useNavigate();
@@ -93,6 +94,7 @@ const CatalogPage = () => {
       if (res.data.success) {
         setProducts(products.filter(p => p._id !== id));
         setDeleteId(null);
+        toast.success('Catalog item deleted successfully.');
       }
     } catch (err) {
       console.error('Failed to delete catalog product:', err);

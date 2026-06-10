@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { FiArrowLeft, FiUser, FiMail, FiLock, FiEye, FiEyeOff, FiCheck, FiPhone, FiTruck, FiMapPin, FiShoppingBag, FiGift, FiUploadCloud, FiCheckCircle, FiLoader, FiCreditCard, FiShield, FiActivity, FiFileText, FiUserCheck, FiBriefcase } from 'react-icons/fi';
 import { FaGoogle, FaFacebookF, FaXTwitter } from 'react-icons/fa6';
 import Button from '../../../shared/components/Button';
@@ -629,7 +629,9 @@ const SignupPage = () => {
 
                     <div className="flex items-center gap-2 pt-2 px-1">
                       <input type="checkbox" checked={agreeTerms} onChange={(e) => setAgreeTerms(e.target.checked)} className="accent-[#189D91] md:accent-warm-sand h-3.5 w-3.5" />
-                      <label className="text-[8px] md:text-[9px] font-medium text-gray-400 md:text-white/60 uppercase tracking-widest leading-none">I agree to the Terms & Conditions</label>
+                      <label className="text-[8px] md:text-[9px] font-medium text-gray-400 md:text-white/60 uppercase tracking-widest leading-none">
+                        I agree to the <Link to={role === 'delivery' ? '/delivery/terms' : '/terms'} target="_blank" className="underline font-bold text-gray-600 md:text-white hover:text-[#189D91] md:hover:text-warm-sand transition-colors">Terms & Conditions</Link>
+                      </label>
                     </div>
 
                     <Button

@@ -1,9 +1,15 @@
-import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { FiArrowLeft, FiPrinter, FiDownload, FiCheckCircle, FiFileText } from 'react-icons/fi';
-import api from '../../../shared/utils/api';
-import Button from '../../../shared/components/Button';
+import React, { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import {
+  FiArrowLeft,
+  FiPrinter,
+  FiDownload,
+  FiCheckCircle,
+  FiFileText,
+} from "react-icons/fi";
+import api from "../../../shared/utils/api";
+import Button from "../../../shared/components/Button";
 
 const InvoicePage = () => {
   const { id } = useParams();
@@ -19,7 +25,7 @@ const InvoicePage = () => {
           setOrder(res.data.data);
         }
       } catch (err) {
-        console.error('Failed to fetch order:', err);
+        console.error("Failed to fetch order:", err);
       } finally {
         setLoading(false);
       }
@@ -45,17 +51,28 @@ const InvoicePage = () => {
   if (!order) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-6 text-center">
-        <h2 className="text-2xl font-black text-deep-espresso mb-4">Invoice Not Found</h2>
-        <Button onClick={() => navigate('/orders')}>Back to Orders</Button>
+        <h2 className="text-2xl font-black text-deep-espresso mb-4">
+          Invoice Not Found
+        </h2>
+        <Button onClick={() => navigate("/orders")}>Back to Orders</Button>
       </div>
     );
   }
 
-  const { businessDetails, shippingAddress, orderItems, totalPrice, itemsPrice, shippingPrice, createdAt, _id } = order;
-  const invoiceDate = new Date(createdAt).toLocaleDateString('en-IN', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric'
+  const {
+    businessDetails,
+    shippingAddress,
+    orderItems,
+    totalPrice,
+    itemsPrice,
+    shippingPrice,
+    createdAt,
+    _id,
+  } = order;
+  const invoiceDate = new Date(createdAt).toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
   });
 
   return (
@@ -76,9 +93,9 @@ const InvoicePage = () => {
             <FiPrinter /> Print Invoice
           </Button>
           {order.invoiceUrl ? (
-            <a 
-              href={order.invoiceUrl} 
-              target="_blank" 
+            <a
+              href={order.invoiceUrl}
+              target="_blank"
               rel="noreferrer"
               className="flex items-center gap-2 bg-deep-espresso text-white h-10 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg hover:bg-warm-sand transition-all"
             >
@@ -112,34 +129,55 @@ const InvoicePage = () => {
               </p>
             </div>
             <div className="text-right">
-              <h2 className="text-lg md:text-xl font-black uppercase tracking-tight text-deep-espresso">Tax Invoice</h2>
-              <p className="text-xs font-bold text-warm-sand">#{_id.slice(-8).toUpperCase()}</p>
+              <h2 className="text-lg md:text-xl font-black uppercase tracking-tight text-deep-espresso">
+                Tax Invoice
+              </h2>
+              <p className="text-xs font-bold text-warm-sand">
+                #{_id.slice(-8).toUpperCase()}
+              </p>
             </div>
           </div>
           {/* Billing Info */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
             <div className="space-y-2 md:space-y-4">
-              <p className="text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-100 pb-1 md:pb-2">Sold By</p>
+              <p className="text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-100 pb-1 md:pb-2">
+                Sold By
+              </p>
               <div className="space-y-0.5 md:space-y-1 text-xs md:text-sm font-medium text-deep-espresso">
-                <p className="font-black text-base md:text-lg">Riddha Interio Mart Pvt. Ltd.</p>
+                <p className="font-black text-base md:text-lg">
+                  Riddha Interior Mart Pvt. Ltd.
+                </p>
                 <p className="opacity-70">123 Luxury Avenue, Design District</p>
                 <p className="opacity-70">Indore, MP - 452001</p>
                 <p className="font-bold">GSTIN: 23AAAAA0000A1Z5</p>
               </div>
             </div>
             <div className="space-y-2 md:space-y-4">
-              <p className="text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-100 pb-1 md:pb-2">Billing To</p>
+              <p className="text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-100 pb-1 md:pb-2">
+                Billing To
+              </p>
               <div className="space-y-0.5 md:space-y-1 text-xs md:text-sm font-medium text-deep-espresso">
                 {businessDetails?.shopName ? (
                   <>
-                    <p className="font-black text-base md:text-lg">{businessDetails.shopName}</p>
-                    <p className="text-warm-sand font-bold text-[10px] md:text-xs uppercase tracking-wider">GSTIN: {businessDetails.gstNumber}</p>
+                    <p className="font-black text-base md:text-lg">
+                      {businessDetails.shopName}
+                    </p>
+                    <p className="text-warm-sand font-bold text-[10px] md:text-xs uppercase tracking-wider">
+                      GSTIN: {businessDetails.gstNumber}
+                    </p>
                   </>
                 ) : (
-                  <p className="font-black text-base md:text-lg">{shippingAddress.fullName}</p>
+                  <p className="font-black text-base md:text-lg">
+                    {shippingAddress.fullName}
+                  </p>
                 )}
-                <p className="opacity-70 mt-1">{shippingAddress.fullAddress}, {shippingAddress.city} - {shippingAddress.pincode}</p>
-                <p className="opacity-70">Phone: {shippingAddress.mobileNumber}</p>
+                <p className="opacity-70 mt-1">
+                  {shippingAddress.fullAddress}, {shippingAddress.city} -{" "}
+                  {shippingAddress.pincode}
+                </p>
+                <p className="opacity-70">
+                  Phone: {shippingAddress.mobileNumber}
+                </p>
               </div>
             </div>
           </div>
@@ -147,18 +185,30 @@ const InvoicePage = () => {
           {/* Order Meta */}
           <div className="flex flex-wrap gap-4 md:gap-8 py-4 md:py-6 border-y border-gray-100">
             <div>
-              <p className="text-[8px] md:text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5 md:mb-1">Date</p>
-              <p className="text-xs md:text-sm font-black text-deep-espresso">{invoiceDate}</p>
+              <p className="text-[8px] md:text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5 md:mb-1">
+                Date
+              </p>
+              <p className="text-xs md:text-sm font-black text-deep-espresso">
+                {invoiceDate}
+              </p>
             </div>
             <div className="hidden sm:block">
-              <p className="text-[8px] md:text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5 md:mb-1">Order ID</p>
-              <p className="text-xs md:text-sm font-black text-deep-espresso">#{_id.slice(-12)}</p>
+              <p className="text-[8px] md:text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5 md:mb-1">
+                Order ID
+              </p>
+              <p className="text-xs md:text-sm font-black text-deep-espresso">
+                #{_id.slice(-12)}
+              </p>
             </div>
             <div>
-              <p className="text-[8px] md:text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5 md:mb-1">Status</p>
+              <p className="text-[8px] md:text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5 md:mb-1">
+                Status
+              </p>
               <div className="flex items-center gap-1 text-green-600">
                 <FiCheckCircle className="h-3 w-3 md:h-4 md:h-4" />
-                <p className="text-[10px] md:text-sm font-black uppercase tracking-tight">Paid</p>
+                <p className="text-[10px] md:text-sm font-black uppercase tracking-tight">
+                  Paid
+                </p>
               </div>
             </div>
           </div>
@@ -178,12 +228,22 @@ const InvoicePage = () => {
                 {orderItems.map((item, idx) => (
                   <tr key={idx} className="text-deep-espresso">
                     <td className="py-3 md:py-6">
-                      <p className="font-black text-xs md:text-sm">{item.name}</p>
-                      <p className="text-[7px] md:text-[10px] font-bold text-gray-400 uppercase">HSN: 9403</p>
+                      <p className="font-black text-xs md:text-sm">
+                        {item.name}
+                      </p>
+                      <p className="text-[7px] md:text-[10px] font-bold text-gray-400 uppercase">
+                        HSN: 9403
+                      </p>
                     </td>
-                    <td className="py-3 md:py-6 text-center text-xs font-bold">{item.quantity}</td>
-                    <td className="py-3 md:py-6 text-right text-xs font-bold">₹{item.price.toLocaleString()}</td>
-                    <td className="py-3 md:py-6 text-right text-xs md:text-sm font-black">₹{(item.price * item.quantity).toLocaleString()}</td>
+                    <td className="py-3 md:py-6 text-center text-xs font-bold">
+                      {item.quantity}
+                    </td>
+                    <td className="py-3 md:py-6 text-right text-xs font-bold">
+                      ₹{item.price.toLocaleString()}
+                    </td>
+                    <td className="py-3 md:py-6 text-right text-xs md:text-sm font-black">
+                      ₹{(item.price * item.quantity).toLocaleString()}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -199,11 +259,17 @@ const InvoicePage = () => {
               </div>
               <div className="flex justify-between text-xs font-bold text-gray-500">
                 <span>Shipping</span>
-                <span>{shippingPrice === 0 ? 'FREE' : `₹${shippingPrice}`}</span>
+                <span>
+                  {shippingPrice === 0 ? "FREE" : `₹${shippingPrice}`}
+                </span>
               </div>
               <div className="pt-3 border-t border-deep-espresso/10 flex justify-between items-center">
-                <span className="text-[10px] md:text-sm font-black text-deep-espresso uppercase tracking-tighter">Grand Total</span>
-                <span className="text-xl md:text-2xl font-black text-warm-sand italic font-serif">₹{totalPrice.toLocaleString()}</span>
+                <span className="text-[10px] md:text-sm font-black text-deep-espresso uppercase tracking-tighter">
+                  Grand Total
+                </span>
+                <span className="text-xl md:text-2xl font-black text-warm-sand italic font-serif">
+                  ₹{totalPrice.toLocaleString()}
+                </span>
               </div>
             </div>
           </div>

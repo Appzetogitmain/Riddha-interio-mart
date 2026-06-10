@@ -25,6 +25,15 @@ import api from '../../../shared/utils/api';
 import { toast } from 'react-hot-toast';
 
 const Marketing = () => {
+  const getTodayDateString = () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+  };
+
   const [activeTab, setActiveTab] = useState('Campaigns');
   const [campaigns, setCampaigns] = useState([]);
   const [coupons, setCoupons] = useState([]);
@@ -92,6 +101,8 @@ const Marketing = () => {
     fetchData();
   }, []);
 
+  const todayDateString = getTodayDateString();
+
   const handleDeleteCoupon = async (id) => {
     if (!window.confirm('Are you sure you want to delete this coupon?')) return;
     try {
@@ -102,7 +113,7 @@ const Marketing = () => {
       }
     } catch (err) {
       console.error('Failed to delete coupon:', err);
-      toast.error(err.response?.data?.message || 'Failed to delete coupon.');
+      toast.error(err.response?.data?.message || err.response?.data?.error || 'Failed to delete coupon.');
     }
   };
 
@@ -110,6 +121,19 @@ const Marketing = () => {
     e.preventDefault();
     if (!campaignForm.title || !campaignForm.budget || !campaignForm.discountPercentage || !campaignForm.startDate || !campaignForm.endDate) {
       toast.error('Please fill all required fields.');
+      return;
+    }
+
+    const startDate = new Date(campaignForm.startDate);
+    const endDate = new Date(campaignForm.endDate);
+
+    if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
+      toast.error('Please select valid campaign dates.');
+      return;
+    }
+
+    if (startDate >= endDate) {
+      toast.error('Sale start date should be earlier than sale end date.');
       return;
     }
 
@@ -137,7 +161,7 @@ const Marketing = () => {
       }
     } catch (err) {
       console.error('Failed to create campaign:', err);
-      toast.error(err.response?.data?.message || 'Failed to launch campaign.');
+      toast.error(err.response?.data?.message || err.response?.data?.error || 'Failed to launch campaign.');
     } finally {
       setIsSubmitting(false);
     }
@@ -147,6 +171,11 @@ const Marketing = () => {
     e.preventDefault();
     if (!couponForm.code || !couponForm.discountValue || !couponForm.expiryDate) {
       toast.error('Please fill all required fields.');
+      return;
+    }
+
+    if (couponForm.expiryDate < todayDateString) {
+      toast.error('Coupon expiry date cannot be in the past.');
       return;
     }
 
@@ -176,7 +205,7 @@ const Marketing = () => {
       }
     } catch (err) {
       console.error('Failed to create coupon:', err);
-      toast.error(err.response?.data?.message || 'Failed to create coupon.');
+      toast.error(err.response?.data?.message || err.response?.data?.error || 'Failed to create coupon.');
     } finally {
       setIsSubmitting(false);
     }
@@ -458,9 +487,9 @@ const Marketing = () => {
                        <h4 className="text-lg font-black text-slate-900 tracking-tight leading-none">Smart Targeting</h4>
                        <p className="text-[8px] text-slate-400 leading-relaxed font-black uppercase tracking-[0.2em]">AI-Driven Merchant Ads</p>
                      </div>
-                     <button className="w-full py-3 bg-seller-primary text-white rounded-xl font-black text-[9px] uppercase tracking-widest shadow-xl shadow-seller-primary/20 hover:bg-seller-dark transition-all">
-                        Optimize Audience
-                     </button>
+                     <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
+                        <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Audience insights are already reflected in your campaign and coupon diagnostics.</p>
+                     </div>
                   </div>
                </div>
            </div>
@@ -478,9 +507,9 @@ const Marketing = () => {
                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest max-w-sm">Your brand visibility has increased by 14% in the last 30 days. Deploy more flash sales to capture the current trend.</p>
               </div>
            </div>
-           <button className="px-10 py-4 bg-seller-primary text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-seller-dark transition-all shadow-lg shadow-seller-primary/20">
-              Analyze Trends
-           </button>
+           <div className="rounded-2xl border border-slate-100 bg-slate-50 px-6 py-4 text-center">
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Trend guidance is shown here from current marketing analytics.</p>
+           </div>
         </div>
 
       </div>
@@ -572,6 +601,7 @@ const Marketing = () => {
                     <label className="text-xs font-bold text-slate-700 uppercase tracking-wider ml-1">End Date *</label>
                     <input 
                       type="datetime-local" required
+                      min={campaignForm.startDate || undefined}
                       value={campaignForm.endDate}
                       onChange={(e) => setCampaignForm({ ...campaignForm, endDate: e.target.value })}
                       className="w-full bg-slate-50 border-none rounded-2xl px-4 py-4 text-xs font-bold text-slate-700 focus:ring-2 focus:ring-seller-primary/20 transition-all"
@@ -728,6 +758,7 @@ const Marketing = () => {
                     <label className="text-xs font-bold text-slate-700 uppercase tracking-wider ml-1">Expiry Date *</label>
                     <input 
                       type="date" required
+                      min={todayDateString}
                       value={couponForm.expiryDate}
                       onChange={(e) => setCouponForm({ ...couponForm, expiryDate: e.target.value })}
                       className="w-full bg-slate-50 border-none rounded-2xl px-4 py-4 text-xs font-bold text-slate-700 focus:ring-2 focus:ring-seller-primary/20 transition-all"

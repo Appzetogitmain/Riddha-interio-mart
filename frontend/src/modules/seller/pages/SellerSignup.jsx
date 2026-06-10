@@ -415,7 +415,7 @@ const SellerSignup = () => {
                       className="w-5 h-5 md:w-4 md:h-4 accent-[#E36666] rounded cursor-pointer"
                     />
                     <label className="text-[11px] md:text-[9px] font-semibold text-slate-400 uppercase tracking-widest leading-none cursor-pointer">
-                      I agree to the <span className="text-slate-900 underline decoration-[#E36666]/30">Terms & Conditions</span>
+                      I agree to the <Link to="/seller/terms" target="_blank" className="text-slate-900 underline decoration-[#E36666]/30 hover:text-[#E36666] transition-colors">Terms & Conditions</Link>
                     </label>
                   </div>
                 </div>

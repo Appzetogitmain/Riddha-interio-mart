@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import PageWrapper from '../components/PageWrapper';
 import { 
   User, 
@@ -14,7 +14,7 @@ import {
   Save, 
   MapPin, 
   CreditCard, 
-  Camera,
+  ImagePlus,
   ShieldCheck,
   Calendar,
   ChevronRight,
@@ -36,10 +36,12 @@ import { useUser } from '../../user/data/UserContext';
 import api from '../../../shared/utils/api';
 import { uploadImage } from '../../../shared/utils/upload';
 import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'react-hot-toast';
 
 const SellerProfile = () => {
   const navigate = useNavigate();
   const { logout, user: currentUser, setUser } = useUser();
+  const avatarInputRef = useRef(null);
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -130,13 +132,15 @@ const SellerProfile = () => {
       }
     } catch (err) {
       console.error('Update failed:', err);
+      toast.error(err.response?.data?.message || 'Failed to update profile.');
     } finally {
       setIsSaving(false);
     }
   };
 
   const handleAvatarChange = async (e) => {
-    const file = e.target.files[0];
+    const input = e.target;
+    const file = input.files?.[0];
     if (!file) return;
     setIsSaving(true);
     try {
@@ -145,11 +149,14 @@ const SellerProfile = () => {
       const { data } = await api.put('/auth/seller/profile', { avatar: url });
       if (data.success) {
         setUser({ ...currentUser, avatar: url });
+        toast.success('Profile photo updated.');
       }
     } catch (err) {
       console.error('Upload failed:', err);
+      toast.error(err.response?.data?.error || err.response?.data?.message || 'Failed to upload profile photo.');
     } finally {
       setIsSaving(false);
+      input.value = '';
     }
   };
 
@@ -194,8 +201,14 @@ const SellerProfile = () => {
                     </div>
                   </div>
                   <label className="absolute -bottom-1 -right-1 h-9 w-9 bg-seller-primary text-white rounded-xl flex items-center justify-center shadow-xl cursor-pointer hover:scale-110 transition-all z-20 border-2 border-white">
-                    <Camera size={14} />
-                    <input type="file" className="hidden" onChange={handleAvatarChange} accept="image/*" />
+                    <ImagePlus size={14} />
+                    <input
+                      ref={avatarInputRef}
+                      type="file"
+                      className="hidden"
+                      onChange={handleAvatarChange}
+                      accept=".jpg,.jpeg,.png,.webp,.heic,.heif"
+                    />
                   </label>
                 </div>
 
@@ -430,7 +443,7 @@ const SellerProfile = () => {
                   {[
                     { label: 'Analytics', icon: <BarChart3 size={16} />, path: '/seller/reports/sales', color: 'bg-blue-50 text-blue-600' },
                     { label: 'Finances', icon: <CreditCard size={16} />, path: '/seller/wallet', color: 'bg-emerald-50 text-emerald-600' },
-                    { label: 'Settings', icon: <Settings size={16} />, path: '/seller/settings', color: 'bg-slate-50 text-slate-600' },
+                    { label: 'Settings', icon: <Settings size={16} />, path: '/seller/profile', color: 'bg-slate-50 text-slate-600' },
                     { label: 'System', icon: <Bell size={16} />, path: '/seller/notifications', color: 'bg-rose-50 text-rose-600' },
                   ].map((tool, i) => (
                     <button 

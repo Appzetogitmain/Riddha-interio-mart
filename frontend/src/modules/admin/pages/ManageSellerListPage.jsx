@@ -41,7 +41,7 @@ const ManageSellerListPage = () => {
         api.get('/auth/admin/sellers/pending')
       ]);
 
-      // Map backend database status cleanly
+      // Map backend database status cleanly and sort by registration date (newest first)
       const allSellers = [
         ...activeRes.data.data.map(s => ({ 
           ...s, 
@@ -51,7 +51,7 @@ const ManageSellerListPage = () => {
           ...s, 
           status: s.status === 'suspended' ? 'Suspended' : (s.status === 'approved' ? 'Active' : 'Pending')
         }))
-      ];
+      ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
       setSellers(allSellers);
     } catch (err) {

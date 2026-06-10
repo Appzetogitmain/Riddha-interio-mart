@@ -10,7 +10,13 @@ const ProductSchema = new mongoose.Schema({
     type: String
   },
   hsnCode: {
-    type: String
+    type: String,
+    validate: {
+      validator: function(v) {
+        return !v || /^\d{4}$|^\d{6}$|^\d{8}$/.test(v);
+      },
+      message: props => `${props.value} is not a valid HSN code! It must be a 4, 6, or 8 digit numeric code.`
+    }
   },
   description: {
     type: String,
@@ -53,10 +59,24 @@ const ProductSchema = new mongoose.Schema({
     type: String
   },
   dimensions: {
-    type: String
+    type: String,
+    trim: true,
+    validate: {
+      validator: function(v) {
+        return !v || /^(\d+(\.\d+)?\s*[xX]\s*\d+(\.\d+)?(\s*[xX]\s*\d+(\.\d+)?)?\s*(mm|cm|inches|inch|feet|ft|m|mtrs|in)?)$|^([a-zA-Z0-9\s\-\/\(\)\.\,]+)$/i.test(v.trim());
+      },
+      message: props => `${props.value} is not a valid dimensions layout! Must be a numeric size (e.g., 600x600 mm, 24x24 inches) or descriptive text (e.g., Standard, King Size).`
+    }
   },
   thickness: {
-    type: String
+    type: String,
+    trim: true,
+    validate: {
+      validator: function(v) {
+        return !v || /^(\d+(\.\d+)?\s*(mm|cm|inches|inch|feet|ft|m|mtrs|in)?)$|^([a-zA-Z0-9\s\-\/\(\)\.\,]+)$/i.test(v.trim());
+      },
+      message: props => `${props.value} is not a valid thickness layout! Must be a numeric size (e.g., 12mm, 6 inch) or descriptive text (e.g., Medium, Thick).`
+    }
   },
   color: {
     type: String

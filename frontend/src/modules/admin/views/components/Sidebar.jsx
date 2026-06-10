@@ -473,7 +473,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         {/* Footer info */}
         <div className="relative z-10 p-6 border-t border-white/10 text-white/50 text-xs mt-auto backdrop-blur-sm bg-deep-espresso/20">
           <p className="font-medium text-white/80 drop-shadow-md">
-            © 2026 Riddha Interio Mart
+            © 2026 Riddha Interior Mart
           </p>
           <p className="mt-1 text-[10px] tracking-wide uppercase drop-shadow-md">
             Admin Workspace v1.0

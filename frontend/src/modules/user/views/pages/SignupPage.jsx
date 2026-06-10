@@ -236,7 +236,7 @@ const SignupPage = () => {
               <div className="md:hidden text-center space-y-1 mb-6 w-full">
                 <h1 className="text-2xl font-black text-deep-espresso tracking-tight">Create Account</h1>
                 <p className="text-gray-400 font-bold text-[10px] tracking-[0.15em] uppercase italic">
-                  Join Riddha Interio Mart
+                  Join Riddha Interior Mart
                 </p>
               </div>
 

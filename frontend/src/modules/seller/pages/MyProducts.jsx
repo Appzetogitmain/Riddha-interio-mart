@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import api from '../../../shared/utils/api';
 import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'react-hot-toast';
 
 const MyProducts = () => {
   const [filter, setFilter] = useState('All');
@@ -29,6 +30,7 @@ const MyProducts = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [activeMenu, setActiveMenu] = useState(null);
 
   const fetchProducts = async () => {
     try {
@@ -57,8 +59,10 @@ const MyProducts = () => {
     try {
       await api.delete(`/products/${id}`);
       setProducts(products.filter(p => (p._id || p.id) !== id));
+      toast.success('Product deleted successfully!');
     } catch (err) {
       console.error('Delete failed:', err);
+      toast.error(err.response?.data?.message || 'Failed to delete product.');
     }
   };
 
@@ -76,11 +80,13 @@ const MyProducts = () => {
     e.preventDefault();
     try {
       await api.put(`/products/${editingProduct._id || editingProduct.id}`, editFormData);
+      toast.success('Product updated successfully!');
       fetchProducts();
       setShowEditModal(false);
       setEditingProduct(null);
     } catch (err) {
       console.error('Update failed:', err);
+      toast.error(err.response?.data?.message || 'Failed to update product.');
     }
   };
 
@@ -199,7 +205,7 @@ const MyProducts = () => {
              </button>
           </div>
         ) : view === 'list' ? (
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden min-h-[400px]">
             <div className="overflow-x-auto">
               <table className="w-full text-left">
                 <thead className="bg-slate-50/50 border-b border-slate-100">
@@ -241,25 +247,64 @@ const MyProducts = () => {
                       <td className="px-8 py-5">
                         <StatusBadge status={product.status || (product.isActive ? 'approved' : 'pending')} />
                       </td>
-                      <td className="px-8 py-5 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <button 
-                            onClick={() => handleEditOpen(product)}
-                            className="p-2 hover:bg-white rounded-xl transition-all text-slate-400 hover:text-seller-primary hover:shadow-sm border border-transparent hover:border-slate-100"
-                            title="Edit Product"
-                          >
-                            <Pencil size={18} />
-                          </button>
-                          <button 
-                            onClick={() => handleDelete(product._id || product.id)}
-                            className="p-2 hover:bg-red-50 rounded-xl transition-all text-slate-400 hover:text-red-600 border border-transparent hover:border-red-100"
-                            title="Delete Product"
-                          >
-                            <Trash2 size={18} />
-                          </button>
-                          <button className="p-2 text-slate-300 hover:text-slate-600 transition-colors">
-                             <MoreHorizontal size={18} />
-                          </button>
+                      <td className="px-8 py-5 text-right relative">
+                        <div className="flex items-center justify-end">
+                          <div className="relative">
+                            <button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const prodId = product._id || product.id;
+                                setActiveMenu(activeMenu === prodId ? null : prodId);
+                              }}
+                              className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-xl transition-all cursor-pointer"
+                              title="Actions"
+                            >
+                              <MoreHorizontal size={18} />
+                            </button>
+                            
+                            <AnimatePresence>
+                              {activeMenu === (product._id || product.id) && (
+                                <>
+                                  <div 
+                                    className="fixed inset-0 z-40" 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setActiveMenu(null);
+                                    }} 
+                                  />
+                                  <motion.div
+                                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                    className="absolute right-0 mt-2 w-44 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden z-50 p-1.5 text-left"
+                                  >
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setActiveMenu(null);
+                                        handleEditOpen(product);
+                                      }}
+                                      className="w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
+                                    >
+                                      <Pencil size={14} className="text-slate-400" />
+                                      Edit Product
+                                    </button>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setActiveMenu(null);
+                                        handleDelete(product._id || product.id);
+                                      }}
+                                      className="w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-bold text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                                    >
+                                      <Trash2 size={14} className="text-red-500" />
+                                      Delete Product
+                                    </button>
+                                  </motion.div>
+                                </>
+                              )}
+                            </AnimatePresence>
+                          </div>
                         </div>
                       </td>
                     </tr>

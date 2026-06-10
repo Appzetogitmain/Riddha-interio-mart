@@ -293,6 +293,46 @@ async function notifySellerProductApproval(sellerId, payload) {
   });
 }
 
+async function notifySellerAccountSuspended(sellerId, payload) {
+  if (!io) return;
+  const notif = await persistNotification({
+    recipient: sellerId,
+    recipientModel: 'Seller',
+    title: 'Account Suspended',
+    message: payload.message || 'Your seller account has been suspended.',
+    type: 'admin_alert',
+    metadata: payload
+  });
+  io.to(`seller:${sellerId}`).emit('seller:account_suspended', payload);
+  if (notif) io.to(`seller:${sellerId}`).emit('notification:new', notif);
+
+  await maybePushToUser('seller', sellerId, 'Seller', {
+    title: 'Account Suspended',
+    body: payload.message || 'Your seller account has been suspended.',
+    data: { type: 'admin_alert', sellerId: String(sellerId || '') }
+  });
+}
+
+async function notifySellerProductDeleted(sellerId, payload) {
+  if (!io) return;
+  const notif = await persistNotification({
+    recipient: sellerId,
+    recipientModel: 'Seller',
+    title: 'Product Deleted',
+    message: payload.message || 'A product was removed from your catalog.',
+    type: 'admin_alert',
+    metadata: payload
+  });
+  io.to(`seller:${sellerId}`).emit('product:deleted', payload);
+  if (notif) io.to(`seller:${sellerId}`).emit('notification:new', notif);
+
+  await maybePushToUser('seller', sellerId, 'Seller', {
+    title: 'Product Deleted',
+    body: payload.message || 'A product was removed from your catalog.',
+    data: { type: 'admin_alert', productId: String(payload.productId || '') }
+  });
+}
+
 async function notifyDeliveryAssignment(deliveryBoyId, payload) {
   if (!io) return;
   const notif = await persistNotification({
@@ -388,6 +428,24 @@ async function notifyAdminNewDelivery(payload) {
   });
 }
 
+async function notifyAdminNewSeller(payload) {
+  if (!io) return;
+  const { admins, sample: notif } = await persistForAdmins({
+    title: 'New Seller Registration',
+    message: payload.message || `${payload.fullName} has registered a new seller account.`,
+    type: 'admin_alert',
+    metadata: payload
+  });
+  io.to('role:admin').emit('seller:new_registration', payload);
+  if (notif) io.to('role:admin').emit('notification:new', notif);
+
+  await maybePushToOfflineAdmins(admins, {
+    title: 'New Seller Registration',
+    body: payload.message || `${payload.fullName} has registered a new seller account.`,
+    data: { type: 'admin_alert' }
+  });
+}
+
 async function notifyDeliveryApproval(deliveryBoyId, payload) {
   if (!io) return;
   const notif = await persistNotification({
@@ -476,10 +534,13 @@ module.exports = {
   notifyAdminNewOrder,
   notifyAdminNewProduct,
   notifySellerProductApproval,
+  notifySellerAccountSuspended,
+  notifySellerProductDeleted,
   notifyDeliveryAssignment,
   notifySellerDeliveryResponse,
   notifyAdminDeliveryResponse,
   notifyAdminNewDelivery,
+  notifyAdminNewSeller,
   notifyDeliveryApproval,
   notifyUserOrderStatus,
   notifyLowStock

@@ -7,9 +7,10 @@ const {
   removeFromCart,
   clearCart
 } = require('../controllers/cartController');
-const { protect } = require('../middleware/auth');
+const { protect, authorize } = require('../middleware/auth');
 
 router.use(protect); // All cart routes are protected
+router.use(authorize('user')); // Restrict to customer role only
 
 router.route('/')
   .get(getCart)

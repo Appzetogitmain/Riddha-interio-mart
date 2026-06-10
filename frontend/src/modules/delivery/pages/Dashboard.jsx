@@ -107,8 +107,8 @@ const Dashboard = () => {
   }, []);
 
   useEffect(() => {
-    if (earnings.codToDeposit === 0) setDepositPending(false);
-  }, [earnings.codToDeposit]);
+    if (analytics.earnings?.codToDeposit === 0) setDepositPending(false);
+  }, [analytics.earnings?.codToDeposit]);
 
   // Tick-by-tick shift timer tracking
   useEffect(() => {

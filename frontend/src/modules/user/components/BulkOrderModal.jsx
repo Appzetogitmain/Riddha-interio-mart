@@ -90,6 +90,9 @@ const BulkOrderModal = ({ isOpen, onClose }) => {
     if (!formData.name || !formData.phone || !formData.email) {
       return alert('Name, Phone, and Email are mandatory fields.');
     }
+    if (formData.phone.length < 10 || formData.phone.length > 12) {
+      return alert('Phone number must be 10–12 digits.');
+    }
 
     setStatus('sending');
     
@@ -175,23 +178,24 @@ const BulkOrderModal = ({ isOpen, onClose }) => {
                   <div className="grid grid-cols-1 gap-3">
                     <div className="relative">
                       <FiUser className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm" />
-                      <input 
-                        required 
-                        placeholder="Full Name *" 
-                        value={formData.name} 
-                        onChange={e => setFormData({...formData, name: e.target.value})} 
-                        className="w-full bg-gray-50/80 border border-gray-150 focus:border-[#189D91] focus:bg-white rounded-xl py-3 pl-11 pr-4 outline-none text-xs font-semibold text-gray-800 transition-all placeholder:text-gray-400" 
+                      <input
+                        required
+                        placeholder="Full Name *"
+                        value={formData.name}
+                        onChange={e => setFormData({...formData, name: e.target.value.replace(/[^a-zA-Z\s]/g, '')})}
+                        className="w-full bg-gray-50/80 border border-gray-150 focus:border-[#189D91] focus:bg-white rounded-xl py-3 pl-11 pr-4 outline-none text-xs font-semibold text-gray-800 transition-all placeholder:text-gray-400"
                       />
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div className="relative">
                         <FiPhone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm" />
-                        <input 
-                          required 
-                          placeholder="Phone Number *" 
-                          value={formData.phone} 
-                          onChange={e => setFormData({...formData, phone: e.target.value})} 
-                          className="w-full bg-gray-50/80 border border-gray-150 focus:border-[#189D91] focus:bg-white rounded-xl py-3 pl-11 pr-4 outline-none text-xs font-semibold text-gray-800 transition-all placeholder:text-gray-400" 
+                        <input
+                          required
+                          type="tel"
+                          placeholder="Phone Number *"
+                          value={formData.phone}
+                          onChange={e => setFormData({...formData, phone: e.target.value.replace(/\D/g, '').slice(0, 12)})}
+                          className="w-full bg-gray-50/80 border border-gray-150 focus:border-[#189D91] focus:bg-white rounded-xl py-3 pl-11 pr-4 outline-none text-xs font-semibold text-gray-800 transition-all placeholder:text-gray-400"
                         />
                       </div>
                       <div className="relative">

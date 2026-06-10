@@ -79,7 +79,7 @@ const ReferralRewardsPage = () => {
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="min-h-screen bg-gray-50/30 pb-32 px-4 md:px-12 pt-16 md:pt-24"
+      className="min-h-screen bg-gray-50/30 pb-32 px-4 md:px-12 pt-4 md:pt-10"
     >
       <div className="max-w-7xl mx-auto space-y-12">
         {/* Header */}
@@ -230,7 +230,10 @@ const ReferralRewardsPage = () => {
                   <p className="text-sm text-white/90 font-medium leading-relaxed">
                      Our support team is here to help you maximize your rewards.
                   </p>
-                  <button className="bg-white text-[#189D91] px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-black hover:text-white transition-all shadow-lg">
+                  <button
+                    onClick={() => navigate('/contact')}
+                    className="bg-white text-[#189D91] px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-black hover:text-white transition-all shadow-lg"
+                  >
                     Contact Support
                   </button>
                 </div>

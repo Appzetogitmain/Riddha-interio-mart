@@ -1,16 +1,18 @@
 const express = require('express');
-const { 
-  registerDelivery, 
-  loginDelivery, 
-  getDeliveryMe, 
+const {
+  registerDelivery,
+  loginDelivery,
+  getDeliveryMe,
   updateDeliveryProfile,
-  getAvailableDeliveryBoys, 
+  getAvailableDeliveryBoys,
   updateDeliveryStatus,
   getAllDeliveryPartners,
   updateDeliveryApprovalStatus,
   getPendingDeliveryBoys,
   updateDeliveryLocation,
-  deleteDeliveryPartner
+  deleteDeliveryPartner,
+  changeDeliveryPassword,
+  deleteDeliveryAccount
 } = require('../controllers/deliveryController');
 const { getDeliveryAnalytics } = require('../controllers/deliveryAnalyticsController');
 const { protect, authorize } = require('../middleware/auth');
@@ -34,6 +36,8 @@ router.post('/login', [
 ], loginDelivery);
 router.get('/me', protect, getDeliveryMe);
 router.put('/profile', protect, updateDeliveryProfile);
+router.put('/change-password', protect, changeDeliveryPassword);
+router.delete('/me', protect, deleteDeliveryAccount);
 router.get('/available', protect, getAvailableDeliveryBoys);
 router.put('/status', protect, updateDeliveryStatus);
 router.put('/location', protect, updateDeliveryLocation);

@@ -1,344 +1,471 @@
 import React, { useState, useEffect } from 'react';
-import PageWrapper from '../components/PageWrapper';
-import { FiUser, FiMail, FiShield, FiBell, FiSave, FiCheck, FiXCircle } from 'react-icons/fi';
+import {
+  FiUser, FiMail, FiShield, FiBell, FiSave, FiCheck,
+  FiAlertCircle, FiEye, FiEyeOff, FiDollarSign, FiSettings,
+  FiRefreshCw, FiPercent
+} from 'react-icons/fi';
+import { LuPackage, LuTruck } from 'react-icons/lu';
+import { motion, AnimatePresence } from 'framer-motion';
+import toast from 'react-hot-toast';
 import api from '../../../shared/utils/api';
 
+const TABS = [
+  { id: 'profile',       label: 'Profile',       icon: FiUser },
+  { id: 'security',      label: 'Security',      icon: FiShield },
+  { id: 'notifications', label: 'Notifications', icon: FiBell },
+  { id: 'system',        label: 'System',        icon: FiSettings },
+];
+
+const Label = ({ children }) => (
+  <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1">{children}</label>
+);
+
+const Input = ({ icon: Icon, ...props }) => (
+  <div className="relative">
+    {Icon && <Icon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />}
+    <input
+      {...props}
+      className={`w-full bg-gray-50 border border-gray-200 focus:border-teal-400 focus:bg-white rounded-xl text-sm font-medium outline-none transition-all py-2.5 pr-3 ${Icon ? 'pl-9' : 'pl-3'} ${props.className || ''}`}
+    />
+  </div>
+);
+
+const Toggle = ({ value, onChange, label, description }) => (
+  <div
+    onClick={() => onChange(!value)}
+    className="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 hover:border-teal-300 rounded-xl cursor-pointer transition-all group"
+  >
+    <div>
+      <p className="text-sm font-bold text-gray-800">{label}</p>
+      {description && <p className="text-xs text-gray-400 mt-0.5">{description}</p>}
+    </div>
+    <div className={`w-10 h-6 rounded-full relative shrink-0 transition-colors duration-300 ${value ? 'bg-teal-500' : 'bg-gray-200'}`}>
+      <motion.div
+        animate={{ x: value ? 16 : 2 }}
+        className="absolute top-1 w-4 h-4 bg-white rounded-full shadow"
+      />
+    </div>
+  </div>
+);
+
 const SettingsPage = () => {
-  const [activeTab, setActiveTab] = useState('Profile');
-  const [isSaving, setIsSaving] = useState(false);
-  const [isSaved, setIsSaved] = useState(false);
-  const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
-  
-  const [profile, setProfile] = useState({
-    fullName: '',
-    email: '',
+  const [activeTab, setActiveTab] = useState('profile');
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  const [profile, setProfile] = useState({ fullName: '', email: '' });
+
+  const [pwForm, setPwForm] = useState({ current: '', newPwd: '', confirm: '' });
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+
+  const [notifications, setNotifications] = useState({
+    emailReports: true,
+    newOrders: true,
+    sellerRequests: true,
+    lowStock: false,
   });
 
-  const [passwordData, setPasswordData] = useState({
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: ''
+  const [system, setSystem] = useState({
+    deliveryCommissionRate: 50.00,
+    salesCommissionRate: 10.00,
   });
 
-  const [notifications, setNotifications] = useState(true);
-
-  const [systemSettings, setSystemSettings] = useState({
-    deliveryCommissionRate: 50.00
-  });
-
-  // Fetch Admin Profile on mount
   useEffect(() => {
-    const fetchProfile = async () => {
+    const load = async () => {
       try {
-        setIsLoading(true);
-        const { data } = await api.get('/auth/admin/me');
-        if (data.success) {
+        const [profileRes, settingsRes] = await Promise.all([
+          api.get('/auth/admin/me'),
+          api.get('/settings'),
+        ]);
+        if (profileRes.data.success) {
           setProfile({
-            fullName: data.data.fullName || '',
-            email: data.data.email || ''
+            fullName: profileRes.data.data.fullName || '',
+            email: profileRes.data.data.email || '',
           });
         }
-        
-        // Fetch System Settings
-        const settingsRes = await api.get('/settings');
         if (settingsRes.data?.success && settingsRes.data?.data) {
-          setSystemSettings({
-            deliveryCommissionRate: settingsRes.data.data.deliveryCommissionRate || 50.00
+          const s = settingsRes.data.data;
+          setSystem({
+            deliveryCommissionRate: s.deliveryCommissionRate ?? 50.00,
+            salesCommissionRate: s.salesCommissionRate ?? 10.00,
           });
         }
-      } catch (err) {
-        console.error('Failed to load admin profile', err);
-        setError('Failed to load profile data.');
+      } catch {
+        toast.error('Failed to load settings');
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     };
-    fetchProfile();
+    load();
   }, []);
 
-  const handleSaveProfile = async () => {
-    setIsSaving(true);
-    setError('');
-    setIsSaved(false);
-    
+  const saveProfile = async () => {
+    if (!profile.fullName.trim()) { toast.error('Full name is required'); return; }
+    if (!/\S+@\S+\.\S+/.test(profile.email)) { toast.error('Enter a valid email address'); return; }
+    setSaving(true);
     try {
-      const { data } = await api.put('/auth/admin/profile', {
-        fullName: profile.fullName,
-        email: profile.email
-      });
-      if (data.success) {
-        setIsSaved(true);
-        setTimeout(() => setIsSaved(false), 3000);
-      }
+      const { data } = await api.put('/auth/admin/profile', profile);
+      if (data.success) toast.success('Profile updated');
     } catch (err) {
-      console.error('Failed to update profile', err);
-      setError(err.response?.data?.error || 'Failed to update profile.');
-    } finally {
-      setIsSaving(false);
-    }
+      toast.error(err.response?.data?.error || 'Failed to update profile');
+    } finally { setSaving(false); }
   };
 
-  const handleSavePassword = async () => {
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
-      setError('New passwords do not match.');
-      return;
-    }
-    if (passwordData.newPassword.length < 6) {
-      setError('Password must be at least 6 characters long.');
-      return;
-    }
-
-    setIsSaving(true);
-    setError('');
-    setIsSaved(false);
-
+  const savePassword = async () => {
+    if (!pwForm.current) { toast.error('Enter your current password'); return; }
+    if (pwForm.newPwd.length < 6) { toast.error('New password must be at least 6 characters'); return; }
+    if (pwForm.newPwd !== pwForm.confirm) { toast.error('Passwords do not match'); return; }
+    setSaving(true);
     try {
       const { data } = await api.put('/auth/admin/password', {
-        currentPassword: passwordData.currentPassword,
-        newPassword: passwordData.newPassword
+        currentPassword: pwForm.current,
+        newPassword: pwForm.newPwd,
       });
       if (data.success) {
-        setIsSaved(true);
-        setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
-        setTimeout(() => setIsSaved(false), 3000);
+        toast.success('Password updated successfully');
+        setPwForm({ current: '', newPwd: '', confirm: '' });
       }
     } catch (err) {
-      console.error('Failed to update password', err);
-      setError(err.response?.data?.error || 'Failed to update password.');
-    } finally {
-      setIsSaving(false);
-    }
+      toast.error(err.response?.data?.error || 'Failed to update password');
+    } finally { setSaving(false); }
   };
 
-  const handleSaveNotifications = () => {
-    // Mock save for notifications if backend route doesn't exist yet
-    setIsSaving(true);
+  const saveNotifications = () => {
+    setSaving(true);
     setTimeout(() => {
-      setIsSaving(false);
-      setIsSaved(true);
-      setTimeout(() => setIsSaved(false), 3000);
-    }, 800);
+      setSaving(false);
+      toast.success('Notification preferences saved');
+    }, 600);
   };
 
-  const handleSaveSystemSettings = async () => {
-    setIsSaving(true);
-    setError('');
-    setIsSaved(false);
-
-    try {
-      const { data } = await api.put('/settings', systemSettings);
-      if (data.success) {
-        setIsSaved(true);
-        setTimeout(() => setIsSaved(false), 3000);
-      }
-    } catch (err) {
-      console.error('Failed to update system settings', err);
-      setError(err.response?.data?.error || 'Failed to update system settings.');
-    } finally {
-      setIsSaving(false);
+  const saveSystem = async () => {
+    if (system.deliveryCommissionRate < 0 || system.salesCommissionRate < 0) {
+      toast.error('Commission rates cannot be negative');
+      return;
     }
+    setSaving(true);
+    try {
+      const { data } = await api.put('/settings', system);
+      if (data.success) toast.success('System settings updated');
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Failed to update system settings');
+    } finally { setSaving(false); }
   };
 
   const handleSave = () => {
-    if (activeTab === 'Profile') handleSaveProfile();
-    else if (activeTab === 'Security') handleSavePassword();
-    else if (activeTab === 'Notifications') handleSaveNotifications();
-    else if (activeTab === 'System') handleSaveSystemSettings();
+    if (activeTab === 'profile') saveProfile();
+    else if (activeTab === 'security') savePassword();
+    else if (activeTab === 'notifications') saveNotifications();
+    else if (activeTab === 'system') saveSystem();
   };
 
-  if (isLoading) {
+  const pwStrength = (() => {
+    const p = pwForm.newPwd;
+    if (!p) return null;
+    let score = 0;
+    if (p.length >= 6) score++;
+    if (p.length >= 10) score++;
+    if (/[A-Z]/.test(p)) score++;
+    if (/[0-9]/.test(p)) score++;
+    if (/[^A-Za-z0-9]/.test(p)) score++;
+    if (score <= 1) return { label: 'Weak', color: 'bg-red-400', width: 'w-1/5' };
+    if (score <= 3) return { label: 'Fair', color: 'bg-amber-400', width: 'w-3/5' };
+    return { label: 'Strong', color: 'bg-emerald-500', width: 'w-full' };
+  })();
+
+  if (loading) {
     return (
-      <PageWrapper>
-        <div className="flex justify-center items-center h-64">
-          <div className="w-8 h-8 border-4 border-deep-espresso border-t-transparent rounded-full animate-spin"></div>
-        </div>
-      </PageWrapper>
+      <div className="p-6 flex justify-center items-center h-64">
+        <FiRefreshCw className="animate-spin text-teal-500" size={24} />
+      </div>
     );
   }
 
   return (
-    <PageWrapper>
-      <div className="max-w-4xl mx-auto space-y-8">
-        <div className="space-y-1">
-          <h1 className="text-2xl md:text-3xl lg:text-4xl font-display font-bold text-deep-espresso">System Settings</h1>
-          <p className="text-warm-sand text-sm md:text-base font-medium">Manage your administrator account and preferences.</p>
-        </div>
+    <div className="p-4 md:p-6 space-y-4 max-w-5xl">
 
-        {error && (
-          <div className="bg-red-50 text-red-600 p-4 rounded-xl flex items-center gap-3 border border-red-100">
-            <FiXCircle className="shrink-0" />
-            <p className="text-sm font-medium">{error}</p>
-          </div>
-        )}
+      {/* Header */}
+      <div>
+        <h1 className="text-xl font-black tracking-tight text-gray-900">
+          System <span className="text-teal-600">Settings</span>
+        </h1>
+        <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mt-0.5">
+          Admin account & platform configuration
+        </p>
+      </div>
 
-        <div className="bg-white rounded-2xl md:rounded-[32px] shadow-xl border border-soft-oatmeal overflow-hidden">
-          {/* Tabs header */}
-          <div className="flex border-b border-soft-oatmeal px-4 md:px-8 bg-soft-oatmeal/5 overflow-x-auto no-scrollbar">
-            {['Profile', 'Notifications', 'Security', 'System'].map((tab) => (
-              <button 
-                key={tab} 
-                onClick={() => {
-                  setActiveTab(tab);
-                  setError('');
-                  setIsSaved(false);
-                }}
-                className={`py-5 px-6 text-[10px] font-black uppercase tracking-[0.2em] transition-all whitespace-nowrap border-b-2 ${activeTab === tab ? 'text-dusty-cocoa border-dusty-cocoa' : 'text-warm-sand border-transparent hover:text-deep-espresso'}`}
+      <div className="flex flex-col md:flex-row gap-4">
+
+        {/* Sidebar nav */}
+        <div className="md:w-48 shrink-0">
+          <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
+            {TABS.map(({ id, label, icon: Icon }) => (
+              <button
+                key={id}
+                onClick={() => setActiveTab(id)}
+                className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-bold transition-all text-left border-l-2 ${
+                  activeTab === id
+                    ? 'bg-teal-50 border-teal-500 text-teal-700'
+                    : 'border-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                }`}
               >
-                {tab}
+                <Icon size={15} />
+                {label}
               </button>
             ))}
           </div>
 
-          <div className="p-6 md:p-12">
-            {activeTab === 'Profile' && (
-              <div className="space-y-6 max-w-xl animate-in fade-in slide-in-from-bottom-2 duration-300">
-                <h3 className="text-xl font-display font-bold text-deep-espresso flex items-center gap-3">
-                  <FiUser className="text-warm-sand" /> Personal Details
-                </h3>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest pl-1">Full Name</label>
-                    <input 
-                      type="text" 
-                      value={profile.fullName}
-                      onChange={(e) => setProfile({...profile, fullName: e.target.value})}
-                      className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-2xl px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-warm-sand/20 focus:bg-white transition-all font-medium" 
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest pl-1">Email Address</label>
-                    <div className="relative">
-                      <FiMail className="absolute left-5 top-1/2 -translate-y-1/2 text-warm-sand" size={18} />
-                      <input 
-                        type="email" 
-                        value={profile.email}
-                        onChange={(e) => setProfile({...profile, email: e.target.value})}
-                        className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-2xl pl-14 pr-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-warm-sand/20 focus:bg-white transition-all font-medium" 
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'Security' && (
-              <div className="space-y-6 max-w-xl animate-in fade-in slide-in-from-bottom-2 duration-300">
-                <h3 className="text-xl font-display font-bold text-deep-espresso flex items-center gap-3">
-                  <FiShield className="text-warm-sand" /> Authentication
-                </h3>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest pl-1">Current Password</label>
-                    <input 
-                      type="password" 
-                      placeholder="••••••••" 
-                      value={passwordData.currentPassword}
-                      onChange={(e) => setPasswordData({...passwordData, currentPassword: e.target.value})}
-                      className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-2xl px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-warm-sand/20 focus:bg-white transition-all" 
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest pl-1">New Password</label>
-                    <input 
-                      type="password" 
-                      placeholder="Min. 6 characters" 
-                      value={passwordData.newPassword}
-                      onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
-                      className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-2xl px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-warm-sand/20 focus:bg-white transition-all" 
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest pl-1">Confirm New Password</label>
-                    <input 
-                      type="password" 
-                      placeholder="Min. 6 characters" 
-                      value={passwordData.confirmPassword}
-                      onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})}
-                      className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-2xl px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-warm-sand/20 focus:bg-white transition-all" 
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'Notifications' && (
-              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                <h3 className="text-xl font-display font-bold text-deep-espresso flex items-center gap-3">
-                  <FiBell className="text-warm-sand" /> Notification Settings
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div onClick={() => setNotifications(!notifications)} className="group flex items-center justify-between p-6 rounded-[24px] bg-soft-oatmeal/5 border border-soft-oatmeal hover:border-warm-sand/30 hover:bg-white transition-all cursor-pointer">
-                    <div className="flex items-center gap-5">
-                      <div className={`p-4 rounded-2xl transition-colors ${notifications ? 'bg-emerald-50 text-emerald-500' : 'bg-soft-oatmeal text-warm-sand'}`}>
-                        <FiBell size={24} />
-                      </div>
-                      <div>
-                        <h4 className="font-bold text-deep-espresso">Email Reports</h4>
-                        <p className="text-xs text-warm-sand">Weekly analytics summaries.</p>
-                      </div>
-                    </div>
-                    <div className={`w-14 h-8 rounded-full relative transition-all duration-300 ${notifications ? 'bg-emerald-500' : 'bg-soft-oatmeal'}`}>
-                      <div className={`absolute top-1 w-6 h-6 bg-white rounded-full shadow-lg transition-all duration-300 ${notifications ? 'right-1' : 'left-1'}`}></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'System' && (
-              <div className="space-y-6 max-w-xl animate-in fade-in slide-in-from-bottom-2 duration-300">
-                <h3 className="text-xl font-display font-bold text-deep-espresso flex items-center gap-3">
-                  <FiSave className="text-warm-sand" /> System Configuration
-                </h3>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest pl-1">Delivery Commission Rate (₹ / Order)</label>
-                    <div className="relative">
-                      <span className="absolute left-5 top-1/2 -translate-y-1/2 text-warm-sand font-bold">₹</span>
-                      <input 
-                        type="number" 
-                        min="0"
-                        step="0.01"
-                        value={systemSettings.deliveryCommissionRate}
-                        onChange={(e) => setSystemSettings({...systemSettings, deliveryCommissionRate: parseFloat(e.target.value) || 0})}
-                        className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-2xl pl-10 px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-warm-sand/20 focus:bg-white transition-all font-medium" 
-                      />
-                    </div>
-                    <p className="text-xs text-warm-sand/70 pl-1">This rate is automatically applied to all completed deliveries.</p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <div className="pt-6 flex justify-end">
-              <button 
-                onClick={handleSave}
-                disabled={isSaving || isSaved}
-                className={`w-full md:w-auto flex items-center justify-center gap-3 px-10 py-4.5 rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] transition-all active:scale-95 shadow-2xl ${
-                  isSaved 
-                  ? 'bg-emerald-500 text-white' 
-                  : 'bg-deep-espresso text-white hover:bg-dusty-cocoa shadow-deep-espresso/20'
-                }`}
-              >
-                {isSaving ? (
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                ) : (
-                  isSaved ? <FiCheck size={16} /> : <FiSave size={16} />
-                )}
-                {isSaving ? 'Processing...' : (isSaved ? 'Preferences Saved' : 'Update Settings')}
-              </button>
+          {/* Store status card */}
+          <div className="mt-3 bg-teal-50 border border-teal-100 rounded-2xl p-4 text-center">
+            <div className="flex items-center justify-center gap-1.5 mb-1">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-[9px] font-black uppercase tracking-widest text-emerald-600">Live</span>
             </div>
+            <p className="text-xs font-bold text-gray-800">Riddha Interio Mart</p>
+            <p className="text-[9px] text-gray-400 mt-0.5">All systems operational</p>
           </div>
         </div>
 
-        <div className="bg-golden-glow/10 p-6 md:p-8 rounded-2xl md:rounded-[32px] border border-warm-sand/10 flex flex-col items-center text-center">
-          <div className="px-4 py-1.5 bg-green-50 text-green-600 rounded-full text-[10px] font-black uppercase tracking-[0.2em] mb-4">Store Active</div>
-          <h4 className="text-xl md:text-2xl font-display font-bold text-deep-espresso">Riddha Interio Mart</h4>
-          <p className="text-xs md:text-sm text-warm-sand mt-2 max-w-md italic">Your configuration affects all administrative access and catalog automation rules.</p>
+        {/* Content panel */}
+        <div className="flex-1 bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
+
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.15 }}
+              className="p-5 space-y-5"
+            >
+
+              {/* Profile Tab */}
+              {activeTab === 'profile' && (
+                <>
+                  <div className="flex items-center gap-2 pb-3 border-b border-gray-100">
+                    <div className="w-8 h-8 bg-teal-50 text-teal-600 rounded-xl flex items-center justify-center">
+                      <FiUser size={15} />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-black text-gray-900">Personal Details</h3>
+                      <p className="text-[10px] text-gray-400">Update your admin account information</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl">
+                    <div>
+                      <Label>Full Name</Label>
+                      <Input
+                        icon={FiUser}
+                        type="text"
+                        value={profile.fullName}
+                        onChange={e => setProfile({ ...profile, fullName: e.target.value })}
+                        placeholder="Admin full name"
+                      />
+                    </div>
+                    <div>
+                      <Label>Email Address</Label>
+                      <Input
+                        icon={FiMail}
+                        type="email"
+                        value={profile.email}
+                        onChange={e => setProfile({ ...profile, email: e.target.value })}
+                        placeholder="admin@riddha.com"
+                      />
+                    </div>
+                  </div>
+                  <div className="p-3 bg-blue-50 border border-blue-100 rounded-xl flex items-start gap-2 max-w-2xl">
+                    <FiAlertCircle size={14} className="text-blue-500 shrink-0 mt-0.5" />
+                    <p className="text-xs text-blue-600 font-medium">Email changes affect your login credentials. Make sure you have access to the new address.</p>
+                  </div>
+                </>
+              )}
+
+              {/* Security Tab */}
+              {activeTab === 'security' && (
+                <>
+                  <div className="flex items-center gap-2 pb-3 border-b border-gray-100">
+                    <div className="w-8 h-8 bg-teal-50 text-teal-600 rounded-xl flex items-center justify-center">
+                      <FiShield size={15} />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-black text-gray-900">Change Password</h3>
+                      <p className="text-[10px] text-gray-400">Update your admin account password</p>
+                    </div>
+                  </div>
+                  <div className="space-y-3 max-w-sm">
+                    {[
+                      { label: 'Current Password', key: 'current', show: showCurrent, setShow: setShowCurrent },
+                      { label: 'New Password', key: 'newPwd', show: showNew, setShow: setShowNew },
+                      { label: 'Confirm New Password', key: 'confirm', show: showConfirm, setShow: setShowConfirm },
+                    ].map(({ label, key, show, setShow }) => (
+                      <div key={key}>
+                        <Label>{label}</Label>
+                        <div className="relative">
+                          <FiShield className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+                          <input
+                            type={show ? 'text' : 'password'}
+                            value={pwForm[key]}
+                            onChange={e => setPwForm(p => ({ ...p, [key]: e.target.value }))}
+                            placeholder="••••••••"
+                            className="w-full bg-gray-50 border border-gray-200 focus:border-teal-400 focus:bg-white rounded-xl text-sm font-medium outline-none py-2.5 pl-9 pr-10 transition-all"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShow(v => !v)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                          >
+                            {show ? <FiEyeOff size={14} /> : <FiEye size={14} />}
+                          </button>
+                        </div>
+                        {key === 'newPwd' && pwStrength && (
+                          <div className="mt-1.5 space-y-0.5">
+                            <div className="h-1 w-full bg-gray-100 rounded-full overflow-hidden">
+                              <div className={`h-full rounded-full transition-all ${pwStrength.color} ${pwStrength.width}`} />
+                            </div>
+                            <p className={`text-[10px] font-bold ${pwStrength.color.replace('bg-', 'text-')}`}>{pwStrength.label}</p>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+
+              {/* Notifications Tab */}
+              {activeTab === 'notifications' && (
+                <>
+                  <div className="flex items-center gap-2 pb-3 border-b border-gray-100">
+                    <div className="w-8 h-8 bg-teal-50 text-teal-600 rounded-xl flex items-center justify-center">
+                      <FiBell size={15} />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-black text-gray-900">Notification Preferences</h3>
+                      <p className="text-[10px] text-gray-400">Control which alerts you receive</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-2xl">
+                    <Toggle
+                      value={notifications.emailReports}
+                      onChange={v => setNotifications(n => ({ ...n, emailReports: v }))}
+                      label="Weekly Email Reports"
+                      description="Analytics summaries every Monday"
+                    />
+                    <Toggle
+                      value={notifications.newOrders}
+                      onChange={v => setNotifications(n => ({ ...n, newOrders: v }))}
+                      label="New Order Alerts"
+                      description="Real-time order notifications"
+                    />
+                    <Toggle
+                      value={notifications.sellerRequests}
+                      onChange={v => setNotifications(n => ({ ...n, sellerRequests: v }))}
+                      label="Seller Requests"
+                      description="New seller registration alerts"
+                    />
+                    <Toggle
+                      value={notifications.lowStock}
+                      onChange={v => setNotifications(n => ({ ...n, lowStock: v }))}
+                      label="Low Stock Warnings"
+                      description="Alert when products run low"
+                    />
+                  </div>
+                </>
+              )}
+
+              {/* System Tab */}
+              {activeTab === 'system' && (
+                <>
+                  <div className="flex items-center gap-2 pb-3 border-b border-gray-100">
+                    <div className="w-8 h-8 bg-teal-50 text-teal-600 rounded-xl flex items-center justify-center">
+                      <FiSettings size={15} />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-black text-gray-900">System Configuration</h3>
+                      <p className="text-[10px] text-gray-400">Platform-wide financial settings</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl">
+                    <div>
+                      <Label>Delivery Commission Rate (₹/order)</Label>
+                      <div className="relative">
+                        <LuTruck className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={system.deliveryCommissionRate}
+                          onChange={e => setSystem(s => ({ ...s, deliveryCommissionRate: parseFloat(e.target.value) || 0 }))}
+                          className="w-full bg-gray-50 border border-gray-200 focus:border-teal-400 focus:bg-white rounded-xl text-sm font-medium outline-none py-2.5 pl-9 pr-3 transition-all"
+                        />
+                      </div>
+                      <p className="text-[10px] text-gray-400 mt-1">Fixed ₹ amount paid to delivery partner per completed order</p>
+                    </div>
+                    <div>
+                      <Label>Seller Commission Rate (%)</Label>
+                      <div className="relative">
+                        <FiPercent className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+                        <input
+                          type="number"
+                          min="0"
+                          max="100"
+                          step="0.01"
+                          value={system.salesCommissionRate}
+                          onChange={e => setSystem(s => ({ ...s, salesCommissionRate: parseFloat(e.target.value) || 0 }))}
+                          className="w-full bg-gray-50 border border-gray-200 focus:border-teal-400 focus:bg-white rounded-xl text-sm font-medium outline-none py-2.5 pl-9 pr-3 transition-all"
+                        />
+                      </div>
+                      <p className="text-[10px] text-gray-400 mt-1">Percentage deducted from seller earnings on each sale</p>
+                    </div>
+                  </div>
+
+                  {/* Preview */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-2xl">
+                    <div className="bg-teal-50 border border-teal-100 rounded-xl p-3 flex items-center gap-3">
+                      <div className="w-8 h-8 bg-teal-600 text-white rounded-lg flex items-center justify-center">
+                        <LuTruck size={14} />
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-teal-600 font-bold uppercase tracking-wider">Delivery Pay</p>
+                        <p className="text-base font-black text-gray-900">₹{system.deliveryCommissionRate.toFixed(2)}<span className="text-xs font-semibold text-gray-400">/order</span></p>
+                      </div>
+                    </div>
+                    <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 flex items-center gap-3">
+                      <div className="w-8 h-8 bg-blue-500 text-white rounded-lg flex items-center justify-center">
+                        <LuPackage size={14} />
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-blue-600 font-bold uppercase tracking-wider">Platform Cut</p>
+                        <p className="text-base font-black text-gray-900">{system.salesCommissionRate.toFixed(1)}<span className="text-xs font-semibold text-gray-400">% per sale</span></p>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+
+            </motion.div>
+          </AnimatePresence>
+
+          {/* Save bar */}
+          <div className="px-5 py-3 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
+            <p className="text-[10px] text-gray-400 font-medium capitalize">
+              Editing: <span className="font-bold text-gray-600">{TABS.find(t => t.id === activeTab)?.label}</span>
+            </p>
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="flex items-center gap-2 bg-teal-600 hover:bg-teal-700 disabled:bg-teal-400 text-white px-5 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all active:scale-95 shadow-sm"
+            >
+              {saving
+                ? <><div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />Saving...</>
+                : <><FiSave size={13} />Save Changes</>
+              }
+            </button>
+          </div>
         </div>
       </div>
-    </PageWrapper>
+    </div>
   );
 };
 

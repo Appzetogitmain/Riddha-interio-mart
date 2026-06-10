@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import PageWrapper from '../components/PageWrapper';
-import { LuBell, LuUser, LuShieldCheck, LuGlobe, LuMoon, LuSun, LuChevronRight, LuMapPin, LuPhone, LuMail } from 'react-icons/lu';
+import { LuBell, LuUser, LuShieldCheck, LuGlobe, LuChevronRight, LuMapPin, LuPhone, LuMail } from 'react-icons/lu';
 import { motion } from 'framer-motion';
 
 const Settings = () => {
@@ -11,7 +11,6 @@ const Settings = () => {
     emailNotifications: true,
   });
 
-  const [theme, setTheme] = useState('light');
   const [language, setLanguage] = useState('en');
 
   const toggleNotification = (key) => {
@@ -43,7 +42,6 @@ const Settings = () => {
       icon: LuGlobe,
       items: [
         { label: 'Language', description: 'English', value: language },
-        { label: 'Theme', description: theme === 'light' ? 'Light Mode' : 'Dark Mode', value: theme },
       ]
     },
     {
@@ -104,14 +102,6 @@ const Settings = () => {
                     ) : item.value ? (
                       <div className="flex items-center gap-2 text-dusty-cocoa">
                         <span className="text-sm font-medium">{item.description}</span>
-                        {item.label === 'Theme' && (
-                          <button
-                            onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
-                            className="w-8 h-8 bg-soft-oatmeal rounded-lg flex items-center justify-center hover:bg-warm-sand hover:text-white transition-colors"
-                          >
-                            {theme === 'light' ? <LuMoon size={16} /> : <LuSun size={16} />}
-                          </button>
-                        )}
                       </div>
                     ) : (
                       <LuChevronRight size={20} className="text-dusty-cocoa" />

@@ -171,7 +171,7 @@ const ReviewFeedbackModal = ({ isOpen, onClose, orderId, product, initialData = 
                   >
                     {uploading ? <FiLoader className="animate-spin" /> : <FiCamera size={20} />}
                   </button>
-                  <input type="file" multiple hidden ref={fileInputRef} onChange={handleImageUpload} accept="image/*" />
+                  <input type="file" multiple ref={fileInputRef} onChange={handleImageUpload} accept="image/*" className="absolute opacity-0 w-0 h-0 pointer-events-none" />
                 </div>
               </div>
 

@@ -11,10 +11,10 @@ const AddressPage = () => {
   const [formData, setFormData] = useState({
     fullName: '',
     mobileNumber: '',
-    pincode: '560001',
+    pincode: '',
     fullAddress: '',
     landmark: '',
-    city: 'Bengaluru',
+    city: '',
     state: 'Karnataka',
     addressType: 'Home' // Home, Work, Other
   });

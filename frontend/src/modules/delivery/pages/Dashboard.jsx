@@ -35,9 +35,11 @@ import {
 import { motion } from 'framer-motion';
 import api from '../../../shared/utils/api';
 import { useUser } from '../../user/data/UserContext';
+import { useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
   const { user, setUser } = useUser();
+  const navigate = useNavigate();
   const [updating, setUpdating] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activeShiftTime, setActiveShiftTime] = useState('Offline');
@@ -50,6 +52,11 @@ const Dashboard = () => {
   const [depositNotes, setDepositNotes] = useState('');
   const [submittingDeposit, setSubmittingDeposit] = useState(false);
   const [depositSuccess, setDepositSuccess] = useState(false);
+  const [depositPending, setDepositPending] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('All');
+  const [showFilterMenu, setShowFilterMenu] = useState(false);
   
   const [analytics, setAnalytics] = useState({
     stats: {
@@ -98,6 +105,10 @@ const Dashboard = () => {
   useEffect(() => {
     fetchDashboardData();
   }, []);
+
+  useEffect(() => {
+    if (earnings.codToDeposit === 0) setDepositPending(false);
+  }, [earnings.codToDeposit]);
 
   // Tick-by-tick shift timer tracking
   useEffect(() => {
@@ -162,6 +173,7 @@ const Dashboard = () => {
       });
       if (response.data.success) {
         setDepositSuccess(true);
+        setDepositPending(true);
         fetchDashboardData();
         setTimeout(() => {
           setShowDepositModal(false);
@@ -180,6 +192,15 @@ const Dashboard = () => {
   };
 
   const { stats, earnings, performance, recentDeliveries, charts } = analytics;
+
+  const statusOptions = ['All', 'Delivered', 'Processing', 'Accepted', 'Rejected'];
+  const filteredDeliveries = recentDeliveries.filter(order => {
+    const matchesSearch = !searchQuery ||
+      order.customerName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      order.id?.toString().toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = statusFilter === 'All' || order.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
   const performanceData = charts?.performanceData || [];
   const revenueData = charts?.revenueData || [];
 
@@ -229,19 +250,20 @@ const Dashboard = () => {
         {/* Premium KPI Cards Grid */}
         <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
            {[
-             { label: 'Total Orders', value: stats.totalAssigned, icon: LuPackage, trend: 'Lifetime', color: 'text-blue-600', bg: 'bg-blue-50' },
-             { label: 'Active Routes', value: stats.pendingDeliveries, icon: LuNavigation, trend: 'Active', color: 'text-amber-600', bg: 'bg-amber-50' },
-             { label: 'Success Rate', value: `${performance.successRate}%`, icon: LuCheck, trend: 'Target > 95%', color: 'text-emerald-600', bg: 'bg-emerald-50' },
-             { label: 'Avg Delivery Time', value: `${performance.avgDeliveryTimeHours || 0} hrs`, icon: LuClock, trend: 'Target < 1.5h', color: 'text-[#2A458A]', bg: 'bg-[#2A458A]/10' },
-             { label: 'Total Earnings', value: `₹${earnings.totalEarnings.toLocaleString()}`, icon: LuWallet, trend: 'Ledger Balance', color: 'text-slate-900', bg: 'bg-slate-100' },
-             { label: 'Pending COD', value: `₹${earnings.codToDeposit.toLocaleString()}`, icon: LuTriangleAlert, trend: 'To Deposit', color: 'text-rose-600', bg: 'bg-rose-50' },
+             { label: 'Total Orders', value: stats.totalAssigned, icon: LuPackage, trend: 'Lifetime', color: 'text-blue-600', bg: 'bg-blue-50', link: '/delivery/orders' },
+             { label: 'Active Routes', value: stats.pendingDeliveries, icon: LuNavigation, trend: 'Active', color: 'text-amber-600', bg: 'bg-amber-50', link: '/delivery/orders?filter=available' },
+             { label: 'Success Rate', value: `${performance.successRate}%`, icon: LuCheck, trend: 'Target > 95%', color: 'text-emerald-600', bg: 'bg-emerald-50', link: '/delivery/delivery-history' },
+             { label: 'Avg Delivery Time', value: `${performance.avgDeliveryTimeHours || 0} hrs`, icon: LuClock, trend: 'Target < 1.5h', color: 'text-[#2A458A]', bg: 'bg-[#2A458A]/10', link: '/delivery/delivery-history' },
+             { label: 'Total Earnings', value: `₹${earnings.totalEarnings.toLocaleString()}`, icon: LuWallet, trend: 'Ledger Balance', color: 'text-slate-900', bg: 'bg-slate-100', link: '/delivery/earnings' },
+             { label: 'Pending COD', value: `₹${earnings.codToDeposit.toLocaleString()}`, icon: LuTriangleAlert, trend: 'To Deposit', color: 'text-rose-600', bg: 'bg-rose-50', link: '/delivery/wallet' },
            ].map((card, i) => (
-             <motion.div 
+             <motion.div
                key={i}
                initial={{ opacity: 0, y: 10 }}
                animate={{ opacity: 1, y: 0 }}
                transition={{ delay: i * 0.05 }}
-               className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all group"
+               onClick={() => navigate(card.link)}
+               className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all group cursor-pointer"
              >
                  <div className="flex justify-between items-start mb-3">
                     <div className={`w-8 h-8 rounded-xl ${card.bg} ${card.color} flex items-center justify-center transition-transform group-hover:scale-105`}>
@@ -342,13 +364,43 @@ const Dashboard = () => {
                  <div>
                     <h3 className="text-slate-900 font-bold text-base">Recent Deliveries</h3>
                  </div>
-                 <div className="flex items-center gap-2">
-                    <button className="p-2 bg-white border border-slate-200 text-slate-500 hover:text-[#2A458A] hover:border-[#2A458A]/30 rounded-lg transition-all shadow-sm"><LuSearch size={16} /></button>
-                    <button className="p-2 bg-white border border-slate-200 text-slate-500 hover:text-[#2A458A] hover:border-[#2A458A]/30 rounded-lg transition-all shadow-sm"><LuFilter size={16} /></button>
+                 <div className="flex items-center gap-2 relative">
+                    <button
+                      onClick={() => { setShowSearch(v => !v); setSearchQuery(''); }}
+                      className={`p-2 border rounded-lg transition-all shadow-sm ${showSearch ? 'bg-[#2A458A] border-[#2A458A] text-white' : 'bg-white border-slate-200 text-slate-500 hover:text-[#2A458A] hover:border-[#2A458A]/30'}`}
+                    ><LuSearch size={16} /></button>
+                    <button
+                      onClick={() => setShowFilterMenu(v => !v)}
+                      className={`p-2 border rounded-lg transition-all shadow-sm ${statusFilter !== 'All' || showFilterMenu ? 'bg-[#2A458A] border-[#2A458A] text-white' : 'bg-white border-slate-200 text-slate-500 hover:text-[#2A458A] hover:border-[#2A458A]/30'}`}
+                    ><LuFilter size={16} /></button>
+                    {showFilterMenu && (
+                      <div className="absolute right-0 top-10 z-20 bg-white border border-slate-200 rounded-xl shadow-lg py-1 min-w-[130px]">
+                        {statusOptions.map(s => (
+                          <button
+                            key={s}
+                            onClick={() => { setStatusFilter(s); setShowFilterMenu(false); }}
+                            className={`w-full text-left px-4 py-2 text-xs font-semibold transition-colors ${statusFilter === s ? 'bg-[#2A458A]/10 text-[#2A458A]' : 'text-slate-700 hover:bg-slate-50'}`}
+                          >{s}</button>
+                        ))}
+                      </div>
+                    )}
                  </div>
               </div>
 
-              <div className="overflow-x-auto">
+              {showSearch && (
+              <div className="px-5 pb-3 border-b border-slate-100">
+                <input
+                  autoFocus
+                  type="text"
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  placeholder="Search by customer name or order ID..."
+                  className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#2A458A]/30 bg-slate-50"
+                />
+              </div>
+           )}
+
+           <div className="overflow-x-auto">
                  <table className="w-full text-left border-collapse">
                     <thead>
                        <tr className="bg-slate-50 text-slate-500">
@@ -365,17 +417,19 @@ const Dashboard = () => {
                                 <td colSpan={4} className="px-5 py-4 h-12 bg-slate-50/30"></td>
                              </tr>
                           ))
-                       ) : recentDeliveries.length === 0 ? (
+                       ) : filteredDeliveries.length === 0 ? (
                           <tr>
                              <td colSpan={4} className="px-5 py-12 text-center">
                                 <div className="flex flex-col items-center gap-2">
                                    <LuActivity className="text-slate-200" size={32} />
-                                   <p className="text-xs font-semibold text-slate-500">No Recent Deliveries</p>
+                                   <p className="text-xs font-semibold text-slate-500">
+                                     {recentDeliveries.length === 0 ? 'No Recent Deliveries' : 'No results found'}
+                                   </p>
                                 </div>
                              </td>
                           </tr>
                        ) : (
-                          recentDeliveries.slice(0, 4).map((order) => (
+                          filteredDeliveries.slice(0, 10).map((order) => (
                              <tr key={order.id} className="hover:bg-slate-50 transition-colors group">
                                 <td className="px-5 py-3">
                                    <span className="text-xs font-bold text-slate-900">#{order.id}</span>
@@ -424,12 +478,16 @@ const Dashboard = () => {
                     </div>
                  </div>
 
-                 <button 
-                   onClick={() => setShowDepositModal(true)}
-                   disabled={earnings.codToDeposit <= 0}
-                   className="w-full relative z-10 bg-white text-[#189D91] py-2.5 rounded-xl font-bold text-xs hover:bg-slate-50 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                 <button
+                   onClick={() => !depositPending && setShowDepositModal(true)}
+                   disabled={earnings.codToDeposit <= 0 || depositPending}
+                   className={`w-full relative z-10 py-2.5 rounded-xl font-bold text-xs transition-all shadow-sm ${
+                     depositPending
+                       ? 'bg-white/50 text-[#189D91]/70 cursor-not-allowed'
+                       : 'bg-white text-[#189D91] hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed'
+                   }`}
                  >
-                    Pay Now
+                   {depositPending ? 'Pending Approval...' : 'Pay Now'}
                  </button>
               </div>
            </div>

@@ -149,8 +149,8 @@ const Orders = () => {
           </div>
           
           <div className="flex flex-wrap items-center gap-4">
-            <button 
-              onClick={fetchOrders}
+            <button
+              onClick={() => fetchOrders(false)}
               className="p-3 bg-white border border-slate-200 rounded-xl text-slate-500 hover:text-[#189D91] transition-all shadow-sm"
             >
               <LuRefreshCw size={20} className={loading ? 'animate-spin' : ''} />
@@ -252,8 +252,8 @@ const Orders = () => {
                   <p className="text-sm text-slate-500 font-medium mt-2 leading-relaxed">
                     There are currently no active deliveries in this section. Refresh to check for new ones.
                   </p>
-                  <button 
-                    onClick={fetchOrders}
+                  <button
+                    onClick={() => fetchOrders(false)}
                     className="mt-6 px-6 py-3 bg-white border border-slate-200 text-slate-700 rounded-xl font-bold text-sm hover:bg-slate-50 transition-all shadow-sm"
                   >
                     Refresh Orders

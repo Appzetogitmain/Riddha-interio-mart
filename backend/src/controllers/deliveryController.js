@@ -340,6 +340,44 @@ exports.updateDeliveryLocation = async (req, res, next) => {
   }
 };
 
+// @desc    Change own password
+// @route   PUT /api/delivery/change-password
+// @access  Private/Delivery
+exports.changeDeliveryPassword = async (req, res, next) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ success: false, error: 'Please provide current and new password' });
+    }
+    if (newPassword.length < 6) {
+      return res.status(400).json({ success: false, error: 'New password must be at least 6 characters' });
+    }
+    const delivery = await Delivery.findById(req.user.id).select('+password');
+    if (!delivery) return res.status(404).json({ success: false, error: 'Partner not found' });
+    if (!(await delivery.matchPassword(currentPassword))) {
+      return res.status(401).json({ success: false, error: 'Current password is incorrect' });
+    }
+    delivery.password = newPassword;
+    await delivery.save();
+    res.status(200).json({ success: true, message: 'Password updated successfully' });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// @desc    Delete own delivery account
+// @route   DELETE /api/delivery/me
+// @access  Private/Delivery
+exports.deleteDeliveryAccount = async (req, res, next) => {
+  try {
+    await Order.updateMany({ deliveryBoy: req.user.id }, { $unset: { deliveryBoy: '' } });
+    await Delivery.findByIdAndDelete(req.user.id);
+    res.status(200).json({ success: true, message: 'Account deleted successfully' });
+  } catch (err) {
+    next(err);
+  }
+};
+
 // @desc    Permanently delete a delivery partner (admin only)
 // @route   DELETE /api/delivery/:id
 // @access  Private/Admin

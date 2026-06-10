@@ -1,15 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { 
-  FiStar, 
-  FiMessageSquare, 
-  FiTrash2, 
-  FiSearch, 
-  FiFilter, 
-  FiDownload, 
-  FiCheckCircle, 
-  FiEye, 
-  FiEyeOff 
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  FiStar, FiMessageSquare, FiTrash2, FiSearch, FiDownload,
+  FiCheckCircle, FiEye, FiEyeOff, FiChevronDown, FiChevronUp,
+  FiRefreshCw, FiFlag
 } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import api from '../../../shared/utils/api';
@@ -18,58 +12,41 @@ const FeedbackManagement = () => {
   const [reviews, setReviews] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRating, setFilterRating] = useState('all');
+  const [filterStatus, setFilterStatus] = useState('all');
   const [loading, setLoading] = useState(true);
+  const [expandedId, setExpandedId] = useState(null);
+  const [lightboxImg, setLightboxImg] = useState(null);
 
   const fetchReviews = async () => {
     try {
       setLoading(true);
       const { data } = await api.get('/reviews/admin?limit=100');
-      if (data.success) {
-        setReviews(data.data);
-      }
+      if (data.success) setReviews(data.data);
     } catch (err) {
-      console.error('Failed to fetch reviews:', err);
       toast.error('Failed to fetch platform reviews');
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchReviews();
-  }, []);
+  useEffect(() => { fetchReviews(); }, []);
 
   const handleDelete = (id) => {
     toast((t) => (
-      <div className="flex flex-col gap-2 p-1 text-left">
-        <p className="text-sm font-bold text-gray-800">
-          Are you sure you want to delete this review? This action cannot be undone.
-        </p>
-        <div className="flex justify-end gap-2 mt-1">
+      <div className="flex flex-col gap-2 p-1">
+        <p className="text-sm font-bold text-gray-800">Delete this review? This cannot be undone.</p>
+        <div className="flex justify-end gap-2">
+          <button onClick={() => toast.dismiss(t.id)} className="px-3 py-1 bg-gray-200 text-gray-700 rounded-lg text-xs font-bold">Cancel</button>
           <button
             onClick={async () => {
               toast.dismiss(t.id);
               try {
                 const { data } = await api.delete(`/reviews/${id}`);
-                if (data.success) {
-                  toast.success("Review deleted successfully");
-                  fetchReviews();
-                }
-              } catch (err) {
-                console.error(err);
-                toast.error("Failed to delete review");
-              }
+                if (data.success) { toast.success('Review deleted'); fetchReviews(); }
+              } catch { toast.error('Failed to delete review'); }
             }}
-            className="px-3 py-1 bg-red-800 text-white rounded-lg text-xs font-bold hover:bg-red-900 transition-colors"
-          >
-            Delete
-          </button>
-          <button
-            onClick={() => toast.dismiss(t.id)}
-            className="px-3 py-1 bg-gray-200 text-gray-800 rounded-lg text-xs font-bold hover:bg-gray-300 transition-colors"
-          >
-            Cancel
-          </button>
+            className="px-3 py-1 bg-red-600 text-white rounded-lg text-xs font-bold hover:bg-red-700"
+          >Delete</button>
         </div>
       </div>
     ), { duration: 6000 });
@@ -77,226 +54,351 @@ const FeedbackManagement = () => {
 
   const handleToggleApproval = async (id, currentStatus) => {
     try {
-      const { data } = await api.put(`/reviews/${id}/moderation`, {
-        isApproved: !currentStatus
-      });
+      const { data } = await api.put(`/reviews/${id}/moderation`, { isApproved: !currentStatus });
       if (data.success) {
-        toast.success(`Review ${!currentStatus ? 'approved' : 'hidden'} successfully`);
+        toast.success(`Review ${!currentStatus ? 'approved' : 'hidden'}`);
         fetchReviews();
       }
-    } catch (err) {
-      console.error(err);
-      toast.error('Failed to update review moderation');
-    }
+    } catch { toast.error('Failed to update moderation'); }
   };
 
   const exportToExcel = async () => {
-    if (reviews.length === 0) {
-      toast.error('No reviews available to export.');
-      return;
-    }
+    if (reviews.length === 0) { toast.error('No reviews to export'); return; }
     const XLSX = await import('xlsx');
     const dataToExport = reviews.map(r => ({
       'Review ID': r._id,
-      'Product Name': r.product?.name || 'Unknown Product',
-      'User Name': r.user?.fullName || 'Guest',
+      'Product': r.product?.name || 'Unknown',
+      'User': r.user?.fullName || 'Guest',
       'Rating': r.rating,
       'Title': r.title || '',
-      'Review Text': r.review || '',
-      'Status': r.isApproved ? 'Approved' : 'Hidden',
-      'Helpful Votes': r.helpfulCount || 0,
-      'Report Count': r.reportCount || 0,
+      'Comment': r.review || '',
+      'Status': r.isApproved ? 'Approved' : 'Pending',
+      'Helpful': r.helpfulCount || 0,
+      'Reports': r.reportCount || 0,
       'Date': r.createdAt ? new Date(r.createdAt).toLocaleDateString() : '-'
     }));
-
     const ws = XLSX.utils.json_to_sheet(dataToExport);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Product Reviews");
-    XLSX.writeFile(wb, `Review_Logs_${new Date().toLocaleDateString()}.xlsx`);
-    toast.success('Logs exported successfully!');
+    XLSX.utils.book_append_sheet(wb, ws, 'Reviews');
+    XLSX.writeFile(wb, `Review_Logs_${new Date().toISOString().split('T')[0]}.xlsx`);
+    toast.success('Exported successfully');
   };
 
   const filteredReviews = reviews.filter(r => {
-    const productName = r.product?.name || '';
-    const comment = r.review || '';
-    const matchesSearch = productName.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          comment.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch =
+      (r.product?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (r.review || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (r.user?.fullName || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesRating = filterRating === 'all' || r.rating.toString() === filterRating;
-    return matchesSearch && matchesRating;
+    const matchesStatus = filterStatus === 'all' ||
+      (filterStatus === 'approved' ? r.isApproved : !r.isApproved);
+    return matchesSearch && matchesRating && matchesStatus;
   });
 
+  const avgRating = reviews.length > 0
+    ? (reviews.reduce((a, r) => a + r.rating, 0) / reviews.length).toFixed(1)
+    : '0.0';
+  const mediaCount = reviews.filter(r => r.images?.length > 0).length;
+  const approvedCount = reviews.filter(r => r.isApproved).length;
+
+  const StarRow = ({ rating }) => (
+    <div className="flex items-center gap-0.5">
+      {[1,2,3,4,5].map(s => (
+        <FiStar key={s} size={11} className={s <= rating ? 'fill-amber-400 text-amber-400' : 'text-gray-200'} />
+      ))}
+    </div>
+  );
+
   return (
-    <div className="p-4 md:p-8 space-y-8">
+    <div className="p-4 md:p-6 space-y-4">
+
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-black uppercase italic tracking-tight text-gray-900">
+          <h1 className="text-xl font-black tracking-tight text-gray-900">
             Feedback <span className="text-teal-600">Management</span>
           </h1>
-          <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mt-1">Platform-wide review oversight</p>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mt-0.5">Platform-wide review oversight</p>
         </div>
-        <button 
-          onClick={exportToExcel}
-          className="flex items-center gap-2 bg-gray-900 text-white px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-teal-600 transition-all shadow-lg active:scale-95"
-        >
-          <FiDownload /> Export Logs
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={fetchReviews} className="p-2 bg-white border border-gray-200 text-gray-500 hover:text-teal-600 rounded-xl transition-all shadow-sm">
+            <FiRefreshCw size={15} className={loading ? 'animate-spin' : ''} />
+          </button>
+          <button onClick={exportToExcel} className="flex items-center gap-2 bg-gray-900 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-teal-600 transition-all shadow-sm active:scale-95">
+            <FiDownload size={13} /> Export
+          </button>
+        </div>
+      </div>
+
+      {/* Stats strip */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {[
+          { label: 'Total Reviews', value: reviews.length, icon: FiCheckCircle, bg: 'bg-teal-50', border: 'border-teal-100', icon_bg: 'bg-teal-600', text: 'text-teal-600' },
+          { label: 'Platform Avg', value: avgRating, icon: FiStar, bg: 'bg-amber-50', border: 'border-amber-100', icon_bg: 'bg-amber-400', text: 'text-amber-600' },
+          { label: 'Approved', value: approvedCount, icon: FiEye, bg: 'bg-emerald-50', border: 'border-emerald-100', icon_bg: 'bg-emerald-500', text: 'text-emerald-600' },
+          { label: 'With Media', value: mediaCount, icon: FiMessageSquare, bg: 'bg-blue-50', border: 'border-blue-100', icon_bg: 'bg-blue-500', text: 'text-blue-600' },
+        ].map(({ label, value, icon: Icon, bg, border, icon_bg, text }) => (
+          <div key={label} className={`${bg} ${border} border px-4 py-3 rounded-2xl flex items-center gap-3`}>
+            <div className={`w-8 h-8 ${icon_bg} text-white rounded-xl flex items-center justify-center shrink-0`}>
+              <Icon size={15} />
+            </div>
+            <div>
+              <p className="text-lg font-black text-gray-900 leading-none">{loading ? '—' : value}</p>
+              <p className={`text-[9px] font-black uppercase tracking-widest ${text}`}>{label}</p>
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* Toolbar */}
-      <div className="bg-white p-4 rounded-[24px] border border-gray-100 shadow-sm flex flex-col md:flex-row gap-4">
+      <div className="flex flex-col sm:flex-row gap-2">
         <div className="flex-1 relative">
-          <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+          <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
           <input
             type="text"
-            placeholder="Search by product or comment..."
+            placeholder="Search by product, user or comment..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-gray-50 border border-gray-100 focus:border-teal-500 focus:bg-white rounded-xl py-3 pl-12 pr-4 outline-none text-xs font-bold transition-all"
+            onChange={e => setSearchTerm(e.target.value)}
+            className="w-full bg-white border border-gray-200 focus:border-teal-400 rounded-xl py-2 pl-9 pr-3 text-xs font-medium outline-none transition-all"
           />
         </div>
-        <div className="flex gap-2">
-          <select 
-            value={filterRating}
-            onChange={(e) => setFilterRating(e.target.value)}
-            className="bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-xs font-bold outline-none focus:border-teal-500"
-          >
-            <option value="all">All Ratings</option>
-            <option value="5">5 Stars</option>
-            <option value="4">4 Stars</option>
-            <option value="3">3 Stars</option>
-            <option value="2">2 Stars</option>
-            <option value="1">1 Star</option>
-          </select>
-        </div>
+        <select value={filterRating} onChange={e => setFilterRating(e.target.value)}
+          className="bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:border-teal-400">
+          <option value="all">All Ratings</option>
+          {[5,4,3,2,1].map(n => <option key={n} value={n}>{n} Star{n > 1 ? 's' : ''}</option>)}
+        </select>
+        <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
+          className="bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:border-teal-400">
+          <option value="all">All Status</option>
+          <option value="approved">Approved</option>
+          <option value="pending">Pending</option>
+        </select>
       </div>
 
-      {/* Stats Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-         <div className="bg-teal-50/50 border border-teal-100 p-6 rounded-[32px] flex items-center gap-5">
-            <div className="w-12 h-12 bg-teal-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-teal-100">
-               <FiCheckCircle size={24} />
-            </div>
-            <div>
-               <p className="text-2xl font-black text-gray-900">{reviews.length}</p>
-               <p className="text-[10px] font-black uppercase tracking-widest text-teal-600">Total Reviews</p>
-            </div>
-         </div>
-         <div className="bg-amber-50/50 border border-amber-100 p-6 rounded-[32px] flex items-center gap-5">
-            <div className="w-12 h-12 bg-amber-400 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-amber-100">
-               <FiStar size={24} />
-            </div>
-            <div>
-               <p className="text-2xl font-black text-gray-900">
-                 {reviews.length > 0 ? (reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1) : '0.0'}
-               </p>
-               <p className="text-[10px] font-black uppercase tracking-widest text-amber-600">Platform Avg</p>
-            </div>
-         </div>
-         <div className="bg-blue-50/50 border border-blue-100 p-6 rounded-[32px] flex items-center gap-5">
-            <div className="w-12 h-12 bg-blue-500 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-blue-100">
-               <FiMessageSquare size={24} />
-            </div>
-            <div>
-               <p className="text-2xl font-black text-gray-900">{reviews.filter(r => r.images?.length > 0).length}</p>
-               <p className="text-[10px] font-black uppercase tracking-widest text-blue-600">Media Reviews</p>
-            </div>
-         </div>
-      </div>
+      {/* Table */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr className="bg-gray-50 border-b border-gray-100">
+              <th className="px-4 py-3 text-[10px] uppercase tracking-wider font-bold text-gray-400">Product / User</th>
+              <th className="px-4 py-3 text-[10px] uppercase tracking-wider font-bold text-gray-400">Rating</th>
+              <th className="px-4 py-3 text-[10px] uppercase tracking-wider font-bold text-gray-400">Comment</th>
+              <th className="px-4 py-3 text-[10px] uppercase tracking-wider font-bold text-gray-400 hidden md:table-cell">Date</th>
+              <th className="px-4 py-3 text-[10px] uppercase tracking-wider font-bold text-gray-400">Status</th>
+              <th className="px-4 py-3 text-[10px] uppercase tracking-wider font-bold text-gray-400 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              [...Array(5)].map((_, i) => (
+                <tr key={i} className="border-b border-gray-50 animate-pulse">
+                  <td className="px-4 py-3"><div className="h-8 bg-gray-100 rounded-lg w-36"></div></td>
+                  <td className="px-4 py-3"><div className="h-4 bg-gray-100 rounded w-20"></div></td>
+                  <td className="px-4 py-3"><div className="h-4 bg-gray-100 rounded w-48"></div></td>
+                  <td className="px-4 py-3 hidden md:table-cell"><div className="h-4 bg-gray-100 rounded w-20"></div></td>
+                  <td className="px-4 py-3"><div className="h-5 bg-gray-100 rounded-full w-16"></div></td>
+                  <td className="px-4 py-3"><div className="h-7 bg-gray-100 rounded-lg w-16 ml-auto"></div></td>
+                </tr>
+              ))
+            ) : filteredReviews.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="py-20 text-center">
+                  <FiMessageSquare className="mx-auto text-gray-200 mb-3" size={40} />
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">No reviews found</p>
+                </td>
+              </tr>
+            ) : (
+              filteredReviews.map((review, i) => (
+                <React.Fragment key={review._id}>
+                  <motion.tr
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: i * 0.03 }}
+                    className={`border-b border-gray-50 hover:bg-gray-50/60 transition-colors ${expandedId === review._id ? 'bg-teal-50/20' : ''}`}
+                  >
+                    {/* Product + User */}
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center text-[8px] font-black text-gray-500 shrink-0">
+                          #{review._id.slice(-4).toUpperCase()}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-bold text-gray-900 truncate max-w-[140px]">
+                            {review.product?.name || 'Unknown Product'}
+                          </p>
+                          <p className="text-[10px] text-gray-400 font-medium truncate max-w-[140px]">
+                            {review.user?.fullName || 'Guest'}
+                          </p>
+                        </div>
+                      </div>
+                    </td>
 
-      {/* Review Cards */}
-      <div className="grid grid-cols-1 gap-4">
-        {loading ? (
-          Array(3).fill(0).map((_, i) => (
-            <div key={i} className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm flex flex-col md:flex-row gap-6 animate-pulse">
-              <div className="flex-1 space-y-4">
-                <div className="h-6 bg-gray-100 rounded w-1/3"></div>
-                <div className="h-12 bg-gray-50 rounded"></div>
-              </div>
-              <div className="md:w-40 h-16 bg-gray-100 rounded"></div>
-            </div>
-          ))
-        ) : filteredReviews.length === 0 ? (
-          <div className="bg-white py-24 rounded-[40px] border border-dashed border-gray-200 text-center">
-            <FiMessageSquare className="mx-auto text-gray-100 mb-6" size={64} />
-            <h3 className="text-lg font-black text-gray-900 uppercase italic">No reviews found</h3>
-            <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest mt-2">Try adjusting your filters or search terms</p>
-          </div>
-        ) : (
-          filteredReviews.map((review, i) => (
-            <motion.div
-              key={review._id}
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: i * 0.05 }}
-              className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm flex flex-col md:flex-row gap-6 hover:shadow-md transition-all group"
-            >
-              <div className="flex-1">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400 border border-gray-100 font-black text-xs">
-                      #{review._id.slice(-4).toUpperCase()}
-                    </div>
-                    <div>
-                      <h4 className="text-xs font-black text-gray-900 uppercase tracking-tight">
-                        {review.product?.name || 'Unknown Product'}
-                      </h4>
-                      <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">
-                        User: {review.user?.fullName || 'Guest'}
+                    {/* Rating */}
+                    <td className="px-4 py-3">
+                      <div className="flex flex-col gap-0.5">
+                        <StarRow rating={review.rating} />
+                        <span className="text-[9px] font-bold text-gray-400">{review.rating}/5</span>
+                      </div>
+                    </td>
+
+                    {/* Comment (truncated) */}
+                    <td className="px-4 py-3 max-w-[240px]">
+                      <p className="text-xs text-gray-600 italic truncate">
+                        "{review.review || '—'}"
                       </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    {[1, 2, 3, 4, 5].map(s => (
-                      <FiStar key={s} size={12} className={`${s <= review.rating ? 'fill-amber-400 text-amber-400' : 'text-gray-200'}`} />
-                    ))}
-                  </div>
-                </div>
-                <p className="text-xs text-gray-600 font-medium leading-relaxed bg-gray-50 p-4 rounded-2xl italic border border-gray-50 group-hover:bg-teal-50/30 group-hover:border-teal-50 transition-all">
-                  "{review.review}"
-                </p>
-                {review.images && review.images.length > 0 && (
-                  <div className="flex gap-2 mt-4">
-                    {review.images.map((img, idx) => (
-                      <img key={idx} src={img} className="w-16 h-16 rounded-xl object-cover border border-white shadow-sm hover:scale-105 transition-transform cursor-pointer" alt="Review" />
-                    ))}
-                  </div>
-                )}
-              </div>
-              <div className="md:w-40 border-t md:border-t-0 md:border-l border-gray-100 pt-6 md:pt-0 md:pl-6 flex md:flex-col justify-between items-center md:items-end">
-                <div className="text-right">
-                  <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest">Submitted On</p>
-                  <p className="text-[11px] font-bold text-gray-700">
-                    {new Date(review.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
-                  </p>
-                </div>
-                
-                <div className="flex items-center gap-2 mt-4 md:mt-0">
-                  <button
-                    onClick={() => handleToggleApproval(review._id, review.isApproved)}
-                    className={`p-3 rounded-2xl transition-all shadow-sm active:scale-95 ${
-                      review.isApproved 
-                        ? 'bg-teal-50 text-teal-600 hover:bg-teal-600 hover:text-white' 
-                        : 'bg-amber-50 text-amber-600 hover:bg-amber-600 hover:text-white'
-                    }`}
-                    title={review.isApproved ? "Hide Review" : "Approve Review"}
-                  >
-                    {review.isApproved ? <FiEye size={18} /> : <FiEyeOff size={18} />}
-                  </button>
+                      <div className="flex items-center gap-2 mt-1">
+                        {review.images?.length > 0 && (
+                          <span className="text-[9px] font-bold text-blue-500 bg-blue-50 px-1.5 py-0.5 rounded-md">
+                            {review.images.length} photo{review.images.length > 1 ? 's' : ''}
+                          </span>
+                        )}
+                        {review.reportCount > 0 && (
+                          <span className="text-[9px] font-bold text-red-500 bg-red-50 px-1.5 py-0.5 rounded-md flex items-center gap-0.5">
+                            <FiFlag size={9} /> {review.reportCount}
+                          </span>
+                        )}
+                        {(review.review?.length > 60 || review.images?.length > 0) && (
+                          <button
+                            onClick={() => setExpandedId(expandedId === review._id ? null : review._id)}
+                            className="text-[9px] font-bold text-teal-600 hover:text-teal-800 flex items-center gap-0.5"
+                          >
+                            {expandedId === review._id ? <><FiChevronUp size={10} />Less</> : <><FiChevronDown size={10} />More</>}
+                          </button>
+                        )}
+                      </div>
+                    </td>
 
-                  <button 
-                    onClick={() => handleDelete(review._id)}
-                    className="p-3 bg-red-50 text-red-500 rounded-2xl hover:bg-red-500 hover:text-white transition-all shadow-sm active:scale-95"
-                    title="Delete Review"
-                  >
-                    <FiTrash2 size={18} />
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          ))
+                    {/* Date */}
+                    <td className="px-4 py-3 hidden md:table-cell whitespace-nowrap">
+                      <p className="text-[11px] font-semibold text-gray-600">
+                        {new Date(review.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                      </p>
+                    </td>
+
+                    {/* Status */}
+                    <td className="px-4 py-3">
+                      <span className={`inline-block text-[9px] font-black uppercase px-2 py-0.5 rounded-full border ${
+                        review.isApproved
+                          ? 'bg-teal-50 text-teal-600 border-teal-100'
+                          : 'bg-amber-50 text-amber-600 border-amber-100'
+                      }`}>
+                        {review.isApproved ? 'Approved' : 'Pending'}
+                      </span>
+                    </td>
+
+                    {/* Actions */}
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-1.5 justify-end">
+                        <button
+                          onClick={() => handleToggleApproval(review._id, review.isApproved)}
+                          className={`p-1.5 rounded-lg transition-all active:scale-95 ${
+                            review.isApproved
+                              ? 'bg-teal-50 text-teal-600 hover:bg-teal-600 hover:text-white'
+                              : 'bg-amber-50 text-amber-600 hover:bg-amber-600 hover:text-white'
+                          }`}
+                          title={review.isApproved ? 'Hide Review' : 'Approve Review'}
+                        >
+                          {review.isApproved ? <FiEye size={14} /> : <FiEyeOff size={14} />}
+                        </button>
+                        <button
+                          onClick={() => handleDelete(review._id)}
+                          className="p-1.5 bg-red-50 text-red-500 rounded-lg hover:bg-red-500 hover:text-white transition-all active:scale-95"
+                          title="Delete Review"
+                        >
+                          <FiTrash2 size={14} />
+                        </button>
+                      </div>
+                    </td>
+                  </motion.tr>
+
+                  {/* Expanded row */}
+                  <AnimatePresence>
+                    {expandedId === review._id && (
+                      <motion.tr
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="bg-teal-50/20"
+                      >
+                        <td colSpan={6} className="px-4 pb-4">
+                          <div className="ml-9 space-y-3">
+                            {review.title && (
+                              <p className="text-xs font-bold text-gray-700">"{review.title}"</p>
+                            )}
+                            <p className="text-xs text-gray-600 leading-relaxed bg-white p-3 rounded-xl border border-gray-100 italic">
+                              "{review.review}"
+                            </p>
+                            {review.images?.length > 0 && (
+                              <div className="flex flex-wrap gap-2">
+                                {review.images.map((img, idx) => (
+                                  <img
+                                    key={idx}
+                                    src={img}
+                                    onClick={() => setLightboxImg(img)}
+                                    className="w-14 h-14 rounded-xl object-cover border border-white shadow-sm hover:scale-105 transition-transform cursor-pointer"
+                                    alt="Review"
+                                  />
+                                ))}
+                              </div>
+                            )}
+                            <div className="flex items-center gap-4 text-[10px] text-gray-400 font-semibold">
+                              {review.helpfulCount > 0 && <span>👍 {review.helpfulCount} helpful</span>}
+                              {review.reportCount > 0 && <span className="text-red-400">🚩 {review.reportCount} reports</span>}
+                              <span className="md:hidden">
+                                {new Date(review.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                              </span>
+                            </div>
+                          </div>
+                        </td>
+                      </motion.tr>
+                    )}
+                  </AnimatePresence>
+                </React.Fragment>
+              ))
+            )}
+          </tbody>
+        </table>
+
+        {/* Footer count */}
+        {!loading && filteredReviews.length > 0 && (
+          <div className="px-4 py-3 border-t border-gray-50 bg-gray-50/50 flex items-center justify-between">
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+              Showing {filteredReviews.length} of {reviews.length} review{reviews.length !== 1 ? 's' : ''}
+            </p>
+            {(searchTerm || filterRating !== 'all' || filterStatus !== 'all') && (
+              <button
+                onClick={() => { setSearchTerm(''); setFilterRating('all'); setFilterStatus('all'); }}
+                className="text-[10px] font-bold text-teal-600 hover:text-teal-800 uppercase tracking-wider"
+              >
+                Clear Filters
+              </button>
+            )}
+          </div>
         )}
       </div>
+
+      {/* Image Lightbox */}
+      <AnimatePresence>
+        {lightboxImg && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setLightboxImg(null)}
+            className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-6"
+          >
+            <motion.img
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.9 }}
+              src={lightboxImg}
+              className="max-w-full max-h-[80vh] rounded-2xl shadow-2xl"
+              alt="Review image"
+              onClick={e => e.stopPropagation()}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

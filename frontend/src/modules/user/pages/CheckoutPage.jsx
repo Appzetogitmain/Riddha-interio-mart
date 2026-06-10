@@ -1,12 +1,32 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useCart } from '../data/CartContext';
 import { useUser } from '../data/UserContext';
-import { FiArrowLeft, FiMapPin, FiShoppingBag, FiTruck, FiInfo, FiPlusCircle, FiAlertCircle } from 'react-icons/fi';
+import {
+  FiArrowLeft, FiMapPin, FiShoppingBag, FiTruck, FiInfo,
+  FiPlusCircle, FiAlertCircle, FiArrowRight, FiEdit2, FiCheck,
+  FiTag
+} from 'react-icons/fi';
 import toast from 'react-hot-toast';
-import Button from '../../../shared/components/Button';
 import CouponSelector from '../components/CouponSelector';
+
+/* ── tiny reusable section card ── */
+const Card = ({ children, className = '' }) => (
+  <div className={`bg-white border border-gray-100 ${className}`}>{children}</div>
+);
+
+const CardHeader = ({ icon: Icon, title, action }) => (
+  <div className="flex items-center justify-between px-4 py-3 border-b border-gray-50">
+    <div className="flex items-center gap-2.5">
+      <div className="w-7 h-7 bg-[#189D91]/10 flex items-center justify-center text-[#189D91]">
+        <Icon size={14} />
+      </div>
+      <span className="text-[11px] font-black uppercase tracking-widest text-gray-700">{title}</span>
+    </div>
+    {action}
+  </div>
+);
 
 const CheckoutPage = () => {
   const navigate = useNavigate();
@@ -15,299 +35,293 @@ const CheckoutPage = () => {
   const [appliedCoupon, setAppliedCoupon] = useState(null);
 
   useEffect(() => {
-    if (!isLoggedIn) {
-      navigate('/login');
-      return;
-    }
+    if (!isLoggedIn) { navigate('/login'); return; }
     fetchAddresses();
-    
-    // Reset coupon session storage on checkout load
     sessionStorage.removeItem('applied_coupon');
   }, [isLoggedIn, fetchAddresses, navigate]);
 
-  // Handle coupon lifecycle
-  const handleCouponApplied = (couponData) => {
-    setAppliedCoupon(couponData);
-  };
+  const handleCouponApplied  = (c) => setAppliedCoupon(c);
+  const handleCouponRemoved  = () => { setAppliedCoupon(null); sessionStorage.removeItem('applied_coupon'); toast.success('Coupon removed.'); };
 
-  const handleCouponRemoved = () => {
-    setAppliedCoupon(null);
-    sessionStorage.removeItem('applied_coupon');
-    toast.success('Coupon removed.');
-  };
-
-  // Pricing calculations adjusted for coupon
-  const subtotal = pricingBreakdown?.subtotal || 0;
-  const gstAmount = pricingBreakdown?.taxAmount || 0;
-  const deliveryCharges = pricingBreakdown?.shippingPrice || 0;
-  const baseDiscount = pricingBreakdown?.discountAmount || 0;
+  const subtotal       = pricingBreakdown?.subtotal     || 0;
+  const gstAmount      = pricingBreakdown?.taxAmount    || 0;
+  const deliveryCharges= pricingBreakdown?.shippingPrice|| 0;
+  const baseDiscount   = pricingBreakdown?.discountAmount|| 0;
   const couponDiscount = appliedCoupon ? appliedCoupon.discountAmount : 0;
-  const totalDiscount = baseDiscount + couponDiscount;
-  const grandTotal = Math.max(0, subtotal - baseDiscount + deliveryCharges - couponDiscount);
+  const grandTotal     = Math.max(0, subtotal - baseDiscount + deliveryCharges - couponDiscount);
 
   const handleProceedToPayment = () => {
-    if (!address) {
-      toast.error('Please add a shipping address first.');
-      return;
-    }
-
-    // Address verification checks
+    if (!address) { toast.error('Add a shipping address first.'); return; }
     if (!address.fullName || !address.mobileNumber || !address.fullAddress || !address.pincode || !address.city) {
-      toast.error('Your shipping address has incomplete details. Please edit it.');
-      return;
+      toast.error('Address has incomplete details.'); return;
     }
-
-    if (address.mobileNumber.length !== 10) {
-      toast.error('Please configure a valid 10-digit mobile number in your address.');
-      return;
-    }
-
-    if (address.pincode.length !== 6) {
-      toast.error('Please enter a valid 6-digit pincode.');
-      return;
-    }
-
-    // Store applied coupon data in session storage for PaymentPage
-    if (appliedCoupon) {
-      sessionStorage.setItem('applied_coupon', JSON.stringify(appliedCoupon));
-    }
-
-    toast.success('Address and items verified! Proceeding to Payment.');
+    if (address.mobileNumber.length !== 10) { toast.error('Mobile must be 10 digits.'); return; }
+    if (address.pincode.length !== 6)       { toast.error('Pincode must be 6 digits.'); return; }
+    if (appliedCoupon) sessionStorage.setItem('applied_coupon', JSON.stringify(appliedCoupon));
     navigate('/payment');
   };
 
   const isLoading = cartLoading || userLoading;
 
-  if (cart.length === 0 && !isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[70vh] px-6 text-center">
-        <div className="w-20 h-20 bg-[#189D91]/5 rounded-full flex items-center justify-center mb-6 border border-[#189D91]/10">
-          <FiShoppingBag className="text-3xl text-[#189D91]/55" />
-        </div>
-        <h2 className="text-xl font-bold text-slate-800 mb-2">Checkout is empty</h2>
-        <p className="text-gray-400 mb-8 text-xs font-semibold">Your cart is empty. Fill it to proceed!</p>
-        <button 
-          onClick={() => navigate('/products')} 
-          className="px-10 py-3.5 bg-[#189D91] hover:bg-[#14847a] text-white font-bold rounded-xl text-xs uppercase tracking-wider transition-all duration-300 shadow-md shadow-[#189D91]/15 hover:shadow-lg active:scale-[0.98]"
-        >
-          Catalog
-        </button>
-      </div>
-    );
-  }
+  if (cart.length === 0 && !isLoading) return (
+    <div className="flex flex-col items-center justify-center min-h-[70vh] px-6 text-center">
+      <FiShoppingBag size={40} className="text-gray-200 mb-4" />
+      <h2 className="text-base font-bold text-gray-800 mb-1">Cart is empty</h2>
+      <p className="text-xs text-gray-400 mb-6">Add items before checking out.</p>
+      <button onClick={() => navigate('/products')}
+        className="px-8 py-2.5 bg-[#189D91] text-white text-xs font-bold uppercase tracking-wider hover:bg-[#14847a] transition-colors">
+        Browse Products
+      </button>
+    </div>
+  );
+
+  /* ── Stepper ── */
+  const steps = [
+    { n: 1, label: 'Checkout' },
+    { n: 2, label: 'Payment' },
+    { n: 3, label: 'Placed' },
+  ];
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="bg-white md:bg-[#FAFAFA] min-h-screen pb-32"
-    >
-      <div className="max-w-6xl mx-auto px-6 py-8">
-        {/* Header & Back Button */}
-        <div className="flex items-center gap-4 mb-8">
-          <button onClick={() => navigate('/cart')} className="p-1 hover:bg-slate-100 rounded-full transition-colors">
-            <FiArrowLeft className="h-6 w-6 text-deep-espresso" />
-          </button>
-          <div>
-            <div className="text-[11px] text-gray-400 font-bold uppercase tracking-widest">STEP 1 OF 3</div>
-            <h1 className="text-2xl font-display font-bold text-deep-espresso">Checkout Summary</h1>
-          </div>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+      className="min-h-screen bg-[#F5F5F5] pb-32 md:pb-10">
+
+      {/* ── Page header ── */}
+      <div className="bg-white border-b border-gray-100 px-4 py-3 flex items-center gap-3 sticky top-0 z-20 md:static md:bg-transparent md:border-0 md:px-6 md:py-5">
+        <button onClick={() => navigate('/cart')}
+          className="p-1.5 hover:bg-gray-100 transition-colors">
+          <FiArrowLeft size={18} className="text-gray-700" />
+        </button>
+        <div className="flex-1">
+          <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest leading-none">Step 1 of 3</p>
+          <h1 className="text-base font-bold text-gray-900 leading-tight mt-0.5">Checkout Summary</h1>
         </div>
-
-        {/* Stepper */}
-        <div className="flex items-center gap-10 mb-10 border-b border-gray-100 pb-6">
-          <div className="flex items-center gap-3 bg-[#189D91]/10 px-5 py-2 rounded-full border border-[#189D91]/20">
-            <span className="w-6 h-6 rounded-full bg-[#189D91] text-white flex items-center justify-center text-xs font-bold">1</span>
-            <span className="text-sm font-bold text-[#189D91]">Checkout Summary</span>
-          </div>
-          <div className="flex items-center gap-3 opacity-60">
-            <span className="w-6 h-6 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center text-xs font-bold">2</span>
-            <span className="text-sm font-semibold text-gray-600">Payment Selection</span>
-          </div>
-          <div className="flex items-center gap-3 opacity-60">
-            <span className="w-6 h-6 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center text-xs font-bold">3</span>
-            <span className="text-sm font-semibold text-gray-600">Order Placed</span>
-          </div>
+        {/* Stepper — mobile compact */}
+        <div className="flex items-center gap-1 md:hidden">
+          {steps.map((s, i) => (
+            <React.Fragment key={s.n}>
+              <div className={`flex items-center gap-1 ${s.n === 1 ? 'text-[#189D91]' : 'text-gray-300'}`}>
+                <span className={`w-5 h-5 flex items-center justify-center text-[10px] font-black border ${s.n === 1 ? 'bg-[#189D91] border-[#189D91] text-white' : 'border-gray-200'}`}>
+                  {s.n === 1 ? <FiCheck size={10} /> : s.n}
+                </span>
+                <span className="text-[9px] font-bold hidden">{s.label}</span>
+              </div>
+              {i < steps.length - 1 && <div className={`w-4 h-px ${s.n < 1 ? 'bg-[#189D91]' : 'bg-gray-200'}`} />}
+            </React.Fragment>
+          ))}
         </div>
+      </div>
 
-        {isLoading ? (
-          /* Elegant Loading Skeleton */
-          <div className="grid grid-cols-12 gap-8">
-            <div className="col-span-12 md:col-span-7 space-y-6">
-              <div className="h-48 bg-gray-100 rounded-3xl animate-pulse" />
-              <div className="h-56 bg-gray-100 rounded-3xl animate-pulse" />
-              <div className="h-44 bg-gray-100 rounded-3xl animate-pulse" />
+      {/* Desktop stepper */}
+      <div className="hidden md:flex items-center gap-6 max-w-6xl mx-auto px-6 mb-6 mt-2">
+        {steps.map((s, i) => (
+          <React.Fragment key={s.n}>
+            <div className={`flex items-center gap-2 ${s.n === 1 ? '' : 'opacity-40'}`}>
+              <span className={`w-6 h-6 flex items-center justify-center text-xs font-black ${s.n === 1 ? 'bg-[#189D91] text-white' : 'bg-gray-200 text-gray-600'}`}>
+                {s.n}
+              </span>
+              <span className={`text-xs font-bold ${s.n === 1 ? 'text-[#189D91]' : 'text-gray-500'}`}>{s.label}</span>
             </div>
-            <div className="col-span-12 md:col-span-5">
-              <div className="h-96 bg-gray-100 rounded-3xl animate-pulse" />
-            </div>
-          </div>
-        ) : (
-          <div className="grid grid-cols-12 gap-8">
-            {/* Left Column: Delivery Address & Cart Items */}
-            <div className="col-span-12 md:col-span-7 space-y-6">
-              
-              {/* Delivery Address Section */}
-              <div className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm space-y-4">
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-[#189D91]/10 flex items-center justify-center text-[#189D91]">
-                      <FiMapPin className="text-xl" />
-                    </div>
-                    <div>
-                      <h2 className="text-sm font-black text-gray-900 uppercase tracking-wider">Shipping Address</h2>
-                      <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mt-0.5">WHERE WE DELIVER YOUR LUXURY PIECES</p>
-                    </div>
-                  </div>
-                  {address && (
-                    <button
-                      onClick={() => navigate('/address')}
-                      className="text-[10px] font-black text-[#189D91] hover:text-black uppercase tracking-widest border-b border-[#189D91]/20 pb-0.5"
-                    >
-                      EDIT ADDRESS
-                    </button>
-                  )}
-                </div>
+            {i < steps.length - 1 && <div className="flex-1 h-px bg-gray-200" />}
+          </React.Fragment>
+        ))}
+      </div>
 
+      {isLoading ? (
+        <div className="max-w-6xl mx-auto px-4 md:px-6 space-y-3 mt-3">
+          {[80, 56, 120, 80].map((h, i) => (
+            <div key={i} className={`h-${h === 80 ? '20' : h === 56 ? '14' : h === 120 ? '28' : '20'} bg-white animate-pulse border border-gray-100`} style={{height: h}} />
+          ))}
+        </div>
+      ) : (
+        <div className="max-w-6xl mx-auto md:px-6 md:grid md:grid-cols-12 md:gap-6">
+
+          {/* ── Left column ── */}
+          <div className="md:col-span-7 space-y-2 md:space-y-4">
+
+            {/* Address */}
+            <Card className="mx-0">
+              <CardHeader
+                icon={FiMapPin}
+                title="Shipping Address"
+                action={address && (
+                  <button
+                    onClick={() => navigate('/address', { state: { from: '/checkout' } })}
+                    className="flex items-center gap-1 text-[10px] font-bold text-[#189D91] uppercase tracking-wider hover:underline"
+                  >
+                    <FiEdit2 size={11} /> Edit
+                  </button>
+                )}
+              />
+              <div className="px-4 py-3">
                 {address ? (
-                  <div className="p-4 bg-slate-50 border border-gray-100 rounded-2xl relative overflow-hidden">
-                    <div className="absolute top-4 right-4 flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-full text-[9px] font-black uppercase tracking-wider">
-                      Selected
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <p className="text-[13px] font-bold text-gray-900">{address.fullName}</p>
+                        <span className="text-[9px] font-black bg-emerald-50 text-emerald-600 border border-emerald-100 px-1.5 py-0.5 uppercase tracking-wide">Default</span>
+                      </div>
+                      <p className="text-[12px] text-gray-500 leading-relaxed">
+                        {address.fullAddress}{address.landmark ? `, ${address.landmark}` : ''}, {address.city} – {address.pincode}
+                      </p>
+                      <p className="text-[11px] text-gray-400 font-medium mt-1">+91 {address.mobileNumber}</p>
                     </div>
-                    <p className="text-xs font-black text-gray-900 uppercase tracking-wide">{address.fullName}</p>
-                    <p className="text-[11px] text-gray-500 font-medium leading-relaxed mt-2 max-w-md">
-                      {address.fullAddress}, {address.landmark && `${address.landmark}, `}
-                      {address.city}, {address.pincode}
-                    </p>
-                    <p className="text-[11px] text-gray-400 font-bold tracking-wider mt-3 uppercase">
-                      PHONE: <span className="text-gray-800 font-black">+91 {address.mobileNumber}</span>
-                    </p>
                   </div>
                 ) : (
-                  <div 
-                    onClick={() => navigate('/address')}
-                    className="p-6 border-2 border-dashed border-gray-200 hover:border-[#189D91]/30 rounded-2xl flex flex-col items-center justify-center text-center cursor-pointer group transition-all bg-slate-50/50 hover:bg-[#189D91]/5"
+                  <div
+                    onClick={() => navigate('/address', { state: { from: '/checkout' } })}
+                    className="flex items-center gap-3 py-3 cursor-pointer group"
                   >
-                    <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 group-hover:bg-[#189D91]/10 group-hover:text-[#189D91] transition-all mb-3">
-                      <FiPlusCircle size={22} />
+                    <div className="w-9 h-9 border-2 border-dashed border-gray-200 group-hover:border-[#189D91]/40 flex items-center justify-center text-gray-300 group-hover:text-[#189D91] transition-colors">
+                      <FiPlusCircle size={18} />
                     </div>
-                    <span className="text-xs font-black text-gray-800 uppercase tracking-widest group-hover:text-[#189D91] transition-colors">Add Shipping Address</span>
-                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mt-1">NO DELIVERY ADDRESS DETECTED YET</p>
+                    <div>
+                      <p className="text-[12px] font-bold text-gray-700 group-hover:text-[#189D91] transition-colors">Add Delivery Address</p>
+                      <p className="text-[10px] text-gray-400">Required to proceed to payment</p>
+                    </div>
+                    <FiArrowRight size={14} className="ml-auto text-gray-300 group-hover:text-[#189D91] transition-colors" />
                   </div>
                 )}
               </div>
+            </Card>
 
-              {/* Coupon Code Section */}
-              <CouponSelector 
-                cartItems={cart}
-                onCouponApplied={handleCouponApplied}
-                appliedCoupon={appliedCoupon}
-                onCouponRemoved={handleCouponRemoved}
-              />
-
-              {/* Order Items Review */}
-              <div className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-[#189D91]/10 flex items-center justify-center text-[#189D91]">
-                    <FiShoppingBag className="text-xl" />
-                  </div>
-                  <div>
-                    <h2 className="text-sm font-black text-gray-900 uppercase tracking-wider">Review Ordered Items</h2>
-                    <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mt-0.5">CHECK YOUR ITEMS BEFORE PROCEEDING</p>
-                  </div>
-                </div>
-
-                <div className="divide-y divide-gray-100">
-                  {cart.map((item) => (
-                    <div key={item._id || item.id} className="py-4 first:pt-0 last:pb-0 flex gap-4 items-center">
-                      <img src={item.image} alt={item.name} className="w-[64px] h-[64px] rounded-xl object-cover bg-gray-50 border border-gray-100" />
-                      <div className="flex-1">
-                        <h4 className="text-xs font-black text-gray-800 line-clamp-1 uppercase tracking-wide">{item.name}</h4>
-                        <div className="flex justify-between items-center mt-2">
-                          <p className="text-[11px] text-gray-400 font-bold uppercase">Qty: <span className="text-gray-900 font-black">{item.quantity}</span></p>
-                          <span className="text-xs font-black text-gray-900">₹{item.price?.toLocaleString('en-IN')}</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+            {/* Coupon */}
+            <Card>
+              <CardHeader icon={FiTag} title="Apply Coupon" />
+              <div className="px-4 py-3">
+                <CouponSelector
+                  cartItems={cart}
+                  onCouponApplied={handleCouponApplied}
+                  appliedCoupon={appliedCoupon}
+                  onCouponRemoved={handleCouponRemoved}
+                />
               </div>
-            </div>
+            </Card>
 
-            {/* Right Column: Pricing Breakdown & CTA */}
-            <div className="col-span-12 md:col-span-5">
-              <div className="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm space-y-6 sticky top-24">
-                <h2 className="text-sm font-black text-gray-900 uppercase tracking-wider">Checkout Summary</h2>
-                
-                <div className="space-y-4 border-b border-gray-100 pb-5">
-                  <div className="flex justify-between text-xs font-bold text-gray-400 uppercase tracking-wider">
-                    <span>Subtotal</span>
-                    <span className="text-gray-900 font-black">₹{subtotal.toLocaleString('en-IN')}</span>
-                  </div>
-                  <div className="flex justify-between text-xs font-bold text-gray-400 uppercase tracking-wider">
-                    <span>Inclusive GST</span>
-                    <span className="text-gray-900 font-black">₹{gstAmount.toLocaleString('en-IN')}</span>
-                  </div>
-                  <div className="flex justify-between text-xs font-bold text-gray-400 uppercase tracking-wider">
-                    <span>Shipping</span>
-                    <span className="text-[#189D91] font-black tracking-wider">
-                      {deliveryCharges === 0 ? 'FREE' : `₹${deliveryCharges}`}
+            {/* Order items */}
+            <Card>
+              <CardHeader icon={FiShoppingBag} title={`Order Items (${cart.length})`} />
+              <div className="divide-y divide-gray-50">
+                {cart.map((item) => (
+                  <div key={item._id || item.id} className="flex gap-3 px-4 py-3 items-center">
+                    <img
+                      src={item.image || item.images?.[0]}
+                      alt={item.name}
+                      className="w-14 h-14 object-cover bg-gray-50 border border-gray-100 shrink-0"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[12px] font-bold text-gray-800 line-clamp-1">{item.name}</p>
+                      <p className="text-[11px] text-gray-400 mt-0.5">Qty: <span className="font-bold text-gray-600">{item.quantity}</span></p>
+                    </div>
+                    <span className="text-[13px] font-black text-gray-900 shrink-0">
+                      ₹{(item.price * item.quantity)?.toLocaleString('en-IN')}
                     </span>
                   </div>
-                  {baseDiscount > 0 && (
-                    <div className="flex justify-between text-xs font-bold text-gray-400 uppercase tracking-wider">
-                      <span>Product Discount</span>
-                      <span className="text-emerald-600 font-black">-₹{baseDiscount.toLocaleString('en-IN')}</span>
-                    </div>
+                ))}
+              </div>
+            </Card>
+          </div>
+
+          {/* ── Right column (desktop only) — price summary ── */}
+          <div className="md:col-span-5 hidden md:block">
+            <div className="bg-white border border-gray-100 sticky top-24">
+              <div className="px-5 py-4 border-b border-gray-50">
+                <h2 className="text-[11px] font-black uppercase tracking-widest text-gray-700">Price Summary</h2>
+              </div>
+
+              <div className="px-5 py-4 space-y-3">
+                <PriceLine label="Subtotal" value={`₹${subtotal.toLocaleString('en-IN')}`} />
+                {gstAmount > 0 && <PriceLine label="GST (incl.)" value={`₹${gstAmount.toLocaleString('en-IN')}`} muted />}
+                <PriceLine
+                  label="Shipping"
+                  value={deliveryCharges === 0 ? 'FREE' : `₹${deliveryCharges}`}
+                  valueClass={deliveryCharges === 0 ? 'text-[#189D91] font-black' : ''}
+                />
+                {baseDiscount > 0 && <PriceLine label="Discount" value={`-₹${baseDiscount.toLocaleString('en-IN')}`} valueClass="text-emerald-600 font-black" />}
+                <AnimatePresence>
+                  {appliedCoupon && (
+                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
+                      <PriceLine label={`Coupon (${appliedCoupon.code})`} value={`-₹${appliedCoupon.discountAmount.toLocaleString('en-IN')}`} valueClass="text-emerald-600 font-black" />
+                    </motion.div>
                   )}
-                  
-                  <AnimatePresence>
-                    {appliedCoupon && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="flex justify-between text-xs font-bold text-emerald-600 uppercase tracking-wider overflow-hidden"
-                      >
-                        <span>Coupon Discount ({appliedCoupon.code})</span>
-                        <span className="font-black">-₹{appliedCoupon.discountAmount.toLocaleString('en-IN')}</span>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
+                </AnimatePresence>
+              </div>
 
-                <div className="flex justify-between items-center pt-2">
-                  <div>
-                    <span className="text-[10px] text-gray-400 font-black uppercase tracking-widest block mb-1">GRAND TOTAL</span>
-                    <span className="text-2xl font-extrabold text-gray-900">₹{grandTotal.toLocaleString('en-IN')}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-[#189D91] font-bold text-[10px] uppercase tracking-wider">
-                    <FiTruck /> Express Delivery
-                  </div>
-                </div>
+              <div className="px-5 py-3 border-t-2 border-gray-900 mx-5 flex justify-between items-center mb-5">
+                <span className="text-[13px] font-black uppercase tracking-wide text-gray-900">Total</span>
+                <span className="text-xl font-black text-gray-900">₹{grandTotal.toLocaleString('en-IN')}</span>
+              </div>
 
-                <div className="space-y-4 pt-4">
-                  <Button
-                    onClick={handleProceedToPayment}
-                    className="w-full h-16 rounded-2xl bg-[#189D91] hover:bg-black text-white font-black uppercase tracking-[0.2em] text-xs shadow-2xl shadow-[#189D91]/25 flex items-center justify-center gap-3 transition-all"
-                  >
-                    PROCEED TO PAYMENT
-                  </Button>
-                  
-                  <div className="flex items-start gap-2.5 p-3.5 bg-slate-50 border border-gray-100 rounded-xl">
-                    <FiInfo className="text-[#189D91] shrink-0 mt-0.5" size={15} />
-                    <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider leading-relaxed">
-                      White-Glove packaging and standard insurance is included automatically for all luxury collection purchases.
-                    </p>
-                  </div>
+              {!address && (
+                <div className="mx-5 mb-3 flex items-center gap-2 p-2.5 bg-amber-50 border border-amber-200">
+                  <FiAlertCircle className="text-amber-500 shrink-0" size={13} />
+                  <p className="text-[10px] text-amber-700 font-bold uppercase tracking-wider">Add address to proceed</p>
+                </div>
+              )}
+
+              <div className="px-5 pb-5">
+                <button
+                  onClick={!address ? () => navigate('/address', { state: { from: '/checkout' } }) : handleProceedToPayment}
+                  className={`w-full h-12 font-black text-xs uppercase tracking-[0.15em] transition-colors flex items-center justify-center gap-2 ${
+                    !address
+                      ? 'bg-amber-500 hover:bg-amber-600 text-white'
+                      : 'bg-[#189D91] hover:bg-[#14847a] text-white'
+                  }`}
+                >
+                  {!address ? <><FiPlusCircle size={14} /> Add Address First</> : 'Proceed to Payment'}
+                </button>
+
+                <div className="flex items-start gap-2 mt-3 p-3 bg-gray-50 border border-gray-100">
+                  <FiInfo className="text-gray-400 shrink-0 mt-0.5" size={12} />
+                  <p className="text-[10px] text-gray-400 leading-relaxed">Secure checkout. All payments are encrypted and protected.</p>
                 </div>
               </div>
             </div>
           </div>
-        )}
+
+        </div>
+      )}
+
+      {/* ── Mobile sticky bottom bar ── */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-gray-100 shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
+        {/* Price row */}
+        <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-50">
+          <div className="flex items-center gap-3 text-[12px] text-gray-500">
+            <span>Subtotal <span className="font-bold text-gray-800">₹{subtotal.toLocaleString('en-IN')}</span></span>
+            {deliveryCharges === 0 && <span className="text-[#189D91] font-bold text-[11px]">+ Free Shipping</span>}
+          </div>
+          <div className="text-right">
+            <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">Total</p>
+            <p className="text-[16px] font-black text-gray-900">₹{grandTotal.toLocaleString('en-IN')}</p>
+          </div>
+        </div>
+        {/* CTA */}
+        <div className="px-4 py-3">
+          <button
+            onClick={!address ? () => navigate('/address', { state: { from: '/checkout' } }) : handleProceedToPayment}
+            className={`w-full h-12 font-black text-[13px] uppercase tracking-wider transition-colors flex items-center justify-center gap-2 ${
+              !address
+                ? 'bg-amber-500 hover:bg-amber-600 text-white'
+                : 'bg-[#189D91] hover:bg-[#14847a] text-white'
+            }`}
+          >
+            {!address
+              ? <><FiPlusCircle size={15} /> Add Address to Continue</>
+              : <>Proceed to Payment <FiArrowRight size={14} /></>
+            }
+          </button>
+        </div>
       </div>
+
     </motion.div>
   );
 };
+
+const PriceLine = ({ label, value, muted = false, valueClass = '' }) => (
+  <div className="flex justify-between items-center text-[12px]">
+    <span className={muted ? 'text-gray-400' : 'text-gray-500'}>{label}</span>
+    <span className={`font-bold text-gray-800 ${valueClass}`}>{value}</span>
+  </div>
+);
 
 export default CheckoutPage;

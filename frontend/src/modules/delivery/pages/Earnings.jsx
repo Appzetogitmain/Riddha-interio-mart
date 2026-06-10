@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import PageWrapper from '../components/PageWrapper';
 import EarningsCard from '../components/EarningsCard';
 import { 
@@ -22,6 +23,7 @@ import { toast } from 'react-hot-toast';
 import api from '../../../shared/utils/api';
 
 const Earnings = () => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [analytics, setAnalytics] = useState(null);
   const [wallet, setWallet] = useState(null);
@@ -77,10 +79,35 @@ const Earnings = () => {
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
     .slice(0, 50); // Get last 50 deliveries
 
+  const handleExport = () => {
+    if (ledger.length === 0) {
+      toast('No earnings data to export', { icon: '📊' });
+      return;
+    }
+    const rows = [
+      ['Date', 'Order ID', 'Description', 'Amount (₹)'],
+      ...ledger.map(item => [
+        new Date(item.createdAt).toLocaleDateString('en-IN'),
+        item.referenceId ? item.referenceId.toString().slice(-8).toUpperCase() : 'N/A',
+        (item.description || '').replace(/,/g, ' '),
+        item.amount
+      ])
+    ];
+    const csv = rows.map(r => r.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `earnings_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success('Report exported successfully');
+  };
+
   return (
     <PageWrapper>
       <div className="max-w-[1600px] mx-auto space-y-4 pb-8">
-        
+
         {/* Financial Header */}
         <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
           <div className="space-y-1">
@@ -96,7 +123,7 @@ const Earnings = () => {
             </p>
           </div>
           
-          <button className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl font-bold text-xs transition-all shadow-sm">
+          <button onClick={handleExport} className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl font-bold text-xs transition-all shadow-sm">
              <LuFileText size={16} />
              Export Report
           </button>
@@ -191,7 +218,7 @@ const Earnings = () => {
                    </div>
                 </div>
 
-                <button className="w-full mt-6 bg-[#2A458A] text-white py-2.5 rounded-xl font-bold text-xs hover:bg-[#1f3366] transition-all shadow-sm">
+                <button onClick={() => navigate('/delivery/wallet')} className="w-full mt-6 bg-[#2A458A] text-white py-2.5 rounded-xl font-bold text-xs hover:bg-[#1f3366] transition-all shadow-sm">
                    Withdraw Earnings
                 </button>
              </div>

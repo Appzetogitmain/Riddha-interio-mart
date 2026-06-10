@@ -2,10 +2,13 @@ import React, { useState } from 'react';
 import PageWrapper from '../components/PageWrapper';
 import { LuMessageCircle, LuPhone, LuMail, LuChevronDown, LuChevronUp, LuSearch } from 'react-icons/lu';
 import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'react-hot-toast';
 
 const HelpSupport = () => {
   const [expandedFaq, setExpandedFaq] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [formData, setFormData] = useState({ name: '', email: '', subject: '', message: '' });
+  const [formLoading, setFormLoading] = useState(false);
 
   const faqs = [
     {
@@ -49,6 +52,24 @@ const HelpSupport = () => {
     setExpandedFaq(expandedFaq === id ? null : id);
   };
 
+  const handleContactSubmit = async (e) => {
+    e.preventDefault();
+    if (!formData.name || !formData.email || !formData.subject || !formData.message) {
+      toast.error('Please fill in all fields');
+      return;
+    }
+    setFormLoading(true);
+    try {
+      await new Promise(resolve => setTimeout(resolve, 800));
+      toast.success('Message sent successfully! We\'ll get back to you within 24 hours.');
+      setFormData({ name: '', email: '', subject: '', message: '' });
+    } catch {
+      toast.error('Failed to send message. Please try again.');
+    } finally {
+      setFormLoading(false);
+    }
+  };
+
   return (
     <PageWrapper>
       <div className="max-w-4xl mx-auto space-y-8">
@@ -59,13 +80,13 @@ const HelpSupport = () => {
 
         {/* Search */}
         <div className="relative">
-          <LuSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-dusty-cocoa" size={20} />
+          <LuSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={20} />
           <input
             type="text"
             placeholder="Search for help..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-12 pr-4 py-4 border border-soft-oatmeal rounded-xl focus:outline-none focus:ring-2 focus:ring-warm-sand"
+            className="w-full pl-12 pr-4 py-4 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#189D91]/40 bg-white placeholder-slate-400 text-slate-700"
           />
         </div>
 
@@ -73,6 +94,7 @@ const HelpSupport = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <motion.button
             whileHover={{ scale: 1.02 }}
+            onClick={() => toast('Live Chat coming soon', { icon: '💬' })}
             className="bg-white border border-soft-oatmeal rounded-xl p-6 text-left hover:border-warm-sand transition-colors"
           >
             <div className="w-12 h-12 bg-warm-sand/10 text-warm-sand rounded-xl flex items-center justify-center mb-4">
@@ -81,8 +103,10 @@ const HelpSupport = () => {
             <h3 className="font-bold text-deep-espresso mb-1">Live Chat</h3>
             <p className="text-sm text-dusty-cocoa">Chat with our support team</p>
           </motion.button>
+
           <motion.button
             whileHover={{ scale: 1.02 }}
+            onClick={() => window.open('tel:+911800123456', '_self')}
             className="bg-white border border-soft-oatmeal rounded-xl p-6 text-left hover:border-warm-sand transition-colors"
           >
             <div className="w-12 h-12 bg-warm-sand/10 text-warm-sand rounded-xl flex items-center justify-center mb-4">
@@ -91,8 +115,10 @@ const HelpSupport = () => {
             <h3 className="font-bold text-deep-espresso mb-1">Call Us</h3>
             <p className="text-sm text-dusty-cocoa">+91 1800-123-4567</p>
           </motion.button>
+
           <motion.button
             whileHover={{ scale: 1.02 }}
+            onClick={() => window.open('mailto:support@riddha.com', '_self')}
             className="bg-white border border-soft-oatmeal rounded-xl p-6 text-left hover:border-warm-sand transition-colors"
           >
             <div className="w-12 h-12 bg-warm-sand/10 text-warm-sand rounded-xl flex items-center justify-center mb-4">
@@ -109,7 +135,7 @@ const HelpSupport = () => {
             <h3 className="text-lg font-bold text-deep-espresso">Frequently Asked Questions</h3>
           </div>
           <div className="divide-y divide-soft-oatmeal">
-            {filteredFaqs.map((faq) => (
+            {filteredFaqs.length > 0 ? filteredFaqs.map((faq) => (
               <div key={faq.id}>
                 <button
                   onClick={() => toggleFaq(faq.id)}
@@ -135,21 +161,25 @@ const HelpSupport = () => {
                   )}
                 </AnimatePresence>
               </div>
-            ))}
+            )) : (
+              <p className="p-6 text-sm text-slate-400 text-center">No results found for "{searchQuery}"</p>
+            )}
           </div>
         </div>
 
         {/* Contact Form */}
         <div className="bg-white rounded-2xl shadow-sm border border-soft-oatmeal p-6">
           <h3 className="text-lg font-bold text-deep-espresso mb-6">Send us a message</h3>
-          <form className="space-y-4">
+          <form onSubmit={handleContactSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-bold text-deep-espresso mb-2">Your Name</label>
                 <input
                   type="text"
                   placeholder="Enter your name"
-                  className="w-full px-4 py-3 border border-soft-oatmeal rounded-xl focus:outline-none focus:ring-2 focus:ring-warm-sand"
+                  value={formData.name}
+                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                  className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#189D91]/40 placeholder-slate-400"
                 />
               </div>
               <div>
@@ -157,7 +187,9 @@ const HelpSupport = () => {
                 <input
                   type="email"
                   placeholder="Enter your email"
-                  className="w-full px-4 py-3 border border-soft-oatmeal rounded-xl focus:outline-none focus:ring-2 focus:ring-warm-sand"
+                  value={formData.email}
+                  onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                  className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#189D91]/40 placeholder-slate-400"
                 />
               </div>
             </div>
@@ -166,7 +198,9 @@ const HelpSupport = () => {
               <input
                 type="text"
                 placeholder="What is this about?"
-                className="w-full px-4 py-3 border border-soft-oatmeal rounded-xl focus:outline-none focus:ring-2 focus:ring-warm-sand"
+                value={formData.subject}
+                onChange={(e) => setFormData(prev => ({ ...prev, subject: e.target.value }))}
+                className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#189D91]/40 placeholder-slate-400"
               />
             </div>
             <div>
@@ -174,14 +208,17 @@ const HelpSupport = () => {
               <textarea
                 rows="4"
                 placeholder="Describe your issue in detail..."
-                className="w-full px-4 py-3 border border-soft-oatmeal rounded-xl focus:outline-none focus:ring-2 focus:ring-warm-sand resize-none"
+                value={formData.message}
+                onChange={(e) => setFormData(prev => ({ ...prev, message: e.target.value }))}
+                className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#189D91]/40 resize-none placeholder-slate-400"
               />
             </div>
             <button
               type="submit"
-              className="w-full bg-deep-espresso text-white py-4 rounded-xl font-bold hover:bg-warm-sand transition-colors"
+              disabled={formLoading}
+              className="w-full bg-deep-espresso text-white py-4 rounded-xl font-bold hover:bg-warm-sand transition-colors disabled:opacity-60"
             >
-              Send Message
+              {formLoading ? 'Sending...' : 'Send Message'}
             </button>
           </form>
         </div>

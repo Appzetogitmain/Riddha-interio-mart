@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { connectSocket } from '../../../shared/utils/socket';
 import PageWrapper from '../components/PageWrapper';
 import api from '../../../shared/utils/api';
 import { 
@@ -72,7 +73,6 @@ const Wallet = () => {
     }
 
     if (hasUser) {
-      const { connectSocket } = require('../../../shared/utils/socket');
       const socket = connectSocket({ token });
       
       const refresh = () => fetchWallet();

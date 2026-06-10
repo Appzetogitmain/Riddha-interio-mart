@@ -31,7 +31,8 @@ import {
   FiZap,
   FiActivity,
   FiLayers,
-  FiMessageSquare
+  FiMessageSquare,
+  FiHelpCircle
 } from "react-icons/fi";
 import logoImage from "../../../assets/transparent_logo.png";
 
@@ -292,6 +293,7 @@ const menuGroups = [
       },
       { path: "/admin/settings", icon: FiSettings, label: "Settings" },
       { path: "/admin/feedback", icon: FiMessageSquare, label: "Product Reviews" },
+      { path: "/admin/support-tickets", icon: FiHelpCircle, label: "Support Tickets" },
       {
         path: "/admin/seller-recommendations",
         icon: FiZap,

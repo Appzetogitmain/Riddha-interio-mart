@@ -54,6 +54,7 @@ const ManageSellerListPage = React.lazy(() => import('./pages/ManageSellerListPa
 const FeedbackManagement = React.lazy(() => import('./pages/FeedbackManagement'));
 const SellerRecommendationManagement = React.lazy(() => import('./pages/SellerRecommendationManagement'));
 const ManageTerms = React.lazy(() => import('./pages/ManageTerms'));
+const SupportTicketsPage = React.lazy(() => import('./pages/SupportTicketsPage'));
 import { RBACProvider } from './data/RBACContext';
 
 const AdminRoutes = () => {
@@ -154,6 +155,7 @@ const AdminRoutes = () => {
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/feedback" element={<FeedbackManagement />} />
             <Route path="/seller-recommendations" element={<SellerRecommendationManagement />} />
+            <Route path="/support-tickets" element={<SupportTicketsPage />} />
           </Route>
 
           {/* Team Management (Admin Only) */}

@@ -6,8 +6,6 @@ import {
   LuSearch,
   LuBanknote,
   LuClock,
-  LuCheckCircle2,
-  LuXCircle,
   LuRefreshCw,
   LuChevronDown,
   LuX,
@@ -15,7 +13,7 @@ import {
   LuBuilding2,
   LuShieldCheck
 } from 'react-icons/lu';
-import { FiDownload } from 'react-icons/fi';
+import { FiDownload, FiCheckCircle, FiXCircle } from 'react-icons/fi';
 
 const STATUS_TABS = ['all', 'requested', 'completed', 'rejected'];
 
@@ -190,8 +188,8 @@ const SellerPayoutsPage = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
             { label: 'Pending Requests', count: stats.requested?.count || 0, amount: stats.requested?.totalAmount || 0, icon: LuClock, color: 'text-amber-600', bg: 'bg-amber-50' },
-            { label: 'Completed', count: stats.completed?.count || 0, amount: stats.completed?.totalAmount || 0, icon: LuCheckCircle2, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-            { label: 'Rejected', count: stats.rejected?.count || 0, amount: stats.rejected?.totalAmount || 0, icon: LuXCircle, color: 'text-red-600', bg: 'bg-red-50' },
+            { label: 'Completed', count: stats.completed?.count || 0, amount: stats.completed?.totalAmount || 0, icon: FiCheckCircle, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+            { label: 'Rejected', count: stats.rejected?.count || 0, amount: stats.rejected?.totalAmount || 0, icon: FiXCircle, color: 'text-red-600', bg: 'bg-red-50' },
             { label: 'Processing', count: stats.processing?.count || 0, amount: stats.processing?.totalAmount || 0, icon: LuBanknote, color: 'text-blue-600', bg: 'bg-blue-50' }
           ].map((s, i) => (
             <div key={i} className="bg-white p-5 rounded-2xl border border-soft-oatmeal shadow-sm flex items-center gap-4">
@@ -432,7 +430,7 @@ const SellerPayoutsPage = () => {
                   disabled={submitting}
                   className="flex-1 py-3 rounded-xl font-bold text-xs uppercase tracking-widest text-white bg-emerald-700 hover:bg-emerald-800 transition-all shadow-lg shadow-emerald-800/20 disabled:opacity-60 flex items-center justify-center gap-2"
                 >
-                  {submitting ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <LuCheckCircle2 size={16} />}
+                  {submitting ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <FiCheckCircle size={16} />}
                   {submitting ? 'Processing...' : 'Confirm Approval'}
                 </button>
               </div>

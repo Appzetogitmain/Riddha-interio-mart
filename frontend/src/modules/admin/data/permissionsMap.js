@@ -46,6 +46,7 @@ export const permissionsMap = {
     'Bulk Orders': 'orders',
     'Settings': 'settings',
     'Product Reviews': 'settings',
+    'Support Tickets': 'settings',
     'Referral System': 'referrals',
     'Team Management': 'team',
     'Payments': 'payments',

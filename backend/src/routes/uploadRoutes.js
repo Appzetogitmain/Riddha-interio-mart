@@ -109,12 +109,13 @@ router.post('/', protect, uploadRateLimiter, uploadParser.single('image'), valid
   }
 
   try {
+    const isImage = req.file.mimetype.startsWith('image');
     const result = await cloudinary.uploader.upload(req.file.path, {
       folder: 'riddha_mart/images',
       image_metadata: false, // strips EXIF metadata
-      transformation: [
+      transformation: isImage ? [
         { width: 1200, height: 1200, crop: 'limit', quality: 'auto', fetch_format: 'auto' }
-      ]
+      ] : undefined
     });
 
     console.log(`[Upload Audit] Single upload success. User: ${req.user.id}. Url: ${result.secure_url}`);

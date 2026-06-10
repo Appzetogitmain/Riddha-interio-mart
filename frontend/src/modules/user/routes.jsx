@@ -27,6 +27,7 @@ const OrderSuccessPage = React.lazy(() => import('./pages/OrderSuccessPage'));;
 const OrderTrackingPage = React.lazy(() => import('./pages/OrderTrackingPage'));;
 const EditProfile = React.lazy(() => import('./pages/EditProfile'));;
 const BrandPage = React.lazy(() => import('./pages/BrandPage'));;
+const BrandsPage = React.lazy(() => import('./pages/BrandsPage'));;
 const SearchEntryPage = React.lazy(() => import('./pages/SearchEntryPage'));;
 const SearchProductsPage = React.lazy(() => import('./pages/SearchProductsPage'));;
 const InvoicePage = React.lazy(() => import('./pages/InvoicePage'));;
@@ -38,6 +39,7 @@ const WishlistPage = React.lazy(() => import('./pages/WishlistPage'));;
 const NotificationPage = React.lazy(() => import('./pages/NotificationPage'));;
 const SplashPage = React.lazy(() => import('./pages/SplashPage'));;
 const OnboardingPage = React.lazy(() => import('./pages/OnboardingPage'));;
+const SavedAddressesPage = React.lazy(() => import('./pages/SavedAddressesPage'));;
 
 import { Navigate } from 'react-router-dom';
 import { useUser } from './data/UserContext';
@@ -89,11 +91,13 @@ const UserRoutes = () => {
       <Route path="/order-success" element={<OrderSuccessPage />} />
       <Route path="/track-order/:id" element={<OrderTrackingPage />} />
       <Route path="/profile/edit" element={<EditProfile />} />
+      <Route path="/brands" element={<BrandsPage />} />
       <Route path="/brand/:brandName" element={<BrandPage />} />
       <Route path="/search" element={<SearchEntryPage />} />
       <Route path="/search-results" element={<SearchProductsPage />} />
       <Route path="/order/invoice/:id" element={<InvoicePage />} />
       <Route path="/notifications" element={<NotificationPage />} />
+      <Route path="/addresses" element={<SavedAddressesPage />} />
     </Routes>
   );
 };

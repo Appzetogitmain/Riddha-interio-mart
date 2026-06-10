@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '../data/CartContext';
@@ -18,6 +18,13 @@ const CartPage = () => {
   const deliveryCharges = pricingBreakdown?.shippingPrice || 0;
   const gstAmount = pricingBreakdown?.taxAmount || 0;
   const totalPrice = pricingBreakdown?.totalPrice || 0;
+
+  const [searchQuery, setSearchQuery] = useState('');
+  const handleSearch = (e) => {
+    if (e.key === 'Enter' && searchQuery.trim()) {
+      navigate(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
 
   const handleAction = () => {
     if (!isLoggedIn) {
@@ -92,7 +99,7 @@ const CartPage = () => {
                     </div>
                     
                     <div className="w-24 h-24 bg-gray-50 rounded-lg overflow-hidden flex-shrink-0 border border-gray-100">
-                      <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                      <img src={item.images?.[0] || item.image} alt={item.name} className="w-full h-full object-cover" />
                     </div>
                     <div className="flex-1 flex flex-col justify-between pr-6">
                       <div className="flex justify-between items-start">
@@ -147,7 +154,7 @@ const CartPage = () => {
               <div className="space-y-5 mb-6 border-b border-gray-100 pb-6">
                 {cart.map((item) => (
                   <div key={item._id || item.id} className="flex gap-4 items-center">
-                    <img src={item.image} alt={item.name} className="w-[60px] h-[60px] rounded-lg object-cover bg-gray-50 border border-gray-100" />
+                    <img src={item.images?.[0] || item.image} alt={item.name} className="w-[60px] h-[60px] rounded-lg object-cover bg-gray-50 border border-gray-100" />
                     <div className="flex-1">
                       <div className="flex justify-between items-start">
                         <h4 className="text-[15px] font-bold text-gray-800 line-clamp-1">{item.name}</h4>
@@ -162,20 +169,23 @@ const CartPage = () => {
               {/* Price Breakdown */}
               <div className="space-y-4">
                 <div className="flex justify-between text-[15px]">
-                  <span className="text-gray-500 font-medium">Subtotal</span>
+                  <div>
+                    <span className="text-gray-500 font-medium">Subtotal</span>
+                    {gstAmount > 0 && (
+                      <p className="text-[11px] text-gray-400 font-medium mt-0.5">
+                        Incl. GST ₹{gstAmount?.toLocaleString('en-IN')}
+                      </p>
+                    )}
+                  </div>
                   <span className="text-gray-900 font-bold">₹{mrpValue?.toLocaleString('en-IN')}</span>
                 </div>
                 <div className="flex justify-between text-[15px]">
                   <span className="text-gray-500 font-medium">Shipping</span>
                   <span className="text-[#189D91] font-bold uppercase tracking-wide">
-                    {deliveryCharges === 0 ? 'FREE' : `₹${deliveryCharges}`}
+                    {deliveryCharges === 0 ? 'FREE' : `₹${deliveryCharges?.toLocaleString('en-IN')}`}
                   </span>
                 </div>
-                <div className="flex justify-between text-[15px]">
-                  <span className="text-gray-500 font-medium">Inclusive GST</span>
-                  <span className="text-gray-900 font-bold">₹{gstAmount?.toLocaleString('en-IN')}</span>
-                </div>
-                
+
                 <div className="pt-4 mt-2 border-t border-gray-100 flex justify-between items-center">
                   <span className="text-[22px] font-extrabold text-gray-900">Total</span>
                   <span className="text-[22px] font-extrabold text-gray-900">₹{totalPrice?.toLocaleString('en-IN')}</span>
@@ -207,10 +217,18 @@ const CartPage = () => {
         {/* Mobile Search */}
         <div className="px-5 py-4 bg-white">
           <div className="bg-gray-50 border border-gray-100 rounded-xl px-4 py-2.5 flex items-center gap-2.5 text-gray-400 focus-within:ring-2 focus-within:ring-[#36A18B]/20 transition-all">
-            <FiSearch size={18} />
-            <input 
-              type="text" 
-              placeholder="Search products or brands..." 
+            <button
+              onClick={() => { if (searchQuery.trim()) navigate(`/products?search=${encodeURIComponent(searchQuery.trim())}`); }}
+              className="text-gray-400 hover:text-[#189D91] transition-colors flex-shrink-0"
+            >
+              <FiSearch size={18} />
+            </button>
+            <input
+              type="text"
+              placeholder="Search products or brands..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={handleSearch}
               className="bg-transparent border-none outline-none w-full text-[15px] font-medium text-gray-700 placeholder:text-gray-400"
             />
           </div>
@@ -236,7 +254,7 @@ const CartPage = () => {
                       <FiX size={18} />
                     </button>
                     <div className="w-[100px] h-[100px] rounded-2xl overflow-hidden flex-shrink-0 bg-gray-50 border border-gray-100">
-                      <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                      <img src={item.images?.[0] || item.image} alt={item.name} className="w-full h-full object-cover" />
                     </div>
                     <div className="flex-1 pt-1 pr-6">
                       <h3 className="text-[15px] font-bold text-gray-900 leading-tight mb-1">{item.name}</h3>
@@ -274,16 +292,19 @@ const CartPage = () => {
         {/* Mobile Price Summary */}
         <div className="px-5 py-6 space-y-3 border-b border-gray-100 bg-white">
           <div className="flex justify-between items-center text-[15px] font-medium text-gray-800">
-            <span>Subtotal</span>
+            <div>
+              <span>Subtotal</span>
+              {gstAmount > 0 && (
+                <p className="text-[11px] text-gray-400 mt-0.5">Incl. GST ₹{gstAmount?.toLocaleString('en-IN')}</p>
+              )}
+            </div>
             <span className="font-semibold text-gray-900">₹{mrpValue?.toLocaleString('en-IN')}</span>
           </div>
           <div className="flex justify-between items-center text-[15px] font-medium text-gray-800">
             <span>Shipping</span>
-            <span className="font-semibold text-gray-900">₹{deliveryCharges?.toLocaleString('en-IN')}</span>
-          </div>
-          <div className="flex justify-between items-center text-[15px] font-medium text-gray-800">
-            <span>Inclusive GST</span>
-            <span className="font-semibold text-gray-900">₹{gstAmount?.toLocaleString('en-IN')}</span>
+            <span className={deliveryCharges === 0 ? 'font-semibold text-[#189D91]' : 'font-semibold text-gray-900'}>
+              {deliveryCharges === 0 ? 'FREE' : `₹${deliveryCharges?.toLocaleString('en-IN')}`}
+            </span>
           </div>
           
           {discountOnMRP > 0 && (

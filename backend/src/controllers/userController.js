@@ -71,9 +71,12 @@ exports.registerUser = async (req, res, next) => {
 exports.loginUser = async (req, res, next) => {
   try {
     const { email, password } = req.body;
-    if (!email || !password) return res.status(400).json({ success: false, error: 'Please provide email and password' });
+    if (!email || !password) return res.status(400).json({ success: false, error: 'Please provide email/phone and password' });
 
-    const user = await User.findOne({ email }).select('+password');
+    const isPhone = /^\d{10}$/.test(email.trim());
+    const user = await User.findOne(
+      isPhone ? { phone: email.trim() } : { email: email.trim() }
+    ).select('+password');
     if (!user || !(await user.matchPassword(password))) {
       return res.status(401).json({ success: false, error: 'Invalid credentials' });
     }

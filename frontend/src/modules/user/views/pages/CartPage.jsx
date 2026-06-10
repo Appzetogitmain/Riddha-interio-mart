@@ -164,7 +164,7 @@ const CartPage = () => {
                   {/* Mobile Item Card */}
                   <div className="md:hidden bg-white rounded-xl p-3 shadow-sm border border-soft-oatmeal/10 flex gap-3">
                     <div className="w-20 h-20 bg-soft-oatmeal/10 rounded-lg overflow-hidden flex-shrink-0">
-                      <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                      <img src={item.images?.[0] || item.image} alt={item.name} className="w-full h-full object-cover" />
                     </div>
                     <div className="flex-1 flex flex-col justify-between py-0.5">
                       <div>
@@ -273,16 +273,19 @@ const CartPage = () => {
               
               <div className="space-y-6 mb-12">
                 <div className="flex justify-between text-deep-espresso/60 font-medium">
-                  <span className="text-sm uppercase tracking-widest">Subtotal</span>
+                  <div>
+                    <span className="text-sm uppercase tracking-widest">Subtotal</span>
+                    {gstAmount > 0 && (
+                      <p className="text-[10px] text-deep-espresso/40 mt-0.5 normal-case tracking-normal">
+                        Incl. GST ₹{gstAmount.toFixed(2)}
+                      </p>
+                    )}
+                  </div>
                   <span className="text-lg font-bold text-deep-espresso">₹{mrpValue.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-deep-espresso/60 font-medium">
                   <span className="text-sm uppercase tracking-widest">Discount</span>
                   <span className="text-lg font-bold text-warm-sand">-₹{discountOnMRP.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-deep-espresso/60 font-medium">
-                  <span className="text-sm uppercase tracking-widest">Inclusive GST</span>
-                  <span className="text-lg font-bold text-deep-espresso">₹{gstAmount.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-deep-espresso/40">
                   <span className="text-xs uppercase tracking-widest">Shipping</span>

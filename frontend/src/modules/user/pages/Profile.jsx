@@ -16,7 +16,7 @@ const Profile = () => {
     { icon: <FiUser />, title: "My Profile", subtitle: "View and edit your personal details", link: "/profile/edit" },
     { icon: <FiHeart />, title: "My Wishlist", subtitle: "Your favorite pieces saved for later", scrollTarget: "wishlist-section" },
     { icon: <FiPackage />, title: "My Orders", subtitle: "Track, return or buy things again", link: "/orders" },
-    { icon: <FiMapPin />, title: "Saved Addresses", subtitle: "Edit addresses for orders", link: "/address" },
+    { icon: <FiMapPin />, title: "Saved Addresses", subtitle: "Edit addresses for orders", link: "/addresses" },
     { icon: <FiGift />, title: "Referral Rewards", subtitle: "Refer friends and earn credits", link: "/referral-rewards" },
     { icon: <FiSettings />, title: "Account Settings", subtitle: "Update your profile and security", link: "/profile/edit" },
   ];

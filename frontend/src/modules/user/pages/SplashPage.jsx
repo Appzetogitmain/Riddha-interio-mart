@@ -45,25 +45,25 @@ const SplashPage = () => {
 
         {/* Tagline */}
         <motion.div
-          initial={{ opacity: 0, y: 15 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4, duration: 0.6 }}
-          className="text-center mb-16"
+          transition={{ delay: 0.35, duration: 0.5 }}
+          className="text-center space-y-1"
         >
-          <h1 className="text-slate-800 text-2xl sm:text-3xl font-extrabold tracking-tight mb-2">
+          <p className="text-slate-800 text-[17px] font-extrabold tracking-tight">
             Connecting India to
-          </h1>
-          <h2 className="text-slate-600 text-xl sm:text-2xl font-semibold tracking-wide">
+          </p>
+          <p className="text-[#189D91] text-[15px] font-semibold tracking-wide">
             Premium Interiors.
-          </h2>
+          </p>
         </motion.div>
 
         {/* Premium Loading Bar */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.7, duration: 0.5 }}
-          className="w-full max-w-[240px] flex flex-col items-center"
+          transition={{ delay: 0.6, duration: 0.4 }}
+          className="w-full flex flex-col items-center gap-2.5 pt-2"
         >
           <div className="flex items-center gap-2 mb-3">
             <div className="w-2 h-2 rounded-full bg-[#EC008C] animate-pulse" />

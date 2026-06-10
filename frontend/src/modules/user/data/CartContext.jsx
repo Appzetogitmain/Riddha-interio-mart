@@ -217,7 +217,7 @@ export const CartProvider = ({ children }) => {
     clearCart,
     cartTotal,
     pricingBreakdown,
-    cartCount: cart.length,
+    cartCount: cart.reduce((sum, item) => sum + item.quantity, 0),
   }), [cart, loading, cartTotal, pricingBreakdown]);
 
   return (

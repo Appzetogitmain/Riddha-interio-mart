@@ -7,7 +7,7 @@ import {
   FiBell,
   FiSave,
   FiCheck,
-  FiXCircle,
+  FiRefreshCw,
 } from "react-icons/fi";
 import api from "../../../shared/utils/api";
 
@@ -33,11 +33,12 @@ const SettingsPage = () => {
 
   const [systemSettings, setSystemSettings] = useState({
     deliveryCommissionRate: 50.0,
+    salesCommissionRate: 10.0,
   });
 
-  // Fetch Admin Profile on mount
+  // Fetch Admin Profile and Settings on mount
   useEffect(() => {
-    const fetchProfile = async () => {
+    const load = async () => {
       try {
         setIsLoading(true);
         const { data } = await api.get("/auth/admin/me");
@@ -53,7 +54,9 @@ const SettingsPage = () => {
         if (settingsRes.data?.success && settingsRes.data?.data) {
           setSystemSettings({
             deliveryCommissionRate:
-              settingsRes.data.data.deliveryCommissionRate || 50.0,
+              settingsRes.data.data.deliveryCommissionRate ?? 50.0,
+            salesCommissionRate:
+              settingsRes.data.data.salesCommissionRate ?? 10.0,
           });
         }
       } catch (err) {
@@ -63,7 +66,7 @@ const SettingsPage = () => {
         setIsLoading(false);
       }
     };
-    fetchProfile();
+    load();
   }, []);
 
   const handleSaveProfile = async () => {
@@ -125,13 +128,14 @@ const SettingsPage = () => {
   };
 
   const handleSaveNotifications = () => {
-    // Mock save for notifications if backend route doesn't exist yet
     setIsSaving(true);
+    setError("");
+    setIsSaved(false);
     setTimeout(() => {
       setIsSaving(false);
       setIsSaved(true);
       setTimeout(() => setIsSaved(false), 3000);
-    }, 800);
+    }, 600);
   };
 
   const handleSaveSystemSettings = async () => {
@@ -164,11 +168,9 @@ const SettingsPage = () => {
 
   if (isLoading) {
     return (
-      <PageWrapper>
-        <div className="flex justify-center items-center h-64">
-          <div className="w-8 h-8 border-4 border-deep-espresso border-t-transparent rounded-full animate-spin"></div>
-        </div>
-      </PageWrapper>
+      <div className="p-6 flex justify-center items-center h-64">
+        <FiRefreshCw className="animate-spin text-warm-sand" size={24} />
+      </div>
     );
   }
 
@@ -184,13 +186,6 @@ const SettingsPage = () => {
           </p>
         </div>
 
-        {error && (
-          <div className="bg-red-50 text-red-600 p-4 rounded-xl flex items-center gap-3 border border-red-100">
-            <FiXCircle className="shrink-0" />
-            <p className="text-sm font-medium">{error}</p>
-          </div>
-        )}
-
         <div className="bg-white rounded-2xl md:rounded-[32px] shadow-xl border border-soft-oatmeal overflow-hidden">
           {/* Tabs header */}
           <div className="flex border-b border-soft-oatmeal px-4 md:px-8 bg-soft-oatmeal/5 overflow-x-auto no-scrollbar">
@@ -202,7 +197,11 @@ const SettingsPage = () => {
                   setError("");
                   setIsSaved(false);
                 }}
-                className={`py-5 px-6 text-[10px] font-black uppercase tracking-[0.2em] transition-all whitespace-nowrap border-b-2 ${activeTab === tab ? "text-dusty-cocoa border-dusty-cocoa" : "text-warm-sand border-transparent hover:text-deep-espresso"}`}
+                className={`py-5 px-6 text-[10px] font-black uppercase tracking-[0.2em] transition-all whitespace-nowrap border-b-2 ${
+                  activeTab === tab
+                    ? "text-dusty-cocoa border-dusty-cocoa"
+                    : "text-warm-sand border-transparent hover:text-deep-espresso"
+                }`}
               >
                 {tab}
               </button>
@@ -210,6 +209,12 @@ const SettingsPage = () => {
           </div>
 
           <div className="p-6 md:p-12">
+            {error && (
+              <div className="mb-6 p-4 bg-rose-50 border border-rose-100 rounded-xl text-rose-600 text-xs font-bold uppercase tracking-wider">
+                {error}
+              </div>
+            )}
+
             {activeTab === "Profile" && (
               <div className="space-y-6 max-w-xl animate-in fade-in slide-in-from-bottom-2 duration-300">
                 <h3 className="text-xl font-display font-bold text-deep-espresso flex items-center gap-3">
@@ -325,7 +330,11 @@ const SettingsPage = () => {
                   >
                     <div className="flex items-center gap-5">
                       <div
-                        className={`p-4 rounded-2xl transition-colors ${notifications ? "bg-emerald-50 text-emerald-500" : "bg-soft-oatmeal text-warm-sand"}`}
+                        className={`p-4 rounded-2xl transition-colors ${
+                          notifications
+                            ? "bg-emerald-50 text-emerald-500"
+                            : "bg-soft-oatmeal text-warm-sand"
+                        }`}
                       >
                         <FiBell size={24} />
                       </div>
@@ -339,10 +348,14 @@ const SettingsPage = () => {
                       </div>
                     </div>
                     <div
-                      className={`w-14 h-8 rounded-full relative transition-all duration-300 ${notifications ? "bg-emerald-500" : "bg-soft-oatmeal"}`}
+                      className={`w-14 h-8 rounded-full relative transition-all duration-300 ${
+                        notifications ? "bg-emerald-500" : "bg-soft-oatmeal"
+                      }`}
                     >
                       <div
-                        className={`absolute top-1 w-6 h-6 bg-white rounded-full shadow-lg transition-all duration-300 ${notifications ? "right-1" : "left-1"}`}
+                        className={`absolute top-1 w-6 h-6 bg-white rounded-full shadow-lg transition-all duration-300 ${
+                          notifications ? "right-1" : "left-1"
+                        }`}
                       ></div>
                     </div>
                   </div>
@@ -382,6 +395,35 @@ const SettingsPage = () => {
                     <p className="text-xs text-warm-sand/70 pl-1">
                       This rate is automatically applied to all completed
                       deliveries.
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest pl-1">
+                      Seller Commission Rate (%)
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-5 top-1/2 -translate-y-1/2 text-warm-sand font-bold">
+                        %
+                      </span>
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.01"
+                        value={systemSettings.salesCommissionRate}
+                        onChange={(e) =>
+                          setSystemSettings({
+                            ...systemSettings,
+                            salesCommissionRate:
+                              parseFloat(e.target.value) || 0,
+                          })
+                        }
+                        className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-2xl pl-10 px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-warm-sand/20 focus:bg-white transition-all font-medium"
+                      />
+                    </div>
+                    <p className="text-xs text-warm-sand/70 pl-1">
+                      Percentage deducted from seller earnings on each sale.
                     </p>
                   </div>
                 </div>

@@ -169,7 +169,7 @@ const LoginPage = () => {
             </div>
           </div>
 
-          <div className="flex-1 md:w-1/2 w-full flex flex-col justify-between py-12 px-8 md:px-12 xl:px-16 items-center md:items-start overflow-y-auto">
+          <div className="flex-1 md:w-1/2 w-full flex flex-col justify-center py-8 px-8 md:px-12 xl:px-16 items-center md:items-start overflow-y-auto gap-5">
             {/* Logo */}
             <div className="mt-8 md:mt-0 mb-8 w-full max-w-[200px] flex justify-center md:justify-start">
               <img
@@ -202,12 +202,12 @@ const LoginPage = () => {
               {/* Phone or Email Input */}
               <div className="space-y-1.5">
                 <label className="text-[11px] font-bold text-slate-700 ml-0.5">
-                  Phone Number
+                  Phone No. / Email
                 </label>
                 <div className="relative">
                   <input
                     type="text"
-                    placeholder="or Email"
+                    placeholder="Phone number or email"
                     value={identifier}
                     onChange={(e) => setIdentifier(e.target.value)}
                     className="w-full px-4 py-3 bg-slate-50/85 border border-slate-200/80 rounded-xl focus:bg-white focus:border-[#189D91] outline-none transition-all text-xs font-bold text-slate-800 placeholder:text-slate-400 placeholder:font-semibold shadow-sm"
@@ -275,7 +275,7 @@ const LoginPage = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-[#8A3B8B] hover:bg-[#722b73] text-white py-3.5 rounded-full font-bold text-[14px] uppercase tracking-wider transition-all active:scale-[0.98] shadow-md shadow-[#8A3B8B]/20 mt-6"
+                className="w-full bg-[#8A3B8B] hover:bg-[#722b73] text-white py-3.5 rounded-full font-bold text-[14px] uppercase tracking-wider transition-all active:scale-[0.98] shadow-md shadow-[#8A3B8B]/20"
               >
                 {loading ? "Authenticating..." : "LOGIN"}
               </button>
@@ -292,7 +292,7 @@ const LoginPage = () => {
             </div>
 
             {/* Footer Copyright */}
-            <div className="mt-auto pt-6 w-full md:hidden">
+            <div className="w-full md:hidden">
               <p className="text-center text-[9px] font-bold text-slate-400 uppercase tracking-wider">
                 © {new Date().getFullYear()} Riddha Interior Mart.
               </p>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useUser } from '../data/UserContext';
 import { FiArrowLeft, FiUser, FiMail, FiLock, FiEye, FiEyeOff, FiCheck, FiPhone, FiTruck, FiMapPin, FiShoppingBag, FiGift, FiUploadCloud, FiCheckCircle, FiLoader, FiCreditCard, FiShield, FiActivity, FiFileText, FiUserCheck, FiBriefcase } from 'react-icons/fi';
 import { FaGoogle, FaFacebookF, FaXTwitter } from 'react-icons/fa6';
 import Button from '../../../shared/components/Button';
@@ -73,13 +74,39 @@ const SignupPage = () => {
     }
   };
 
-  const [userType, setUserType] = useState('customer'); // customer or enterpriser
+  const [userType, setUserType] = useState('customer');
   const [showPassword, setShowPassword] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const { login } = useUser();
+
+  // Delivery: login-first, then slide up signup
+  const [showSignupForm, setShowSignupForm] = useState(false);
+  const [dlId, setDlId] = useState('');
+  const [dlPwd, setDlPwd] = useState('');
+  const [dlShowPwd, setDlShowPwd] = useState(false);
+  const [dlLoading, setDlLoading] = useState(false);
+
+  const handleDeliveryLogin = async (e) => {
+    e.preventDefault();
+    setError('');
+    setDlLoading(true);
+    try {
+      const resp = await api.post('/auth/delivery/login', { email: dlId, password: dlPwd });
+      if (resp.data.success) {
+        const { token, user } = resp.data.data || resp.data;
+        login({ ...user, token });
+        navigate('/delivery/dashboard');
+      }
+    } catch (err) {
+      setError(err.response?.data?.error || 'Invalid credentials');
+    } finally {
+      setDlLoading(false);
+    }
+  };
 
   const getRole = () => {
     if (location.pathname.startsWith('/admin')) return 'admin';
@@ -252,6 +279,74 @@ const SignupPage = () => {
     setFormData({ ...formData, [name]: value });
   };
 
+  // ── Delivery: login form by default, signup slides up full-screen ──
+  if (getRole() === 'delivery' && !showSignupForm) {
+    return (
+      <div className="min-h-screen bg-[#F8F9FB] flex flex-col items-center justify-center px-6 py-12 relative">
+        <div className="w-full max-w-sm space-y-5">
+          <div className="flex justify-center">
+            <img src={logo} alt="Riddha" className="w-40 object-contain" />
+          </div>
+          <div className="text-center">
+            <h1 className="text-xl font-bold text-slate-800">Delivery Partner Login</h1>
+            <p className="text-xs text-slate-400 mt-1">Sign in to your delivery account</p>
+          </div>
+
+          {error && (
+            <div className="p-3 bg-rose-50 border border-rose-100 rounded-xl text-xs text-rose-600 font-semibold text-center">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleDeliveryLogin} className="space-y-3">
+            <input
+              type="text"
+              placeholder="Email or Phone"
+              value={dlId}
+              onChange={e => setDlId(e.target.value)}
+              className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-[#2A458A] transition-colors"
+              required
+            />
+            <div className="relative">
+              <input
+                type={dlShowPwd ? 'text' : 'password'}
+                placeholder="Password"
+                value={dlPwd}
+                onChange={e => setDlPwd(e.target.value)}
+                className="w-full px-4 py-3 pr-11 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-[#2A458A] transition-colors"
+                required
+              />
+              <button type="button" onClick={() => setDlShowPwd(p => !p)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
+                {dlShowPwd ? <FiEyeOff size={16} /> : <FiEye size={16} />}
+              </button>
+            </div>
+            <button
+              type="submit"
+              disabled={dlLoading}
+              className="w-full py-3.5 bg-[#2A458A] text-white font-bold text-sm rounded-full hover:bg-[#1f346b] transition-colors active:scale-[0.98] disabled:opacity-60"
+            >
+              {dlLoading ? 'Signing in…' : 'LOGIN'}
+            </button>
+          </form>
+
+          <div className="flex items-center gap-3">
+            <div className="flex-1 h-px bg-slate-200" />
+            <span className="text-[11px] text-slate-400">or</span>
+            <div className="flex-1 h-px bg-slate-200" />
+          </div>
+
+          <button
+            onClick={() => { setError(''); setShowSignupForm(true); }}
+            className="w-full py-3 border border-[#2A458A] text-[#2A458A] font-semibold text-sm rounded-full hover:bg-[#2A458A]/5 transition-colors"
+          >
+            Create Account
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="relative min-h-screen bg-white md:bg-deep-espresso overflow-hidden selection:bg-warm-sand selection:text-white">
       {/* Desktop Background Layer */}
@@ -275,7 +370,7 @@ const SignupPage = () => {
           <div className="absolute inset-0 bg-black/10" />
 
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => getRole() === 'delivery' ? setShowSignupForm(false) : navigate(-1)}
             className="absolute top-6 left-6 h-10 w-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white border border-white/30 shadow-lg active:scale-90 transition-all z-20"
           >
             <FiArrowLeft className="h-5 w-5" />

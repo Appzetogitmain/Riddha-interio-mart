@@ -5,8 +5,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import api from '../../../shared/utils/api';
 import ReviewFeedbackModal from '../components/ReviewFeedbackModal';
 import ExistingReviewCard from '../components/ExistingReviewCard';
-import ReturnRequestModal from '../components/ReturnRequestModal';
-import { FiMessageCircle, FiRefreshCcw } from 'react-icons/fi';
+import { FiMessageCircle } from 'react-icons/fi';
 
 const Orders = () => {
   const [orders, setOrders] = useState([]);
@@ -19,11 +18,6 @@ const Orders = () => {
   const [activeOrder, setActiveOrder] = useState(null);
   const [activeProduct, setActiveProduct] = useState(null);
   const [modalInitialData, setModalInitialData] = useState(null);
-
-  // Return Modal State
-  const [isReturnModalOpen, setIsReturnModalOpen] = useState(false);
-  const [returnOrder, setReturnOrder] = useState(null);
-  const [returnItem, setReturnItem] = useState(null);
 
   const fetchReviews = async () => {
     try {
@@ -59,16 +53,6 @@ const Orders = () => {
     setActiveProduct(product);
     setModalInitialData(existingReview);
     setIsModalOpen(true);
-  };
-
-  const openReturnModal = (order, item) => {
-    setReturnOrder(order);
-    setReturnItem(item);
-    setIsReturnModalOpen(true);
-  };
-
-  const handleReturnSuccess = () => {
-    fetchMyOrders();
   };
 
   const getStatusStyle = (status) => {
@@ -184,22 +168,6 @@ const Orders = () => {
                                  </div>
                                  
                                  <div className="flex flex-col gap-2 shrink-0">
-                                   {order.status === 'Delivered' && (!item.returnStatus || item.returnStatus === 'None' || item.returnStatus === 'Rejected') && (
-                                     <button
-                                       onClick={() => openReturnModal(order, item)}
-                                       className="flex items-center justify-center gap-1.5 px-3 py-1.5 bg-white border border-red-200 text-red-600 rounded-lg hover:bg-red-50 hover:border-red-300 transition-all text-[10px] font-black uppercase tracking-widest shadow-sm active:scale-95"
-                                     >
-                                       <FiRefreshCcw size={12} />
-                                       Return
-                                     </button>
-                                   )}
-
-                                   {item.returnStatus && item.returnStatus !== 'None' && item.returnStatus !== 'Rejected' && (
-                                     <div className="px-3 py-1.5 bg-orange-50 border border-orange-100 text-orange-600 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center justify-center shadow-sm">
-                                       Return: {item.returnStatus}
-                                     </div>
-                                   )}
-
                                    {order.status === 'Delivered' && !existingReview && (
                                      <button
                                        onClick={() => openFeedbackModal(order._id, item)}
@@ -265,15 +233,6 @@ const Orders = () => {
         onStatusChange={fetchReviews}
       />
 
-      {returnOrder && returnItem && (
-        <ReturnRequestModal
-          isOpen={isReturnModalOpen}
-          onClose={() => setIsReturnModalOpen(false)}
-          order={returnOrder}
-          orderItem={returnItem}
-          onSuccess={handleReturnSuccess}
-        />
-      )}
     </motion.div>
   );
 };

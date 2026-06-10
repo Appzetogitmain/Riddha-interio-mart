@@ -86,7 +86,7 @@ const ProductListingPage = () => {
       >
         <div className="space-y-1">
           <h1 className="text-3xl md:text-5xl font-display font-semibold tracking-tight">Our Collection</h1>
-          <p className="text-deep-espresso/40 text-sm md:text-lg font-normal">
+          <p className="text-deep-espresso/70 text-sm md:text-lg font-normal">
             {searchQuery ? `Search results for "${searchQuery}"` : `Showing ${filteredProducts.length} premium pieces for your dream home.`}
           </p>
         </div>

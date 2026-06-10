@@ -96,6 +96,10 @@ const Profile = () => {
   }, [fetchProfile]);
 
   const handleBack = () => {
+    if (showDocDrawer) {
+      setShowDocDrawer(false);
+      return;
+    }
     if (window.history.length > 1) {
       navigate(-1);
     } else {
@@ -216,7 +220,7 @@ const Profile = () => {
         <h1 className="text-base font-bold flex-1 text-center mr-6">Partner Profile</h1>
       </div>
 
-      <div className="px-4 space-y-5 max-w-4xl mx-auto lg:py-2">
+      <div className="px-4 space-y-5 max-w-4xl mx-auto pt-4 lg:py-4">
         <AnimatePresence mode="wait">
           {isEditing ? (
             <motion.form 

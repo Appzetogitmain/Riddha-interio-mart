@@ -60,11 +60,11 @@ const CategoriesPage = () => {
                 to={`/category/${category.name.toLowerCase().replace(/\s+/g, '-')}`}
                 className="group flex flex-col items-center gap-1 md:gap-4"
               >
-                <div className="relative aspect-square w-full rounded-2xl md:rounded-[2.5rem] overflow-hidden bg-white shadow-sm group-hover:shadow-lg transition-all duration-500 border border-soft-oatmeal/10 flex items-center justify-center p-2">
-                  <img 
-                    src={category.image} 
-                    alt={category.name} 
-                    className="h-full w-full object-contain transition-transform duration-700 group-hover:scale-110"
+                <div className="relative aspect-square w-full rounded-2xl md:rounded-[2.5rem] overflow-hidden bg-white shadow-sm group-hover:shadow-lg transition-all duration-500 border border-soft-oatmeal/10">
+                  <img
+                    src={category.image}
+                    alt={category.name}
+                    className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
                   />
                   <div className="absolute inset-0 bg-deep-espresso/0 group-hover:bg-deep-espresso/5 transition-colors duration-300" />
                 </div>

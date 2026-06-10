@@ -134,8 +134,8 @@ const ProductCard = ({ product, index = 0, variant = 'grid' }) => {
         {/* Wishlist Button (top-right) */}
         <WishlistButton product={product} />
 
-        {/* Trending Badge (top-right, left of heart) */}
-        {isTrending && <TrendingBadge />}
+        {/* Trending Badge (top-right, left of heart) — only in grid view; list view uses the red discount circle */}
+        {isTrending && !isList && <TrendingBadge />}
       </Link>
 
       <div className={`flex-1 min-w-0 p-3 md:p-5 flex flex-col justify-between ${isList ? 'space-y-2 md:space-y-4' : 'space-y-1 md:space-y-2'}`}>
@@ -153,7 +153,7 @@ const ProductCard = ({ product, index = 0, variant = 'grid' }) => {
           )}
         </Link>
 
-        <div className="flex items-end justify-between gap-2 md:gap-4 min-w-0 pt-1 md:pt-2 mt-auto">
+        <div className="flex items-center justify-between gap-2 md:gap-4 min-w-0 pt-1 md:pt-2 mt-auto">
           <Link to={`/products/${productId}`} className="min-w-0 flex-1 flex flex-col hover:opacity-80 transition-opacity">
             <div className="flex flex-col md:flex-row md:items-baseline md:gap-2 min-w-0">
               <span className={`text-[16px] md:text-xl font-black tracking-tight whitespace-nowrap ${isList ? 'text-[#B71C1C]' : 'text-black'}`}>
@@ -177,14 +177,12 @@ const ProductCard = ({ product, index = 0, variant = 'grid' }) => {
               </span>
             )}
             
-            {/* Express Delivery Badge (List View Enhancement) */}
+            {/* Express Delivery Badge (List View) */}
             {isList && (
-              <div className="mt-1.5 md:mt-2">
-                <div className="inline-flex items-center gap-1 px-2.5 md:px-3 py-1 md:py-1 bg-[#F3E5F5] text-[#7B1FA2] rounded-full shadow-sm">
-                  <span className="text-[10px] md:text-[12px] font-black animate-pulse">⚡</span>
-                  <span className="text-[8px] md:text-[10px] font-black uppercase tracking-wider">Delivery in 4 hours</span>
-                </div>
-              </div>
+              <span className="inline-flex items-center gap-1 mt-1.5 text-[9px] md:text-[10px] font-bold text-[#189D91]">
+                <span className="text-[9px]">⚡</span>
+                Fast Delivery
+              </span>
             )}
             
             {/* Stock Status Indicator */}
@@ -194,26 +192,27 @@ const ProductCard = ({ product, index = 0, variant = 'grid' }) => {
           {quantity === 0 ? (
             <button
               onClick={(e) => { e.preventDefault(); addToCart(product); }}
-              className="bg-[#702D8B] text-white px-5 md:px-8 py-2 md:py-3.5 rounded-xl text-[11px] md:text-sm font-bold shadow-md hover:bg-[#5d2574] transition-all active:scale-95 whitespace-nowrap flex-shrink-0 mb-0.5"
+              className="flex items-center gap-1.5 bg-[#189D91] hover:bg-[#14847a] text-white px-4 py-2 rounded-lg text-[11px] font-bold shadow-sm transition-all active:scale-95 whitespace-nowrap flex-shrink-0"
             >
+              <FiShoppingCart className="w-3 h-3" />
               Add
             </button>
           ) : (
-            <div className="flex items-center gap-1 bg-soft-oatmeal/5 rounded-xl md:rounded-2xl p-0.5 md:p-1 border border-soft-oatmeal/10 shadow-inner flex-shrink-0 max-w-[90px] md:max-w-[150px] mb-0.5">
+            <div className="flex items-center gap-0.5 bg-gray-50 rounded-lg border border-gray-200 flex-shrink-0">
               <button
                 onClick={(e) => { e.preventDefault(); updateQuantity(productId, quantity - 1); }}
-                className="w-7 h-7 md:w-10 md:h-10 flex items-center justify-center text-gray-400 hover:text-deep-espresso transition-all active:scale-90 rounded-lg md:rounded-2xl border border-transparent outline-none"
+                className="w-7 h-7 flex items-center justify-center text-gray-500 hover:text-[#189D91] transition-colors active:scale-90 outline-none"
               >
-                <FiMinus className="w-3 h-3 md:w-4 md:h-4" />
+                <FiMinus className="w-3 h-3" />
               </button>
-              <span className="min-w-[16px] md:min-w-[32px] text-center text-[11px] md:text-lg font-semibold text-deep-espresso">
+              <span className="min-w-[20px] text-center text-[12px] font-bold text-gray-800">
                 {quantity}
               </span>
               <button
                 onClick={(e) => { e.preventDefault(); addToCart(product); }}
-                className="w-7 h-7 md:w-10 md:h-10 flex items-center justify-center text-gray-400 hover:text-deep-espresso transition-all active:scale-90 rounded-lg md:rounded-2xl border border-transparent outline-none"
+                className="w-7 h-7 flex items-center justify-center text-gray-500 hover:text-[#189D91] transition-colors active:scale-90 outline-none"
               >
-                <FiPlus className="w-3 h-3 md:w-4 md:h-4" />
+                <FiPlus className="w-3 h-3" />
               </button>
             </div>
           )}

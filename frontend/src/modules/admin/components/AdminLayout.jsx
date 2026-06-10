@@ -73,12 +73,33 @@ const AdminLayoutContent = () => {
                 Riddha Interior Mart
               </h2>
             </div>
-            <span className="hidden md:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-100">
+
+            <div className="hidden md:block h-5 w-px bg-slate-200 shrink-0" />
+
+            <span className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-100 whitespace-nowrap shrink-0">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
               Live Environment
             </span>
           </div>
 
+          {/* Center: Search */}
+          <div className="hidden lg:flex items-center relative flex-1 max-w-sm xl:max-w-md">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <input
+              type="text"
+              placeholder="Search across transactions, products, users..."
+              className="w-full pl-9 pr-10 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-teal-400 focus:outline-none transition-all placeholder-slate-400 text-slate-800"
+            />
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-semibold text-slate-400 bg-white border border-slate-200 px-1.5 py-0.5 rounded-md shadow-sm leading-none">
+              ⌘K
+            </span>
+          </div>
+
+          {/* Right: Notifications & Profile */}
           <div className="flex items-center gap-4">
             <NotificationDropdown
               isMobile={false}
@@ -96,7 +117,7 @@ const AdminLayoutContent = () => {
                 }}
                 className="flex items-center gap-2.5 cursor-pointer group focus:outline-none"
               >
-                <div className="w-8.5 h-8.5 rounded-lg flex items-center justify-center text-white ring-2 ring-slate-100 shadow-sm transition-all overflow-hidden bg-[var(--color-primary)] hover:bg-[var(--color-secondary-purple)]">
+                <div className="w-8 h-8 rounded-xl flex items-center justify-center text-white ring-2 ring-slate-100 shadow-sm overflow-hidden bg-[var(--color-primary)] shrink-0">
                   {user?.avatar ? (
                     <img
                       src={user.avatar}
@@ -104,7 +125,7 @@ const AdminLayoutContent = () => {
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <FiUser size={16} />
+                    <FiUser size={15} />
                   )}
                 </div>
                 <div className="hidden sm:flex flex-col text-left">

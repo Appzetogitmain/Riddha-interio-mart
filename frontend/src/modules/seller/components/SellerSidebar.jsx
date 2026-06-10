@@ -113,7 +113,7 @@ const SellerSidebar = ({ isOpen, onClose }) => {
         )}
       </AnimatePresence>
 
-      {/* Sidebar Content */}
+      {/* Sidebar */}
       <aside
         className={`
           fixed lg:static top-0 left-0 h-screen w-[280px] lg:shrink-0 bg-white border-r border-slate-200 z-[70] flex flex-col shadow-xl lg:shadow-none transition-transform duration-300 ease-in-out
@@ -142,8 +142,25 @@ const SellerSidebar = ({ isOpen, onClose }) => {
           </button>
         </div>
 
+        {/* Seller profile mini-card */}
+        <div className="px-3 py-3 border-b border-slate-100 shrink-0">
+          <Link to="/seller/profile" className="flex items-center gap-2.5 p-2 rounded-xl hover:bg-slate-50 transition-colors group">
+            <div className="w-8 h-8 rounded-xl bg-seller-primary/10 text-seller-primary flex items-center justify-center font-black text-xs shrink-0 overflow-hidden">
+              {user?.avatar
+                ? <img src={user.avatar} alt="" className="w-full h-full object-cover" />
+                : (user?.fullName?.[0] || user?.name?.[0] || 'S')
+              }
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-bold text-slate-800 leading-none truncate">{user?.fullName || user?.name || 'Seller'}</p>
+              <p className="text-[10px] text-slate-400 font-medium mt-0.5 leading-none truncate">{user?.email || 'seller@store.com'}</p>
+            </div>
+            <ChevronRight size={13} className="text-slate-300 group-hover:text-slate-500 transition-colors shrink-0" />
+          </Link>
+        </div>
+
         {/* Navigation */}
-        <nav className="flex-1 px-4 pt-2 pb-10 space-y-1 overflow-y-auto custom-scrollbar">
+        <nav className="flex-1 px-3 py-2 space-y-0.5 overflow-y-auto custom-scrollbar">
           {menuItems.map((item) => {
             const hasChildren = !!item.children;
             const isMenuOpen = openMenus[item.label];
@@ -153,7 +170,7 @@ const SellerSidebar = ({ isOpen, onClose }) => {
 
             if (hasChildren) {
               return (
-                <div key={item.label} className="space-y-1">
+                <div key={item.label}>
                   <button
                     onClick={() => toggleMenu(item.label)}
                     className={`
@@ -182,7 +199,7 @@ const SellerSidebar = ({ isOpen, onClose }) => {
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: "auto", opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
-                        className="overflow-hidden space-y-1 ml-4 border-l border-slate-100 pl-2"
+                        className="overflow-hidden ml-4 border-l border-slate-100 pl-2 mt-0.5 space-y-0.5"
                       >
                         {item.children.map((child) => (
                           <NavLink
@@ -240,11 +257,11 @@ const SellerSidebar = ({ isOpen, onClose }) => {
           })}
         </nav>
 
-        {/* Footer info and logout */}
-        <div className="p-4 mt-auto border-t border-slate-100">
+        {/* Footer: Sign out */}
+        <div className="px-3 py-3 border-t border-slate-100 shrink-0">
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-slate-500 hover:bg-red-50 hover:text-red-600 transition-all group"
+            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-semibold text-slate-500 hover:bg-red-50 hover:text-red-600 transition-all group"
           >
             <LogOut
               size={18}

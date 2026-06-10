@@ -8,13 +8,12 @@ import { useNavigate } from 'react-router-dom';
 import { useNotification } from '../../modules/user/data/NotificationContext';
 import { formatDistanceToNow } from 'date-fns';
 
-// ── Per-type metadata ─────────────────────────────────────────────
 const typeMetadata = {
   seller_approval: {
     icon: FiPackage,
     approved: { color: 'bg-emerald-50 text-emerald-600', bar: 'bg-emerald-500', btn: 'bg-emerald-600 hover:bg-emerald-700' },
-    rejected: { color: 'bg-rose-50 text-rose-600',       bar: 'bg-rose-500',    btn: 'bg-rose-600 hover:bg-rose-700'    },
-    default:  { color: 'bg-teal-50 text-teal-600',       bar: 'bg-teal-500',    btn: 'bg-teal-600 hover:bg-teal-700'    },
+    rejected:  { color: 'bg-rose-50 text-rose-600',     bar: 'bg-rose-500',    btn: 'bg-rose-600 hover:bg-rose-700'    },
+    default:   { color: 'bg-teal-50 text-teal-600',     bar: 'bg-teal-500',    btn: 'bg-teal-600 hover:bg-teal-700'    },
   },
   admin_alert: {
     icon: FiLayers,
@@ -53,7 +52,7 @@ function getNavTarget(notif, isSeller, isAdmin) {
     case 'admin_alert':
       return data.batchId
         ? { label: 'Review Bulk Orders', path: '/admin/product-batches' }
-        : { label: 'Review Products',   path: '/admin/inventory'        };
+        : { label: 'Review Products',    path: '/admin/inventory'       };
     case 'order_update':
       if (isSeller) return { label: 'View Orders', path: '/seller/orders' };
       if (isAdmin)  return { label: 'View Order',  path: data.orderId ? `/admin/orders/view/${data.orderId}` : '/admin/orders/all' };
@@ -64,14 +63,14 @@ function getNavTarget(notif, isSeller, isAdmin) {
       return { label: 'View Order', path: data.orderId ? `/orders/${data.orderId}` : '/orders' };
     case 'stock_alert':
       if (isAdmin)  return { label: 'View Inventory', path: '/admin/inventory' };
-      if (isSeller) return { label: 'View Products', path: '/seller/my-products' };
+      if (isSeller) return { label: 'View Products',  path: '/seller/my-products' };
       return null;
     default:
       return null;
   }
 }
 
-// ── Detail Panel ──────────────────────────────────────────────────
+// ── Detail Panel ───────────────────────────────────────────────────
 const NotificationDetail = ({ notif, onBack, onNavigate, isSeller, isAdmin }) => {
   const theme = getTheme(notif);
   const nav   = getNavTarget(notif, isSeller, isAdmin);
@@ -81,53 +80,47 @@ const NotificationDetail = ({ notif, onBack, onNavigate, isSeller, isAdmin }) =>
   return (
     <motion.div
       key="detail"
-      initial={{ opacity: 0, x: 24 }}
+      initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: 24 }}
-      transition={{ duration: 0.18 }}
-      className="flex flex-col h-full"
+      exit={{ opacity: 0, x: 20 }}
+      transition={{ duration: 0.15 }}
+      className="flex flex-col"
     >
-      {/* Detail header */}
-      <div className="flex items-center gap-3 px-4 py-3.5 border-b border-gray-100 bg-gray-50/50">
+      <div className="flex items-center gap-2 px-3 py-2.5 border-b border-gray-100 bg-gray-50/60">
         <button
           onClick={onBack}
-          className="p-1.5 rounded-lg hover:bg-gray-200 text-gray-500 transition-colors"
+          className="p-1 rounded-lg hover:bg-gray-200 text-gray-500 transition-colors"
         >
           <FiChevronLeft className="w-4 h-4" />
         </button>
-        <h3 className="font-bold text-deep-espresso text-sm">Notification Detail</h3>
+        <h3 className="font-bold text-deep-espresso text-sm">Detail</h3>
       </div>
 
-      {/* Detail body */}
-      <div className="p-5 space-y-4 overflow-y-auto custom-scrollbar">
-        {/* Accent bar */}
-        <div className={`h-1 w-full rounded-full ${theme.bar}`} />
+      <div className="p-4 space-y-3">
+        <div className={`h-0.5 w-full rounded-full ${theme.bar}`} />
 
-        {/* Icon + title */}
         <div className="flex items-start gap-3">
-          <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${theme.color}`}>
-            <Icon size={20} />
+          <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${theme.color}`}>
+            <Icon size={16} />
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-black text-deep-espresso leading-snug">{notif.title}</p>
-            <p className="text-[11px] text-gray-400 font-bold uppercase tracking-wider mt-0.5">
+            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mt-0.5">
               {formatDistanceToNow(new Date(notif.createdAt), { addSuffix: true })}
             </p>
           </div>
         </div>
 
-        {/* Full message */}
-        <div className="bg-gray-50 rounded-xl px-4 py-3.5 border border-gray-100">
-          <p className="text-sm text-gray-700 leading-relaxed">{notif.message}</p>
+        <div className="bg-gray-50 rounded-xl px-3 py-3 border border-gray-100">
+          <p className="text-xs text-gray-700 leading-relaxed">{notif.message}</p>
         </div>
 
-        {/* Action button */}
         {nav && (
           <button
             onClick={() => onNavigate(nav.path)}
-            className={`w-full py-3 rounded-xl text-[11px] font-black uppercase tracking-widest text-white flex items-center justify-center gap-2 transition-all ${theme.btn}`}
+            className={`w-full py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-white flex items-center justify-center gap-2 transition-all ${theme.btn}`}
           >
-            {nav.label} <FiArrowRight size={13} />
+            {nav.label} <FiArrowRight size={12} />
           </button>
         )}
       </div>
@@ -135,16 +128,31 @@ const NotificationDetail = ({ notif, onBack, onNavigate, isSeller, isAdmin }) =>
   );
 };
 
-// ── Main Dropdown ─────────────────────────────────────────────────
+// ── Main Dropdown ──────────────────────────────────────────────────
 const NotificationDropdown = ({ isMobile = false, buttonClassName = '', viewAllPath = '' }) => {
-  const [isOpen, setIsOpen]         = useState(false);
-  const [selected, setSelected]     = useState(null);
-  const dropdownRef                 = useRef(null);
-  const navigate                    = useNavigate();
+  const [isOpen, setIsOpen]     = useState(false);
+  const [selected, setSelected] = useState(null);
+  const [rightOffset, setRightOffset] = useState(0);
+  const dropdownRef = useRef(null);
+  const buttonRef   = useRef(null);
+  const navigate    = useNavigate();
   const { notifications, unreadCount, markAsRead, markAllAsRead, deleteNotification } = useNotification();
 
   const isSeller = window.location.pathname.startsWith('/seller');
   const isAdmin  = window.location.pathname.startsWith('/admin');
+
+  // Smart viewport clamping — prevent left-edge overflow
+  useEffect(() => {
+    if (!isOpen || !buttonRef.current) { setRightOffset(0); return; }
+    const rect  = buttonRef.current.getBoundingClientRect();
+    const dropW = isMobile ? 320 : 384; // match actual width (w-80 / w-96)
+    const leftEdge = rect.right - dropW;
+    if (leftEdge < 8) {
+      setRightOffset(Math.ceil(8 - leftEdge));
+    } else {
+      setRightOffset(0);
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -157,7 +165,6 @@ const NotificationDropdown = ({ isMobile = false, buttonClassName = '', viewAllP
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Reset detail view when dropdown closes
   useEffect(() => {
     if (!isOpen) setSelected(null);
   }, [isOpen]);
@@ -188,6 +195,7 @@ const NotificationDropdown = ({ isMobile = false, buttonClassName = '', viewAllP
   return (
     <div className="relative" ref={dropdownRef}>
       <button
+        ref={buttonRef}
         onClick={() => setIsOpen(!isOpen)}
         className={`relative transition-colors ${buttonClassName || defaultButtonClass}`}
       >
@@ -208,6 +216,7 @@ const NotificationDropdown = ({ isMobile = false, buttonClassName = '', viewAllP
             animate={{ opacity: 1, y: 0,  scale: 1    }}
             exit={{   opacity: 0, y: 10,  scale: 0.95 }}
             transition={{ duration: 0.18 }}
+            style={{ right: rightOffset > 0 ? -rightOffset : 0 }}
             className={`absolute ${isMobile ? 'right-0 w-80' : 'right-0 w-96'} mt-3 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50`}
           >
             <AnimatePresence mode="wait">
@@ -223,18 +232,25 @@ const NotificationDropdown = ({ isMobile = false, buttonClassName = '', viewAllP
               ) : (
                 <motion.div
                   key="list"
-                  initial={{ opacity: 0, x: -24 }}
+                  initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -24 }}
-                  transition={{ duration: 0.18 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.15 }}
                 >
-                  {/* List header */}
-                  <div className="flex items-center justify-between px-4 py-3.5 border-b border-gray-100 bg-gray-50/50">
-                    <h3 className="font-bold text-deep-espresso">Notifications</h3>
+                  {/* Header */}
+                  <div className="flex items-center justify-between px-3 py-2.5 border-b border-gray-100 bg-gray-50/60">
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-bold text-deep-espresso text-sm">Notifications</h3>
+                      {unreadCount > 0 && (
+                        <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-black">
+                          {unreadCount > 9 ? '9+' : unreadCount}
+                        </span>
+                      )}
+                    </div>
                     {unreadCount > 0 && (
                       <button
                         onClick={markAllAsRead}
-                        className="text-[10px] font-black uppercase tracking-wider text-[#189D91] hover:text-deep-espresso transition-colors"
+                        className="text-[9px] font-black uppercase tracking-wider text-[#189D91] hover:text-deep-espresso transition-colors"
                       >
                         Mark all read
                       </button>
@@ -242,14 +258,14 @@ const NotificationDropdown = ({ isMobile = false, buttonClassName = '', viewAllP
                   </div>
 
                   {/* List */}
-                  <div className="max-h-[360px] overflow-y-auto custom-scrollbar">
+                  <div className="max-h-[280px] overflow-y-auto custom-scrollbar">
                     {notifications.length === 0 ? (
-                      <div className="p-8 text-center text-gray-400">
-                        <FiBell className="w-8 h-8 mx-auto mb-2 opacity-20" />
-                        <p className="text-sm font-medium">No notifications yet</p>
+                      <div className="py-8 text-center text-gray-400">
+                        <FiBell className="w-7 h-7 mx-auto mb-2 opacity-20" />
+                        <p className="text-xs font-medium">No notifications yet</p>
                       </div>
                     ) : (
-                      notifications.slice(0, 10).map((notif) => {
+                      notifications.slice(0, 8).map((notif) => {
                         const theme = getTheme(notif);
                         const meta  = typeMetadata[notif.type];
                         const Icon  = meta?.icon || FiBell;
@@ -257,28 +273,27 @@ const NotificationDropdown = ({ isMobile = false, buttonClassName = '', viewAllP
                           <div
                             key={notif._id}
                             onClick={() => openDetail(notif)}
-                            className={`group px-4 py-3.5 border-b border-gray-50 cursor-pointer transition-colors flex gap-3 items-start
+                            className={`group px-3 py-2.5 border-b border-gray-50 cursor-pointer transition-colors flex gap-2.5 items-start
                               ${!notif.read ? 'bg-teal-50/40 hover:bg-teal-50/70' : 'hover:bg-gray-50'}`}
                           >
-                            {/* Type icon */}
-                            <div className={`mt-0.5 w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${theme.color}`}>
-                              <Icon size={14} />
+                            <div className={`mt-0.5 w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${theme.color}`}>
+                              <Icon size={13} />
                             </div>
 
                             <div className="flex-1 min-w-0">
-                              <h4 className={`text-sm leading-snug ${!notif.read ? 'font-bold text-deep-espresso' : 'font-medium text-gray-700'}`}>
+                              <h4 className={`text-xs leading-snug ${!notif.read ? 'font-bold text-deep-espresso' : 'font-medium text-gray-700'}`}>
                                 {notif.title}
                               </h4>
-                              <p className="text-xs text-gray-500 mt-0.5 line-clamp-2 leading-relaxed">
+                              <p className="text-[11px] text-gray-500 mt-0.5 line-clamp-1 leading-relaxed">
                                 {notif.message}
                               </p>
-                              <span className="text-[10px] font-bold text-gray-400 mt-1 block uppercase tracking-wider">
+                              <span className="text-[9px] font-bold text-gray-400 mt-0.5 block uppercase tracking-wider">
                                 {formatDistanceToNow(new Date(notif.createdAt), { addSuffix: true })}
                               </span>
                             </div>
 
-                            <div className="flex flex-col items-center gap-1.5 shrink-0 mt-1">
-                              <FiChevronRight className="w-3.5 h-3.5 text-gray-300 group-hover:text-[#189D91] group-hover:translate-x-0.5 transition-all" />
+                            <div className="flex flex-col items-center gap-1 shrink-0 mt-1">
+                              <FiChevronRight className="w-3 h-3 text-gray-300 group-hover:text-[#189D91] group-hover:translate-x-0.5 transition-all" />
                               <button
                                 onClick={(e) => { e.stopPropagation(); deleteNotification(notif._id); }}
                                 className="text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
@@ -293,10 +308,10 @@ const NotificationDropdown = ({ isMobile = false, buttonClassName = '', viewAllP
                   </div>
 
                   {/* Footer */}
-                  <div className="p-3 border-t border-gray-100 bg-gray-50/50 text-center">
+                  <div className="px-3 py-2 border-t border-gray-100 bg-gray-50/60 text-center">
                     <button
                       onClick={() => handleNavigate(viewAllPath || defaultViewAllPath)}
-                      className="text-[10px] font-black uppercase tracking-widest text-deep-espresso hover:text-[#189D91] transition-colors"
+                      className="text-[9px] font-black uppercase tracking-widest text-deep-espresso hover:text-[#189D91] transition-colors"
                     >
                       View All Notifications
                     </button>

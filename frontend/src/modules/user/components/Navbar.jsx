@@ -26,6 +26,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { LuWallet } from "react-icons/lu";
 import { useCart } from "../data/CartContext";
 import { useUser } from "../data/UserContext";
+import { useWishlist } from "../data/WishlistContext";
 import SearchBar from "./SearchBar";
 import api from '../../../shared/utils/api';
 import { getDeliveryEstimate, getCityFromPincode } from '../../../shared/utils/delivery';
@@ -45,16 +46,28 @@ const getCategorySlug = (name) => {
 };
 
 const SidebarLink = ({ to, icon: Icon, label, onClick }) => (
-  <Link
+  <NavLink
     to={to}
+    end={to === '/'}
     onClick={onClick}
-    className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-[#189D91]/5 hover:text-[#189D91] transition-all group"
+    className={({ isActive }) =>
+      `flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group ${
+        isActive
+          ? 'bg-[#189D91]/10 text-[#189D91] border border-[#189D91]/15'
+          : 'text-gray-700 hover:bg-[#189D91]/5 hover:text-[#189D91] border border-transparent'
+      }`
+    }
   >
-    <div className="p-1.5 rounded-md bg-gray-50 border border-gray-100 group-hover:bg-[#189D91]/10 group-hover:border-[#189D91]/20 transition-all">
-      <Icon size={16} />
-    </div>
-    <span className="text-[13px] font-semibold tracking-tight">{label}</span>
-  </Link>
+    {({ isActive }) => (
+      <>
+        <div className={`p-1.5 rounded-md border transition-all ${isActive ? 'bg-[#189D91]/15 border-[#189D91]/25' : 'bg-gray-50 border-gray-100 group-hover:bg-[#189D91]/10 group-hover:border-[#189D91]/20'}`}>
+          <Icon size={16} />
+        </div>
+        <span className={`text-[13px] tracking-tight ${isActive ? 'font-black' : 'font-semibold'}`}>{label}</span>
+        {isActive && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-[#189D91]" />}
+      </>
+    )}
+  </NavLink>
 );
 
 const Navbar = () => {
@@ -67,6 +80,8 @@ const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const dropdownTimeoutRef = useRef(null);
   const { cartCount } = useCart();
+  const { wishlistItems } = useWishlist();
+  const wishlistCount = wishlistItems?.length || 0;
   const location = useLocation();
   const currentPath = location.pathname.toLowerCase();
   const isInitPath = currentPath.includes('/splash') || currentPath.includes('/onboarding');
@@ -250,6 +265,11 @@ const Navbar = () => {
                 <Link to="/wishlist" className="flex items-center gap-2 group relative">
                   <FiHeart className="w-5 h-5 text-gray-500 group-hover:text-red-500 transition-colors" />
                   <span className="text-[12px] font-bold text-gray-700 group-hover:text-red-500 transition-colors hidden xl:inline">Wishlist</span>
+                  {wishlistCount > 0 && (
+                    <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[9px] font-bold h-4 w-4 flex items-center justify-center rounded-full border-2 border-white">
+                      {wishlistCount > 9 ? '9+' : wishlistCount}
+                    </span>
+                  )}
                 </Link>
 
                 <Link to="/cart" className="flex items-center gap-2 group relative">
@@ -281,8 +301,13 @@ const Navbar = () => {
                 <FiUser className="h-[22px] w-[22px]" />
               </Link>
               {user && (
-                <Link to="/wishlist" className="p-1.5 text-[#189D91]">
+                <Link to="/wishlist" className="p-1.5 text-[#189D91] relative">
                   <FiHeart className="h-[22px] w-[22px]" />
+                  {wishlistCount > 0 && (
+                    <span className="absolute top-0 right-0 bg-red-500 text-white text-[9px] font-bold h-4 w-4 flex items-center justify-center rounded-full border border-white">
+                      {wishlistCount > 9 ? '9+' : wishlistCount}
+                    </span>
+                  )}
                 </Link>
               )}
               {user && <NotificationDropdown isMobile={true} />}

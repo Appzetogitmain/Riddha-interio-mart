@@ -19,7 +19,8 @@ export const UserProvider = ({ children }) => {
 
   const [loading, setLoading] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(!!user);
-  const [address, setAddress] = useState(null);
+  const [address, setAddress]     = useState(null);
+  const [addresses, setAddresses] = useState([]);
 
   // Sync session on mount (unified session validation)
   useEffect(() => {
@@ -63,9 +64,10 @@ export const UserProvider = ({ children }) => {
   const fetchAddresses = async () => {
     try {
       const res = await api.get('/address');
-      if (res.data.success && res.data.data.length > 0) {
-        // find default address or first one
-        const defaultAddr = res.data.data.find(a => a.isDefault) || res.data.data[0];
+      if (res.data.success) {
+        const all = res.data.data || [];
+        setAddresses(all);
+        const defaultAddr = all.find(a => a.isDefault) || all[0] || null;
         setAddress(defaultAddr);
       }
     } catch (err) {
@@ -78,7 +80,7 @@ export const UserProvider = ({ children }) => {
       setLoading(true);
       const res = await api.post('/address', { ...addressData, isDefault: true });
       if (res.data.success) {
-        setAddress(res.data.data);
+        await fetchAddresses();
         return true;
       }
     } catch (err) {
@@ -86,6 +88,35 @@ export const UserProvider = ({ children }) => {
       return false;
     } finally {
       setLoading(false);
+    }
+  };
+
+  const updateAddress = async (id, addressData) => {
+    try {
+      setLoading(true);
+      const res = await api.put(`/address/${id}`, addressData);
+      if (res.data.success) {
+        await fetchAddresses();
+        return true;
+      }
+    } catch (err) {
+      console.error('Failed to update address:', err);
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteAddress = async (id) => {
+    try {
+      const res = await api.delete(`/address/${id}`);
+      if (res.data.success) {
+        await fetchAddresses();
+        return true;
+      }
+    } catch (err) {
+      console.error('Failed to delete address:', err);
+      return false;
     }
   };
 
@@ -111,12 +142,15 @@ export const UserProvider = ({ children }) => {
     setLoading,
     isLoggedIn,
     address,
+    addresses,
     login,
     logout,
     saveAddress,
+    updateAddress,
+    deleteAddress,
     fetchAddresses,
     setUser
-  }), [user, loading, isLoggedIn, address]);
+  }), [user, loading, isLoggedIn, address, addresses]);
 
   return (
     <UserContext.Provider value={contextValue}>

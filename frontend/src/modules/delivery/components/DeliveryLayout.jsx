@@ -24,6 +24,7 @@ import NotificationDropdown from '../../../shared/components/NotificationDropdow
 import api from '../../../shared/utils/api';
 import { connectSocket } from '../../../shared/utils/socket';
 import { primeNotificationAudio, isSoundEnabled, playNotificationSound } from '../../../shared/utils/notificationSound';
+import { toast } from 'react-hot-toast';
 
 const formatTime = (dateStr) => {
   const date = new Date(dateStr);
@@ -46,7 +47,7 @@ const DeliveryLayout = () => {
   const [notifications, setNotifications] = React.useState([]);
   const [assignmentRequest, setAssignmentRequest] = React.useState(null);
   const [approvalNotification, setApprovalNotification] = React.useState(null);
-  const [toast, setToast] = React.useState(null);
+  const [notification, setNotification] = React.useState(null);
   const { user, setUser, logout } = useUser();
   const [updatingStatus, setUpdatingStatus] = React.useState(false);
   const navigate = useNavigate();
@@ -167,7 +168,7 @@ const DeliveryLayout = () => {
       window.dispatchEvent(new Event('delivery_notifications_updated'));
 
       // Show unified screen toast
-      setToast({
+      setNotification({
         title: newNotif.title,
         message: newNotif.message,
         type: newNotif.title?.toLowerCase().includes('approved') ? 'success' : 'info'
@@ -190,11 +191,11 @@ const DeliveryLayout = () => {
   }, [user?.token, user?.role]);
 
   React.useEffect(() => {
-    if (toast) {
-      const timer = setTimeout(() => setToast(null), 6000);
+    if (notification) {
+      const timer = setTimeout(() => setNotification(null), 6000);
       return () => clearTimeout(timer);
     }
-  }, [toast]);
+  }, [notification]);
 
   const handleResponse = async (responseStatus) => {
     try {
@@ -208,14 +209,20 @@ const DeliveryLayout = () => {
   const toggleStatus = async () => {
     if (user?.approvalStatus !== 'Approved') return;
     setUpdatingStatus(true);
+    const newStatus = status === 'Available' ? 'Offline' : 'Available';
     try {
-      const newStatus = status === 'Available' ? 'Offline' : 'Available';
       const { data } = await api.put('/delivery/status', { status: newStatus });
       if (data.success) {
         setUser({ ...user, status: data.data.status });
+        if (newStatus === 'Available') {
+          toast.success('You are now Online — orders will be assigned to you', { icon: '🟢' });
+        } else {
+          toast('You are now Offline — no new orders will be received', { icon: '⚫', style: { background: '#1e293b', color: '#fff' } });
+        }
       }
     } catch (err) {
       console.error('Failed to update status:', err);
+      toast.error('Failed to update status. Try again.');
     } finally {
       setUpdatingStatus(false);
     }
@@ -224,12 +231,12 @@ const DeliveryLayout = () => {
   return (
     <div className="flex h-screen w-full bg-[#F8FAFC] text-slate-900 overflow-hidden font-sans">
       <AnimatePresence>
-        {toast && (
+        {notification && (
           <motion.div
             initial={{ opacity: 0, y: -20, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -20, scale: 0.9 }}
-            onClick={() => setToast(null)}
+            onClick={() => setNotification(null)}
             className="fixed top-6 right-6 z-[130] w-[380px] max-w-[calc(100vw-3rem)] cursor-pointer"
           >
             <div className="bg-white rounded-[2rem] shadow-2xl border border-slate-100 overflow-hidden">
@@ -239,8 +246,8 @@ const DeliveryLayout = () => {
                 </div>
                 <div className="flex-1">
                   <p className="text-xs font-semibold text-[#189D91]">Notification</p>
-                  <h4 className="text-sm font-bold text-slate-900 mt-1">{toast.title}</h4>
-                  <p className="text-sm text-slate-500 mt-1">{toast.message}</p>
+                  <h4 className="text-sm font-bold text-slate-900 mt-1">{notification.title}</h4>
+                  <p className="text-sm text-slate-500 mt-1">{notification.message}</p>
                 </div>
               </div>
               <div className="h-1 w-full bg-slate-50">
@@ -332,7 +339,7 @@ const DeliveryLayout = () => {
 
       <div className="flex-1 flex flex-col h-full overflow-hidden w-full relative">
         {/* Header */}
-        <header className="h-24 bg-white border-b border-slate-100 px-8 flex items-center justify-between z-30 sticky top-0">
+        <header className="h-14 md:h-24 bg-white border-b border-slate-100 px-4 md:px-8 flex items-center justify-between z-30 sticky top-0">
           <div className="flex items-center gap-6">
             <button 
               onClick={(e) => { e.stopPropagation(); setIsSidebarOpen(true); }}
@@ -358,16 +365,37 @@ const DeliveryLayout = () => {
               <button
                 onClick={(e) => { e.stopPropagation(); toggleStatus(); }}
                 disabled={updatingStatus}
-                className={`flex items-center gap-3 px-5 py-2.5 rounded-2xl border-2 transition-all group ${
-                  status === 'Available' 
-                    ? 'bg-emerald-50 border-emerald-100 text-emerald-600 shadow-sm' 
-                    : 'bg-slate-50 border-slate-200 text-slate-400'
-                }`}
+                className="relative focus:outline-none"
+                title={status === 'Available' ? 'Go Offline' : 'Go Online'}
               >
-                <div className={`w-2.5 h-2.5 rounded-full ${status === 'Available' ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}`} />
-                <span className="text-[10px] font-black uppercase tracking-[0.15em]">
-                  {updatingStatus ? 'Syncing...' : status === 'Available' ? 'Online' : 'Offline'}
-                </span>
+                <motion.div
+                  animate={{
+                    backgroundColor: status === 'Available' ? '#10b981' : '#334155',
+                    boxShadow: status === 'Available' ? '0 0 12px rgba(16,185,129,0.4)' : '0 0 0px rgba(0,0,0,0)',
+                  }}
+                  transition={{ duration: 0.3 }}
+                  className="flex items-center gap-2 pl-2 pr-4 py-1.5 rounded-full min-w-[90px]"
+                >
+                  {/* Thumb */}
+                  <motion.div
+                    animate={{ scale: updatingStatus ? 0.8 : 1 }}
+                    className="relative flex-shrink-0"
+                  >
+                    <div className={`w-6 h-6 rounded-full bg-white shadow-md flex items-center justify-center`}>
+                      {updatingStatus ? (
+                        <div className="w-3 h-3 border-2 border-slate-300 border-t-slate-600 rounded-full animate-spin" />
+                      ) : (
+                        <div className={`w-2 h-2 rounded-full ${status === 'Available' ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+                      )}
+                    </div>
+                    {status === 'Available' && !updatingStatus && (
+                      <span className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-40" />
+                    )}
+                  </motion.div>
+                  <span className="text-[10px] font-black uppercase tracking-[0.15em] text-white">
+                    {updatingStatus ? '...' : status === 'Available' ? 'Online' : 'Offline'}
+                  </span>
+                </motion.div>
               </button>
             )}
 
@@ -397,11 +425,11 @@ const DeliveryLayout = () => {
                          className="absolute right-0 mt-4 w-[320px] bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden z-50 flex flex-col max-h-[400px]"
                        >
                           <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-                             <h3 className="font-bold text-slate-900">Notifications</h3>
+                             <h3 className="font-medium text-slate-900">Notifications</h3>
                              {unreadCount > 0 && (
-                               <button 
+                               <button
                                  onClick={handleMarkAllRead}
-                                 className="text-[10px] font-bold text-[#2A458A] hover:text-[#189D91] transition-colors"
+                                 className="text-[10px] font-medium text-[#2A458A] hover:text-[#189D91] transition-colors"
                                >
                                  Mark all read
                                </button>
@@ -411,22 +439,22 @@ const DeliveryLayout = () => {
                              {notifications.length === 0 ? (
                                <div className="p-6 text-center text-slate-400">
                                  <LuBell size={32} className="mx-auto mb-2 opacity-20" />
-                                 <p className="text-sm font-medium">No notifications yet</p>
+                                 <p className="text-sm font-normal">No notifications yet</p>
                                </div>
                              ) : (
                                notifications.map((notif) => (
-                                 <div 
+                                 <div
                                    key={notif._id}
                                    onClick={() => handleNotificationClick(notif)}
                                    className={`p-3 rounded-2xl cursor-pointer transition-all flex gap-3 ${!notif.read ? 'bg-[#2A458A]/5 hover:bg-[#2A458A]/10' : 'hover:bg-slate-50'}`}
                                  >
                                    <div className={`mt-1.5 w-1.5 h-1.5 rounded-full shrink-0 ${!notif.read ? 'bg-[#2A458A]' : 'bg-transparent'}`} />
                                    <div>
-                                     <h4 className={`text-sm ${!notif.read ? 'font-bold text-slate-900' : 'font-medium text-slate-700'}`}>
+                                     <h4 className="text-sm font-normal text-slate-800">
                                        {notif.title}
                                      </h4>
                                      <p className="text-xs text-slate-500 mt-0.5">{notif.message}</p>
-                                     <span className="text-[10px] font-semibold text-slate-400 mt-1.5 block">
+                                     <span className="text-[10px] font-normal text-slate-400 mt-1.5 block">
                                        {notif.time}
                                      </span>
                                    </div>
@@ -506,7 +534,7 @@ const DeliveryLayout = () => {
         </header>
 
         {/* Main Content Area */}
-        <main className="flex-1 overflow-y-auto p-8 pb-32 lg:pb-8 custom-scrollbar bg-[#F8FAFC]">
+        <main className="flex-1 overflow-y-auto px-3 py-3 md:p-8 pb-32 lg:pb-8 custom-scrollbar bg-[#F8FAFC]">
            <div className="max-w-[1600px] mx-auto">
               <Outlet />
            </div>

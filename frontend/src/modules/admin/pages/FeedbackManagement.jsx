@@ -115,8 +115,8 @@ const FeedbackManagement = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-black tracking-tight text-gray-900">
-            Feedback <span className="text-teal-600">Management</span>
+          <h1 className="text-2xl font-black uppercase italic tracking-tight text-gray-900">
+            Product <span className="text-teal-600">Reviews</span>
           </h1>
           <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mt-0.5">Platform-wide review oversight</p>
         </div>

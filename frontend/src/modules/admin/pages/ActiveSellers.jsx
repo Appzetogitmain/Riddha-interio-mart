@@ -43,7 +43,7 @@ const ActiveSellers = () => {
 
   return (
     <PageWrapper>
-      <div className="max-w-7xl mx-auto space-y-8">
+      <div className="max-w-7xl mx-auto space-y-8 pb-32">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div>
             <h1 className="text-3xl font-display font-bold text-deep-espresso">Active Sellers</h1>

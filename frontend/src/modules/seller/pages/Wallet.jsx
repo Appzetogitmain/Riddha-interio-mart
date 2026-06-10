@@ -103,8 +103,8 @@ const Wallet = () => {
       return;
     }
 
-    if (amount < 100) {
-      setError('Minimum withdrawal amount is ₹100.');
+    if (amount < 500) {
+      setError('Minimum withdrawal amount is ₹500.');
       return;
     }
 
@@ -338,7 +338,7 @@ const Wallet = () => {
 
                 <form onSubmit={handleWithdraw} className="space-y-6">
                   <div className="space-y-2">
-                    <label className="text-xs font-semibold text-slate-700 uppercase tracking-wider ml-1">Amount to Withdraw (₹)</label>
+                    <label className="text-xs font-semibold text-slate-700 uppercase tracking-wider ml-1">Amount to Withdraw (₹) <span className="text-slate-400 normal-case font-normal">(min ₹500)</span></label>
                     <div className="relative">
                        <div className="absolute left-5 top-1/2 -translate-y-1/2 font-semibold text-slate-400">₹</div>
                        <input 

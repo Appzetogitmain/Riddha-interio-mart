@@ -57,6 +57,16 @@ const HelpCenter = () => {
   const [email, setEmail] = useState('');
   const imageUploadInputRef = useRef(null);
   const pdfUploadInputRef = useRef(null);
+  const messagesEndRef = useRef(null);
+
+  useEffect(() => {
+    if (selectedTicket) {
+      const timer = setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [selectedTicket, selectedTicket?.replies]);
 
   const faqs = [
     {
@@ -940,6 +950,7 @@ const HelpCenter = () => {
                           <p className="text-[9px] text-slate-300 mt-1">Our support personnel will reply here shortly.</p>
                         </div>
                       )}
+                      <div ref={messagesEndRef} />
                     </div>
                   </div>
 

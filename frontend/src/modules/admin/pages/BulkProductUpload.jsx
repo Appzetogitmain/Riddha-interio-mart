@@ -7,6 +7,7 @@ import {
 import Button from '../../../shared/components/Button';
 import api from '../../../shared/utils/api';
 import { toast } from 'react-hot-toast';
+import PageWrapper from '../components/PageWrapper';
 
 const BulkProductUpload = () => {
   const [activeTab, setActiveTab] = useState('manual');
@@ -20,6 +21,90 @@ const BulkProductUpload = () => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isSuccess, setIsSuccess] = useState(false);
   const fileInputRefs = useRef([]);
+  const spreadsheetInputRef = useRef(null);
+
+  const isRowEmpty = (p) => {
+    return (p.name === undefined || p.name === null || String(p.name).trim() === '') && 
+           (p.brand === undefined || p.brand === null || String(p.brand).trim() === '') && 
+           (p.category === undefined || p.category === null || String(p.category).trim() === '') && 
+           (p.price === undefined || p.price === null || String(p.price).trim() === '') && 
+           (p.stock === undefined || p.stock === null || String(p.stock).trim() === '') && 
+           (p.description === undefined || p.description === null || String(p.description).trim() === '') && 
+           (p.imageLink === undefined || p.imageLink === null || String(p.imageLink).trim() === '') && 
+           !p.imageFile;
+  };
+
+  const handleSpreadsheetClick = () => {
+    if (spreadsheetInputRef.current) {
+      spreadsheetInputRef.current.click();
+    }
+  };
+
+  const handleSpreadsheetChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const fileExtension = file.name.split('.').pop().toLowerCase();
+    if (!['xlsx', 'xls', 'csv'].includes(fileExtension)) {
+      toast.error('Please upload a valid Excel or CSV file.');
+      return;
+    }
+
+    const loadToastId = toast.loading('Reading spreadsheet...');
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      try {
+        const XLSX = await import('xlsx');
+        const bstr = evt.target.result;
+        const wb = XLSX.read(bstr, { type: 'binary' });
+        const wsname = wb.SheetNames[0];
+        const ws = wb.Sheets[wsname];
+        const data = XLSX.utils.sheet_to_json(ws);
+
+        if (data.length === 0) {
+          toast.error('The selected file is empty.');
+          toast.dismiss(loadToastId);
+          return;
+        }
+
+        const mapped = data.map((row) => {
+          const getValue = (keys) => {
+            const foundKey = Object.keys(row).find(k => 
+              keys.some(key => k.toLowerCase().trim() === key.toLowerCase())
+            );
+            return foundKey ? String(row[foundKey]).trim() : '';
+          };
+
+          const priceVal = getValue(['price', 'mrp', 'rate', 'cost']);
+          const stockVal = getValue(['stock', 'quantity', 'qty', 'count', 'in stock']);
+
+          return {
+            name: getValue(['name', 'product name', 'title']),
+            brand: getValue(['brand', 'brand name', 'make']),
+            category: getValue(['category', 'category name', 'type']),
+            price: priceVal ? Number(priceVal) : '',
+            stock: stockVal ? Number(stockVal) : '',
+            imageLink: getValue(['image link', 'image', 'imageurl', 'image url', 'photo']),
+            imageFile: null,
+            preview: getValue(['image link', 'image', 'imageurl', 'image url', 'photo']),
+            description: getValue(['description', 'short description', 'details'])
+          };
+        });
+
+        setManualProducts(mapped);
+        toast.success(`Successfully loaded ${mapped.length} items. Review them in the Manual Grid!`, { id: loadToastId });
+        setActiveTab('manual');
+      } catch (err) {
+        console.error('Failed to parse spreadsheet:', err);
+        toast.error('Failed to read spreadsheet. Ensure it is not corrupted.', { id: loadToastId });
+      }
+    };
+    reader.onerror = () => {
+      toast.error('File reading error.', { id: loadToastId });
+    };
+    reader.readAsBinaryString(file);
+    e.target.value = '';
+  };
 
   const fetchData = async () => {
     setIsSyncing(true);
@@ -98,10 +183,18 @@ const BulkProductUpload = () => {
   const handleBulkSubmit = async (e) => {
     e.preventDefault();
     
-    // Basic validation
-    const invalidRows = manualProducts.filter(p => !p.name || !p.category || !p.price || !p.stock);
+    // Filter out completely empty rows
+    const filledProducts = manualProducts.filter(p => !isRowEmpty(p));
+
+    if (filledProducts.length === 0) {
+      toast.error('Please fill in at least one product row with details.');
+      return;
+    }
+
+    // Validate only filled products
+    const invalidRows = filledProducts.filter(p => !p.name || !p.category || !p.price || !p.stock);
     if (invalidRows.length > 0) {
-      toast.error('Please fill in all required fields (Name, Category, Price, Stock) for all rows.');
+      toast.error('Please fill in all required fields (Name, Category, Price, Stock) for all active rows.');
       return;
     }
 
@@ -110,10 +203,10 @@ const BulkProductUpload = () => {
 
     try {
       const finalProducts = [];
-      const totalRows = manualProducts.length;
+      const totalRows = filledProducts.length;
 
       for (let i = 0; i < totalRows; i++) {
-        const product = manualProducts[i];
+        const product = filledProducts[i];
         let imageUrl = product.imageLink;
 
         if (product.imageFile) {
@@ -169,45 +262,46 @@ const BulkProductUpload = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col font-sans text-gray-800">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-4 py-4 md:px-6 flex flex-col gap-4 md:flex-row items-center justify-between sticky top-0 z-50">
-        <div className="flex items-center gap-3 w-full md:w-auto">
-          <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center text-white shadow-sm flex-shrink-0">
-            <FiDatabase size={20} />
+    <PageWrapper>
+      <div className="max-w-7xl mx-auto space-y-6 flex flex-col font-sans text-gray-800">
+        {/* Header */}
+        <div className="bg-white border border-gray-200 rounded-2xl px-4 py-4 md:px-6 flex flex-col gap-4 md:flex-row items-center justify-between shadow-sm">
+          <div className="flex items-center gap-3 w-full md:w-auto">
+            <div className="w-10 h-10 bg-teal-600 rounded-lg flex items-center justify-center text-white shadow-sm flex-shrink-0">
+              <FiDatabase size={20} />
+            </div>
+            <div>
+              <h1 className="text-lg md:text-xl font-bold text-gray-900 tracking-tight">Catalog Master Studio</h1>
+              <p className="text-[10px] md:text-xs text-gray-500 font-medium">Bulk Product Management System</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-lg md:text-xl font-bold text-gray-900 tracking-tight">Catalog Master Studio</h1>
-            <p className="text-[10px] md:text-xs text-gray-500 font-medium">Bulk Product Management System</p>
+
+          <div className="flex items-center justify-between md:justify-end gap-4 w-full md:w-auto">
+            <div className="flex p-1 bg-gray-100 rounded-lg border border-gray-200 flex-1 md:flex-none">
+              <button
+                onClick={() => setActiveTab('excel')}
+                className={`flex-1 md:px-6 py-2 rounded-md text-[10px] md:text-xs font-semibold transition-all ${activeTab === 'excel' ? 'bg-white text-teal-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                Spreadsheet
+              </button>
+              <button
+                onClick={() => setActiveTab('manual')}
+                className={`flex-1 md:px-6 py-2 rounded-md text-[10px] md:text-xs font-semibold transition-all ${activeTab === 'manual' ? 'bg-white text-teal-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                Manual Grid
+              </button>
+            </div>
+            
+            <button 
+              onClick={clearAll}
+              className="text-[10px] md:text-xs font-semibold text-gray-400 hover:text-red-500 transition-colors flex items-center gap-2 whitespace-nowrap"
+            >
+              <FiTrash2 size={14} /> <span className="hidden sm:inline">Clear All</span>
+            </button>
           </div>
         </div>
 
-        <div className="flex items-center justify-between md:justify-end gap-4 w-full md:w-auto">
-          <div className="flex p-1 bg-gray-100 rounded-lg border border-gray-200 flex-1 md:flex-none">
-            <button
-              onClick={() => setActiveTab('excel')}
-              className={`flex-1 md:px-6 py-2 rounded-md text-[10px] md:text-xs font-semibold transition-all ${activeTab === 'excel' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-            >
-              Spreadsheet
-            </button>
-            <button
-              onClick={() => setActiveTab('manual')}
-              className={`flex-1 md:px-6 py-2 rounded-md text-[10px] md:text-xs font-semibold transition-all ${activeTab === 'manual' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-            >
-              Manual Grid
-            </button>
-          </div>
-          
-          <button 
-            onClick={clearAll}
-            className="text-[10px] md:text-xs font-semibold text-gray-400 hover:text-red-500 transition-colors flex items-center gap-2 whitespace-nowrap"
-          >
-            <FiTrash2 size={14} /> <span className="hidden sm:inline">Clear All</span>
-          </button>
-        </div>
-      </div>
-
-      <div className="flex-1 p-4 md:p-6 lg:p-8">
+        <div className="flex-grow">
         <AnimatePresence mode="wait">
           {activeTab === 'excel' ? (
             <motion.div
@@ -218,14 +312,25 @@ const BulkProductUpload = () => {
               className="min-h-[50vh] md:h-[60vh] flex flex-col items-center justify-center bg-white rounded-2xl border border-gray-200 shadow-sm text-center p-6"
             >
               <div className="max-w-md w-full">
-                <div className="w-16 h-16 md:w-20 md:h-20 bg-indigo-50 rounded-full flex items-center justify-center mx-auto mb-6 border border-indigo-100">
-                  <FiUploadCloud size={32} className="text-indigo-600" />
+                <div className="w-16 h-16 md:w-20 md:h-20 bg-teal-50 rounded-full flex items-center justify-center mx-auto mb-6 border border-teal-100">
+                  <FiUploadCloud size={32} className="text-teal-600" />
                 </div>
                 <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-3">Import Spreadsheet</h2>
                 <p className="text-xs md:text-sm text-gray-500 mb-8 leading-relaxed">
                   Upload your product catalog using a CSV or Excel file. Our system will automatically process and validate your data.
                 </p>
-                <Button className="w-full h-12 rounded-lg font-semibold text-sm border border-indigo-600">
+                <input
+                  type="file"
+                  ref={spreadsheetInputRef}
+                  onChange={handleSpreadsheetChange}
+                  accept=".xlsx, .xls, .csv"
+                  className="hidden"
+                />
+                <Button 
+                  onClick={handleSpreadsheetClick}
+                  variant="outline"
+                  className="w-full h-12 rounded-xl font-semibold text-sm border-teal-600 hover:bg-teal-50"
+                >
                   Select File to Import
                 </Button>
               </div>
@@ -262,7 +367,7 @@ const BulkProductUpload = () => {
                                 <button onClick={() => clearImage(idx)} className="absolute inset-0 bg-black/40 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><FiX size={16} /></button>
                               </>
                             ) : (
-                              <button onClick={() => fileInputRefs.current[idx].click()} className="flex flex-col items-center text-gray-400 hover:text-indigo-600 transition-colors">
+                              <button onClick={() => fileInputRefs.current[idx].click()} className="flex flex-col items-center text-gray-400 hover:text-teal-600 transition-colors">
                                 <FiImage size={20} />
                                 <span className="text-[9px] font-bold mt-1">ADD</span>
                               </button>
@@ -292,21 +397,18 @@ const BulkProductUpload = () => {
                         </td>
                         <td className="px-6 py-4">
                           <div className="space-y-2">
-                            <div className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2 border border-gray-200 focus-within:border-indigo-300 focus-within:bg-white transition-all">
+                            <div className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2 border border-gray-200 focus-within:border-teal-300 focus-within:bg-white transition-all relative">
                               <FiTag size={12} className="text-gray-400" />
-                              <input
-                                type="text"
-                                list={`brands-list-${idx}`}
-                                placeholder="Brand Name"
-                                className="bg-transparent border-none p-0 text-xs font-medium text-gray-900 focus:ring-0 w-full"
+                              <select
+                                className="bg-transparent border-none p-0 text-xs font-medium text-gray-900 focus:ring-0 w-full cursor-pointer"
                                 value={row.brand}
                                 onChange={(e) => handleInputChange(idx, 'brand', e.target.value)}
-                              />
-                              <datalist id={`brands-list-${idx}`}>
-                                {brands.map(b => <option key={b._id} value={b.name} />)}
-                              </datalist>
+                              >
+                                <option value="">Select Brand</option>
+                                {brands.map(b => <option key={b._id} value={b.name}>{b.name}</option>)}
+                              </select>
                             </div>
-                            <div className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2 border border-gray-200 focus-within:border-indigo-300 focus-within:bg-white transition-all relative">
+                            <div className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2 border border-gray-200 focus-within:border-teal-300 focus-within:bg-white transition-all relative">
                               <FiLayers size={12} className="text-gray-400" />
                               <select
                                 className="bg-transparent border-none p-0 text-xs font-medium text-gray-900 focus:ring-0 w-full cursor-pointer appearance-none"
@@ -321,7 +423,7 @@ const BulkProductUpload = () => {
                           </div>
                         </td>
                         <td className="px-6 py-4">
-                          <div className="bg-gray-50 rounded-lg px-3 py-3 flex items-center gap-2 border border-gray-200 focus-within:border-indigo-300 focus-within:bg-white transition-all">
+                          <div className="bg-gray-50 rounded-lg px-3 py-3 flex items-center gap-2 border border-gray-200 focus-within:border-teal-300 focus-within:bg-white transition-all">
                             <span className="text-gray-400 font-bold text-xs">₹</span>
                             <input
                               type="number"
@@ -336,14 +438,14 @@ const BulkProductUpload = () => {
                           <input
                             type="number"
                             placeholder="0"
-                            className="bg-gray-50 border border-gray-200 rounded-lg w-16 px-2 py-3 text-sm font-bold text-gray-900 focus:ring-0 text-center focus:border-indigo-300 transition-colors"
+                            className="bg-gray-50 border border-gray-200 rounded-lg w-16 px-2 py-3 text-sm font-bold text-gray-900 focus:ring-0 text-center focus:border-teal-300 transition-colors"
                             value={row.stock}
                             onChange={(e) => handleInputChange(idx, 'stock', e.target.value)}
                           />
                         </td>
                         <td className="px-6 py-4 text-right">
                           <div className="flex items-center justify-end gap-1">
-                            <button onClick={() => duplicateRow(idx)} title="Duplicate" className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"><FiCopy size={16} /></button>
+                            <button onClick={() => duplicateRow(idx)} title="Duplicate" className="p-2 text-gray-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-colors"><FiCopy size={16} /></button>
                             <button onClick={() => removeRow(idx)} title="Remove" className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"><FiTrash2 size={16} /></button>
                           </div>
                         </td>
@@ -364,7 +466,7 @@ const BulkProductUpload = () => {
                               <button onClick={() => clearImage(idx)} className="absolute top-1 right-1 bg-black/50 text-white p-1 rounded-full"><FiX size={12} /></button>
                             </>
                           ) : (
-                            <button onClick={() => fileInputRefs.current[idx].click()} className="flex flex-col items-center text-gray-400 hover:text-indigo-600 transition-colors">
+                            <button onClick={() => fileInputRefs.current[idx].click()} className="flex flex-col items-center text-gray-400 hover:text-teal-600 transition-colors">
                               <FiImage size={24} />
                               <span className="text-[10px] font-bold mt-1">ADD</span>
                             </button>
@@ -388,25 +490,22 @@ const BulkProductUpload = () => {
                           />
                         </div>
                         <div className="flex flex-col gap-2">
-                          <button onClick={() => duplicateRow(idx)} className="p-2 text-gray-400 hover:text-indigo-600 bg-gray-50 rounded-lg"><FiCopy size={16} /></button>
+                          <button onClick={() => duplicateRow(idx)} className="p-2 text-gray-400 hover:text-teal-600 bg-gray-50 rounded-lg"><FiCopy size={16} /></button>
                           <button onClick={() => removeRow(idx)} className="p-2 text-gray-400 hover:text-red-500 bg-red-50 rounded-lg"><FiTrash2 size={16} /></button>
                         </div>
                       </div>
 
                       <div className="grid grid-cols-2 gap-3">
-                        <div className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2 border border-gray-200">
+                        <div className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2 border border-gray-200 relative">
                           <FiTag size={12} className="text-gray-400" />
-                          <input
-                            type="text"
-                            list={`brands-list-mob-${idx}`}
-                            placeholder="Brand"
-                            className="bg-transparent border-none p-0 text-xs font-medium text-gray-900 focus:ring-0 w-full"
+                          <select
+                            className="bg-transparent border-none p-0 text-xs font-medium text-gray-900 focus:ring-0 w-full cursor-pointer"
                             value={row.brand}
                             onChange={(e) => handleInputChange(idx, 'brand', e.target.value)}
-                          />
-                          <datalist id={`brands-list-mob-${idx}`}>
-                            {brands.map(b => <option key={b._id} value={b.name} />)}
-                          </datalist>
+                          >
+                            <option value="">Brand</option>
+                            {brands.map(b => <option key={b._id} value={b.name}>{b.name}</option>)}
+                          </select>
                         </div>
                         <div className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2 border border-gray-200 relative">
                           <FiLayers size={12} className="text-gray-400" />
@@ -452,9 +551,9 @@ const BulkProductUpload = () => {
               <div className="bg-white border-t border-gray-200 p-4 md:p-6 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm z-40">
                 <button
                   onClick={addRow}
-                  className="w-full sm:w-auto flex items-center justify-center gap-3 text-xs md:text-sm font-bold text-indigo-600 hover:text-indigo-700 transition-colors group"
+                  className="w-full sm:w-auto flex items-center justify-center gap-3 text-xs md:text-sm font-bold text-teal-600 hover:text-teal-700 transition-colors group"
                 >
-                  <div className="w-10 h-10 bg-indigo-50 rounded-lg flex items-center justify-center border border-indigo-100 group-hover:bg-indigo-100 transition-colors"><FiPlus size={20} /></div>
+                  <div className="w-10 h-10 bg-teal-50 rounded-lg flex items-center justify-center border border-teal-100 group-hover:bg-teal-100 transition-colors"><FiPlus size={20} /></div>
                   <span className="sm:hidden">Add New Product Row</span>
                   <span className="hidden sm:inline">Append New Row</span>
                 </button>
@@ -462,12 +561,15 @@ const BulkProductUpload = () => {
                 <div className="w-full sm:w-auto flex items-center justify-between sm:justify-end gap-6 md:gap-8">
                   <div className="text-left sm:text-right border-r border-gray-200 pr-6 md:pr-8">
                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Total</p>
-                    <p className="text-lg md:text-xl font-bold text-gray-900 leading-none">{manualProducts.length} <span className="text-gray-400 text-[10px] md:text-xs font-normal">Items</span></p>
+                    <p className="text-lg md:text-xl font-bold text-gray-900 leading-none">
+                      {manualProducts.filter(p => !isRowEmpty(p)).length} / {manualProducts.length}{' '}
+                      <span className="text-gray-400 text-[10px] md:text-xs font-normal">Active Items</span>
+                    </p>
                   </div>
                   <Button
                     onClick={handleBulkSubmit}
                     disabled={isUploading}
-                    className={`flex-1 sm:flex-none h-12 px-8 md:px-10 rounded-lg font-bold text-xs md:text-sm border transition-all duration-300 ${isUploading ? 'bg-gray-400 border-gray-400' : 'bg-indigo-600 border-indigo-600 hover:bg-indigo-700 shadow-md shadow-indigo-100'}`}
+                    className={`flex-1 sm:flex-none h-12 px-8 md:px-10 rounded-lg font-bold text-xs md:text-sm border transition-all duration-300 ${isUploading ? 'bg-gray-400 border-gray-400' : 'bg-teal-600 border-teal-600 hover:bg-teal-700 shadow-md shadow-teal-100'}`}
                   >
                     <span className="flex items-center gap-2">
                       {isUploading ? (
@@ -505,7 +607,8 @@ const BulkProductUpload = () => {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+      </div>
+    </PageWrapper>
   );
 };
 

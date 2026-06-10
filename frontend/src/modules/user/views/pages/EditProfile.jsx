@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { FiArrowLeft, FiCamera, FiCheck, FiUser, FiMail, FiPhone } from 'react-icons/fi';
+import { FiArrowLeft, FiUpload, FiCheck, FiUser, FiMail, FiPhone } from 'react-icons/fi';
 import Button from '../../../../views/shared/Button';
 import { useUser } from '../../data/UserContext';
 import api from '../../../../shared/utils/api';
@@ -85,7 +85,7 @@ const EditProfile = () => {
               )}
             </div>
             <label className="absolute bottom-1 right-1 h-8 w-8 md:h-10 md:w-10 bg-warm-sand text-white rounded-full flex items-center justify-center shadow-lg border-2 md:border-4 border-white cursor-pointer">
-              <FiCamera className="h-3 w-3 md:h-4 md:w-4" />
+              <FiUpload className="h-3 w-3 md:h-4 md:w-4" />
               <input type="file" className="hidden" onChange={handleAvatarChange} accept="image/*" />
             </label>
           </div>

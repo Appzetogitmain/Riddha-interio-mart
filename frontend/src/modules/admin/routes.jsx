@@ -19,6 +19,7 @@ const LoginPage = React.lazy(() => import('../user/pages/LoginPage'));
 const SignupPage = React.lazy(() => import('../user/pages/SignupPage'));
 const AdminProfile = React.lazy(() => import('./pages/AdminProfile'));
 const AnalyticsPage = React.lazy(() => import('./pages/AnalyticsPage'));
+const NotificationsPage = React.lazy(() => import('./pages/NotificationsPage'));
 const ActivityPage = React.lazy(() => import('./pages/ActivityPage'));
 const ReferralManagement = React.lazy(() => import('./pages/ReferralManagement'));
 const OrderTracking = React.lazy(() => import('./pages/OrderTracking'));
@@ -48,10 +49,12 @@ const ManageUserPage = React.lazy(() => import('./pages/ManageUserPage'));
 const UserPaymentsPage = React.lazy(() => import('./pages/UserPaymentsPage'));
 const CashCollectionPage = React.lazy(() => import('./pages/CashCollectionPage'));
 const SellerTransactionsPage = React.lazy(() => import('./pages/SellerTransactionsPage'));
+const SellerPayoutsPage = React.lazy(() => import('./pages/SellerPayoutsPage'));
 const ManageSellerListPage = React.lazy(() => import('./pages/ManageSellerListPage'));
 const FeedbackManagement = React.lazy(() => import('./pages/FeedbackManagement'));
 const SellerRecommendationManagement = React.lazy(() => import('./pages/SellerRecommendationManagement'));
 const ManageTerms = React.lazy(() => import('./pages/ManageTerms'));
+const SupportTicketsPage = React.lazy(() => import('./pages/SupportTicketsPage'));
 import { RBACProvider } from './data/RBACContext';
 
 const AdminRoutes = () => {
@@ -64,6 +67,7 @@ const AdminRoutes = () => {
           <Route index element={<DashboardPage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/profile" element={<AdminProfile />} />
+          <Route path="/notifications" element={<NotificationsPage />} />
 
           {/* Analytics & Activity */}
           <Route element={<ProtectedRoute permission="analytics" />}>
@@ -151,6 +155,7 @@ const AdminRoutes = () => {
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/feedback" element={<FeedbackManagement />} />
             <Route path="/seller-recommendations" element={<SellerRecommendationManagement />} />
+            <Route path="/support-tickets" element={<SupportTicketsPage />} />
           </Route>
 
           {/* Team Management (Admin Only) */}
@@ -160,12 +165,12 @@ const AdminRoutes = () => {
             <Route path="/team/edit/:id" element={<CreateAssistantPage />} />
           </Route>
 
-          {/* Payments */}
           <Route element={<ProtectedRoute permission="payments" />}>
             <Route path="/payments" element={<Navigate to="/admin/payments/users" replace />} />
             <Route path="/payments/users" element={<UserPaymentsPage />} />
             <Route path="/payments/delivery" element={<CashCollectionPage />} />
             <Route path="/payments/sellers" element={<SellerTransactionsPage />} />
+            <Route path="/payments/seller-payouts" element={<SellerPayoutsPage />} />
           </Route>
         </Route>
       </Routes>

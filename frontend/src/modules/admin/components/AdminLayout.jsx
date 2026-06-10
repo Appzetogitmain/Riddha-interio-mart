@@ -104,7 +104,7 @@ const AdminLayoutContent = () => {
             <NotificationDropdown
               isMobile={false}
               buttonClassName="p-2 text-slate-500 hover:text-slate-850 hover:bg-slate-100 rounded-xl transition-colors relative"
-              viewAllPath="/admin/settings"
+              viewAllPath="/admin/notifications"
             />
 
             <div className="h-6 w-[1px] bg-slate-200 hidden sm:block"></div>

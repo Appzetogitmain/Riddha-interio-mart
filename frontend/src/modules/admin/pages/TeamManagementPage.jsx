@@ -4,6 +4,7 @@ import { FiUsers, FiPlus, FiMail, FiShield, FiTrash2, FiEdit2, FiCheckCircle } f
 import { useRBAC } from '../data/RBACContext';
 import PageWrapper from '../components/PageWrapper';
 import { motion } from 'framer-motion';
+import { toast } from 'react-hot-toast';
 
 const TeamManagementPage = () => {
   const navigate = useNavigate();
@@ -12,6 +13,7 @@ const TeamManagementPage = () => {
   const handleDelete = (id) => {
     if (window.confirm('Are you sure you want to remove this assistant?')) {
       removeAssistant(id);
+      toast.success('Assistant removed successfully!');
     }
   };
 

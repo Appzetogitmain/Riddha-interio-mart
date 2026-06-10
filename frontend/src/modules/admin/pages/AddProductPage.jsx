@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import PageWrapper from '../components/PageWrapper';
 import { FiArrowLeft, FiImage, FiVideo, FiSave, FiInfo, FiTag, FiDollarSign, FiType, FiUser, FiPackage, FiTrash2, FiPlus, FiX } from 'react-icons/fi';
 import api from '../../../shared/utils/api';
+import { toast } from 'react-hot-toast';
 
 const AddProductPage = () => {
   const navigate = useNavigate();
@@ -127,10 +128,47 @@ const AddProductPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.category) return alert('Please select or enter a category');
-    if (!formData.brand) return alert('Please select a brand partner.');
-    if (skuStatus.exists) return alert('Cannot save catalog item: The entered SKU code already exists. Please enter a unique SKU.');
-    if (formData.images.length === 0) return alert('Cannot save catalog item: Please upload or select at least 1 image for this catalog product.');
+
+    if (!formData.name || formData.name.trim() === '') {
+      toast.error('Please enter a product name.');
+      return;
+    }
+    if (!formData.sku || formData.sku.trim() === '') {
+      toast.error('Please enter a unique SKU code.');
+      return;
+    }
+    if (!formData.hsnCode || formData.hsnCode.trim() === '') {
+      toast.error('Please enter an HSN code.');
+      return;
+    }
+    if (!formData.brand) {
+      toast.error('Please select a brand partner.');
+      return;
+    }
+    if (!formData.category) {
+      toast.error('Please select a category.');
+      return;
+    }
+    if (formData.price === '' || formData.price === undefined || formData.price === null) {
+      toast.error('Please enter a product price.');
+      return;
+    }
+    if (formData.stock === '' || formData.stock === undefined || formData.stock === null) {
+      toast.error('Please enter stock quantity.');
+      return;
+    }
+    if (!formData.description || formData.description.trim() === '') {
+      toast.error('Please enter a detailed product description.');
+      return;
+    }
+    if (skuStatus.exists) {
+      toast.error('Cannot save catalog item: The entered SKU code already exists. Please enter a unique SKU.');
+      return;
+    }
+    if (formData.images.length === 0) {
+      toast.error('Cannot save catalog item: Please upload or select at least 1 image for this catalog product.');
+      return;
+    }
 
     try {
       setSubmitting(true);
@@ -166,6 +204,7 @@ const AddProductPage = () => {
       };
 
       await api.post('/catalog', payload);
+      toast.success('Product added to catalog successfully!');
       navigate('/admin/catalog');
     } catch (err) {
       console.error('Failed to add product:', err);
@@ -209,7 +248,7 @@ const AddProductPage = () => {
           )}
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6 md:space-y-8 pb-12">
+        <form onSubmit={handleSubmit} noValidate className="space-y-6 md:space-y-8 pb-12">
           {/* Main Form Card */}
           <div className="bg-white rounded-3xl md:rounded-[32px] border border-soft-oatmeal shadow-xl grid grid-cols-1 lg:grid-cols-3 relative">
              {/* Left: Image Preview Area */}

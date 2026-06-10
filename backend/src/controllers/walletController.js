@@ -2,6 +2,7 @@ const SellerWallet = require('../models/SellerWallet');
 const DeliveryWallet = require('../models/DeliveryWallet');
 const SellerPayout = require('../models/SellerPayout');
 const DeliverySettlement = require('../models/DeliverySettlement');
+const Seller = require('../models/Seller');
 const walletService = require('../services/walletService');
 
 /**
@@ -537,6 +538,93 @@ exports.getAdminFinancialAnalytics = async (req, res, next) => {
           chartData,
           topSellers: populatedSellers
         }
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * @desc    Get all seller payout requests (Admin-only)
+ * @route   GET /api/wallets/admin/payouts
+ * @access  Private (Admin)
+ * @query   status - filter by status (requested|processing|completed|rejected), default: all
+ * @query   page - page number (default: 1)
+ * @query   limit - results per page (default: 20)
+ * @query   search - search by seller name or shop name
+ */
+exports.getAdminPendingPayouts = async (req, res, next) => {
+  try {
+    const { status, page = 1, limit = 20, search } = req.query;
+
+    // Build filter
+    const filter = {};
+    if (status && status !== 'all') {
+      filter.status = status;
+    }
+
+    // Paginate
+    const skip = (Number(page) - 1) * Number(limit);
+
+    // Get payout docs with populated seller
+    let payouts = await SellerPayout.find(filter)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(Number(limit))
+      .populate('seller', 'fullName shopName email phone bankDetails')
+      .lean();
+
+    // Apply search filter on populated seller fields
+    if (search && search.trim()) {
+      const term = search.toLowerCase().trim();
+      payouts = payouts.filter(p => {
+        const name = (p.seller && p.seller.fullName) ? p.seller.fullName.toLowerCase() : '';
+        const shop = (p.seller && p.seller.shopName) ? p.seller.shopName.toLowerCase() : '';
+        return name.includes(term) || shop.includes(term);
+      });
+    }
+
+    // Aggregate summary stats
+    const [summary] = await SellerPayout.aggregate([
+      {
+        $group: {
+          _id: '$status',
+          count: { $sum: 1 },
+          totalAmount: { $sum: '$amount' }
+        }
+      }
+    ]);
+
+    const allStats = await SellerPayout.aggregate([
+      {
+        $group: {
+          _id: '$status',
+          count: { $sum: 1 },
+          totalAmount: { $sum: '$amount' }
+        }
+      }
+    ]);
+
+    const statsMap = {};
+    allStats.forEach(s => { statsMap[s._id] = s; });
+
+    const total = await SellerPayout.countDocuments(filter);
+
+    res.status(200).json({
+      success: true,
+      data: payouts,
+      pagination: {
+        total,
+        page: Number(page),
+        pages: Math.ceil(total / Number(limit)),
+        limit: Number(limit)
+      },
+      stats: {
+        requested: statsMap['requested'] || { count: 0, totalAmount: 0 },
+        processing: statsMap['processing'] || { count: 0, totalAmount: 0 },
+        completed: statsMap['completed'] || { count: 0, totalAmount: 0 },
+        rejected: statsMap['rejected'] || { count: 0, totalAmount: 0 }
       }
     });
   } catch (err) {

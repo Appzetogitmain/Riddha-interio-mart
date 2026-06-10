@@ -7,11 +7,45 @@ import {
 } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 
+const statusBtnTheme = {
+  pending: 'bg-amber-600 text-white border-amber-600 shadow-lg shadow-amber-100',
+  reviewed: 'bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-100',
+  implemented: 'bg-green-600 text-white border-green-600 shadow-lg shadow-green-100',
+};
+
 const SellerRecommendationManagement = () => {
   const [recommendations, setRecommendations] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
   const [selectedRec, setSelectedRec] = useState(null);
+
+  const exportToCSV = async () => {
+    if (!recommendations || recommendations.length === 0) {
+      toast.error('No requests available to export.');
+      return;
+    }
+    try {
+      const XLSX = await import('xlsx');
+      const dataToExport = recommendations.map(rec => ({
+        'Request ID': `REC-${rec.id.toString().slice(-4)}`,
+        'Seller Name': rec.sellerName,
+        'Category': (rec.category || '').replace('_', ' ').toUpperCase(),
+        'Subject': rec.subject,
+        'Description': rec.description,
+        'Priority': (rec.priority || '').toUpperCase(),
+        'Status': (rec.status || '').toUpperCase(),
+        'Created At': new Date(rec.createdAt).toLocaleString()
+      }));
+      const ws = XLSX.utils.json_to_sheet(dataToExport);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Seller Requests");
+      XLSX.writeFile(wb, `Seller_Requests_${new Date().toLocaleDateString().replace(/\//g, '-')}.csv`, { bookType: 'csv' });
+      toast.success('Seller requests exported successfully!');
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to export seller requests.');
+    }
+  };
 
   useEffect(() => {
     const fetchRecommendations = () => {
@@ -75,7 +109,10 @@ const SellerRecommendationManagement = () => {
           </p>
         </div>
         <div className="flex gap-3">
-          <button className="flex items-center gap-2 bg-white border border-gray-200 text-gray-900 px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-gray-50 transition-all shadow-sm active:scale-95">
+          <button 
+            onClick={exportToCSV}
+            className="flex items-center gap-2 bg-white border border-gray-200 text-gray-900 px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-gray-50 transition-all shadow-sm active:scale-95"
+          >
             <FiDownload /> Export CSV
           </button>
         </div>
@@ -84,18 +121,18 @@ const SellerRecommendationManagement = () => {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {[
-          { label: 'Total Requests', value: recommendations.length, icon: FiMessageSquare, color: 'indigo' },
-          { label: 'Pending Review', value: recommendations.filter(r => r.status === 'pending').length, icon: FiClock, color: 'amber' },
-          { label: 'High Priority', value: recommendations.filter(r => r.priority === 'high').length, icon: FiAlertCircle, color: 'red' },
-          { label: 'Implemented', value: recommendations.filter(r => r.status === 'implemented').length, icon: FiCheckCircle, color: 'green' },
+          { label: 'Total Requests', value: recommendations.length, icon: FiMessageSquare, bg: 'bg-indigo-50', text: 'text-indigo-600' },
+          { label: 'Pending Review', value: recommendations.filter(r => r.status === 'pending').length, icon: FiClock, bg: 'bg-amber-50', text: 'text-amber-600' },
+          { label: 'High Priority', value: recommendations.filter(r => r.priority === 'high').length, icon: FiAlertCircle, bg: 'bg-red-50', text: 'text-red-600' },
+          { label: 'Implemented', value: recommendations.filter(r => r.status === 'implemented').length, icon: FiCheckCircle, bg: 'bg-green-50', text: 'text-green-600' },
         ].map((stat, i) => (
           <div key={i} className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm flex items-center gap-4">
-            <div className={`w-12 h-12 bg-${stat.color}-50 text-${stat.color}-600 rounded-2xl flex items-center justify-center`}>
+            <div className={`w-12 h-12 ${stat.bg} ${stat.text} rounded-2xl flex items-center justify-center`}>
               <stat.icon size={24} />
             </div>
             <div>
               <p className="text-2xl font-black text-gray-900">{stat.value}</p>
-              <p className={`text-[10px] font-black uppercase tracking-widest text-${stat.color}-600`}>{stat.label}</p>
+              <p className={`text-[10px] font-black uppercase tracking-widest ${stat.text}`}>{stat.label}</p>
             </div>
           </div>
         ))}
@@ -123,6 +160,7 @@ const SellerRecommendationManagement = () => {
             <option value="feature_request">Feature Requests</option>
             <option value="ui_improvement">UI Improvements</option>
             <option value="bug_report">Bug Reports</option>
+            <option value="other">Other Suggestions</option>
           </select>
           <button className="p-4 bg-gray-50/50 border border-gray-100 rounded-2xl text-gray-400 hover:text-indigo-600 transition-all shadow-sm">
             <FiFilter />
@@ -281,7 +319,7 @@ const SellerRecommendationManagement = () => {
                           onClick={() => handleUpdateStatus(selectedRec.id, status.id)}
                           className={`flex flex-col items-center gap-2 p-4 rounded-2xl border transition-all ${
                             selectedRec.status === status.id 
-                            ? `bg-${status.color}-600 text-white border-${status.color}-600 shadow-lg shadow-${status.color}-100` 
+                            ? statusBtnTheme[status.id] 
                             : `bg-white text-gray-400 border-gray-100 hover:bg-gray-50`
                           }`}
                         >

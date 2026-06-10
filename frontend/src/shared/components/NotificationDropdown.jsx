@@ -145,7 +145,7 @@ const NotificationDropdown = ({ isMobile = false, buttonClassName = '', viewAllP
   useEffect(() => {
     if (!isOpen || !buttonRef.current) { setRightOffset(0); return; }
     const rect  = buttonRef.current.getBoundingClientRect();
-    const dropW = 304; // fixed compact width
+    const dropW = isMobile ? 320 : 384; // match actual width (w-80 / w-96)
     const leftEdge = rect.right - dropW;
     if (leftEdge < 8) {
       setRightOffset(Math.ceil(8 - leftEdge));
@@ -189,7 +189,7 @@ const NotificationDropdown = ({ isMobile = false, buttonClassName = '', viewAllP
   const defaultViewAllPath = isSeller
     ? '/seller/notifications'
     : isAdmin
-      ? '/admin/settings'
+      ? '/admin/notifications'
       : '/notifications';
 
   return (
@@ -212,12 +212,12 @@ const NotificationDropdown = ({ isMobile = false, buttonClassName = '', viewAllP
         {isOpen && (
           <motion.div
             key="dropdown"
-            initial={{ opacity: 0, y: 8, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 8, scale: 0.96 }}
-            transition={{ duration: 0.15 }}
+            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0,  scale: 1    }}
+            exit={{   opacity: 0, y: 10,  scale: 0.95 }}
+            transition={{ duration: 0.18 }}
             style={{ right: rightOffset > 0 ? -rightOffset : 0 }}
-            className="absolute mt-2 w-[304px] glass rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50"
+            className={`absolute ${isMobile ? 'right-0 w-80' : 'right-0 w-96'} mt-3 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50`}
           >
             <AnimatePresence mode="wait">
               {selected ? (

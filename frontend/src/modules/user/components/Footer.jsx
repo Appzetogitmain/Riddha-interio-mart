@@ -42,7 +42,7 @@ const Footer = () => {
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true }}
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 md:gap-16 mb-16"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 md:gap-16 mb-16 items-start"
         >
           {/* Brand & Socials */}
           <motion.div variants={itemVariants} className="space-y-5">
@@ -53,7 +53,7 @@ const Footer = () => {
               <img
                 src={TransparentLogo}
                 alt="Riddha Interior Mart"
-                className="h-20 md:h-24 w-auto object-contain"
+                className="h-12 w-auto object-contain"
               />
             </Link>
             <p className="text-sm leading-relaxed text-gray-500 font-medium">

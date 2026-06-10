@@ -1,58 +1,38 @@
 {
-  "timestamp": "2026-06-10T11:57:55.410Z",
-  "query": {},
-  "builtFilter": {},
-  "resultCount": 10,
+  "timestamp": "2026-06-10T12:43:28.235Z",
+  "query": {
+    "category": "Flooring"
+  },
+  "builtFilter": {
+    "category": "Flooring"
+  },
+  "resultCount": 4,
   "results": [
     {
-      "_id": "6a28153fcc75d9dddcce318e",
-      "name": "Sheetal Premium Item 5",
-      "category": "Carrara Marble"
+      "_id": "6a23ee5b614854ee3ba485c7",
+      "name": "red fort",
+      "category": "Flooring",
+      "subcategory": "Terracotta Tiles",
+      "subsubcategory": ""
     },
     {
-      "_id": "6a28153fcc75d9dddcce318d",
-      "name": "Sheetal Premium Item 4",
-      "category": "Carrara Marble"
+      "_id": "6a229b6b4f777143d2932aeb",
+      "name": "Granite",
+      "category": "Flooring",
+      "subcategory": "Granite Flooring",
+      "subsubcategory": "Black Galaxy"
     },
     {
-      "_id": "6a28153fcc75d9dddcce318c",
-      "name": "Sheetal Premium Item 3",
-      "category": "Carrara Marble"
+      "_id": "6a1005c8a399239b828b5441",
+      "name": "Test Terracotta Vase",
+      "category": "Flooring",
+      "subcategory": "Terracotta Tiles"
     },
     {
-      "_id": "6a28153fcc75d9dddcce318b",
-      "name": "Sheetal Premium Item 2",
-      "category": "Carrara Marble"
-    },
-    {
-      "_id": "6a28153fcc75d9dddcce318a",
-      "name": "Sheetal Premium Item 1",
-      "category": "Carrara Marble"
-    },
-    {
-      "_id": "6a28153dcc75d9dddcce3189",
-      "name": "Sheetal Premium Item 5",
-      "category": "Carrara Marble"
-    },
-    {
-      "_id": "6a28153dcc75d9dddcce3188",
-      "name": "Sheetal Premium Item 4",
-      "category": "Carrara Marble"
-    },
-    {
-      "_id": "6a28153dcc75d9dddcce3187",
-      "name": "Sheetal Premium Item 3",
-      "category": "Carrara Marble"
-    },
-    {
-      "_id": "6a28153ccc75d9dddcce3186",
-      "name": "Sheetal Premium Item 2",
-      "category": "Carrara Marble"
-    },
-    {
-      "_id": "6a28153ccc75d9dddcce3185",
-      "name": "Sheetal Premium Item 1",
-      "category": "Carrara Marble"
+      "_id": "6a0e9b1c8cf557a669106024",
+      "name": "Carrara Marble Slab",
+      "category": "Flooring",
+      "subcategory": "Carrara Marble"
     }
   ]
 }

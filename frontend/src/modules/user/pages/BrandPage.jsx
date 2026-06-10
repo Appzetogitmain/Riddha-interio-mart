@@ -115,12 +115,12 @@ const BrandPage = () => {
               alt={`${brand.name} Banner ${currentSlide + 1}`} 
               className="w-full h-full object-cover"
             />
-            {/* Overlay if it's a URL or generic image */}
+            {/* Brand name badge */}
             {(brand.banners[currentSlide]?.startsWith('http') || brand.banners[currentSlide]?.startsWith('data:')) && (
-              <div className="absolute inset-0 bg-black/10 flex items-center px-6 md:px-12 lg:px-16">
-                 <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white italic uppercase tracking-tighter drop-shadow-2xl">
-                    {brand.name}
-                 </h1>
+              <div className="absolute bottom-4 left-4 md:bottom-6 md:left-6">
+                <span className="inline-block bg-white/90 backdrop-blur-sm text-slate-800 text-xs font-bold px-3 py-1.5 rounded-full shadow-sm tracking-wide">
+                  {brand.name}
+                </span>
               </div>
             )}
           </motion.div>

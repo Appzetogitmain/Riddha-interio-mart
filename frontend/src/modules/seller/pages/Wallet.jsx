@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { connectSocket } from '../../../shared/utils/socket';
 import PageWrapper from '../components/PageWrapper';
 import api from '../../../shared/utils/api';
-import { connectSocket } from '../../../shared/utils/socket';
 import { 
   Wallet as WalletIcon, 
   TrendingUp, 

@@ -1,13 +1,8 @@
 {
-  "timestamp": "2026-06-10T10:28:20.136Z",
-  "query": {
-    "isApproved": "pending",
-    "isActive": "all"
-  },
-  "builtFilter": {
-    "isApproved": false
-  },
-  "resultCount": 8,
+  "timestamp": "2026-06-10T11:57:55.410Z",
+  "query": {},
+  "builtFilter": {},
+  "resultCount": 10,
   "results": [
     {
       "_id": "6a28153fcc75d9dddcce318e",
@@ -25,6 +20,16 @@
       "category": "Carrara Marble"
     },
     {
+      "_id": "6a28153fcc75d9dddcce318b",
+      "name": "Sheetal Premium Item 2",
+      "category": "Carrara Marble"
+    },
+    {
+      "_id": "6a28153fcc75d9dddcce318a",
+      "name": "Sheetal Premium Item 1",
+      "category": "Carrara Marble"
+    },
+    {
       "_id": "6a28153dcc75d9dddcce3189",
       "name": "Sheetal Premium Item 5",
       "category": "Carrara Marble"
@@ -35,21 +40,19 @@
       "category": "Carrara Marble"
     },
     {
-      "_id": "6a280eefcc75d9dddcce3079",
+      "_id": "6a28153dcc75d9dddcce3187",
       "name": "Sheetal Premium Item 3",
       "category": "Carrara Marble"
     },
     {
-      "_id": "6a280eefcc75d9dddcce3078",
+      "_id": "6a28153ccc75d9dddcce3186",
       "name": "Sheetal Premium Item 2",
       "category": "Carrara Marble"
     },
     {
-      "_id": "6a23ace7614854ee3ba48311",
-      "name": "Graphite ton",
-      "category": "Wall Solutions",
-      "subcategory": "",
-      "subsubcategory": ""
+      "_id": "6a28153ccc75d9dddcce3185",
+      "name": "Sheetal Premium Item 1",
+      "category": "Carrara Marble"
     }
   ]
 }

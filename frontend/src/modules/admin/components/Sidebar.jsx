@@ -30,6 +30,7 @@ import {
   FiDollarSign,
   FiZap,
   FiActivity,
+  FiLayers
 } from "react-icons/fi";
 import logoImage from "../../../assets/transparent_logo.png";
 
@@ -260,7 +261,7 @@ const menuGroups = [
   {
     title: "Financial & Core System",
     items: [
-      { path: "/admin/bulk-orders", icon: FiPackage, label: "Bulk Orders" },
+      { path: "/admin/product-batches", icon: FiLayers, label: "Bulk Orders", showBadge: true, badgeType: "batch" },
       {
         label: "Payments",
         icon: FiDollarSign,
@@ -304,6 +305,7 @@ const NavItem = ({
   sellersCount,
   deliveryCount,
   productCount,
+  batchCount,
 }) => {
   const { hasPermission, role } = useRBAC();
   const location = useLocation();
@@ -320,6 +322,13 @@ const NavItem = ({
     item.children.some((child) => location.pathname === child.path);
   const isActive = isSelfActive || isChildActive;
 
+  const itemBadgeCount = item.showBadge && !hasChildren
+    ? (item.badgeType === 'batch' ? batchCount
+      : item.badgeType === 'delivery' ? deliveryCount
+      : item.badgeType === 'product' ? productCount
+      : sellersCount)
+    : 0;
+
   const headerContent = (
     <div className="flex items-center gap-3 w-full text-left">
       <item.icon
@@ -327,10 +336,15 @@ const NavItem = ({
         className={`transition-all duration-300 ${isActive ? "scale-110 text-[var(--color-primary)]" : "text-slate-400 group-hover:scale-110 group-hover:text-slate-700"}`}
       />
       <span
-        className={`text-[12px] font-semibold tracking-wide transition-colors ${isActive ? "text-slate-900 font-bold" : "text-slate-600 group-hover:text-slate-900"}`}
+        className={`text-[12px] font-semibold tracking-wide transition-colors flex-1 ${isActive ? "text-slate-900 font-bold" : "text-slate-600 group-hover:text-slate-900"}`}
       >
         {item.label}
       </span>
+      {itemBadgeCount > 0 && (
+        <span className="px-1.5 py-0.5 bg-violet-600 text-white text-[9px] font-bold rounded-full animate-pulse">
+          {itemBadgeCount}
+        </span>
+      )}
     </div>
   );
 
@@ -395,7 +409,8 @@ const NavItem = ({
             <div className="ml-5 pl-2 border-l border-slate-200 mt-1 space-y-0.5 py-1">
               {item.children.map((child) => {
                 let count = 0;
-                if (child.badgeType === "delivery") count = deliveryCount;
+                if (child.badgeType === "batch") count = batchCount;
+                else if (child.badgeType === "delivery") count = deliveryCount;
                 else if (child.badgeType === "product") count = productCount;
                 else count = sellersCount;
 
@@ -458,16 +473,18 @@ const Sidebar = ({ isOpen, onClose }) => {
   const [sellersCount, setSellersCount] = useState(0);
   const [deliveryCount, setDeliveryCount] = useState(0);
   const [productCount, setProductCount] = useState(0);
+  const [batchCount, setBatchCount] = useState(0);
 
   useEffect(() => {
     const fetchPendingCounts = async () => {
       try {
-        const [sellersRes, deliveryRes, productRes] = await Promise.all([
+        const [sellersRes, deliveryRes, productRes, batchRes] = await Promise.all([
           api.get("/auth/admin/sellers/pending"),
           api.get("/delivery"),
           api.get("/products", {
             params: { isApproved: "pending", isActive: "all" },
           }),
+          api.get("/product-batches", { params: { status: "pending_review" } }),
         ]);
         setSellersCount(sellersRes.data.data.length);
         const pendingPartners = deliveryRes.data.data.filter(
@@ -475,6 +492,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         );
         setDeliveryCount(pendingPartners.length);
         setProductCount(productRes.data.data.length);
+        setBatchCount(batchRes.data.data.length);
       } catch (err) {
         console.error("Failed to fetch counts for sidebar:", err);
       }
@@ -554,6 +572,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                     sellersCount={sellersCount}
                     deliveryCount={deliveryCount}
                     productCount={productCount}
+                    batchCount={batchCount}
                   />
                 ))}
               </div>

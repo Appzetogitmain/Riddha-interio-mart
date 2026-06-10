@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import PageWrapper from '../components/PageWrapper';
 import { 
   Search, 
@@ -17,8 +18,10 @@ import {
 } from 'lucide-react';
 import api from '../../../shared/utils/api';
 import { motion, AnimatePresence } from 'framer-motion';
+import toast from 'react-hot-toast';
 
 const StockManagement = () => {
+  const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -28,13 +31,19 @@ const StockManagement = () => {
     fetchStockData();
   }, []);
 
-  const fetchStockData = async () => {
+  const fetchStockData = async (isManualRefresh = false) => {
     try {
       setLoading(true);
       const response = await api.get('/auth/seller/stock-status');
       setProducts(response.data.data || []);
+      if (isManualRefresh) {
+        toast.success('Inventory synced successfully', { icon: '🔄' });
+      }
     } catch (err) {
       console.error('Failed to fetch stock data:', err);
+      if (isManualRefresh) {
+        toast.error('Failed to sync inventory');
+      }
     } finally {
       setLoading(false);
     }
@@ -68,13 +77,16 @@ const StockManagement = () => {
           
           <div className="flex items-center gap-3">
              <button 
-               onClick={fetchStockData}
-               className="p-3 bg-white border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 hover:text-seller-primary transition-all shadow-sm"
+               onClick={() => fetchStockData(true)}
+               disabled={loading}
+               className={`p-3 bg-white border border-slate-200 rounded-xl transition-all shadow-sm ${loading ? 'opacity-50 cursor-not-allowed' : 'text-slate-600 hover:bg-slate-50 hover:text-seller-primary'}`}
                title="Refresh Inventory"
              >
-               <RefreshCcw size={20} />
+               <RefreshCcw size={20} className={loading ? 'animate-spin text-seller-primary' : ''} />
              </button>
-             <button className="flex items-center gap-2 px-6 py-3 bg-seller-primary text-white rounded-xl font-semibold text-sm hover:bg-seller-dark transition-all shadow-lg shadow-seller-primary/20">
+             <button 
+               onClick={() => navigate('/seller/product/add')}
+               className="flex items-center gap-2 px-6 py-3 bg-seller-primary text-white rounded-xl font-semibold text-sm hover:bg-seller-dark transition-all shadow-lg shadow-seller-primary/20">
                <Plus size={18} />
                Add Stock
              </button>

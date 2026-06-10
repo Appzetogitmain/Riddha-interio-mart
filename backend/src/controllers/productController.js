@@ -271,15 +271,7 @@ exports.createProduct = async (req, res, next) => {
     // 2. Create the product
     const product = await Product.create(req.body);
 
-    // 3. Notify Admin if it's a new product from a seller needing approval
-    if (req.user.role !== 'admin' && source === 'new') {
-      const { notifyAdminNewProduct } = require('../socket');
-      notifyAdminNewProduct({
-        message: `New product "${product.name}" from ${req.user.shopName || req.user.fullName} needs approval.`,
-        productId: product._id,
-        sellerName: req.user. shopName || req.user.fullName
-      });
-    }
+    // Admin is notified only when seller submits a batch, not on individual product adds
     const cacheService = require('../services/cacheService');
     cacheService.delPattern('products:list:*');
     cacheService.delPattern('search:*');

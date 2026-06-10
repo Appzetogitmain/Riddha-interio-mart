@@ -42,6 +42,8 @@ const SellerSignup = () => {
       value = value.replace(/\D/g, '').slice(0, 10);
     } else if (name === 'fullName') {
       value = value.replace(/[^A-Za-z\s]/g, '');
+    } else if (name === 'gstNumber' || name === 'panNumber') {
+      value = value.toUpperCase().trim();
     }
     
     setFormData({ ...formData, [name]: value });
@@ -57,6 +59,18 @@ const SellerSignup = () => {
     
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
+      return;
+    }
+
+    const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
+    if (!panRegex.test(formData.panNumber)) {
+      setError('Please enter a valid PAN number');
+      return;
+    }
+
+    const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+    if (!gstRegex.test(formData.gstNumber)) {
+      setError('Please enter a valid GST number');
       return;
     }
 
@@ -309,7 +323,7 @@ const SellerSignup = () => {
                       <span className="text-[10px] font-semibold text-slate-400 text-center truncate w-full px-2">
                         {docs.gstDoc ? docs.gstDoc.name : 'Upload PDF/JPG'}
                       </span>
-                      <input type="file" name="gstDoc" onChange={handleFileChange} className="sr-only" accept=".pdf,.jpg,.jpeg,.png" />
+                      <input type="file" name="gstDoc" onChange={handleFileChange} className="sr-only" accept="image/*,application/pdf,.pdf,.jpg,.jpeg,.png" />
                     </label>
                   </div>
                   <div className="space-y-2">
@@ -319,7 +333,7 @@ const SellerSignup = () => {
                       <span className="text-[10px] font-semibold text-slate-400 text-center truncate w-full px-2">
                         {docs.panDoc ? docs.panDoc.name : 'Upload PDF/JPG'}
                       </span>
-                      <input type="file" name="panDoc" onChange={handleFileChange} className="sr-only" accept=".pdf,.jpg,.jpeg,.png" />
+                      <input type="file" name="panDoc" onChange={handleFileChange} className="sr-only" accept="image/*,application/pdf,.pdf,.jpg,.jpeg,.png" />
                     </label>
                   </div>
                   <div className="space-y-2">
@@ -329,7 +343,7 @@ const SellerSignup = () => {
                       <span className="text-[10px] font-semibold text-slate-400 text-center truncate w-full px-2">
                         {docs.shopDoc ? docs.shopDoc.name : 'Upload PDF/JPG'}
                       </span>
-                      <input type="file" name="shopDoc" onChange={handleFileChange} className="sr-only" accept=".pdf,.jpg,.jpeg,.png" />
+                      <input type="file" name="shopDoc" onChange={handleFileChange} className="sr-only" accept="image/*,application/pdf,.pdf,.jpg,.jpeg,.png" />
                     </label>
                   </div>
                 </div>

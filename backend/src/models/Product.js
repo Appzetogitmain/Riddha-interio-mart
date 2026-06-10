@@ -151,6 +151,15 @@ const ProductSchema = new mongoose.Schema({
     required: true,
     default: 1.5
   },
+  rejectionReason: {
+    type: String,
+    default: ''
+  },
+  batchId: {
+    type: mongoose.Schema.ObjectId,
+    ref: 'ProductBatch',
+    default: null
+  },
   createdAt: {
     type: Date,
     default: Date.now

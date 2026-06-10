@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiPackage, FiX, FiArrowRight, FiTruck, FiBriefcase } from 'react-icons/fi';
+import { FiPackage, FiX, FiArrowRight, FiTruck, FiBriefcase, FiLayers } from 'react-icons/fi';
 import { connectSocket, disconnectSocket } from '../../../shared/utils/socket';
 import { useNavigate } from 'react-router-dom';
 
@@ -57,6 +57,12 @@ const AdminNotifications = ({ token }) => {
       setActiveNotification({ ...payload, type: 'delivery_resp' });
     });
 
+    socket.on('batch:new', (payload) => {
+      console.log('BATCH:NEW received in Admin panel:', payload);
+      playSound();
+      setActiveNotification({ ...payload, type: 'batch' });
+    });
+
     socket.on('connect_error', (err) => {
       console.error('Admin socket connection error:', err.message);
       if (err.message === 'AUTH_INVALID_TOKEN' || err.message === 'AUTH_TOKEN_REQUIRED' || err.message === 'AUTH_INVALID') {
@@ -71,12 +77,14 @@ const AdminNotifications = ({ token }) => {
       socket.off('delivery:new_registration');
       socket.off('seller:new_registration');
       socket.off('delivery:response');
+      socket.off('batch:new');
       socket.off('connect');
       socket.off('connect_error');
     };
   }, [token, playSound]);
 
   const getIcon = () => {
+     if (activeNotification.type === 'batch') return <FiLayers size={28} className="animate-bounce" />;
      if (activeNotification.type === 'product') return <FiPackage size={28} className="animate-bounce" />;
      if (activeNotification.type === 'delivery_reg' || activeNotification.type === 'delivery_resp') return <FiTruck size={28} className="animate-bounce" />;
      if (activeNotification.type === 'seller_reg') return <FiBriefcase size={28} className="animate-bounce" />;
@@ -84,6 +92,7 @@ const AdminNotifications = ({ token }) => {
   };
 
   const getTheme = () => {
+     if (activeNotification.type === 'batch') return 'bg-violet-50 text-violet-600';
      if (activeNotification.type === 'product') return 'bg-amber-50 text-amber-600';
      if (activeNotification.type === 'delivery_reg') return 'bg-blue-50 text-blue-600';
      if (activeNotification.type === 'seller_reg') return 'bg-teal-50 text-teal-600';
@@ -103,10 +112,11 @@ const AdminNotifications = ({ token }) => {
         >
             {/* Top accent bar */}
             <div className={`absolute top-0 left-0 w-full h-1.5 ${
+              activeNotification.type === 'batch' ? 'bg-violet-600' :
               activeNotification.type === 'delivery_reg' ? 'bg-blue-600' :
               activeNotification.type === 'seller_reg' ? 'bg-teal-500' :
               activeNotification.type === 'delivery_resp' ? (activeNotification.status === 'Accepted' ? 'bg-emerald-500' : 'bg-rose-500') :
-              activeNotification.type === 'product' ? 'bg-amber-500' : 
+              activeNotification.type === 'product' ? 'bg-amber-500' :
               'bg-gradient-to-r from-red-800 to-deep-espresso'
             }`} />
 
@@ -119,7 +129,8 @@ const AdminNotifications = ({ token }) => {
             <div className="flex-1 space-y-1">
                <div className="flex items-center justify-between">
                   <h3 className="text-sm font-black uppercase tracking-widest text-deep-espresso">
-                    {activeNotification.type === 'product' ? 'Product Approval' : 
+                    {activeNotification.type === 'batch' ? 'New Product Batch' :
+                     activeNotification.type === 'product' ? 'Product Approval' :
                      activeNotification.type === 'delivery_reg' ? 'New Fleet Request' :
                      activeNotification.type === 'seller_reg' ? 'New Seller Request' :
                      activeNotification.type === 'delivery_resp' ? 'Delivery Response' :
@@ -133,29 +144,34 @@ const AdminNotifications = ({ token }) => {
                   </button>
                </div>
                <p className="text-xl font-display font-bold text-deep-espresso leading-tight">
-                  {activeNotification.type === 'product' ? activeNotification.message :
-                   activeNotification.type === 'delivery_reg' ? `${activeNotification.fullName} wants to join` :
-                   activeNotification.type === 'seller_reg' ? `${activeNotification.fullName} wants to join` :
-                   activeNotification.type === 'delivery_resp' ? `Order ${activeNotification.status}` :
-                   `₹${activeNotification.totalPrice?.toLocaleString()} Order Received`}
+                  {activeNotification.type === 'batch'
+                    ? `${activeNotification.totalProducts} product${activeNotification.totalProducts !== 1 ? 's' : ''} need review`
+                    : activeNotification.type === 'product' ? activeNotification.message
+                    : activeNotification.type === 'delivery_reg' ? `${activeNotification.fullName} wants to join`
+                    : activeNotification.type === 'seller_reg' ? `${activeNotification.fullName} wants to join`
+                    : activeNotification.type === 'delivery_resp' ? `Order ${activeNotification.status}`
+                    : `₹${activeNotification.totalPrice?.toLocaleString()} Order Received`}
                </p>
                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-brand-teal font-medium mt-2">
                   <span className="flex items-center gap-1">
                      <span className={`w-1.5 h-1.5 rounded-full ${
-                       activeNotification.type === 'product' ? 'bg-amber-500' : 
+                       activeNotification.type === 'batch' ? 'bg-violet-500' :
+                       activeNotification.type === 'product' ? 'bg-amber-500' :
                        activeNotification.type === 'delivery_reg' ? 'bg-blue-500' :
                        activeNotification.type === 'seller_reg' ? 'bg-teal-500' :
                        activeNotification.type === 'delivery_resp' ? (activeNotification.status === 'Accepted' ? 'bg-emerald-500' : 'bg-rose-500') :
                        'bg-green-500'
                      }`}></span>
-                     {activeNotification.type === 'product' ? activeNotification.sellerName :
+                     {activeNotification.type === 'batch' ? (activeNotification.shopName || activeNotification.sellerName) :
+                      activeNotification.type === 'product' ? activeNotification.sellerName :
                       activeNotification.type === 'delivery_reg' ? activeNotification.vehicleType :
                       activeNotification.type === 'seller_reg' ? activeNotification.shopName :
                       activeNotification.type === 'delivery_resp' ? activeNotification.deliveryBoyName :
                       (activeNotification.customerName || 'Premium Client')}
                   </span>
                   <span className="opacity-30">•</span>
-                  <span>{activeNotification.type === 'product' ? 'Draft Product' : 
+                  <span>{activeNotification.type === 'batch' ? 'Batch Submission' :
+                         activeNotification.type === 'product' ? 'Draft Product' :
                          activeNotification.type === 'delivery_reg' ? activeNotification.phone :
                          activeNotification.type === 'seller_reg' ? (activeNotification.phone || activeNotification.email) :
                          activeNotification.type === 'delivery_resp' ? `Order ID: ...${activeNotification.orderId?.slice(-6)}` :
@@ -171,18 +187,21 @@ const AdminNotifications = ({ token }) => {
                <div className="pt-4 flex gap-3">
                   <button 
                     onClick={() => {
-                        if (activeNotification.type === 'product') {
-                          navigate(`/admin/inventory`);
+                        if (activeNotification.type === 'batch') {
+                          navigate('/admin/product-batches');
+                        } else if (activeNotification.type === 'product') {
+                          navigate('/admin/inventory');
                         } else if (activeNotification.type === 'delivery_reg') {
-                          navigate(`/admin/delivery/pending`);
+                          navigate('/admin/delivery/pending');
                         } else if (activeNotification.type === 'seller_reg') {
-                          navigate(`/admin/sellers/pending`);
+                          navigate('/admin/sellers/pending');
                         } else {
                           navigate(`/admin/orders/view/${activeNotification.orderId}`);
                         }
                         setActiveNotification(null);
                      }}
                     className={`flex-1 text-[10px] font-black uppercase tracking-widest py-3 rounded-xl transition-all flex items-center justify-center gap-2 ${
+                      activeNotification.type === 'batch' ? 'bg-violet-600 text-white hover:bg-violet-700' :
                       activeNotification.type === 'product' ? 'bg-amber-600 text-white hover:bg-amber-700' :
                       activeNotification.type === 'delivery_reg' ? 'bg-blue-600 text-white hover:bg-blue-700' :
                       activeNotification.type === 'seller_reg' ? 'bg-teal-600 text-white hover:bg-teal-700' :
@@ -190,7 +209,8 @@ const AdminNotifications = ({ token }) => {
                       'bg-deep-espresso text-white hover:bg-red-900'
                     }`}
                   >
-                    {activeNotification.type === 'product' ? 'Review Product' : 
+                    {activeNotification.type === 'batch' ? 'Review Batch' :
+                     activeNotification.type === 'product' ? 'Review Product' :
                      activeNotification.type === 'delivery_reg' ? 'Review Partner' :
                      activeNotification.type === 'seller_reg' ? 'Review Seller' :
                      activeNotification.type === 'delivery_resp' ? 'View Order' :

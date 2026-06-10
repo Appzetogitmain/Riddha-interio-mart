@@ -1,337 +1,436 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  UploadCloud, 
-  Plus, 
-  Trash2, 
-  FileText, 
-  CheckCircle2, 
-  Package, 
-  ShoppingBag,
-  FileSpreadsheet,
-  Zap,
-  Info,
-  ChevronRight,
-  ArrowRight,
-  X,
-  PlusCircle,
-  Database,
-  SearchCode
+import { useNavigate, useLocation } from 'react-router-dom';
+import {
+  Clock, ChevronDown, ChevronUp,
+  Package, AlertCircle, Send, RefreshCw, ImageOff
 } from 'lucide-react';
+import toast from 'react-hot-toast';
+import api from '../../../shared/utils/api';
+import { connectSocket } from '../../../shared/utils/socket';
 import PageWrapper from '../components/PageWrapper';
 
+const statusColors = {
+  pending:  { bg: 'bg-amber-50',   text: 'text-amber-700',   border: 'border-amber-200',  dot: 'bg-amber-500'  },
+  approved: { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200',dot: 'bg-emerald-500'},
+  rejected: { bg: 'bg-red-50',     text: 'text-red-700',     border: 'border-red-200',    dot: 'bg-red-500'    },
+};
+
+const batchStatusMeta = {
+  pending_review: { label: 'Pending Review', color: 'bg-amber-100 text-amber-700'      },
+  in_progress:    { label: 'In Progress',    color: 'bg-blue-100 text-blue-700'        },
+  completed:      { label: 'Completed',      color: 'bg-emerald-100 text-emerald-700'  },
+};
+
+const ProductThumb = ({ images }) => {
+  const src = images && images[0];
+  if (!src || src.startsWith('C:')) return (
+    <div className="w-14 h-14 rounded-xl bg-slate-100 flex items-center justify-center shrink-0">
+      <ImageOff size={18} className="text-slate-400" />
+    </div>
+  );
+  return <img src={src} alt="" className="w-14 h-14 rounded-xl object-cover border border-slate-200 shrink-0" />;
+};
+
+// ── Batch History Card ──────────────────────────────────────────────
+const BatchCard = ({ batch }) => {
+  const [expanded, setExpanded] = useState(false);
+  const meta = batchStatusMeta[batch.status] || batchStatusMeta.pending_review;
+  const pct = batch.totalProducts > 0
+    ? Math.round((batch.approvedCount / batch.totalProducts) * 100)
+    : 0;
+
+  return (
+    <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+      <div className="p-5 flex items-start justify-between gap-4">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
+            <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider ${meta.color}`}>
+              {meta.label}
+            </span>
+            <span className="text-[11px] text-slate-400">
+              {new Date(batch.submittedAt).toLocaleDateString('en-IN', {
+                day: 'numeric', month: 'short', year: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+              })}
+            </span>
+          </div>
+          <div className="flex items-center gap-4 text-xs font-semibold mt-2 flex-wrap">
+            <span className="flex items-center gap-1.5 text-slate-500">
+              <span className="w-2 h-2 rounded-full bg-slate-400 inline-block" />
+              {batch.pendingCount} Pending
+            </span>
+            <span className="flex items-center gap-1.5 text-emerald-600">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
+              {batch.approvedCount} Approved
+            </span>
+            <span className="flex items-center gap-1.5 text-red-500">
+              <span className="w-2 h-2 rounded-full bg-red-500 inline-block" />
+              {batch.rejectedCount} Rejected
+            </span>
+            <span className="text-slate-400">/ {batch.totalProducts} total</span>
+          </div>
+          <div className="mt-3 w-full max-w-xs bg-slate-100 rounded-full h-1.5">
+            <div
+              className="h-1.5 rounded-full bg-emerald-500 transition-all duration-500"
+              style={{ width: `${pct}%` }}
+            />
+          </div>
+        </div>
+        <button
+          onClick={() => setExpanded(v => !v)}
+          className="p-2 rounded-xl hover:bg-slate-100 text-slate-500 transition-colors mt-0.5"
+        >
+          {expanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+        </button>
+      </div>
+
+      <AnimatePresence>
+        {expanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.22 }}
+            className="overflow-hidden border-t border-slate-100"
+          >
+            <div className="p-4 space-y-2">
+              {batch.products.map((item) => {
+                const p = item.product || {};
+                const s = statusColors[item.status] || statusColors.pending;
+                return (
+                  <div key={item._id || p._id} className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
+                    <ProductThumb images={p.images} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-slate-800 truncate">{p.name || '—'}</p>
+                      <p className="text-[11px] text-slate-400 mt-0.5">
+                        {p.category || ''}{p.sku ? ` · SKU: ${p.sku}` : ''}
+                      </p>
+                      {item.status === 'rejected' && item.rejectionReason && (
+                        <p className="mt-1 text-[11px] text-red-600 bg-red-50 px-2 py-0.5 rounded-lg inline-block">
+                          Reason: {item.rejectionReason}
+                        </p>
+                      )}
+                    </div>
+                    <span className={`text-[10px] font-bold px-2.5 py-1 rounded-lg border flex items-center gap-1.5 shrink-0 ${s.bg} ${s.text} ${s.border}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
+                      <span className="capitalize">{item.status}</span>
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+// ── Main Component ──────────────────────────────────────────────────
 const BulkProductUpload = () => {
-  const [activeTab, setActiveTab] = useState('excel');
-  const [manualProducts, setManualProducts] = useState([
-    { name: '', sku: '', hsnCode: '', brand: '', category: '', price: '', stock: '', imageLink: '', description: '' }
-  ]);
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [isSuccess, setIsSuccess] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [activeTab, setActiveTab] = useState(
+    new URLSearchParams(location.search).get('tab') === 'history' ? 'history' : 'submit'
+  );
+  const [pendingProducts, setPendingProducts] = useState([]);
+  const [selectedIds, setSelectedIds] = useState(new Set());
+  const [loadingProducts, setLoadingProducts] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [batches, setBatches] = useState([]);
+  const [loadingBatches, setLoadingBatches] = useState(false);
 
-  const addRow = () => {
-    setManualProducts([...manualProducts, { name: '', sku: '', hsnCode: '', brand: '', category: '', price: '', stock: '', imageLink: '', description: '' }]);
+  const fetchPending = useCallback(async () => {
+    setLoadingProducts(true);
+    try {
+      const res = await api.get('/products/my-products');
+      const all = res.data.data || [];
+      const eligible = all.filter(p => p.approvalStatus === 'pending' && !p.batchId);
+      setPendingProducts(eligible);
+      setSelectedIds(new Set(eligible.map(p => p._id)));
+    } catch {
+      toast.error('Failed to load products');
+    } finally {
+      setLoadingProducts(false);
+    }
+  }, []);
+
+  const fetchBatches = useCallback(async () => {
+    setLoadingBatches(true);
+    try {
+      const res = await api.get('/product-batches/my-batches');
+      setBatches(res.data.data || []);
+    } catch {
+      toast.error('Failed to load batch history');
+    } finally {
+      setLoadingBatches(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchPending(); }, [fetchPending]);
+
+  useEffect(() => {
+    if (activeTab === 'history') fetchBatches();
+  }, [activeTab, fetchBatches]);
+
+  // Silently refresh batch history when admin reviews a product
+  // (popup notification + sound is handled globally by SellerNotifications in App.jsx)
+  useEffect(() => {
+    const userData = JSON.parse(localStorage.getItem('riddha_user') || '{}');
+    const token = userData?.token;
+    if (!token) return;
+
+    const socket = connectSocket({ token });
+    socket.on('batch:product_reviewed', fetchBatches);
+    return () => { socket.off('batch:product_reviewed', fetchBatches); };
+  }, [fetchBatches]);
+
+  const toggleSelect = (id) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
   };
 
-  const removeRow = (index) => {
-    const updated = manualProducts.filter((_, i) => i !== index);
-    setManualProducts(updated.length ? updated : [{ name: '', sku: '', hsnCode: '', brand: '', category: '', price: '', stock: '', imageLink: '', description: '' }]);
+  const toggleAll = () => {
+    if (selectedIds.size === pendingProducts.length) setSelectedIds(new Set());
+    else setSelectedIds(new Set(pendingProducts.map(p => p._id)));
   };
 
-  const handleInputChange = (index, field, value) => {
-    const updated = [...manualProducts];
-    updated[index][field] = value;
-    setManualProducts(updated);
+  const handleSubmit = async () => {
+    if (selectedIds.size === 0) return toast.error('Select at least one product');
+    setSubmitting(true);
+    try {
+      await api.post('/product-batches');
+      toast.success(`${selectedIds.size} product${selectedIds.size > 1 ? 's' : ''} submitted for review!`);
+      setPendingProducts([]);
+      setSelectedIds(new Set());
+      setActiveTab('history');
+      fetchBatches();
+    } catch (err) {
+      toast.error(err?.response?.data?.error || 'Submission failed');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const handleBulkSubmit = (e) => {
-    e.preventDefault();
-    setIsUploading(true);
-    let progress = 0;
-    const interval = setInterval(() => {
-      progress += 5;
-      setUploadProgress(progress);
-      if (progress >= 100) {
-        clearInterval(interval);
-        setTimeout(() => {
-          setIsUploading(false);
-          setIsSuccess(true);
-          setTimeout(() => setIsSuccess(false), 3000);
-        }, 500);
-      }
-    }, 100);
-  };
+  const allSelected = pendingProducts.length > 0 && selectedIds.size === pendingProducts.length;
 
   return (
     <PageWrapper>
-      <div className="max-w-7xl mx-auto space-y-8 pb-10">
-        
-        {/* Header Section */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-1">
-            <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Bulk Inventory Sync</h1>
-            <p className="text-sm font-medium text-slate-500">Scale your storefront by uploading entire catalogs at once</p>
-          </div>
-          
-          <div className="flex items-center gap-3">
-             <div className="bg-white px-5 py-3 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
-                <div className="text-right">
-                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Batch Limit</p>
-                   <p className="text-xl font-bold text-slate-900">1,000 Items</p>
-                </div>
-                <div className="w-10 h-10 bg-seller-primary/10 rounded-xl flex items-center justify-center text-seller-primary">
-                   <Zap size={20} />
-                </div>
-             </div>
-          </div>
+      <div className="max-w-4xl mx-auto space-y-6 pb-32">
+
+        {/* Header */}
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Batch Submission</h1>
+          <p className="text-sm text-slate-500 mt-1">
+            Submit your pending products to admin for approval in one go.
+          </p>
         </div>
 
-        {/* Tab Switcher */}
-        <div className="flex items-center gap-1 bg-white p-1.5 rounded-2xl border border-slate-200 shadow-sm w-full md:w-fit overflow-x-auto no-scrollbar">
-          <button
-            onClick={() => setActiveTab('excel')}
-            className={`flex items-center gap-2 px-6 py-3 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${activeTab === 'excel' ? 'bg-seller-primary text-white shadow-lg shadow-seller-primary/20' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'}`}
-          >
-            <FileSpreadsheet size={16} /> Import Spreadsheet
-          </button>
-          <button
-            onClick={() => setActiveTab('manual')}
-            className={`flex items-center gap-2 px-6 py-3 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${activeTab === 'manual' ? 'bg-seller-primary text-white shadow-lg shadow-seller-primary/20' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'}`}
-          >
-            <Zap size={16} /> Manual Batch Entry
-          </button>
+        {/* Tabs */}
+        <div className="flex gap-1 bg-slate-100 p-1 rounded-xl w-fit">
+          {[
+            { key: 'submit',  label: 'Submit Batch',  badge: pendingProducts.length },
+            { key: 'history', label: 'Batch History', badge: batches.length         },
+          ].map(tab => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-all ${
+                activeTab === tab.key
+                  ? 'bg-white text-slate-900 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              {tab.label}
+              {tab.badge > 0 && (
+                <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full ${
+                  activeTab === tab.key
+                    ? 'bg-seller-primary text-white'
+                    : 'bg-slate-300 text-slate-600'
+                }`}>
+                  {tab.badge}
+                </span>
+              )}
+            </button>
+          ))}
         </div>
 
         <AnimatePresence mode="wait">
-          {activeTab === 'excel' ? (
+          {/* ── Submit Batch Tab ── */}
+          {activeTab === 'submit' && (
             <motion.div
-              key="excel-upload"
-              initial={{ opacity: 0, y: 20 }}
+              key="submit"
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.98 }}
-              className="bg-white rounded-[2.5rem] p-12 md:p-24 border border-slate-200 shadow-sm flex flex-col items-center text-center"
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.18 }}
+              className="space-y-4"
             >
-              <div className="max-w-md w-full space-y-10">
-                <div className="relative group mx-auto">
-                   <div className="absolute inset-0 bg-seller-primary/10 rounded-full blur-3xl group-hover:bg-seller-primary/20 transition-colors"></div>
-                   <div className="relative w-24 h-24 bg-seller-primary rounded-[2rem] flex items-center justify-center text-white shadow-2xl mx-auto shadow-seller-primary/20">
-                      <UploadCloud size={40} />
-                   </div>
+              {loadingProducts ? (
+                <div className="py-24 flex flex-col items-center gap-3 bg-white rounded-2xl border border-slate-200">
+                  <div className="w-10 h-10 border-4 border-slate-200 border-t-seller-primary rounded-full animate-spin" />
+                  <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Loading products…</p>
                 </div>
-                
-                <div className="space-y-3">
-                  <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Import Fast, Scale Faster</h2>
-                  <p className="text-sm font-medium text-slate-500 leading-relaxed">
-                    Upload your Excel or CSV file. Our engine will automatically validate and map your data to our global catalog.
-                  </p>
-                </div>
-
-                <div className="space-y-6">
-                  <div className="relative group">
-                    <input type="file" className="absolute inset-0 opacity-0 cursor-pointer z-10" />
-                    <div className="w-full h-32 rounded-[2rem] border-2 border-dashed border-slate-200 bg-slate-50 flex flex-col items-center justify-center gap-2 group-hover:border-seller-primary group-hover:bg-seller-light/5 transition-all">
-                       <Plus size={24} className="text-slate-300 group-hover:text-seller-primary transition-colors" />
-                       <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Drop File or Click to Browse</span>
-                    </div>
+              ) : pendingProducts.length === 0 ? (
+                <div className="py-24 flex flex-col items-center gap-4 bg-white rounded-2xl border border-dashed border-slate-200 text-center px-6">
+                  <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center">
+                    <Package size={36} className="text-slate-300" />
                   </div>
-                  
-                  <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
-                     <button className="flex items-center gap-2 px-6 py-3 bg-white border border-slate-200 rounded-xl text-[11px] font-bold text-slate-600 uppercase tracking-widest hover:bg-slate-50 transition-all shadow-sm">
-                        <FileText size={16} /> Download Template
-                     </button>
-                     <div className="text-[10px] font-bold text-slate-400 flex items-center gap-1">
-                        <Info size={14} /> Supports .XLSX, .CSV
-                     </div>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          ) : (
-            <motion.div
-              key="manual-upload"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.98 }}
-              className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col"
-            >
-              <div className="p-8 border-b border-slate-50 flex items-center justify-between">
-                 <h3 className="text-lg font-bold text-slate-900 flex items-center gap-3">
-                    <div className="w-1.5 h-6 bg-seller-primary rounded-full" />
-                    Batch Processing Engine
-                 </h3>
-                 <div className="flex items-center gap-3">
-                    <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
-                       {manualProducts.length} Items Loaded
-                    </span>
-                 </div>
-              </div>
-
-              <div className="overflow-x-auto custom-scrollbar">
-                <table className="w-full text-left min-w-[1400px]">
-                  <thead>
-                    <tr className="bg-slate-50/50 border-b border-slate-100">
-                      <th className="px-8 py-5 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Product Title</th>
-                      <th className="px-8 py-5 text-[11px] font-bold text-slate-500 uppercase tracking-wider">SKU</th>
-                      <th className="px-8 py-5 text-[11px] font-bold text-slate-500 uppercase tracking-wider">HSN</th>
-                      <th className="px-8 py-5 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Brand</th>
-                      <th className="px-8 py-5 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Category</th>
-                      <th className="px-8 py-5 text-[11px] font-bold text-slate-500 uppercase tracking-wider w-40">Price (INR)</th>
-                      <th className="px-8 py-5 text-[11px] font-bold text-slate-500 uppercase tracking-wider w-32">Stock</th>
-                      <th className="px-8 py-5 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Asset Link</th>
-                      <th className="px-8 py-5 text-right w-20"></th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {manualProducts.map((row, idx) => (
-                      <tr key={idx} className="hover:bg-slate-50/30 transition-colors">
-                        <td className="px-8 py-5">
-                          <input
-                            type="text"
-                            placeholder="e.g. Marble Slab"
-                            className="w-full bg-slate-50 border-none rounded-xl px-4 py-3.5 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-seller-primary/10 transition-all"
-                            value={row.name}
-                            onChange={(e) => handleInputChange(idx, 'name', e.target.value)}
-                          />
-                        </td>
-                        <td className="px-8 py-5">
-                          <input
-                            type="text"
-                            placeholder="SKU"
-                            className="w-full bg-slate-50 border-none rounded-xl px-4 py-3.5 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-seller-primary/10 transition-all"
-                            value={row.sku}
-                            onChange={(e) => handleInputChange(idx, 'sku', e.target.value)}
-                          />
-                        </td>
-                        <td className="px-8 py-5">
-                          <input
-                            type="text"
-                            placeholder="HSN"
-                            className="w-full bg-slate-50 border-none rounded-xl px-4 py-3.5 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-seller-primary/10 transition-all"
-                            value={row.hsnCode}
-                            onChange={(e) => handleInputChange(idx, 'hsnCode', e.target.value)}
-                          />
-                        </td>
-                        <td className="px-8 py-5">
-                          <input
-                            type="text"
-                            placeholder="Brand"
-                            className="w-full bg-slate-50 border-none rounded-xl px-4 py-3.5 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-seller-primary/10 transition-all"
-                            value={row.brand}
-                            onChange={(e) => handleInputChange(idx, 'brand', e.target.value)}
-                          />
-                        </td>
-                        <td className="px-8 py-5">
-                          <select
-                            className="w-full bg-slate-50 border-none rounded-xl px-4 py-3.5 text-xs font-bold text-slate-600 focus:ring-2 focus:ring-seller-primary/10 transition-all"
-                            value={row.category}
-                            onChange={(e) => handleInputChange(idx, 'category', e.target.value)}
-                          >
-                            <option value="">Select Category</option>
-                            <option value="tiles">Tiles & Slabs</option>
-                            <option value="faucets">Faucets</option>
-                            <option value="sanitary">Sanitaryware</option>
-                          </select>
-                        </td>
-                        <td className="px-8 py-5">
-                          <input
-                            type="number"
-                            placeholder="0.00"
-                            className="w-full bg-slate-50 border-none rounded-xl px-4 py-3.5 text-xs font-bold text-emerald-600 focus:ring-2 focus:ring-seller-primary/10 transition-all"
-                            value={row.price}
-                            onChange={(e) => handleInputChange(idx, 'price', e.target.value)}
-                          />
-                        </td>
-                        <td className="px-8 py-5">
-                          <input
-                            type="number"
-                            placeholder="0"
-                            className="w-full bg-slate-50 border-none rounded-xl px-4 py-3.5 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-seller-primary/10 transition-all"
-                            value={row.stock}
-                            onChange={(e) => handleInputChange(idx, 'stock', e.target.value)}
-                          />
-                        </td>
-                        <td className="px-8 py-5">
-                          <input
-                            type="text"
-                            placeholder="Image URL"
-                            className="w-full bg-slate-50 border-none rounded-xl px-4 py-3.5 text-xs font-bold text-slate-400 focus:ring-2 focus:ring-seller-primary/10 transition-all"
-                            value={row.imageLink}
-                            onChange={(e) => handleInputChange(idx, 'imageLink', e.target.value)}
-                          />
-                        </td>
-                        <td className="px-8 py-5 text-right">
-                          <button
-                            onClick={() => removeRow(idx)}
-                            className="p-3 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="p-8 bg-slate-50/50 flex flex-col md:flex-row justify-between items-center gap-6">
-                <button
-                  onClick={addRow}
-                  className="flex items-center gap-2.5 px-6 py-4 bg-white border border-slate-200 rounded-2xl text-[11px] font-bold text-slate-900 uppercase tracking-widest hover:border-seller-primary transition-all shadow-sm"
-                >
-                  <PlusCircle size={18} className="text-seller-primary" />
-                  Add Product Row
-                </button>
-
-                <div className="flex items-center gap-6 w-full md:w-auto">
-                  <div className="text-right hidden sm:block">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Queue Size</p>
-                    <p className="text-xl font-bold text-slate-900 tracking-tight">{manualProducts.length} Items</p>
+                  <div>
+                    <h3 className="text-lg font-bold text-slate-800">All caught up!</h3>
+                    <p className="text-sm text-slate-500 mt-1 max-w-xs">
+                      No pending products to submit. Add products first via <strong>Add New Product</strong>.
+                    </p>
                   </div>
                   <button
-                    onClick={handleBulkSubmit}
-                    disabled={isUploading}
-                    className="flex-1 sm:flex-none h-16 px-12 bg-seller-primary text-white rounded-2xl font-bold text-xs uppercase tracking-widest shadow-xl shadow-seller-primary/30 hover:bg-seller-dark transition-all relative overflow-hidden min-w-[200px]"
+                    onClick={() => navigate('/seller/add-product?mode=new&from=bulk-upload')}
+                    className="px-5 py-2.5 bg-seller-primary text-white rounded-xl font-bold text-sm hover:bg-seller-dark transition-all"
                   >
-                    <span className="relative z-10">{isUploading ? `Syncing ${uploadProgress}%` : 'Finalize & Submit'}</span>
-                    {isUploading && (
-                      <motion.div
-                        className="absolute bottom-0 left-0 h-1.5 bg-white/20"
-                        initial={{ width: 0 }}
-                        animate={{ width: `${uploadProgress}%` }}
-                      />
-                    )}
+                    + Add Product
                   </button>
                 </div>
-              </div>
+              ) : (
+                <>
+                  {/* Toolbar */}
+                  <div className="flex items-center justify-between bg-white border border-slate-200 rounded-2xl px-5 py-3.5 shadow-sm">
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={allSelected}
+                        onChange={toggleAll}
+                        className="w-4 h-4 accent-seller-primary rounded cursor-pointer"
+                      />
+                      <span className="text-sm font-semibold text-slate-700">
+                        {selectedIds.size > 0 ? `${selectedIds.size} of ${pendingProducts.length} selected` : 'Select all'}
+                      </span>
+                    </label>
+                    <button
+                      onClick={fetchPending}
+                      title="Refresh"
+                      className="p-2 rounded-xl hover:bg-slate-100 text-slate-500 transition-colors"
+                    >
+                      <RefreshCw size={16} />
+                    </button>
+                  </div>
+
+                  {/* Product Cards */}
+                  <div className="grid grid-cols-1 gap-3">
+                    {pendingProducts.map((p, i) => (
+                      <motion.div
+                        key={p._id}
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.04 }}
+                        onClick={() => toggleSelect(p._id)}
+                        className={`flex items-center gap-4 p-4 bg-white rounded-2xl border-2 cursor-pointer transition-all shadow-sm ${
+                          selectedIds.has(p._id)
+                            ? 'border-seller-primary bg-seller-primary/5 shadow-seller-primary/10 shadow-md'
+                            : 'border-slate-200 hover:border-slate-300'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(p._id)}
+                          onChange={() => toggleSelect(p._id)}
+                          onClick={e => e.stopPropagation()}
+                          className="w-4 h-4 accent-seller-primary rounded shrink-0"
+                        />
+                        <ProductThumb images={p.images} />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-slate-900 truncate">{p.name}</p>
+                          <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                            <span className="text-[11px] text-slate-500">{p.category}</span>
+                            {p.sku && (
+                              <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">
+                                SKU: {p.sku}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="text-sm font-bold text-slate-900">
+                            ₹{(p.sellerPrice || p.price || 0).toLocaleString()}
+                          </p>
+                          <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100 inline-flex items-center gap-1">
+                            <Clock size={9} />Pending
+                          </span>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </>
+              )}
             </motion.div>
           )}
-        </AnimatePresence>
 
-        {/* Success Feedback Overlay */}
-        <AnimatePresence>
-          {isSuccess && (
+          {/* ── Batch History Tab ── */}
+          {activeTab === 'history' && (
             <motion.div
-              initial={{ opacity: 0, y: 50, scale: 0.9 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 50, scale: 0.9 }}
-              className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100]"
+              key="history"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.18 }}
+              className="space-y-3"
             >
-              <div className="bg-seller-primary text-white px-8 py-5 rounded-3xl shadow-2xl flex items-center gap-5 border border-white/10 backdrop-blur-xl">
-                <div className="w-12 h-12 bg-seller-primary rounded-2xl flex items-center justify-center text-white shadow-lg">
-                  <CheckCircle2 size={26} />
+              {loadingBatches ? (
+                <div className="py-20 flex flex-col items-center gap-3">
+                  <div className="w-10 h-10 border-4 border-slate-200 border-t-seller-primary rounded-full animate-spin" />
                 </div>
-                <div>
-                  <p className="font-bold uppercase tracking-widest text-[11px] text-seller-primary">Sync Initiated</p>
-                  <p className="text-sm font-medium text-white/80 mt-0.5">Processing your batch in the background...</p>
+              ) : batches.length === 0 ? (
+                <div className="py-24 text-center bg-white rounded-2xl border border-dashed border-slate-200">
+                  <AlertCircle size={40} className="text-slate-300 mx-auto mb-3" />
+                  <p className="text-sm font-semibold text-slate-500">No batches submitted yet.</p>
                 </div>
-                <button onClick={() => setIsSuccess(false)} className="ml-4 p-2 hover:bg-white/10 rounded-lg transition-colors">
-                   <X size={16} className="text-white/40" />
-                </button>
-              </div>
+              ) : (
+                batches.map(batch => <BatchCard key={batch._id} batch={batch} />)
+              )}
             </motion.div>
           )}
         </AnimatePresence>
       </div>
+
+      {/* Sticky Submit Bar */}
+      <AnimatePresence>
+        {activeTab === 'submit' && pendingProducts.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 30 }}
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 pointer-events-none"
+          >
+            <div className="pointer-events-auto flex items-center gap-4 bg-white border border-slate-200 shadow-2xl shadow-slate-900/10 rounded-2xl px-6 py-4">
+              <div className="text-sm">
+                <p className="font-bold text-slate-900">
+                  {selectedIds.size} product{selectedIds.size !== 1 ? 's' : ''} selected
+                </p>
+                <p className="text-slate-500 text-xs">Will be sent to admin for review</p>
+              </div>
+              <button
+                onClick={handleSubmit}
+                disabled={submitting || selectedIds.size === 0}
+                className="flex items-center gap-2 px-6 py-3 bg-seller-primary text-white rounded-xl font-bold text-sm hover:bg-seller-dark transition-all shadow-lg shadow-seller-primary/25 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
+              >
+                {submitting ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                    Submitting…
+                  </>
+                ) : (
+                  <>
+                    <Send size={16} />
+                    Submit for Review
+                  </>
+                )}
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </PageWrapper>
   );
 };

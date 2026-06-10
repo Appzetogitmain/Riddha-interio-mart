@@ -16,6 +16,7 @@ import PincodeModal from './modules/user/components/PincodeModal';
 import DeliveryBar from './modules/user/components/DeliveryBar';
 import UserNotifications from './modules/user/components/UserNotifications';
 import AdminNotifications from './modules/admin/components/AdminNotifications';
+import SellerNotifications from './modules/seller/components/SellerNotifications';
 import { useUser } from './modules/user/data/UserContext';
 
 function App() {
@@ -59,6 +60,8 @@ function App() {
       {/* Global Notifications */}
       {user?.role === 'admin' ? (
         <AdminNotifications token={user.token || 'cookie'} />
+      ) : user?.role === 'seller' ? (
+        <SellerNotifications token={user.token || 'cookie'} />
       ) : (
         user && <UserNotifications token={user.token || 'cookie'} />
       )}

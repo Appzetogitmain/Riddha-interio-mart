@@ -30,8 +30,12 @@ const AddProduct = () => {
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const catalogId = queryParams.get("catalogId");
+  const fromBulkUpload = queryParams.get("from") === "bulk-upload";
 
-  const [selection, setSelection] = useState(null); // 'new' or 'catalog'
+  // Auto-skip selection screen when opened from Bulk Upload (or via catalog link)
+  const [selection, setSelection] = useState(
+    queryParams.get("mode") === "new" ? "new" : null
+  );
   const [videoFile, setVideoFile] = useState(null);
   const [categories, setCategories] = useState([]);
   const [brands, setBrands] = useState([]);
@@ -308,7 +312,7 @@ const AddProduct = () => {
         setSuccess(true);
         setTimeout(() => {
           setSuccess(false);
-          navigate("/seller/stock-management");
+          navigate(fromBulkUpload ? "/seller/bulk-upload" : "/seller/stock-management");
         }, 2000);
       }
     } catch (err) {

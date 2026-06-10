@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiMail, FiLock, FiEye, FiEyeOff } from 'react-icons/fi';
-import Button from '../../../shared/components/Button';
+import { FiMail, FiLock, FiEye, FiEyeOff, FiArrowLeft } from 'react-icons/fi';
 import api from '../../../shared/utils/api';
+import logo from '../../../assets/transparent_logo.png';
 
 const ForgotPasswordPage = () => {
   const [step, setStep] = useState(1);
@@ -70,31 +70,29 @@ const ForgotPasswordPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-deep-espresso flex items-center justify-center p-4 selection:bg-warm-sand selection:text-white relative overflow-hidden">
-      {/* Dynamic Background Elements */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-warm-sand/10 rounded-full blur-[120px]" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-[#189D91]/10 rounded-full blur-[120px]" />
-      </div>
-
+    <div className="min-h-screen w-full flex font-['Outfit'] bg-[radial-gradient(circle_at_top_left,rgba(24,157,145,0.06),transparent_30%),radial-gradient(circle_at_bottom_right,rgba(227,102,102,0.08),transparent_28%),linear-gradient(180deg,#f8fafc_0%,#f1f5f9_100%)] items-center justify-center p-4 lg:p-8">
       <motion.div
-        initial={{ y: 50, opacity: 0 }}
+        initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="w-full max-w-md bg-white/5 backdrop-blur-3xl border border-white/10 p-8 rounded-[40px] shadow-2xl relative z-10"
+        className="w-full max-w-md bg-white p-8 lg:p-10 rounded-3xl shadow-xl border border-slate-100 relative"
       >
+        <div className="flex justify-center mb-8">
+          <img src={logo} alt="Logo" className="h-20 w-auto object-contain" />
+        </div>
+
         <div className="text-center mb-8">
-          <h2 className="font-display text-3xl font-black text-white italic mb-2">Reset Password</h2>
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Secure Account Recovery</p>
+          <h2 className="text-2xl font-bold text-slate-900 mb-2">Reset Password</h2>
+          <p className="text-sm font-medium text-slate-500">Secure Account Recovery</p>
         </div>
 
         <AnimatePresence mode="wait">
           {error && (
-            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-500 text-[10px] font-bold text-center uppercase tracking-widest">
+            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="mb-6 p-3 bg-red-50 rounded-xl border border-red-100 text-red-500 text-[10px] font-semibold text-center uppercase tracking-widest">
               {error}
             </motion.div>
           )}
           {successMsg && (
-            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="mb-6 p-4 bg-green-500/10 border border-green-500/20 rounded-2xl text-green-500 text-[10px] font-bold text-center uppercase tracking-widest">
+            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="mb-6 p-3 bg-green-50 rounded-xl border border-green-100 text-green-500 text-[10px] font-semibold text-center uppercase tracking-widest">
               {successMsg}
             </motion.div>
           )}
@@ -102,80 +100,84 @@ const ForgotPasswordPage = () => {
 
         {step === 1 ? (
           <form onSubmit={handleSendOtp} className="space-y-6">
-            <div className="space-y-1">
-              <label className="text-[9px] font-black uppercase tracking-widest text-white/60 ml-1">Registered Email</label>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 ml-1">Registered Email</label>
               <div className="relative group">
-                <FiMail className="absolute left-5 top-1/2 -translate-y-1/2 text-white/40 group-focus-within:text-white transition-colors h-4 w-4" />
+                <FiMail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 size-4" />
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-12 pr-5 py-4 rounded-xl bg-white/10 border-2 border-transparent focus:border-white/20 focus:bg-white/20 focus:outline-none text-sm text-white font-bold transition-all placeholder:text-white/30"
+                  className="w-full pl-11 pr-4 py-3.5 rounded-xl bg-[#FDF8F8] border-2 border-transparent focus:border-[#E36666]/20 focus:bg-white focus:outline-none text-sm font-medium text-slate-700 transition-all placeholder:text-slate-400"
                   placeholder="Enter your email"
                   required
                 />
               </div>
             </div>
 
-            <Button
+            <button
               type="submit"
               disabled={loading}
-              className={`w-full h-14 rounded-xl bg-white hover:bg-warm-sand text-deep-espresso hover:text-white font-black text-[11px] uppercase tracking-[0.2em] transition-all ${loading ? 'opacity-50' : ''}`}
+              className={`w-full py-4 bg-[#E36666] hover:bg-[#d15555] text-white rounded-xl font-semibold text-xs uppercase tracking-[0.2em] shadow-lg shadow-[#E36666]/20 transition-all disabled:opacity-50 ${loading ? 'opacity-50' : ''}`}
             >
               {loading ? 'Sending OTP...' : 'Send Recovery OTP'}
-            </Button>
+            </button>
           </form>
         ) : (
           <form onSubmit={handleResetPassword} className="space-y-5">
-            <div className="space-y-1">
-              <label className="text-[9px] font-black uppercase tracking-widest text-white/60 ml-1">Enter OTP</label>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 ml-1">Enter OTP</label>
               <input
                 type="text"
                 maxLength={6}
                 value={otp}
-                onChange={(e) => setOtp(e.target.value)}
-                className="w-full text-center tracking-[0.5em] text-2xl py-4 rounded-xl bg-white/10 border-2 border-transparent focus:border-white/20 focus:bg-white/20 focus:outline-none text-white font-bold transition-all placeholder:tracking-normal placeholder:text-sm placeholder:text-white/30"
+                onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
+                className="w-full text-center tracking-[0.5em] text-2xl py-4 rounded-xl bg-[#FDF8F8] border-2 border-transparent focus:border-[#E36666]/20 focus:bg-white focus:outline-none text-slate-700 font-bold transition-all placeholder:tracking-normal placeholder:text-sm placeholder:text-slate-400"
                 placeholder="6-digit code"
                 required
               />
             </div>
 
-            <div className="space-y-1 relative group">
-              <label className="text-[9px] font-black uppercase tracking-widest text-white/60 ml-1">New Password</label>
-              <FiLock className="absolute left-5 top-1/2 -translate-y-1/2 text-white/40 group-focus-within:text-white transition-colors h-4 w-4" />
-              <input
-                type={showPassword ? "text" : "password"}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-12 pr-12 py-4 rounded-xl bg-white/10 border-2 border-transparent focus:border-white/20 focus:bg-white/20 focus:outline-none text-sm text-white font-bold transition-all placeholder:text-white/30"
-                placeholder="••••••••"
-                required
-              />
-              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-5 top-1/2 -translate-y-1/2 text-white/40 hover:text-white">
-                {showPassword ? <FiEyeOff className="h-4 w-4" /> : <FiEye className="h-4 w-4" />}
-              </button>
+            <div className="space-y-1.5 relative group">
+              <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 ml-1">New Password</label>
+              <div className="relative">
+                <FiLock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 size-4" />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full pl-11 pr-12 py-3.5 rounded-xl bg-[#FDF8F8] border-2 border-transparent focus:border-[#E36666]/20 focus:bg-white focus:outline-none text-sm font-medium text-slate-700 transition-all placeholder:text-slate-400"
+                  placeholder="••••••••"
+                  required
+                />
+                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                  {showPassword ? <FiEyeOff className="size-4" /> : <FiEye className="size-4" />}
+                </button>
+              </div>
             </div>
 
-            <div className="space-y-1 relative group">
-              <label className="text-[9px] font-black uppercase tracking-widest text-white/60 ml-1">Confirm Password</label>
-              <FiLock className="absolute left-5 top-1/2 -translate-y-1/2 text-white/40 group-focus-within:text-white transition-colors h-4 w-4" />
-              <input
-                type={showPassword ? "text" : "password"}
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full pl-12 pr-12 py-4 rounded-xl bg-white/10 border-2 border-transparent focus:border-white/20 focus:bg-white/20 focus:outline-none text-sm text-white font-bold transition-all placeholder:text-white/30"
-                placeholder="••••••••"
-                required
-              />
+            <div className="space-y-1.5 relative group">
+              <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 ml-1">Confirm Password</label>
+              <div className="relative">
+                <FiLock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 size-4" />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full pl-11 pr-12 py-3.5 rounded-xl bg-[#FDF8F8] border-2 border-transparent focus:border-[#E36666]/20 focus:bg-white focus:outline-none text-sm font-medium text-slate-700 transition-all placeholder:text-slate-400"
+                  placeholder="••••••••"
+                  required
+                />
+              </div>
             </div>
 
-            <Button
+            <button
               type="submit"
               disabled={loading}
-              className={`w-full h-14 mt-4 rounded-xl bg-white hover:bg-warm-sand text-deep-espresso hover:text-white font-black text-[11px] uppercase tracking-[0.2em] transition-all ${loading ? 'opacity-50' : ''}`}
+              className={`w-full py-4 mt-2 bg-[#E36666] hover:bg-[#d15555] text-white rounded-xl font-semibold text-xs uppercase tracking-[0.2em] shadow-lg shadow-[#E36666]/20 transition-all disabled:opacity-50 ${loading ? 'opacity-50' : ''}`}
             >
               {loading ? 'Resetting...' : 'Update Password'}
-            </Button>
+            </button>
           </form>
         )}
 
@@ -188,9 +190,9 @@ const ForgotPasswordPage = () => {
                 navigate('/login');
               }
             }} 
-            className="text-[10px] font-black uppercase tracking-widest text-white/40 hover:text-white transition-colors border-b border-transparent hover:border-white pb-1"
+            className="inline-flex items-center gap-2 text-slate-400 hover:text-slate-900 transition-all font-bold text-[10px] uppercase tracking-widest"
           >
-            Back to Login
+            <FiArrowLeft /> Back to Login
           </button>
         </div>
       </motion.div>

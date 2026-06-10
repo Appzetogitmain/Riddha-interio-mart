@@ -11,10 +11,10 @@ if (!fs.existsSync(TEMP_DIR)) {
   fs.mkdirSync(TEMP_DIR, { recursive: true });
 }
 
-// 1. Upload Rate Limiter: Max 20 requests per 15 minutes per IP
+// 1. Upload Rate Limiter: Max 60 requests per 15 minutes per IP
 const uploadRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 20, // limit each IP to 20 requests per windowMs
+  max: 60, // limit each IP to 60 requests per windowMs (6 docs × retries per registration)
   message: {
     success: false,
     error: 'Too many file upload requests from this IP. Please try again after 15 minutes.'

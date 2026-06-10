@@ -54,21 +54,30 @@ const SignupPage = () => {
     insurance: false,
     pollution: false,
   });
+  const [uploadErrors, setUploadErrors] = useState({
+    rc: false,
+    dl: false,
+    aadhar: false,
+    bankDetails: false,
+    insurance: false,
+    pollution: false,
+  });
 
   const handleDocUpload = async (e, docType) => {
     const file = e.target.files[0];
     if (!file) return;
     
     setUploadingDocs(prev => ({ ...prev, [docType]: true }));
+    setUploadErrors(prev => ({ ...prev, [docType]: false }));
     try {
       const role = getRole();
-      const url = role === 'delivery' 
+      const url = role === 'delivery'
         ? await uploadRegistrationDocument(file)
         : await uploadImage(file);
       setDocuments(prev => ({ ...prev, [docType]: url }));
     } catch (err) {
       console.error(`Failed to upload ${docType}:`, err);
-      alert(`Failed to upload ${docType}. Please try again.`);
+      setUploadErrors(prev => ({ ...prev, [docType]: true }));
     } finally {
       setUploadingDocs(prev => ({ ...prev, [docType]: false }));
     }
@@ -667,25 +676,36 @@ const SignupPage = () => {
                                  const Icon = doc.icon;
                                  const isUploaded = !!documents[doc.key];
                                  const isUploading = uploadingDocs[doc.key];
-                                 
+                                 const hasError = uploadErrors[doc.key];
+
                                  return (
                                     <div key={doc.key} className="relative">
-                                       <label className={`flex flex-col items-center justify-center p-2.5 rounded-xl border border-dashed transition-all cursor-pointer text-center h-[70px] ${isUploaded ? 'bg-[#189D91]/10 border-[#189D91]/40' : 'bg-blue-50/40 md:bg-white/5 border-slate-200 md:border-white/10 hover:border-[#189D91]/30'}`}>
-                                          <input 
-                                             type="file" 
-                                             className="hidden" 
-                                             onChange={(e) => handleDocUpload(e, doc.key)} 
+                                       <label className={`flex flex-col items-center justify-center p-2.5 rounded-xl border border-dashed transition-all cursor-pointer text-center h-[70px] ${
+                                         hasError
+                                           ? 'bg-red-50/60 border-red-400 md:bg-red-500/10 md:border-red-400/60'
+                                           : isUploaded
+                                             ? 'bg-[#189D91]/10 border-[#189D91]/40'
+                                             : 'bg-blue-50/40 md:bg-white/5 border-slate-200 md:border-white/10 hover:border-[#189D91]/30'
+                                       }`}>
+                                          <input
+                                             type="file"
+                                             className="hidden"
+                                             onChange={(e) => handleDocUpload(e, doc.key)}
                                              accept="image/*,application/pdf"
                                           />
                                           {isUploading ? (
                                              <FiLoader className="h-4 w-4 text-[#189D91] md:text-warm-sand animate-spin mb-1" />
                                           ) : isUploaded ? (
                                              <FiCheckCircle className="h-4 w-4 text-teal-600 md:text-teal-400 mb-1" />
+                                          ) : hasError ? (
+                                             <FiUploadCloud className="h-4 w-4 text-red-500 mb-1" />
                                           ) : (
                                              <Icon className="h-4 w-4 text-slate-400 md:text-white/40 mb-1" />
                                           )}
-                                          <span className={`text-[8.5px] font-medium leading-tight ${isUploaded ? 'text-[#189D91] md:text-teal-400' : 'text-slate-500 md:text-white/60'}`}>{doc.label}</span>
-                                          <span className="text-[7px] text-slate-400 md:text-white/30 mt-0.5 font-normal">{isUploading ? 'Uploading...' : isUploaded ? 'Uploaded' : 'Tap to Upload'}</span>
+                                          <span className={`text-[8.5px] font-medium leading-tight ${isUploaded ? 'text-[#189D91] md:text-teal-400' : hasError ? 'text-red-500' : 'text-slate-500 md:text-white/60'}`}>{doc.label}</span>
+                                          <span className={`text-[7px] mt-0.5 font-normal ${hasError ? 'text-red-400 font-semibold' : 'text-slate-400 md:text-white/30'}`}>
+                                            {isUploading ? 'Uploading...' : isUploaded ? 'Uploaded' : hasError ? 'Failed — Tap to retry' : 'Tap to Upload'}
+                                          </span>
                                        </label>
                                     </div>
                                  );
@@ -725,7 +745,7 @@ const SignupPage = () => {
                     <div className="flex items-center gap-2 pt-2 px-1">
                       <input type="checkbox" checked={agreeTerms} onChange={(e) => setAgreeTerms(e.target.checked)} className="accent-[#189D91] md:accent-warm-sand h-3.5 w-3.5" />
                       <label className="text-[8px] md:text-[9px] font-medium text-gray-400 md:text-white/60 uppercase tracking-widest leading-none">
-                        I agree to the <Link to={role === 'delivery' ? '/delivery/terms' : '/terms'} target="_blank" className="underline font-bold text-gray-600 md:text-white hover:text-[#189D91] md:hover:text-warm-sand transition-colors">Terms & Conditions</Link>
+                        I agree to the <Link to={getRole() === 'delivery' ? '/delivery/terms' : '/terms'} target="_blank" className="underline font-bold text-gray-600 md:text-white hover:text-[#189D91] md:hover:text-warm-sand transition-colors">Terms & Conditions</Link>
                       </label>
                     </div>
 

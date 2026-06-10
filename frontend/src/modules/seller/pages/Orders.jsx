@@ -1,24 +1,25 @@
 import React, { useState, useEffect } from "react";
 import PageWrapper from "../components/PageWrapper";
-import { 
-  Search, 
-  Filter, 
-  Eye, 
-  Clock, 
-  Package, 
-  Truck, 
-  User, 
-  X, 
-  CheckCircle2, 
-  XCircle, 
-  MapPin, 
+import {
+  Search,
+  Filter,
+  Eye,
+  Clock,
+  Package,
+  Truck,
+  User,
+  X,
+  CheckCircle2,
+  XCircle,
+  MapPin,
   MoreHorizontal,
   ChevronRight,
   ArrowUpRight,
   Calendar,
   Download,
   MoreVertical,
-  Activity
+  Activity,
+  RefreshCw
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import api from "../../../shared/utils/api";
@@ -39,6 +40,7 @@ const Orders = () => {
   const [showRangeModal, setShowRangeModal] = useState(false);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
   const navigate = useNavigate();
 
   const exportToExcel = async () => {
@@ -79,6 +81,21 @@ const Orders = () => {
       console.error('Failed to fetch orders:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      const { data } = await api.get('/orders');
+      if (data.success) {
+        setOrders(data.data || []);
+        toast.success('Orders refreshed');
+      }
+    } catch (err) {
+      toast.error('Failed to refresh orders');
+    } finally {
+      setRefreshing(false);
     }
   };
 
@@ -171,16 +188,24 @@ const Orders = () => {
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Manage partner transactions</p>
           </div>
           
-          <div className="flex items-center gap-3">
-             <div className="bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3">
-                <div className="text-right">
-                   <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Active</p>
-                   <p className="text-lg font-black text-slate-900 leading-none">{orders.filter(o => o.status !== 'Delivered' && o.status !== 'Cancelled').length}</p>
-                </div>
-                <div className="w-8 h-8 bg-seller-primary/10 rounded-lg flex items-center justify-center text-seller-primary">
-                   <Activity size={16} />
-                </div>
-             </div>
+          <div className="flex items-center gap-2">
+            <div className="bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3">
+              <div className="text-right">
+                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Active</p>
+                <p className="text-lg font-black text-slate-900 leading-none">{orders.filter(o => o.status !== 'Delivered' && o.status !== 'Cancelled').length}</p>
+              </div>
+              <div className="w-8 h-8 bg-seller-primary/10 rounded-lg flex items-center justify-center text-seller-primary">
+                <Activity size={16} />
+              </div>
+            </div>
+            <button
+              onClick={handleRefresh}
+              disabled={refreshing}
+              title="Refresh orders"
+              className="w-10 h-10 bg-white border border-slate-200 rounded-xl flex items-center justify-center text-slate-500 hover:text-seller-primary hover:border-seller-primary hover:bg-seller-primary/5 transition-all shadow-sm disabled:opacity-50"
+            >
+              <RefreshCw size={15} className={refreshing ? 'animate-spin' : ''} />
+            </button>
           </div>
         </div>
 

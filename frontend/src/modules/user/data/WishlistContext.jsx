@@ -34,7 +34,7 @@ export const WishlistProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  }, [isLoggedIn]);
+  }, [isLoggedIn, user]);
 
   // Load wishlist when login status changes
   useEffect(() => {

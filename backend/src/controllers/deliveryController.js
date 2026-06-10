@@ -15,6 +15,11 @@ exports.registerDelivery = async (req, res, next) => {
       return res.status(400).json({ success: false, error: 'Email already registered' });
     }
 
+    const phoneExists = await Delivery.findOne({ phone });
+    if (phoneExists) {
+      return res.status(400).json({ success: false, error: 'Phone number already registered' });
+    }
+
     const delivery = await Delivery.create({ fullName, email, password, phone, vehicleType, vehicleNumber, documents });
     
     // Notify Admin about new registration

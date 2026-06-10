@@ -13,7 +13,11 @@ const AdminLayoutContent = () => {
   const { logout, user } = useUser();
   const { role } = useRBAC();
   const navigate = useNavigate();
-  const hasValidAdminSession = Boolean(user?.token) && user?.role === 'admin';
+
+  // Read from localStorage fallback to prevent race condition during state updates
+  const storedUser = JSON.parse(localStorage.getItem('riddha_user') || 'null');
+  const activeUser = user || storedUser;
+  const hasValidAdminSession = Boolean(activeUser?.token) && activeUser?.role === 'admin';
 
   useEffect(() => {
     if (!hasValidAdminSession) {

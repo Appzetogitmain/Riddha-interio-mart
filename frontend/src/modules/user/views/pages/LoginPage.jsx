@@ -62,11 +62,15 @@ const LoginPage = () => {
         password
       });
 
+      const resData = response.data.data || response.data;
+
       const userPayload = {
-        ...response.data.user,
-        token: response.data.token,
-        status: response.data.user.role === 'seller' ? 'Active' : undefined
+        ...resData.user,
+        token: resData.token
       };
+      if (resData.user?.role === 'seller') {
+        userPayload.status = 'Active';
+      }
       login(userPayload);
       navigate(successNavigate);
       return;
@@ -85,9 +89,10 @@ const LoginPage = () => {
             phone: '+91 99999 99999'
           });
           const loginRes = await api.post('/auth/seller/login', { email: identifier, password });
+          const loginData = loginRes.data.data || loginRes.data;
           login({
-            ...loginRes.data.user,
-            token: loginRes.data.token,
+            ...loginData.user,
+            token: loginData.token,
             status: 'Active'
           });
           navigate(successNavigate);
@@ -106,9 +111,10 @@ const LoginPage = () => {
             password
           });
           const loginRes = await api.post('/auth/admin/login', { email: identifier, password });
+          const loginData = loginRes.data.data || loginRes.data;
           login({
-            ...loginRes.data.user,
-            token: loginRes.data.token
+            ...loginData.user,
+            token: loginData.token
           });
           navigate(successNavigate);
           return;

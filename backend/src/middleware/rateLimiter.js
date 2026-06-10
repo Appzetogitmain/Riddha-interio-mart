@@ -1,9 +1,11 @@
 const rateLimit = require('express-rate-limit');
 
+const isProd = process.env.NODE_ENV === 'production';
+
 // General rate limiter for all API requests
 exports.limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per `window`
+  max: isProd ? 100 : 10000, // Limit each IP to 100 requests in production, 10000 in development
   message: {
     success: false,
     error: 'Too many requests from this IP, please try again after 15 minutes'
@@ -15,7 +17,7 @@ exports.limiter = rateLimit({
 // Stricter rate limiter for authentication routes
 exports.authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10, // Limit each IP to 10 auth requests per `window`
+  max: isProd ? 10 : 1000, // Limit each IP to 10 auth requests in production, 1000 in development
   message: {
     success: false,
     error: 'Too many login or verification attempts from this IP, please try again after 15 minutes'
@@ -23,3 +25,4 @@ exports.authLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
+

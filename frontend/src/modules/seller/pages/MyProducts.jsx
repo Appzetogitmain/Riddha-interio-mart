@@ -47,7 +47,8 @@ const MyProducts = () => {
   }, []);
 
   const filteredProducts = products.filter(p => {
-    const matchesFilter = filter === 'All' || (p.status || (p.isActive ? 'approved' : 'pending')).toLowerCase() === filter.toLowerCase();
+    const productStatus = (p.approvalStatus || p.status || (p.isActive ? 'approved' : 'pending')).toLowerCase();
+    const matchesFilter = filter === 'All' || productStatus === filter.toLowerCase();
     const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) || (p.sku && p.sku.toLowerCase().includes(searchTerm.toLowerCase()));
     return matchesFilter && matchesSearch;
   });
@@ -84,22 +85,41 @@ const MyProducts = () => {
     }
   };
 
-  const StatusBadge = ({ status }) => {
-    const normalizedStatus = (status || 'pending').toLowerCase();
-    const isApproved = normalizedStatus === 'approved';
-    const isRejected = normalizedStatus === 'rejected';
-    
+  const StatusBadge = ({ product }) => {
+    const status = product?.approvalStatus || 'pending';
+    const inReview = status === 'pending' && !!product?.batchId;
+    const isApproved = status === 'approved';
+    const isRejected = status === 'rejected';
+
+    if (inReview) {
+      return (
+        <div className="space-y-1">
+          <span className="px-2.5 py-1 rounded-lg text-[11px] font-bold flex items-center gap-1.5 w-fit bg-blue-50 text-blue-600 border border-blue-100">
+            <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+            In Review
+          </span>
+        </div>
+      );
+    }
+
     return (
-      <span className={`px-2.5 py-1 rounded-lg text-[11px] font-bold flex items-center gap-1.5 w-fit ${
-        isApproved 
-        ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' 
-        : isRejected
-          ? 'bg-red-50 text-red-600 border border-red-100'
-          : 'bg-amber-50 text-amber-600 border border-amber-100'
-      }`}>
-        <div className={`w-1.5 h-1.5 rounded-full ${isApproved ? 'bg-emerald-500' : isRejected ? 'bg-red-500' : 'bg-amber-500'}`} />
-        <span className="capitalize">{normalizedStatus}</span>
-      </span>
+      <div className="space-y-1">
+        <span className={`px-2.5 py-1 rounded-lg text-[11px] font-bold flex items-center gap-1.5 w-fit ${
+          isApproved
+            ? 'bg-emerald-50 text-emerald-600 border border-emerald-100'
+            : isRejected
+              ? 'bg-red-50 text-red-600 border border-red-100'
+              : 'bg-amber-50 text-amber-600 border border-amber-100'
+        }`}>
+          <div className={`w-1.5 h-1.5 rounded-full ${isApproved ? 'bg-emerald-500' : isRejected ? 'bg-red-500' : 'bg-amber-500'}`} />
+          <span className="capitalize">{status}</span>
+        </span>
+        {isRejected && product?.rejectionReason && (
+          <p className="text-[10px] text-red-500 font-semibold max-w-[140px] leading-tight">
+            {product.rejectionReason}
+          </p>
+        )}
+      </div>
     );
   };
 
@@ -239,7 +259,7 @@ const MyProducts = () => {
                         <span className="text-sm font-bold text-slate-900">₹{(product.sellerPrice || product.price).toLocaleString()}</span>
                       </td>
                       <td className="px-8 py-5">
-                        <StatusBadge status={product.status || (product.isActive ? 'approved' : 'pending')} />
+                        <StatusBadge product={product} />
                       </td>
                       <td className="px-8 py-5 text-right">
                         <div className="flex items-center justify-end gap-2">
@@ -287,7 +307,7 @@ const MyProducts = () => {
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
                   />
                   <div className="absolute top-4 left-4">
-                    <StatusBadge status={product.status || (product.isActive ? 'approved' : 'pending')} />
+                    <StatusBadge product={product} />
                   </div>
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-6">
                      <button 

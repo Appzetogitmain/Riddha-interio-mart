@@ -41,6 +41,7 @@ const AddProductFlowPage = React.lazy(() => import('./pages/AddProductFlowPage')
 const StockManagement = React.lazy(() => import('./pages/StockManagement'));
 const BulkProductUpload = React.lazy(() => import('./pages/BulkProductUpload'));
 const BulkOrdersPage = React.lazy(() => import('./pages/BulkOrdersPage'));
+const ProductBatchesPage = React.lazy(() => import('./pages/ProductBatchesPage'));
 const TeamManagementPage = React.lazy(() => import('./pages/TeamManagementPage'));
 const CreateAssistantPage = React.lazy(() => import('./pages/CreateAssistantPage'));
 const ManageUserPage = React.lazy(() => import('./pages/ManageUserPage'));
@@ -101,6 +102,7 @@ const AdminRoutes = () => {
             <Route path="/orders/view/:id" element={<OrderDetailPage />} />
             <Route path="/orders/tracking" element={<OrderTracking />} />
             <Route path="/bulk-orders" element={<BulkOrdersPage />} />
+            <Route path="/product-batches" element={<ProductBatchesPage />} />
           </Route>
 
           {/* Delivery */}

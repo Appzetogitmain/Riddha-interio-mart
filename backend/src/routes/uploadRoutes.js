@@ -67,6 +67,39 @@ router.post('/bulk', protect, uploadRateLimiter, uploadParser.fields([
   }
 });
 
+// @desc    Upload registration documents securely without authentication (for signup)
+// @route   POST /api/upload/register-document
+// @access  Public
+router.post('/register-document', uploadRateLimiter, uploadParser.single('image'), validateUploadedFiles, async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ success: false, error: 'Please upload a file' });
+  }
+
+  try {
+    const isImage = req.file.mimetype.startsWith('image');
+    const result = await cloudinary.uploader.upload(req.file.path, {
+      folder: 'riddha_mart/documents',
+      image_metadata: false, // strips EXIF metadata
+      transformation: isImage ? [
+        { width: 1200, height: 1200, crop: 'limit', quality: 'auto', fetch_format: 'auto' }
+      ] : undefined
+    });
+
+    console.log(`[Upload Audit] Public document upload success. Url: ${result.secure_url}`);
+
+    res.status(200).json({
+      success: true,
+      url: result.secure_url,
+      public_id: result.public_id
+    });
+  } catch (error) {
+    console.error('[Secure Upload] Public document upload failed:', error.message);
+    res.status(500).json({ success: false, error: 'File upload processing failed.' });
+  } finally {
+    cleanupLocalFiles(req.file);
+  }
+});
+
 // @desc    Upload single image to Cloudinary (Legacy support) with premium security controls
 // @route   POST /api/upload
 // @access  Private

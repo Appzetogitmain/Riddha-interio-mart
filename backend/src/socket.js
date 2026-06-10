@@ -428,6 +428,63 @@ async function notifyUserOrderStatus(userId, payload) {
   });
 }
 
+async function notifyAdminNewBatch(payload) {
+  if (!io) return;
+  const { admins, sample: notif } = await persistForAdmins({
+    title: 'New Product Batch',
+    message: `${payload.shopName} submitted ${payload.totalProducts} product${payload.totalProducts !== 1 ? 's' : ''} for review.`,
+    type: 'admin_alert',
+    metadata: payload
+  });
+  io.to('role:admin').emit('batch:new', payload);
+  if (notif) io.to('role:admin').emit('notification:new', notif);
+  await maybePushToOfflineAdmins(admins, {
+    title: 'New Product Batch',
+    body: `${payload.shopName} submitted ${payload.totalProducts} products for review.`,
+    data: { type: 'admin_alert', batchId: String(payload.batchId || '') }
+  });
+}
+
+async function notifySellerBatchReview(sellerId, payload) {
+  if (!io) return;
+  const notif = await persistNotification({
+    recipient: sellerId,
+    recipientModel: 'Seller',
+    title: payload.action === 'approved' ? 'Product Approved' : 'Product Rejected',
+    message: payload.message || 'Your product has been reviewed.',
+    type: 'seller_approval',
+    metadata: payload
+  });
+  io.to(`seller:${sellerId}`).emit('batch:product_reviewed', payload);
+  if (notif) io.to(`seller:${sellerId}`).emit('notification:new', notif);
+  await maybePushToUser('seller', sellerId, 'Seller', {
+    title: payload.action === 'approved' ? 'Product Approved' : 'Product Rejected',
+    body: payload.message || 'Your product has been reviewed.',
+    data: { type: 'seller_approval', productId: String(payload.productId || '') }
+  });
+}
+
+async function notifySellerBulkOrder(sellerId, payload) {
+  if (!io) return;
+  const itemCount = (payload.items || []).length;
+  const notif = await persistNotification({
+    recipient: sellerId,
+    recipientModel: 'Seller',
+    title: 'New Bulk Order Inquiry',
+    message: `${payload.customerName} placed a bulk order with ${itemCount} product${itemCount !== 1 ? 's' : ''} from your store.`,
+    type: 'order_update',
+    metadata: payload
+  });
+  io.to(`seller:${sellerId}`).emit('bulk_order:new', payload);
+  if (notif) io.to(`seller:${sellerId}`).emit('notification:new', notif);
+
+  await maybePushToUser('seller', sellerId, 'Seller', {
+    title: 'New Bulk Order Inquiry',
+    body: `${payload.customerName} placed a bulk order with ${itemCount} product${itemCount !== 1 ? 's' : ''} from your store.`,
+    data: { type: 'order_update' }
+  });
+}
+
 async function notifyLowStock(sellerId, payload) {
   if (!io) return;
   
@@ -482,5 +539,8 @@ module.exports = {
   notifyAdminNewDelivery,
   notifyDeliveryApproval,
   notifyUserOrderStatus,
-  notifyLowStock
+  notifyLowStock,
+  notifyAdminNewBatch,
+  notifySellerBatchReview,
+  notifySellerBulkOrder
 };

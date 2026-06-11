@@ -13,7 +13,7 @@ export const useCart = () => {
 };
 
 export const CartProvider = ({ children }) => {
-  const { isLoggedIn } = useUser();
+  const { isLoggedIn, user } = useUser();
   const [cart, setCart] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -32,12 +32,12 @@ export const CartProvider = ({ children }) => {
     }
   }, []);
 
-  // Sync with backend if logged in
+  // Sync with backend if logged in as user
   useEffect(() => {
-    if (isLoggedIn) {
+    if (isLoggedIn && user?.role === 'user') {
       fetchCart();
     }
-  }, [isLoggedIn]);
+  }, [isLoggedIn, user]);
 
   // Always persist local cart as fallback
   useEffect(() => {

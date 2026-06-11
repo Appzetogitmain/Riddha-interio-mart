@@ -130,7 +130,7 @@ const LoginPage = () => {
     return (
       <div className="min-h-screen w-full bg-[radial-gradient(circle_at_top_left,rgba(24,157,145,0.06),transparent_30%),radial-gradient(circle_at_bottom_right,rgba(236,0,140,0.04),transparent_28%),linear-gradient(180deg,#f8fafc_0%,#f1f5f9_100%)] flex items-center justify-center font-sans overflow-y-auto md:p-8">
         {/* Device wrapper for desktop, seamless on mobile */}
-        <div className="w-full max-w-[420px] md:max-w-5xl min-h-screen md:min-h-[600px] md:h-[80vh] bg-white flex flex-col md:flex-row justify-between md:justify-start md:rounded-3xl md:shadow-2xl overflow-hidden relative border-none md:border-slate-100">
+        <div className="w-full max-w-[400px] md:max-w-4xl min-h-screen md:min-h-[520px] md:h-[72vh] bg-white flex flex-col md:flex-row justify-between md:justify-start md:rounded-2xl md:shadow-2xl overflow-hidden relative border-none md:border-slate-100">
           {/* Back Button */}
           <button
             onClick={() => navigate(-1)}
@@ -147,31 +147,31 @@ const LoginPage = () => {
               alt="Luxury Showroom"
               className="w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(246,249,252,0.92)_0%,rgba(246,249,252,0.6)_100%)]" />
-            <div className="relative z-10 h-full flex flex-col justify-center px-12 xl:px-16">
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/70 border border-white/90 shadow-sm w-fit mb-4">
-                <span className="w-2 h-2 rounded-full bg-[#189D91]" />
-                <span className="text-[10px] font-black uppercase tracking-[0.22em] text-[#189D91]">
+            <div className="absolute inset-0 bg-gradient-to-r from-black/50 to-transparent z-10" />
+            <div className="absolute inset-0 z-20 flex flex-col justify-end px-10 xl:px-12 pb-10">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 border border-white/30 shadow-sm w-fit mb-3">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#4DD9CE]" />
+                <span className="text-[9px] font-black uppercase tracking-[0.22em] text-white/90">
                   Premium Interior Mart
                 </span>
               </div>
-              <h1 className="text-4xl xl:text-5xl font-black leading-[1.1] tracking-tight text-slate-950 mb-4">
+              <h1 className="text-3xl xl:text-4xl font-black leading-[1.1] tracking-tight text-white mb-2">
                 Sign in to your
                 <br />
-                <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#189D91] via-slate-700 to-[#EC008C]">
+                <span className="text-[#4DD9CE]">
                   Riddha account
                 </span>
               </h1>
-              <p className="max-w-md text-sm xl:text-base font-medium leading-relaxed text-slate-600">
+              <p className="max-w-sm text-xs xl:text-sm font-medium leading-relaxed text-white/70">
                 Access saved addresses, order tracking, wishlist items, and
-                faster checkout with a cleaner desktop experience.
+                faster checkout.
               </p>
             </div>
           </div>
 
-          <div className="flex-1 md:w-1/2 w-full flex flex-col justify-center py-8 px-8 md:px-12 xl:px-16 items-center md:items-start overflow-y-auto gap-5">
+          <div className="flex-1 md:w-1/2 w-full flex flex-col justify-center py-6 px-6 md:px-10 xl:px-12 items-center md:items-start overflow-y-auto gap-3">
             {/* Logo */}
-            <div className="mt-8 md:mt-0 mb-8 w-full max-w-[200px] flex justify-center md:justify-start">
+            <div className="mt-6 md:mt-0 mb-3 w-full max-w-[160px] flex justify-center md:justify-start">
               <img
                 src={logo}
                 alt="Interio Mega Mart"
@@ -197,7 +197,7 @@ const LoginPage = () => {
 
             <form
               onSubmit={handleLogin}
-              className="w-full space-y-5 flex-1 flex flex-col justify-center"
+              className="w-full space-y-3 flex flex-col"
             >
               {/* Phone or Email Input */}
               <div className="space-y-1.5">
@@ -210,7 +210,7 @@ const LoginPage = () => {
                     placeholder="Phone number or email"
                     value={identifier}
                     onChange={(e) => setIdentifier(e.target.value)}
-                    className="w-full px-4 py-3 bg-slate-50/85 border border-slate-200/80 rounded-xl focus:bg-white focus:border-[#189D91] outline-none transition-all text-xs font-bold text-slate-800 placeholder:text-slate-400 placeholder:font-semibold shadow-sm"
+                    className="w-full px-4 py-2.5 bg-slate-50/85 border border-slate-200/80 rounded-xl focus:bg-white focus:border-[#189D91] outline-none transition-all text-xs font-bold text-slate-800 placeholder:text-slate-400 placeholder:font-semibold shadow-sm"
                   />
                 </div>
               </div>
@@ -228,7 +228,7 @@ const LoginPage = () => {
                     placeholder="Password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-4 pr-12 py-3 bg-slate-50/85 border border-slate-200/80 rounded-xl focus:bg-white focus:border-[#189D91] outline-none transition-all text-xs font-bold text-slate-800 placeholder:text-slate-400 placeholder:font-semibold shadow-sm"
+                    className="w-full pl-4 pr-12 py-2.5 bg-slate-50/85 border border-slate-200/80 rounded-xl focus:bg-white focus:border-[#189D91] outline-none transition-all text-xs font-bold text-slate-800 placeholder:text-slate-400 placeholder:font-semibold shadow-sm"
                   />
                   <button
                     type="button"
@@ -245,7 +245,7 @@ const LoginPage = () => {
               </div>
 
               {/* Remember Me & Forgot Password */}
-              <div className="flex items-center justify-between px-0.5 pt-1">
+              <div className="flex items-center justify-between px-0.5">
                 <button
                   type="button"
                   onClick={() => setRememberMe(!rememberMe)}
@@ -275,14 +275,14 @@ const LoginPage = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-[#8A3B8B] hover:bg-[#722b73] text-white py-3.5 rounded-full font-bold text-[14px] uppercase tracking-wider transition-all active:scale-[0.98] shadow-md shadow-[#8A3B8B]/20"
+                className="w-full bg-[#8A3B8B] hover:bg-[#722b73] text-white py-3 rounded-full font-bold text-[13px] uppercase tracking-wider transition-all active:scale-[0.98] shadow-md shadow-[#8A3B8B]/20"
               >
                 {loading ? "Authenticating..." : "LOGIN"}
               </button>
             </form>
 
             {/* Create Account */}
-            <div className="mt-8 text-center md:text-left w-full flex justify-center md:justify-start">
+            <div className="mt-3 text-center md:text-left w-full flex justify-center md:justify-start">
               <Link
                 to="/signup"
                 className="text-[12px] font-bold text-slate-400 hover:text-slate-600 tracking-wider"

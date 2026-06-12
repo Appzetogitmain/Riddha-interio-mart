@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Notification Sound Preview — Riddha Mart</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #f1f5f9; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+  .container { background: white; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.1); padding: 40px; max-width: 520px; width: 100%; }
+  h1 { font-size: 20px; font-weight: 700; color: #0f172a; margin-bottom: 6px; }
+  p { font-size: 12px; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 28px; }
+  .sound-card {
+    display: flex; align-items: center; gap: 16px;
+    padding: 16px 20px; border-radius: 14px;
+    background: #f8fafc; border: 2px solid transparent;
+    cursor: pointer; transition: all 0.15s ease; margin-bottom: 12px;
+    user-select: none;
+  }
+  .sound-card:hover { border-color: #E36666; background: #fff5f5; }
+  .sound-card.playing { border-color: #E36666; background: #fff5f5; }
+  .icon {
+    width: 44px; height: 44px; border-radius: 12px;
+    background: #E36666; display: flex; align-items: center;
+    justify-content: center; flex-shrink: 0; transition: transform 0.1s;
+  }
+  .sound-card:hover .icon { transform: scale(1.08); }
+  .icon svg { width: 20px; height: 20px; fill: white; }
+  .info { flex: 1; }
+  .name { font-size: 14px; font-weight: 700; color: #0f172a; }
+  .desc { font-size: 11px; color: #94a3b8; font-weight: 500; margin-top: 2px; }
+  .badge {
+    font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.12em;
+    padding: 3px 8px; border-radius: 20px; background: #f1f5f9; color: #94a3b8;
+  }
+  .badge.active { background: #fef2f2; color: #E36666; }
+  .footer { text-align: center; margin-top: 24px; font-size: 11px; color: #cbd5e1; font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Notification Sounds</h1>
+  <p>Click each card to preview — pick one for Riddha Mart</p>
+
+  <div class="sound-card" onclick="play(1, this)">
+    <div class="icon">
+      <svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 100 18A9 9 0 0012 3zm0 2a7 7 0 110 14A7 7 0 0112 5zm0 3a1 1 0 00-1 1v4a1 1 0 001 1h3a1 1 0 000-2h-2V9a1 1 0 00-1-1z"/></svg>
+    </div>
+    <div class="info">
+      <div class="name">Sound 1 — Soft Ding</div>
+      <div class="desc">Clean single bell tone · gentle &amp; professional</div>
+    </div>
+    <span class="badge" id="b1">▶</span>
+  </div>
+
+  <div class="sound-card" onclick="play(2, this)">
+    <div class="icon">
+      <svg viewBox="0 0 24 24"><path d="M18 8h-1V6a5 5 0 00-10 0v2H6a2 2 0 00-2 2v9a2 2 0 002 2h12a2 2 0 002-2v-9a2 2 0 00-2-2zm-6 9a2 2 0 110-4 2 2 0 010 4zm3.1-9H8.9V6a3.1 3.1 0 016.2 0v2z"/></svg>
+    </div>
+    <div class="info">
+      <div class="name">Sound 2 — Double Ping</div>
+      <div class="desc">Two ascending tones · clear order alert feel</div>
+    </div>
+    <span class="badge" id="b2">▶</span>
+  </div>
+
+  <div class="sound-card" onclick="play(3, this)">
+    <div class="icon">
+      <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
+    </div>
+    <div class="info">
+      <div class="name">Sound 3 — Cash Register</div>
+      <div class="desc">Classic success chime · "order placed" feel</div>
+    </div>
+    <span class="badge" id="b3">▶</span>
+  </div>
+
+  <div class="sound-card" onclick="play(4, this)">
+    <div class="icon">
+      <svg viewBox="0 0 24 24"><path d="M20 18.69L7.84 6.14 5.27 3.49 4 4.76l2.8 2.8v.01c-.52.99-.8 2.11-.8 3.29v5l-2 2v1h13.73l2 2L21 19.54l-1-1-.85-.85zM12 22c1.11 0 2-.89 2-2h-4a2 2 0 002 2zm6-7.32V11c0-3.08-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68c-.24.06-.47.15-.69.23l6.19 6.19v3.58z"/></svg>
+    </div>
+    <div class="info">
+      <div class="name">Sound 4 — Pop Alert</div>
+      <div class="desc">Short bubbly pop · modern &amp; app-like</div>
+    </div>
+    <span class="badge" id="b4">▶</span>
+  </div>
+
+  <div class="sound-card" onclick="play(5, this)">
+    <div class="icon">
+      <svg viewBox="0 0 24 24"><path d="M12 3L1 9l11 6 9-4.91V17h2V9M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82z"/></svg>
+    </div>
+    <div class="info">
+      <div class="name">Sound 5 — Tri-Tone</div>
+      <div class="desc">Three-note ascending · WhatsApp/iOS style</div>
+    </div>
+    <span class="badge" id="b5">▶</span>
+  </div>
+
+  <div class="footer">Powered by Web Audio API · No downloads needed</div>
+</div>
+
+<script>
+const ctx = new (window.AudioContext || window.webkitAudioContext)();
+
+function tone(freq, start, dur, type = 'sine', gain = 0.4) {
+  const osc = ctx.createOscillator();
+  const g = ctx.createGain();
+  osc.connect(g);
+  g.connect(ctx.destination);
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, ctx.currentTime + start);
+  g.gain.setValueAtTime(0, ctx.currentTime + start);
+  g.gain.linearRampToValueAtTime(gain, ctx.currentTime + start + 0.01);
+  g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + dur);
+  osc.start(ctx.currentTime + start);
+  osc.stop(ctx.currentTime + start + dur + 0.05);
+}
+
+const sounds = {
+  1() {
+    // Soft single ding — 880Hz sine, fast decay
+    tone(880, 0, 0.6, 'sine', 0.35);
+    tone(1760, 0, 0.3, 'sine', 0.08);
+  },
+  2() {
+    // Double ping — two ascending notes
+    tone(660, 0,    0.25, 'sine', 0.3);
+    tone(880, 0.22, 0.35, 'sine', 0.35);
+  },
+  3() {
+    // Cash register — C-E-G arpeggio
+    tone(523, 0,    0.2, 'triangle', 0.3);
+    tone(659, 0.18, 0.2, 'triangle', 0.3);
+    tone(784, 0.34, 0.4, 'triangle', 0.35);
+    tone(1047, 0.5, 0.5, 'triangle', 0.25);
+  },
+  4() {
+    // Pop — short noise burst + tone
+    tone(400, 0,    0.05, 'square', 0.15);
+    tone(800, 0.04, 0.2,  'sine',   0.3);
+  },
+  5() {
+    // Tri-tone — three notes like iOS
+    tone(784, 0,    0.18, 'sine', 0.32);
+    tone(988, 0.18, 0.18, 'sine', 0.32);
+    tone(1175, 0.36, 0.28, 'sine', 0.32);
+  }
+};
+
+let currentCard = null;
+function play(n, card) {
+  if (ctx.state === 'suspended') ctx.resume();
+  if (currentCard) {
+    currentCard.classList.remove('playing');
+    document.getElementById('b' + currentCard.dataset.n).textContent = '▶';
+    document.getElementById('b' + currentCard.dataset.n).classList.remove('active');
+  }
+  card.dataset.n = n;
+  card.classList.add('playing');
+  const badge = document.getElementById('b' + n);
+  badge.textContent = '♫';
+  badge.classList.add('active');
+  currentCard = card;
+  sounds[n]();
+  setTimeout(() => {
+    card.classList.remove('playing');
+    badge.textContent = '▶';
+    badge.classList.remove('active');
+    if (currentCard === card) currentCard = null;
+  }, 1200);
+}
+</script>
+</body>
+</html>

@@ -36,10 +36,6 @@ const SellerLayout = () => {
     }
   }, [hasValidSellerSession, navigate]);
 
-  if (!hasValidSellerSession) {
-    return null;
-  }
-
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 20);
@@ -47,6 +43,10 @@ const SellerLayout = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  if (!hasValidSellerSession) {
+    return null;
+  }
 
   const handleLogout = () => {
     logout();

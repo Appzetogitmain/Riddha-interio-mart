@@ -74,11 +74,10 @@ const ProductCard = ({ product, index = 0, variant = 'grid' }) => {
 
   const originalPrice = Number(product.price || 0);
 
-  // Safety: If discount price is invalid, treat as 0
+  // discountPrice is valid only if > 0, less than full price, and at least 50% of it
   const parsedDiscount = Number(product.discountPrice || 0);
-  let displayPrice = (parsedDiscount > 0 && parsedDiscount < originalPrice)
-    ? parsedDiscount
-    : originalPrice;
+  const validDiscount = parsedDiscount > 0 && parsedDiscount < originalPrice && parsedDiscount >= originalPrice * 0.5;
+  let displayPrice = validDiscount ? parsedDiscount : originalPrice;
 
   const displayPriceString = displayPrice != null ? Number(displayPrice).toLocaleString() : '0';
   const originalPriceString = originalPrice != null ? Number(originalPrice).toLocaleString() : '0';

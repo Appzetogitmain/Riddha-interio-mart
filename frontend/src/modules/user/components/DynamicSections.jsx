@@ -40,7 +40,7 @@ const ProductTile = ({ product }) => {
   const productId = getId(product);
   const rawPrice = Number(product?.price) || 0;
   const rawDiscount = Number(product?.discountPrice) || 0;
-  const hasDiscount = rawDiscount > 0 && rawDiscount < rawPrice;
+  const hasDiscount = rawDiscount > 0 && rawDiscount < rawPrice && rawDiscount >= rawPrice * 0.5;
   const displayPrice = hasDiscount ? rawDiscount : rawPrice;
   const originalPrice = hasDiscount ? rawPrice : null;
 

@@ -33,11 +33,42 @@ const InvoicePage = () => {
     fetchOrder();
   }, [id]);
 
-  const handleDownload = () => {
+  const handlePrint = () => {
     const prev = document.title;
     document.title = `Invoice_${order._id.slice(-8).toUpperCase()}`;
     window.print();
     document.title = prev;
+  };
+
+  const handleSavePDF = () => {
+    const invoiceEl = document.getElementById('invoice-document');
+    if (!invoiceEl) { handlePrint(); return; }
+
+    const styleLinks = Array.from(document.querySelectorAll('link[rel="stylesheet"]'))
+      .map(l => `<link rel="stylesheet" href="${l.href}">`)
+      .join('');
+    const inlineStyles = Array.from(document.querySelectorAll('style'))
+      .map(s => `<style>${s.textContent}</style>`)
+      .join('');
+
+    const printWin = window.open('', '_blank', 'width=900,height=700');
+    if (!printWin) { handlePrint(); return; }
+
+    printWin.document.write(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Invoice_${invoiceNo}</title>
+  ${styleLinks}${inlineStyles}
+  <style>@media print{body{margin:0;padding:0}}</style>
+</head>
+<body style="background:white;margin:0;padding:32px;font-family:sans-serif">
+  ${invoiceEl.outerHTML}
+</body>
+</html>`);
+    printWin.document.close();
+    setTimeout(() => { printWin.focus(); printWin.print(); }, 700);
   };
 
   if (loading) {
@@ -92,7 +123,7 @@ const InvoicePage = () => {
         </button>
         <div className="flex items-center gap-2">
           <button
-            onClick={handleDownload}
+            onClick={handlePrint}
             className="flex items-center gap-1.5 px-4 py-2 rounded-lg border border-gray-200 bg-white text-gray-700 text-[11px] font-bold uppercase tracking-wider hover:border-gray-400 transition-all"
           >
             <FiPrinter size={13} /> Print
@@ -108,8 +139,7 @@ const InvoicePage = () => {
             </a>
           ) : (
             <button
-              onClick={handleDownload}
-              title="Choose 'Save as PDF' in the print dialog"
+              onClick={handleSavePDF}
               className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#189D91] text-white text-[11px] font-bold uppercase tracking-wider hover:bg-[#14847a] transition-all"
             >
               <FiDownload size={13} /> Save as PDF
@@ -120,6 +150,7 @@ const InvoicePage = () => {
 
       {/* Invoice document */}
       <motion.div
+        id="invoice-document"
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
@@ -291,7 +322,7 @@ const InvoicePage = () => {
                 <span className="text-[10px] md:text-sm font-black text-deep-espresso uppercase tracking-tighter">
                   Grand Total
                 </span>
-                <span className="text-xl md:text-2xl font-black text-warm-sand italic font-serif">
+                <span className="text-xl md:text-2xl font-black text-[#189D91]">
                   ₹{totalPrice.toLocaleString("en-IN")}
                 </span>
               </div>
@@ -310,21 +341,26 @@ const InvoicePage = () => {
       </motion.div>
 
       {/* Mobile action button */}
-      <div className="max-w-3xl mx-auto mt-4 print:hidden md:hidden">
+      <div className="max-w-3xl mx-auto mt-4 print:hidden md:hidden flex gap-3">
+        <button
+          onClick={handlePrint}
+          className="flex-1 flex items-center justify-center gap-2 h-12 rounded-xl border border-gray-200 bg-white text-gray-700 text-xs font-black uppercase tracking-widest"
+        >
+          <FiPrinter size={15} /> Print
+        </button>
         {order.invoiceUrl ? (
           <a
             href={order.invoiceUrl}
             target="_blank"
             rel="noreferrer"
-            className="flex items-center justify-center gap-2 w-full h-12 rounded-xl bg-[#189D91] text-white text-xs font-black uppercase tracking-widest shadow-lg"
+            className="flex-1 flex items-center justify-center gap-2 h-12 rounded-xl bg-[#189D91] text-white text-xs font-black uppercase tracking-widest shadow-lg"
           >
             <FiDownload size={15} /> Download PDF
           </a>
         ) : (
           <button
-            onClick={handleDownload}
-            title="Choose 'Save as PDF' in the print dialog"
-            className="flex items-center justify-center gap-2 w-full h-12 rounded-xl bg-[#189D91] text-white text-xs font-black uppercase tracking-widest shadow-lg"
+            onClick={handleSavePDF}
+            className="flex-1 flex items-center justify-center gap-2 h-12 rounded-xl bg-[#189D91] text-white text-xs font-black uppercase tracking-widest shadow-lg"
           >
             <FiDownload size={15} /> Save as PDF
           </button>

@@ -13,7 +13,7 @@ const About = React.lazy(() => import('./pages/About'));
 const TermsConditions = React.lazy(() => import('./pages/TermsConditions'));
 const Notifications = React.lazy(() => import('./pages/Notifications'));
 const LoginPage = React.lazy(() => import('../user/pages/LoginPage'));
-const SignupPage = React.lazy(() => import('../user/pages/SignupPage'));
+const DeliverySignupPage = React.lazy(() => import('./pages/DeliverySignupPage'));
 const DeliveryLanding = React.lazy(() => import('./pages/DeliveryLanding'));
 const RouteManagement = React.lazy(() => import('./pages/RouteManagement'));
 const DispatchCenter = React.lazy(() => import('./pages/DispatchCenter'));
@@ -23,7 +23,7 @@ const DeliveryRoutes = () => {
     <Routes>
       <Route path="/" element={<DeliveryLanding />} />
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/signup" element={<SignupPage />} />
+      <Route path="/signup" element={<DeliverySignupPage />} />
       <Route path="/terms" element={<TermsConditions />} />
       <Route element={<DeliveryLayout />}>
         <Route path="/dashboard" element={<Dashboard />} />

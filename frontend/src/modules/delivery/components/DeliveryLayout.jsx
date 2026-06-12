@@ -380,43 +380,37 @@ const DeliveryLayout = () => {
               <button
                 onClick={(e) => { e.stopPropagation(); toggleStatus(); }}
                 disabled={updatingStatus}
-                className="relative focus:outline-none"
-                title={status === 'Available' ? 'Go Offline' : 'Go Online'}
+                className="focus:outline-none"
+                title={status === 'Available' ? 'Click to go Offline' : 'Click to go Online'}
               >
                 <motion.div
                   animate={{
-                    backgroundColor: status === 'Available' ? '#10b981' : '#334155',
-                    boxShadow: status === 'Available' ? '0 0 12px rgba(16,185,129,0.4)' : '0 0 0px rgba(0,0,0,0)',
+                    backgroundColor: status === 'Available' ? 'rgba(16,185,129,0.1)' : 'rgba(100,116,139,0.08)',
+                    borderColor: status === 'Available' ? 'rgba(16,185,129,0.35)' : 'rgba(100,116,139,0.2)',
                   }}
-                  transition={{ duration: 0.3 }}
-                  className="flex items-center gap-2 pl-2 pr-4 py-1.5 rounded-full min-w-[90px]"
+                  transition={{ duration: 0.25 }}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border"
                 >
-                  {/* Thumb */}
-                  <motion.div
-                    animate={{ scale: updatingStatus ? 0.8 : 1 }}
-                    className="relative flex-shrink-0"
-                  >
-                    <div className={`w-6 h-6 rounded-full bg-white shadow-md flex items-center justify-center`}>
-                      {updatingStatus ? (
-                        <div className="w-3 h-3 border-2 border-slate-300 border-t-slate-600 rounded-full animate-spin" />
-                      ) : (
-                        <div className={`w-2 h-2 rounded-full ${status === 'Available' ? 'bg-emerald-500' : 'bg-slate-400'}`} />
-                      )}
-                    </div>
-                    {status === 'Available' && !updatingStatus && (
-                      <span className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-40" />
+                  <div className="relative shrink-0 w-2 h-2">
+                    {updatingStatus ? (
+                      <div className="w-2 h-2 border border-slate-400 border-t-slate-600 rounded-full animate-spin" />
+                    ) : (
+                      <div className={`w-2 h-2 rounded-full ${status === 'Available' ? 'bg-emerald-500' : 'bg-slate-400'}`} />
                     )}
-                  </motion.div>
-                  <span className="text-[10px] font-black uppercase tracking-[0.15em] text-white">
-                    {updatingStatus ? '...' : status === 'Available' ? 'Online' : 'Offline'}
+                    {status === 'Available' && !updatingStatus && (
+                      <span className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-70" />
+                    )}
+                  </div>
+                  <span className={`text-[10px] font-bold uppercase tracking-wider leading-none ${status === 'Available' ? 'text-emerald-600' : 'text-slate-400'}`}>
+                    {updatingStatus ? '…' : status === 'Available' ? 'Online' : 'Offline'}
                   </span>
                 </motion.div>
               </button>
             )}
 
-            <div className="flex items-center gap-2">
-               <div className="relative">
-                 <button 
+            <div className="flex items-center gap-2 relative">
+               <div>
+                 <button
                    onClick={(e) => { e.stopPropagation(); setShowNotifications(!showNotifications); setShowUserMenu(false); }}
                    className="p-3 text-slate-500 hover:text-[#2A458A] hover:bg-[#2A458A]/10 rounded-xl transition-all relative"
                  >
@@ -429,15 +423,15 @@ const DeliveryLayout = () => {
                  <AnimatePresence>
                    {showNotifications && (
                      <>
-                       <div 
-                         className="fixed inset-0 z-40" 
-                         onClick={(e) => { e.stopPropagation(); setShowNotifications(false); }} 
+                       <div
+                         className="fixed inset-0 z-40"
+                         onClick={(e) => { e.stopPropagation(); setShowNotifications(false); }}
                        />
                        <motion.div
                          initial={{ opacity: 0, y: 10, scale: 0.95 }}
                          animate={{ opacity: 1, y: 0, scale: 1 }}
                          exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                         className="absolute right-0 mt-4 w-[320px] bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden z-50 flex flex-col max-h-[400px]"
+                         className="absolute right-0 top-full mt-2 w-[320px] bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden z-50 flex flex-col max-h-[400px]"
                        >
                           <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
                              <h3 className="font-medium text-slate-900">Notifications</h3>

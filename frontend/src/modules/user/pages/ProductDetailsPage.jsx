@@ -44,8 +44,11 @@ const ProductDetailsPage = () => {
         const found = res.data.data;
         if (!found.features) found.features = ['Premium Quality', 'Authentic Sourcing', 'Designer Approved'];
         const dp = Number(found.discountPrice || 0);
-        found._displayPrice = (dp > 0 && dp < Number(found.price)) ? dp : Number(found.price);
-        found._hasDiscount = found._displayPrice < Number(found.price);
+        const basePrice = Number(found.price);
+        // discountPrice is valid only if it's > 0, less than full price, and at least 50% of it (guards stale/wrong values)
+        const validDiscount = dp > 0 && dp < basePrice && dp >= basePrice * 0.5;
+        found._displayPrice = validDiscount ? dp : basePrice;
+        found._hasDiscount = found._displayPrice < basePrice;
         if (!found.specifications) {
           found.specifications = {
             Brand: found.brand || 'Riddha Mart',

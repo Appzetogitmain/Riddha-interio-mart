@@ -67,7 +67,7 @@ function App() {
       )}
 
       {!isDashboardLayout && (
-        <>
+        <div className="print:hidden">
           {isProductPage ? (
             <>
               <div className="sticky top-0 z-50 shadow-sm">
@@ -81,7 +81,7 @@ function App() {
               <DeliveryBar />
             </div>
           )}
-        </>
+        </div>
       )}
 
       <main className="flex-grow">
@@ -97,8 +97,8 @@ function App() {
           </Suspense>
         </ErrorBoundary>
       </main>
-      {!isDashboardLayout && <Footer />}
-      {!isDashboardLayout && !isProductPage && <BottomNavbar />}
+      {!isDashboardLayout && <div className="print:hidden"><Footer /></div>}
+      {!isDashboardLayout && !isProductPage && <div className="print:hidden"><BottomNavbar /></div>}
     </div>
   );
 }

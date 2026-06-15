@@ -99,12 +99,12 @@ const ProductListPage = ({ status }) => {
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-1">
-            <h1 className="text-2xl md:text-3xl lg:text-4xl font-display font-bold text-deep-espresso">
+          <div>
+            <h1 className="text-xl font-bold text-gray-900">
               {status === 'pending' ? 'Pending Approval' : 'Product List'}
             </h1>
-            <p className="text-brand-teal text-sm md:text-base">
-              {status === 'pending' ? 'Review and approve products from sellers.' : 'Comprehensive view of all your inventory.'}
+            <p className="text-sm text-gray-400 mt-0.5">
+              {status === 'pending' ? 'Review and approve seller product submissions.' : 'All products in your inventory.'}
             </p>
           </div>
           <button 
@@ -195,131 +195,131 @@ const ProductListPage = ({ status }) => {
         )}
 
         {/* Product List Table */}
-        <div className="bg-white rounded-2xl border border-soft-oatmeal shadow-md overflow-hidden min-h-[400px]">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden min-h-[400px]">
           {loading ? (
-            <div className="flex flex-col items-center justify-center py-32 space-y-4">
-              <div className="w-12 h-12 border-4 border-soft-oatmeal border-t-red-800 rounded-full animate-spin" />
-              <p className="text-xs font-black uppercase tracking-widest text-brand-teal">Fetching Inventory...</p>
+            <div className="flex flex-col items-center justify-center py-32 gap-3">
+              <div className="w-8 h-8 border-2 border-gray-200 border-t-gray-600 rounded-full animate-spin" />
+              <p className="text-xs text-gray-400 font-medium">Loading inventory…</p>
             </div>
           ) : filteredProducts.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-32 space-y-4 text-center px-6">
-               <div className="w-20 h-20 bg-soft-oatmeal/20 rounded-[40px] flex items-center justify-center text-brand-teal/30 mb-2">
-                 <LuPackage size={40} />
-               </div>
-               <h3 className="text-xl font-display font-bold text-deep-espresso">No Products Found</h3>
-               <p className="text-sm text-brand-teal max-w-xs">{searchTerm ? "No products match your current search criteria." : "Start by adding your first product to the catalog."}</p>
+            <div className="flex flex-col items-center justify-center py-32 gap-3 text-center px-6">
+              <LuPackage size={32} className="text-gray-300" />
+              <p className="text-sm font-semibold text-gray-500">No products found</p>
+              <p className="text-xs text-gray-400">{searchTerm ? 'Try a different search term.' : 'Add your first product to get started.'}</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
-                <thead className="bg-soft-oatmeal/20 border-b border-soft-oatmeal">
-                  <tr>
-                    <th className="px-6 py-4 text-[10px] font-black text-brand-teal uppercase tracking-widest">Product & Seller</th>
-                    <th className="px-6 py-4 text-[10px] font-black text-brand-teal uppercase tracking-widest">SKU & Brand</th>
-                    <th className="px-6 py-4 text-[10px] font-black text-brand-teal uppercase tracking-widest text-center">Category & Unit</th>
-                    <th className="px-6 py-4 text-[10px] font-black text-brand-teal uppercase tracking-widest text-center">Status</th>
-                    <th className="px-6 py-4 text-[10px] font-black text-brand-teal uppercase tracking-widest">Seller Price</th>
-                    <th className="px-6 py-4 text-[10px] font-black text-brand-teal uppercase tracking-widest text-center">Comm. %</th>
-                    <th className="px-6 py-4 text-[10px] font-black text-brand-teal uppercase tracking-widest">Final Price</th>
-                    <th className="px-6 py-4 text-[10px] font-black text-brand-teal uppercase tracking-widest text-right">Actions</th>
+                <thead>
+                  <tr className="border-b border-gray-100 bg-gray-50/70">
+                    <th className="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Product</th>
+                    <th className="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">SKU / Brand</th>
+                    <th className="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Category</th>
+                    <th className="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider text-center">Status</th>
+                    <th className="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider text-right">Seller Price</th>
+                    <th className="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider text-center">Comm.</th>
+                    <th className="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider text-right">Final Price</th>
+                    <th className="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-soft-oatmeal/50">
+                <tbody className="divide-y divide-gray-50">
                   {filteredProducts.map((product) => (
-                    <tr key={product._id} className="hover:bg-soft-oatmeal/5 transition-colors group">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-4">
-                          <img 
-                            src={product.images?.[0] || 'https://via.placeholder.com/150'} 
-                            alt={product.name} 
-                            className="w-14 h-14 rounded-2xl object-cover shadow-sm group-hover:scale-105 transition-transform border border-soft-oatmeal" 
+                    <tr key={product._id} className="hover:bg-gray-50/60 transition-colors group">
+
+                      {/* Product & Seller */}
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          <img
+                            src={product.images?.[0] || 'https://via.placeholder.com/150'}
+                            alt={product.name}
+                            className="w-9 h-9 rounded-lg object-cover border border-gray-100 shrink-0"
                           />
-                          <div className="space-y-0.5">
-                            <p className="font-medium text-deep-espresso text-sm">{product.name}</p>
-                            <div className="flex items-center gap-2">
-                              <span className="text-[9px] font-medium bg-brand-purple/5 text-brand-purple px-1.5 py-0.5 rounded border border-brand-purple/10 uppercase tracking-widest">Seller</span>
-                              <p className="text-xs font-medium text-brand-teal">{product.seller?.shopName || product.seller?.fullName || 'Internal'}</p>
-                            </div>
+                          <div>
+                            <p className="text-sm font-semibold text-gray-800 leading-snug">{product.name}</p>
+                            <p className="text-[11px] text-gray-400 mt-0.5">{product.seller?.shopName || product.seller?.fullName || 'Internal'}</p>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="space-y-1.5">
-                          <span className="block text-[10px] font-medium text-deep-espresso/60 bg-soft-oatmeal/30 px-2 py-1 rounded border border-soft-oatmeal w-fit">
-                            {product.sku || 'NO-SKU'}
-                          </span>
-                          <p className="text-[11px] font-medium text-warm-sand flex items-center gap-1">
-                            <LuTag size={12} className="opacity-50" />
-                            {product.brand?.name || 'No Brand'}
-                          </p>
-                        </div>
+
+                      {/* SKU & Brand */}
+                      <td className="px-4 py-3">
+                        <p className="text-xs font-medium text-gray-700 font-mono">{product.sku || '—'}</p>
+                        <p className="text-[11px] text-gray-400 mt-0.5 flex items-center gap-1">
+                          <LuTag size={10} />
+                          {product.brand?.name || 'No Brand'}
+                        </p>
                       </td>
-                      <td className="px-6 py-4 text-center">
-                        <div className="space-y-1.5">
-                          <span className="inline-block text-[10px] font-medium text-red-800 uppercase tracking-widest bg-brand-purple/5 px-2.5 py-1 rounded-full border border-red-800/10">
-                            {product.category}
-                          </span>
-                          <p className="text-[10px] font-medium text-brand-teal/60 uppercase tracking-widest">
-                            {product.unitValue} {product.unit} • {product.countInStock} {product.countInStock > 0 ? 'Left' : 'OUT'}
-                          </p>
-                        </div>
+
+                      {/* Category */}
+                      <td className="px-4 py-3">
+                        <p className="text-xs font-medium text-gray-700">{product.category}</p>
+                        <p className="text-[11px] text-gray-400 mt-0.5">
+                          {product.unitValue} {product.unit} · {product.countInStock} left
+                        </p>
                       </td>
-                      <td className="px-6 py-4 text-center">
-                        <span className={`text-[9px] font-medium uppercase tracking-widest px-2.5 py-1 rounded-full border shadow-sm ${
-                          product.approvalStatus === 'approved' 
-                          ? 'bg-emerald-50 text-emerald-600 border-emerald-100' 
-                          : product.approvalStatus === 'rejected'
-                          ? 'bg-brand-pink/5 text-red-600 border-red-100'
-                          : 'bg-amber-50 text-amber-600 border-amber-100'
+
+                      {/* Status */}
+                      <td className="px-4 py-3 text-center">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold ${
+                          product.approvalStatus === 'approved'
+                            ? 'bg-emerald-50 text-emerald-700'
+                            : product.approvalStatus === 'rejected'
+                            ? 'bg-red-50 text-red-600'
+                            : 'bg-amber-50 text-amber-600'
                         }`}>
-                          {product.approvalStatus || 'Pending'}
+                          {product.approvalStatus === 'approved' ? 'Approved' : product.approvalStatus === 'rejected' ? 'Rejected' : 'Pending'}
                         </span>
                       </td>
-                      <td className="px-6 py-4">
-                         <p className="text-[10px] font-medium text-warm-sand uppercase tracking-widest mb-0.5">Seller Asks</p>
-                         <p className="font-medium text-deep-espresso/60">₹{(product.sellerPrice || product.price)?.toLocaleString()}</p>
+
+                      {/* Seller Price */}
+                      <td className="px-4 py-3 text-right">
+                        <p className="text-sm font-semibold text-gray-700">₹{(product.sellerPrice || product.price)?.toLocaleString()}</p>
                       </td>
-                      <td className="px-6 py-4 text-center">
-                        <span className="text-sm font-medium text-emerald-600">
-                          {product.adminCommission || 0}%
-                        </span>
+
+                      {/* Commission */}
+                      <td className="px-4 py-3 text-center">
+                        <span className="text-sm font-semibold text-gray-600">{product.adminCommission || 0}%</span>
                       </td>
-                      <td className="px-6 py-4">
-                        <p className="text-[10px] font-medium text-[#240046] uppercase tracking-widest mb-0.5">User Price</p>
-                        <p className="font-medium text-[#240046] text-sm">₹{product.price?.toLocaleString()}</p>
+
+                      {/* Final Price */}
+                      <td className="px-4 py-3 text-right">
+                        <p className="text-sm font-semibold text-gray-800">₹{product.price?.toLocaleString()}</p>
                       </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
+
+                      {/* Actions */}
+                      <td className="px-4 py-3">
+                        <div className="flex items-center justify-end gap-1.5">
                           {product.approvalStatus === 'pending' && (
                             <>
-                              <button 
+                              <button
                                 onClick={() => setCommissionModal({ open: true, product, commission: 2 })}
-                                className="px-4 py-2 bg-emerald-600 text-white text-[9px] font-black uppercase tracking-widest rounded-xl hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-900/10 active:scale-95"
+                                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold rounded-lg transition-colors"
                               >
                                 Approve
                               </button>
-                              <button 
+                              <button
                                 onClick={() => handleApprove(product._id, 'rejected')}
-                                className="px-4 py-2 bg-red-100 text-red-600 text-[9px] font-black uppercase tracking-widest rounded-xl hover:bg-red-200 transition-all active:scale-95"
+                                className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 text-[11px] font-semibold rounded-lg transition-colors"
                               >
                                 Reject
                               </button>
                             </>
                           )}
-                          <button 
+                          <button
                             onClick={() => navigate(`/admin/inventory/edit/${product._id}`)}
-                            className="p-2.5 text-deep-espresso hover:bg-soft-oatmeal rounded-xl transition-all hover:scale-110"
+                            className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
                           >
-                            <LuPen size={18} />
+                            <LuPen size={14} />
                           </button>
-                          <button 
+                          <button
                             onClick={() => setDeleteId(product._id)}
-                            className="p-2.5 text-red-600 hover:bg-red-50 rounded-xl transition-all hover:scale-110"
+                            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                           >
-                            <LuTrash2 size={18} />
+                            <LuTrash2 size={14} />
                           </button>
                         </div>
                       </td>
+
                     </tr>
                   ))}
                 </tbody>

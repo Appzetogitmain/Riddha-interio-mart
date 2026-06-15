@@ -316,7 +316,8 @@ exports.updateApprovalStatus = async (req, res, next) => {
       const commission = adminCommission !== undefined ? adminCommission : existingProduct.adminCommission;
       const sPrice = existingProduct.sellerPrice || existingProduct.price;
       updateData.price = Math.round(sPrice * (1 + commission / 100));
-      updateData.sellerPrice = sPrice; // Ensure it's set
+      updateData.sellerPrice = sPrice;
+      updateData.discountPrice = 0; // Clear stale discount — seller price may have changed after commission
     }
 
     const product = await Product.findByIdAndUpdate(id, updateData, { new: true });

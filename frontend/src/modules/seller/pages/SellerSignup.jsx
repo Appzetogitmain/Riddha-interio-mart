@@ -141,17 +141,17 @@ const SellerSignup = () => {
         animate={{ opacity: 1, x: 0 }}
         className="hidden lg:flex w-[35%] bg-[#FDF8F8] flex-col items-center justify-center p-12 relative overflow-hidden border-r border-slate-100"
       >
-        <div className="relative z-10 w-full max-w-sm space-y-12">
+        <div className="relative z-10 w-full max-w-sm space-y-8">
           <Link to="/" className="inline-block">
-            <img src={logo} alt="Logo" className="h-24 lg:h-28 w-auto object-contain" />
+            <img src={logo} alt="Logo" className="h-16 lg:h-20 w-auto object-contain" />
           </Link>
 
           <div className="space-y-6">
-            <h1 className="text-5xl lg:text-6xl font-semibold text-slate-900 leading-tight tracking-tighter">
+            <h1 className="text-4xl lg:text-5xl font-semibold text-slate-900 leading-tight tracking-tighter">
               Join the <br />
               <span className="text-[#E36666] font-serif">Family.</span>
             </h1>
-            <p className="text-slate-400 font-medium text-base lg:text-lg leading-relaxed">
+            <p className="text-slate-400 font-medium text-sm leading-relaxed">
               Scale your interior business with India's most trusted partner network.
             </p>
           </div>
@@ -175,11 +175,11 @@ const SellerSignup = () => {
       </motion.div>
 
       {/* Right Section: Form */}
-      <div className="flex-1 bg-white flex flex-col items-center justify-start lg:justify-center p-0 lg:p-6 overflow-y-auto">
-        <motion.div 
+      <div className="flex-1 bg-white flex flex-col items-center justify-start p-0 lg:p-6 overflow-y-auto">
+        <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="w-full lg:max-w-[700px] flex flex-col px-6 py-12 lg:py-8"
+          className="w-full lg:max-w-[700px] flex flex-col px-6 py-6 lg:py-6"
         >
           {/* Mobile Logo */}
           <div className="lg:hidden flex justify-center mb-10">
@@ -206,9 +206,9 @@ const SellerSignup = () => {
           )}
 
           {step === 'signup' ? (
-            <form onSubmit={handleSignup} className="flex-1 flex flex-col space-y-6 md:space-y-4">
+            <form onSubmit={handleSignup} className="flex-1 flex flex-col space-y-4 md:space-y-3">
               {/* Section 1: Identity */}
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <div className="flex items-center gap-3">
                   <div className="w-1 h-4 bg-[#E36666] rounded-full" />
                   <h3 className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">Merchant Identity</h3>
@@ -224,7 +224,7 @@ const SellerSignup = () => {
                         value={formData.fullName}
                         onChange={handleChange}
                         placeholder="Legal name"
-                        className="w-full pl-12 pr-4 py-4 md:py-2.5 md:pl-9 rounded-xl bg-[#FDF8F8] border-2 border-transparent focus:border-[#E36666]/20 focus:bg-white focus:outline-none text-sm md:text-[11px] font-medium text-slate-700 transition-all"
+                        className="w-full pl-12 pr-4 py-2.5 md:py-2 md:pl-9 rounded-xl bg-[#FDF8F8] border-2 border-transparent focus:border-[#E36666]/20 focus:bg-white focus:outline-none text-sm md:text-[11px] font-medium text-slate-700 transition-all"
                         required
                       />
                     </div>
@@ -239,7 +239,7 @@ const SellerSignup = () => {
                         value={formData.email}
                         onChange={handleChange}
                         placeholder="Business email"
-                        className="w-full pl-12 pr-4 py-4 md:py-2.5 md:pl-9 rounded-xl bg-[#FDF8F8] border-2 border-transparent focus:border-[#E36666]/20 focus:bg-white focus:outline-none text-sm md:text-[11px] font-medium text-slate-700 transition-all"
+                        className="w-full pl-12 pr-4 py-2.5 md:py-2 md:pl-9 rounded-xl bg-[#FDF8F8] border-2 border-transparent focus:border-[#E36666]/20 focus:bg-white focus:outline-none text-sm md:text-[11px] font-medium text-slate-700 transition-all"
                         required
                       />
                     </div>
@@ -257,7 +257,7 @@ const SellerSignup = () => {
                         value={formData.shopName}
                         onChange={handleChange}
                         placeholder="Store name"
-                        className="w-full pl-12 pr-4 py-4 md:py-2.5 md:pl-9 rounded-xl bg-[#FDF8F8] border-2 border-transparent focus:border-[#E36666]/20 focus:bg-white focus:outline-none text-sm md:text-[11px] font-medium text-slate-700 transition-all"
+                        className="w-full pl-12 pr-4 py-2.5 md:py-2 md:pl-9 rounded-xl bg-[#FDF8F8] border-2 border-transparent focus:border-[#E36666]/20 focus:bg-white focus:outline-none text-sm md:text-[11px] font-medium text-slate-700 transition-all"
                         required
                       />
                     </div>
@@ -272,7 +272,7 @@ const SellerSignup = () => {
                         value={formData.phone}
                         onChange={handleChange}
                         placeholder="Direct contact"
-                        className="w-full pl-12 pr-4 py-4 md:py-2.5 md:pl-9 rounded-xl bg-[#FDF8F8] border-2 border-transparent focus:border-[#E36666]/20 focus:bg-white focus:outline-none text-sm md:text-[11px] font-medium text-slate-700 transition-all"
+                        className="w-full pl-12 pr-4 py-2.5 md:py-2 md:pl-9 rounded-xl bg-[#FDF8F8] border-2 border-transparent focus:border-[#E36666]/20 focus:bg-white focus:outline-none text-sm md:text-[11px] font-medium text-slate-700 transition-all"
                         required
                       />
                     </div>
@@ -281,7 +281,7 @@ const SellerSignup = () => {
               </div>
 
               {/* Section 2: Business & Compliance */}
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <div className="flex items-center gap-3">
                   <div className="w-1 h-4 bg-[#E36666] rounded-full" />
                   <h3 className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">Compliance & Documents</h3>
@@ -296,7 +296,7 @@ const SellerSignup = () => {
                       value={formData.gstNumber}
                       onChange={handleChange}
                       placeholder="GSTIN"
-                      className="w-full px-4 py-4 md:py-2.5 rounded-xl bg-[#FDF8F8] border-2 border-transparent focus:border-[#E36666]/20 focus:bg-white focus:outline-none text-sm md:text-[11px] font-medium text-slate-700 transition-all"
+                      className="w-full px-4 py-2.5 md:py-2 rounded-xl bg-[#FDF8F8] border-2 border-transparent focus:border-[#E36666]/20 focus:bg-white focus:outline-none text-sm md:text-[11px] font-medium text-slate-700 transition-all"
                       required
                     />
                   </div>
@@ -308,7 +308,7 @@ const SellerSignup = () => {
                       value={formData.panNumber}
                       onChange={handleChange}
                       placeholder="PAN"
-                      className="w-full px-4 py-4 md:py-2.5 rounded-xl bg-[#FDF8F8] border-2 border-transparent focus:border-[#E36666]/20 focus:bg-white focus:outline-none text-sm md:text-[11px] font-medium text-slate-700 transition-all"
+                      className="w-full px-4 py-2.5 md:py-2 rounded-xl bg-[#FDF8F8] border-2 border-transparent focus:border-[#E36666]/20 focus:bg-white focus:outline-none text-sm md:text-[11px] font-medium text-slate-700 transition-all"
                       required
                     />
                   </div>
@@ -357,7 +357,7 @@ const SellerSignup = () => {
                       value={formData.shopAddress}
                       onChange={handleChange}
                       placeholder="Full operating address"
-                      className="w-full pl-12 pr-4 py-4 md:py-2.5 md:pl-9 rounded-xl bg-[#FDF8F8] border-2 border-transparent focus:border-[#E36666]/20 focus:bg-white focus:outline-none text-sm md:text-[11px] font-medium text-slate-700 transition-all"
+                      className="w-full pl-12 pr-4 py-2.5 md:py-2 md:pl-9 rounded-xl bg-[#FDF8F8] border-2 border-transparent focus:border-[#E36666]/20 focus:bg-white focus:outline-none text-sm md:text-[11px] font-medium text-slate-700 transition-all"
                       required
                     />
                   </div>
@@ -365,7 +365,7 @@ const SellerSignup = () => {
               </div>
 
               {/* Section 3: Security */}
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <div className="flex items-center gap-3">
                   <div className="w-1 h-4 bg-[#E36666] rounded-full" />
                   <h3 className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">Security & Credentials</h3>
@@ -381,7 +381,7 @@ const SellerSignup = () => {
                         value={formData.password}
                         onChange={handleChange}
                         placeholder="••••••••"
-                        className="w-full pl-12 pr-10 py-4 md:py-2.5 md:pl-9 rounded-xl bg-[#FDF8F8] border-2 border-transparent focus:border-[#E36666]/20 focus:bg-white focus:outline-none text-sm md:text-[11px] font-medium text-slate-700 transition-all"
+                        className="w-full pl-12 pr-10 py-2.5 md:py-2 md:pl-9 rounded-xl bg-[#FDF8F8] border-2 border-transparent focus:border-[#E36666]/20 focus:bg-white focus:outline-none text-sm md:text-[11px] font-medium text-slate-700 transition-all"
                         required
                       />
                       <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300">
@@ -399,7 +399,7 @@ const SellerSignup = () => {
                         value={formData.confirmPassword}
                         onChange={handleChange}
                         placeholder="••••••••"
-                        className="w-full pl-12 pr-4 py-4 md:py-2.5 md:pl-9 rounded-xl bg-[#FDF8F8] border-2 border-transparent focus:border-[#E36666]/20 focus:bg-white focus:outline-none text-sm md:text-[11px] font-medium text-slate-700 transition-all"
+                        className="w-full pl-12 pr-4 py-2.5 md:py-2 md:pl-9 rounded-xl bg-[#FDF8F8] border-2 border-transparent focus:border-[#E36666]/20 focus:bg-white focus:outline-none text-sm md:text-[11px] font-medium text-slate-700 transition-all"
                         required
                       />
                     </div>
@@ -417,7 +417,7 @@ const SellerSignup = () => {
                         value={formData.referralCode}
                         onChange={handleChange}
                         placeholder="RIDDHA-123"
-                        className="w-full pl-12 pr-4 py-4 md:py-2.5 md:pl-9 rounded-xl bg-[#FDF8F8] border-2 border-transparent focus:border-[#E36666]/20 focus:bg-white focus:outline-none text-sm md:text-[11px] font-medium text-slate-700 transition-all"
+                        className="w-full pl-12 pr-4 py-2.5 md:py-2 md:pl-9 rounded-xl bg-[#FDF8F8] border-2 border-transparent focus:border-[#E36666]/20 focus:bg-white focus:outline-none text-sm md:text-[11px] font-medium text-slate-700 transition-all"
                       />
                     </div>
                   </div>
@@ -481,7 +481,7 @@ const SellerSignup = () => {
             </form>
           )}
 
-          <div className="mt-12 text-center">
+          <div className="mt-5 text-center">
              <Link to="/seller/login" className="inline-flex items-center gap-2 text-slate-400 hover:text-slate-900 transition-all font-bold text-[10px] uppercase tracking-widest">
                 <FiArrowLeft /> Back to Login
              </Link>

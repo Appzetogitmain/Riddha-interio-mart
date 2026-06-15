@@ -179,10 +179,10 @@ const Navbar = () => {
 
   return (
     <>
-      <nav className={`transition-all duration-300 border-b border-gray-100 relative z-50 md:bg-white ${
+      <nav className={`transition-all duration-300 border-b relative z-50 md:bg-white ${
         scrolled
-          ? 'bg-white shadow-md'
-          : 'bg-gradient-to-r from-[#189D91]/10 via-white to-[#EC008C]/10'
+          ? 'bg-white shadow-md border-gray-200'
+          : 'bg-gradient-to-r from-[#189D91]/10 via-white to-[#EC008C]/10 border-gray-200 md:border-gray-100'
       }`}>
         <div className="max-w-[1700px] mx-auto px-4 lg:px-6">
           {/* Main Desktop Header Row */}

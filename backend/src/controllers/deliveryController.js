@@ -9,7 +9,7 @@ const { notifyAdminNewDelivery, notifyDeliveryApproval } = require('../socket');
 // @access  Public
 exports.registerDelivery = async (req, res, next) => {
   try {
-    const { fullName, email, password, phone, vehicleType, vehicleNumber, documents } = req.body;
+    const { fullName, email, password, phone, vehicleType, vehicleNumber, documents, referralCode } = req.body;
 
     if (await checkEmailExists(email)) {
       return res.status(400).json({ success: false, error: 'Email already registered' });
@@ -20,7 +20,26 @@ exports.registerDelivery = async (req, res, next) => {
       return res.status(400).json({ success: false, error: 'Phone number already registered' });
     }
 
-    const delivery = await Delivery.create({ fullName, email, password, phone, vehicleType, vehicleNumber, documents });
+    let referredBy = null;
+    if (referralCode) {
+      const User = require('../models/User');
+      const referrer = await User.findOne({ referralCode });
+      if (!referrer) {
+        return res.status(400).json({ success: false, error: 'Invalid referral code' });
+      }
+      referredBy = referrer._id;
+    }
+
+    const delivery = await Delivery.create({ 
+      fullName, 
+      email, 
+      password, 
+      phone, 
+      vehicleType, 
+      vehicleNumber, 
+      documents,
+      referredBy
+    });
     
     // Notify Admin about new registration
     notifyAdminNewDelivery({

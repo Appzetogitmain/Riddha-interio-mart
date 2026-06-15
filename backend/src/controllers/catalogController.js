@@ -5,7 +5,7 @@ const Catalog = require('../models/Catalog');
 // @access  Public (or Admin? usually public for searching, but admin for management)
 exports.getCatalogItems = async (req, res, next) => {
   try {
-    const items = await Catalog.find({ isActive: true });
+    const items = await Catalog.find({ isActive: true }).sort({ createdAt: -1 });
     res.status(200).json({ success: true, count: items.length, data: items });
   } catch (error) {
     next(error);

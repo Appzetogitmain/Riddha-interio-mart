@@ -118,8 +118,13 @@ const TermsConditions = () => {
             {/* Close button for signup flow */}
             <div className="flex justify-center">
               <button
-                onClick={() => window.close()}
-                className="w-full py-3.5 bg-slate-800 text-white rounded-2xl font-semibold text-xs uppercase tracking-widest hover:bg-slate-900 transition-all flex items-center justify-center gap-2 shadow-lg"
+                onClick={() => {
+                  window.close();
+                  setTimeout(() => {
+                    window.history.back();
+                  }, 150);
+                }}
+                className="w-full py-3.5 bg-slate-800 text-white rounded-2xl font-semibold text-xs uppercase tracking-widest hover:bg-slate-900 transition-all flex items-center justify-center gap-2 shadow-lg cursor-pointer"
               >
                 <LuArrowLeft /> Close Window
               </button>

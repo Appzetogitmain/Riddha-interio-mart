@@ -9,14 +9,14 @@ const SellerLogin = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-[#f1f5f9] flex items-center justify-center font-['Outfit'] p-6">
+    <div className="min-h-screen bg-[#f1f5f9] flex items-center justify-center font-['Outfit'] p-0 md:p-6">
       <div className="w-full max-w-4xl h-auto md:h-[78vh] md:min-h-[540px] bg-white md:rounded-3xl md:shadow-2xl overflow-hidden flex flex-col md:flex-row">
 
         {/* Left Section: Image */}
         <motion.div
           initial={{ opacity: 0, x: -30 }}
           animate={{ opacity: 1, x: 0 }}
-          className="w-full md:w-[52%] h-52 md:h-full relative overflow-hidden"
+          className="w-full md:w-[52%] h-52 md:h-full relative overflow-hidden shrink-0"
         >
           <motion.img
             initial={{ scale: 1.06 }}
@@ -30,7 +30,7 @@ const SellerLogin = () => {
 
           {/* Logo on image */}
           <div className="absolute top-6 left-8 z-20 hidden md:block">
-            <img src={logo} alt="Logo" className="h-14 brightness-0 invert" />
+            <img src={logo} alt="Logo" className="h-14 w-auto object-contain brightness-0 invert" />
           </div>
 
           {/* Floating card — bottom of image */}
@@ -63,16 +63,16 @@ const SellerLogin = () => {
         <motion.div
           initial={{ opacity: 0, x: 30 }}
           animate={{ opacity: 1, x: 0 }}
-          className="w-full md:w-[48%] bg-[#FDF8F8] flex flex-col justify-center items-center px-8 py-8 md:px-10"
+          className="w-full md:w-[48%] bg-[#FDF8F8] flex flex-col justify-center items-center px-6 py-8 md:px-10 shrink-0"
         >
           {/* Mobile logo */}
-          <div className="mb-5 md:hidden">
-            <img src={logo} alt="Logo" className="h-14 object-contain" />
+          <div className="mb-5 md:hidden shrink-0">
+            <img src={logo} alt="Logo" className="h-12 w-auto object-contain" />
           </div>
 
-          <div className="w-full max-w-[360px] flex flex-col items-center text-center">
+          <div className="w-full max-w-[360px] flex flex-col items-center text-center shrink-0">
             {/* Dots */}
-            <div className="flex gap-2 mb-5">
+            <div className="flex gap-2 mb-5 shrink-0">
               <div className="w-6 h-1.5 bg-[#E36666] rounded-full" />
               <div className="w-2 h-1.5 bg-slate-200 rounded-full" />
               <div className="w-2 h-1.5 bg-slate-200 rounded-full" />

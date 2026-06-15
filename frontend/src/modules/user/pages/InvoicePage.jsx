@@ -246,7 +246,7 @@ const InvoicePage = () => {
                 Order ID
               </p>
               <p className="text-xs md:text-sm font-black text-deep-espresso">
-                #{_id.slice(-12)}
+                #{_id.slice(-8).toUpperCase()}
               </p>
             </div>
             <div>

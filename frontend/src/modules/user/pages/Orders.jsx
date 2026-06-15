@@ -207,13 +207,15 @@ const Orders = () => {
                           >
                             Invoice
                           </button>
-                          <button
-                           onClick={() => navigate(`/track-order/${order._id}`)}
-                           className="flex items-center gap-1.5 bg-gray-900 text-white px-5 py-2 rounded-xl hover:bg-teal-600 transition-all active:scale-95 shadow-md shadow-gray-200"
-                          >
-                             <span className="text-xs font-bold">Track</span>
-                             <FiChevronRight className="w-4 h-4 opacity-50" />
-                          </button>
+                           {order.status !== 'Delivered' && order.status !== 'Cancelled' && (
+                             <button
+                              onClick={() => navigate(`/track-order/${order._id}`)}
+                              className="flex items-center gap-1.5 bg-gray-900 text-white px-5 py-2 rounded-xl hover:bg-teal-600 transition-all active:scale-95 shadow-md shadow-gray-200"
+                             >
+                                <span className="text-xs font-bold">Track</span>
+                                <FiChevronRight className="w-4 h-4 opacity-50" />
+                             </button>
+                           )}
                        </div>
                     </div>
                   </div>

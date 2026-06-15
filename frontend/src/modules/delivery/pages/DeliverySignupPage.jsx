@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
   FiArrowLeft, FiUser, FiMail, FiLock, FiEye, FiEyeOff, FiPhone,
   FiTruck, FiFileText, FiCreditCard, FiUserCheck, FiBriefcase,
-  FiShield, FiActivity, FiUploadCloud, FiCheckCircle, FiLoader,
+  FiShield, FiActivity, FiUploadCloud, FiCheckCircle, FiLoader, FiX,
 } from 'react-icons/fi';
 import { useUser } from '../../user/data/UserContext';
 import { uploadRegistrationDocument } from '../../../shared/utils/upload';
@@ -38,6 +38,7 @@ const DeliverySignupPage = () => {
     fullName: '', email: '', phone: '',
     password: '', confirmPassword: '',
     vehicleType: 'Bike', vehicleNumber: '',
+    referralCode: '',
   });
   const [documents, setDocuments] = useState({ rc: '', dl: '', aadhar: '', bankDetails: '', insurance: '', pollution: '' });
   const [uploadingDocs, setUploadingDocs] = useState({ rc: false, dl: false, aadhar: false, bankDetails: false, insurance: false, pollution: false });
@@ -46,11 +47,19 @@ const DeliverySignupPage = () => {
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [termsContent, setTermsContent] = useState('');
+  const [loadingTerms, setLoadingTerms] = useState(false);
+  const vehicleSectionRef = useRef(null);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     if (name === 'phone' && (!/^\d*$/.test(value) || value.length > 10)) return;
     setFormData(p => ({ ...p, [name]: value }));
+    if (fieldErrors[name]) {
+      setFieldErrors(p => ({ ...p, [name]: '' }));
+    }
   };
 
   const handleDocUpload = async (e, docType) => {
@@ -61,6 +70,9 @@ const DeliverySignupPage = () => {
     try {
       const url = await uploadRegistrationDocument(file);
       setDocuments(p => ({ ...p, [docType]: url }));
+      if (fieldErrors.documents) {
+        setFieldErrors(p => ({ ...p, documents: '' }));
+      }
     } catch {
       setUploadErrors(p => ({ ...p, [docType]: true }));
     } finally {
@@ -86,21 +98,72 @@ const DeliverySignupPage = () => {
     }
   };
 
+  const handleConfirmPasswordFocus = () => {
+    setTimeout(() => {
+      vehicleSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 150);
+  };
+
+  const openTermsModal = async () => {
+    setShowTermsModal(true);
+    if (!termsContent) {
+      setLoadingTerms(true);
+      try {
+        const { data } = await api.get('/terms/delivery');
+        if (data.success && data.data) {
+          setTermsContent(data.data.content || '');
+        }
+      } catch (err) {
+        console.error('Failed to fetch delivery terms:', err);
+      } finally {
+        setLoadingTerms(false);
+      }
+    }
+  };
+
   const handleSignup = async (e) => {
     e.preventDefault();
     setError('');
+    const errors = {};
 
-    if (!formData.fullName || !formData.email || !formData.password) return setError('Please fill all required fields');
-    if (!formData.phone || !formData.vehicleNumber) return setError('Please fill Phone and Vehicle Number');
-    if (formData.password !== formData.confirmPassword) return setError('Passwords do not match');
-    if (formData.phone.length !== 10) return setError('Enter a valid 10-digit phone number');
+    if (!formData.fullName || formData.fullName.trim().length < 3) {
+      errors.fullName = 'Full name must be at least 3 characters';
+    }
+    if (!formData.email || !/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(formData.email)) {
+      errors.email = 'Please enter a valid email address';
+    }
+    if (!formData.phone || !/^[6-9]\d{9}$/.test(formData.phone)) {
+      errors.phone = 'Enter a valid 10-digit mobile number starting with 6-9';
+    }
+    if (!formData.password || formData.password.length < 8) {
+      errors.password = 'Password must be at least 8 characters';
+    }
+    if (formData.password !== formData.confirmPassword) {
+      errors.confirmPassword = 'Passwords do not match';
+    }
+    if (!formData.vehicleNumber || formData.vehicleNumber.trim().length < 5) {
+      errors.vehicleNumber = 'Please enter a valid vehicle number';
+    }
 
     const missingDocs = Object.keys(documents).filter(k => !documents[k]);
     if (missingDocs.length) {
       const labels = missingDocs.map(k => documentTypes.find(d => d.key === k)?.label || k);
-      return setError(`Missing documents: ${labels.join(', ')}`);
+      errors.documents = `Missing documents: ${labels.join(', ')}`;
     }
-    if (!agreeTerms) return setError('Please agree to the Terms & Conditions');
+    if (!agreeTerms) {
+      errors.agreeTerms = 'You must agree to the Terms & Conditions';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      const firstError = Object.keys(errors)[0];
+      if (firstError === 'documents') {
+        setError(errors.documents);
+      } else if (errors.agreeTerms && Object.keys(errors).length === 1) {
+        setError(errors.agreeTerms);
+      }
+      return;
+    }
 
     setLoading(true);
     try {
@@ -112,10 +175,16 @@ const DeliverySignupPage = () => {
         vehicleType: formData.vehicleType,
         vehicleNumber: formData.vehicleNumber,
         documents,
+        referralCode: formData.referralCode,
       });
       if (data.success) setMode('success');
     } catch (err) {
-      setError(err.response?.data?.error || 'Registration failed. Please try again.');
+      const serverErr = err.response?.data?.error || 'Registration failed. Please try again.';
+      if (serverErr.toLowerCase().includes('referral')) {
+        setFieldErrors(p => ({ ...p, referralCode: serverErr }));
+      } else {
+        setError(serverErr);
+      }
     } finally {
       setLoading(false);
     }
@@ -246,7 +315,7 @@ const DeliverySignupPage = () => {
 
             {/* ── SIGNUP FORM ── */}
             {mode === 'signup' && (
-              <form onSubmit={handleSignup} className="space-y-6">
+              <form onSubmit={handleSignup} noValidate className="space-y-6">
 
                 {/* Personal Info */}
                 <div>
@@ -257,14 +326,23 @@ const DeliverySignupPage = () => {
                     <div>
                       <label className={LABEL}>Full Name *</label>
                       <input type="text" name="fullName" placeholder="Rahul Sharma" value={formData.fullName} onChange={handleChange} className={INPUT} required />
+                      {fieldErrors.fullName && (
+                        <p className="text-[10px] text-red-500 font-bold mt-1 uppercase tracking-wider">{fieldErrors.fullName}</p>
+                      )}
                     </div>
                     <div>
                       <label className={LABEL}>Email *</label>
                       <input type="email" name="email" placeholder="rahul@example.com" value={formData.email} onChange={handleChange} className={INPUT} required />
+                      {fieldErrors.email && (
+                        <p className="text-[10px] text-red-500 font-bold mt-1 uppercase tracking-wider">{fieldErrors.email}</p>
+                      )}
                     </div>
                     <div>
                       <label className={LABEL}>Phone *</label>
                       <input type="tel" name="phone" placeholder="10-digit mobile" value={formData.phone} onChange={handleChange} className={INPUT} required />
+                      {fieldErrors.phone && (
+                        <p className="text-[10px] text-red-500 font-bold mt-1 uppercase tracking-wider">{fieldErrors.phone}</p>
+                      )}
                     </div>
                     <div>
                       <label className={LABEL}>Password *</label>
@@ -275,16 +353,29 @@ const DeliverySignupPage = () => {
                           {showPwd ? <FiEyeOff size={15} /> : <FiEye size={15} />}
                         </button>
                       </div>
+                      {fieldErrors.password && (
+                        <p className="text-[10px] text-red-500 font-bold mt-1 uppercase tracking-wider">{fieldErrors.password}</p>
+                      )}
                     </div>
                     <div className="md:col-span-2">
                       <label className={LABEL}>Confirm Password *</label>
-                      <input type={showPwd ? 'text' : 'password'} name="confirmPassword" placeholder="Re-enter password" value={formData.confirmPassword} onChange={handleChange} className={INPUT} required />
+                      <input type={showPwd ? 'text' : 'password'} name="confirmPassword" placeholder="Re-enter password" value={formData.confirmPassword} onChange={handleChange} onFocus={handleConfirmPasswordFocus} className={INPUT} required />
+                      {fieldErrors.confirmPassword && (
+                        <p className="text-[10px] text-red-500 font-bold mt-1 uppercase tracking-wider">{fieldErrors.confirmPassword}</p>
+                      )}
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className={LABEL}>Referral Code (Optional)</label>
+                      <input type="text" name="referralCode" placeholder="e.g. RIDDHA123456" value={formData.referralCode || ''} onChange={handleChange} className={INPUT} />
+                      {fieldErrors.referralCode && (
+                        <p className="text-[10px] text-red-500 font-bold mt-1 uppercase tracking-wider">{fieldErrors.referralCode}</p>
+                      )}
                     </div>
                   </div>
                 </div>
 
                 {/* Vehicle Details */}
-                <div>
+                <div ref={vehicleSectionRef}>
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
                     <FiTruck size={11} /> Vehicle Details
                   </p>
@@ -300,6 +391,9 @@ const DeliverySignupPage = () => {
                     <div>
                       <label className={LABEL}>Vehicle Number *</label>
                       <input type="text" name="vehicleNumber" placeholder="e.g. MP09AB1234" value={formData.vehicleNumber} onChange={handleChange} className={INPUT} required />
+                      {fieldErrors.vehicleNumber && (
+                        <p className="text-[10px] text-red-500 font-bold mt-1 uppercase tracking-wider">{fieldErrors.vehicleNumber}</p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -345,13 +439,22 @@ const DeliverySignupPage = () => {
                 {/* Terms + Submit */}
                 <div className="pt-1 space-y-4">
                   <label className="flex items-start gap-2.5 cursor-pointer">
-                    <input type="checkbox" checked={agreeTerms} onChange={e => setAgreeTerms(e.target.checked)}
+                    <input type="checkbox" checked={agreeTerms} onChange={e => {
+                      setAgreeTerms(e.target.checked);
+                      if (e.target.checked && fieldErrors.agreeTerms) {
+                        setFieldErrors(p => ({ ...p, agreeTerms: '' }));
+                      }
+                    }}
                       className="mt-0.5 accent-[#001B4E] h-3.5 w-3.5 shrink-0" />
                     <span className="text-xs text-slate-500 leading-relaxed">
                       I agree to the{' '}
-                      <Link to="/delivery/terms" target="_blank" className="text-[#001B4E] font-semibold hover:underline">
+                      <button
+                        type="button"
+                        onClick={openTermsModal}
+                        className="text-[#001B4E] font-semibold hover:underline bg-transparent border-none p-0 inline focus:outline-none cursor-pointer"
+                      >
                         Terms & Conditions
-                      </Link>{' '}
+                      </button>{' '}
                       for delivery partners
                     </span>
                   </label>
@@ -376,6 +479,62 @@ const DeliverySignupPage = () => {
         </div>
 
       </div>
+
+      {/* Terms and Conditions Modal */}
+      {showTermsModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="bg-white w-full max-w-2xl rounded-2xl overflow-hidden shadow-2xl border border-slate-100 flex flex-col max-h-[85vh]">
+            {/* Modal Header */}
+            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50">
+              <h3 className="text-sm font-bold text-[#001B4E] uppercase tracking-wider flex items-center gap-2">
+                <FiFileText size={16} /> Terms & Conditions
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowTermsModal(false)}
+                className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors text-slate-400 hover:text-slate-600 cursor-pointer"
+              >
+                <FiX size={18} />
+              </button>
+            </div>
+            {/* Modal Body */}
+            <div className="flex-1 overflow-y-auto p-6 text-slate-600 text-xs leading-relaxed font-normal whitespace-pre-wrap">
+              {loadingTerms ? (
+                <div className="flex justify-center items-center py-20">
+                  <FiLoader className="text-[#001B4E] animate-spin" size={24} />
+                </div>
+              ) : termsContent ? (
+                termsContent
+              ) : (
+                <p className="text-center text-slate-400 py-10">Failed to load Terms & Conditions.</p>
+              )}
+            </div>
+            {/* Modal Footer */}
+            <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3 bg-gray-50">
+              <button
+                type="button"
+                onClick={() => setShowTermsModal(false)}
+                className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold uppercase tracking-wider rounded-xl transition-all cursor-pointer"
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setAgreeTerms(true);
+                  setShowTermsModal(false);
+                  if (fieldErrors.agreeTerms) {
+                    setFieldErrors(p => ({ ...p, agreeTerms: '' }));
+                  }
+                }}
+                className="px-5 py-2.5 bg-[#001B4E] hover:bg-[#001B4E]/90 text-white text-xs font-bold uppercase tracking-wider rounded-xl transition-all shadow-md cursor-pointer"
+              >
+                Accept & Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

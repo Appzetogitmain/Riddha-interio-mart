@@ -136,13 +136,21 @@ exports.getSellerAnalytics = async (req, res, next) => {
 
     // 5. Low Stock Products
     const LOW_STOCK_THRESHOLD = 5;
-    const lowStockProducts = await Product.find({
+    const lowStockProductsRaw = await Product.find({
       seller: req.user.id,
       countInStock: { $lt: LOW_STOCK_THRESHOLD }
     })
-    .select('name image countInStock price')
+    .select('name images countInStock price')
     .sort({ countInStock: 1 })
     .limit(5);
+
+    const lowStockProducts = lowStockProductsRaw.map(p => ({
+      _id: p._id,
+      name: p.name,
+      image: p.images && p.images.length > 0 ? p.images[0] : '',
+      countInStock: p.countInStock,
+      price: p.price
+    }));
 
     // 6. Wallet Balance
     const wallet = await SellerWallet.findOne({ seller: sellerId });

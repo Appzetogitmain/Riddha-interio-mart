@@ -34,7 +34,11 @@ function App() {
     location.pathname.startsWith('/coming-soon');
   const isDashboardLayout = isAdminPath || isSellerPath || isDeliveryPath || isAuthPath || isInitPath;
   const isProductPage = location.pathname.startsWith('/product/') || location.pathname.startsWith('/products/');
-  const isCheckoutPath = ['/cart', '/address', '/payment'].includes(location.pathname);
+  const checkoutPaths = ['/cart', '/address', '/payment'];
+  const userSpecialPaths = ['/order-success', '/orders', '/profile', '/profile/edit'];
+  const isTrackOrderPath = location.pathname.startsWith('/track-order/');
+  const isCheckoutPath = checkoutPaths.includes(location.pathname);
+  const shouldHideHeader = isDashboardLayout || isCheckoutPath || userSpecialPaths.includes(location.pathname) || isTrackOrderPath;
 
   useEffect(() => {
     // Clear splash session storage on fresh page load/refresh
@@ -47,12 +51,16 @@ function App() {
     }
   }, [isDashboardLayout]);
 
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
+
   const handlePincodeComplete = () => {
     setShowPincodeModal(false);
   };
 
   return (
-    <div className={`min-h-screen flex flex-col user-theme bg-white border-deep-espresso/5 ${(!isDashboardLayout && !isCheckoutPath && !isProductPage) ? 'pb-24 md:pb-0' : ''}`}>
+    <div className={`min-h-screen flex flex-col user-theme bg-white border-deep-espresso/5 ${(!shouldHideHeader && !isProductPage) ? 'pb-24 md:pb-0' : ''}`}>
       <Toaster position="top-center" reverseOrder={false} />
       <OfflineDetector />
       {showPincodeModal && <PincodeModal onComplete={handlePincodeComplete} />}
@@ -66,7 +74,7 @@ function App() {
         user && <UserNotifications token={user.token || 'cookie'} />
       )}
 
-      {!isDashboardLayout && (
+      {!shouldHideHeader && (
         <div className="print:hidden">
           {isProductPage ? (
             <>
@@ -76,7 +84,7 @@ function App() {
               <DeliveryBar />
             </>
           ) : (
-            <div className={`sticky top-0 z-50 shadow-sm ${['/cart', '/address', '/payment', '/profile/edit'].includes(location.pathname) ? 'hidden md:block' : ''}`}>
+            <div className="sticky top-0 z-50 shadow-sm">
               <Navbar />
               <DeliveryBar />
             </div>

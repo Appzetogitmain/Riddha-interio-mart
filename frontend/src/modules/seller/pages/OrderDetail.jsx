@@ -89,7 +89,7 @@ const OrderDetail = () => {
       `  Phone: ${addr.phone || 'N/A'}`,
       '',
       '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
-      `Order #: ${order._id.slice(-10).toUpperCase()}`,
+      `Order #: ${order._id.slice(-8).toUpperCase()}`,
       `Items  : ${order.orderItems?.length || 1}`,
       `Total  : ₹${order.totalPrice?.toLocaleString()}`,
       `Payment: ${order.paymentMethod} (${order.isPaid ? 'Paid' : 'COD'})`,
@@ -101,7 +101,7 @@ const OrderDetail = () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `label-${order._id.slice(-10)}.txt`;
+    a.download = `label-${order._id.slice(-8)}.txt`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -194,7 +194,7 @@ const OrderDetail = () => {
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <div>
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Order ID</p>
-                  <h2 className="text-sm font-black text-slate-900 mt-0.5">#{order._id.slice(-10).toUpperCase()}</h2>
+                  <h2 className="text-sm font-black text-slate-900 mt-0.5">#{order._id.slice(-8).toUpperCase()}</h2>
                 </div>
                 <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${cfg.color}`}>
                   {order.status}

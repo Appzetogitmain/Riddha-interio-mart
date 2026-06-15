@@ -72,7 +72,12 @@ const SellerTerms = () => {
 
           <div className="pt-6 border-t border-slate-100 flex justify-center">
             <button
-              onClick={() => window.close()}
+              onClick={() => {
+                window.close();
+                setTimeout(() => {
+                  window.history.back();
+                }, 150);
+              }}
               className="px-6 py-3 bg-[#E36666] text-white rounded-xl font-semibold text-xs uppercase tracking-widest hover:bg-[#c95353] transition-all flex items-center gap-2 shadow-lg shadow-[#E36666]/20"
             >
               <FiArrowLeft /> Close Window

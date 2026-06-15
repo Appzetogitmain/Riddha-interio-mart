@@ -71,10 +71,10 @@ const Notifications = () => {
             </button>
             <button
               onClick={markAllAsRead}
-              className="flex items-center gap-2 bg-white border border-slate-200 text-slate-600 px-6 py-3 rounded-xl font-semibold hover:bg-slate-50 transition-all text-xs uppercase tracking-widest shadow-sm"
+              className="flex items-center gap-2 bg-white border border-slate-200 text-slate-600 px-3 sm:px-6 py-3 rounded-xl font-semibold hover:bg-slate-50 transition-all text-xs uppercase tracking-widest shadow-sm"
             >
               <CheckCheck size={18} />
-              Mark All Read
+              <span className="hidden sm:inline">Mark All Read</span>
             </button>
           </div>
         </div>
@@ -83,13 +83,13 @@ const Notifications = () => {
         <div className="flex items-center gap-1 bg-white p-1.5 rounded-2xl border border-slate-200 shadow-sm w-fit mx-4 md:mx-0">
           <button
             onClick={() => setActiveFilter('all')}
-            className={`px-6 py-2.5 rounded-xl text-xs font-semibold transition-all ${activeFilter === 'all' ? 'bg-seller-primary text-white shadow-lg shadow-seller-primary/20' : 'text-slate-500 hover:text-slate-900'}`}
+            className={`px-3 sm:px-6 py-2 sm:py-2.5 rounded-xl text-[11px] sm:text-xs font-semibold transition-all ${activeFilter === 'all' ? 'bg-seller-primary text-white shadow-lg shadow-seller-primary/20' : 'text-slate-500 hover:text-slate-900'}`}
           >
             All Activity
           </button>
           <button
             onClick={() => setActiveFilter('unread')}
-            className={`px-6 py-2.5 rounded-xl text-xs font-semibold transition-all ${activeFilter === 'unread' ? 'bg-seller-primary text-white shadow-lg shadow-seller-primary/20' : 'text-slate-500 hover:text-slate-900'}`}
+            className={`px-3 sm:px-6 py-2 sm:py-2.5 rounded-xl text-[11px] sm:text-xs font-semibold transition-all ${activeFilter === 'unread' ? 'bg-seller-primary text-white shadow-lg shadow-seller-primary/20' : 'text-slate-500 hover:text-slate-900'}`}
           >
             Unread Only
           </button>
@@ -106,18 +106,18 @@ const Notifications = () => {
                   markAsRead(notification._id);
                   setSelectedNotification(notification);
                 }}
-                className={`group relative bg-white p-6 rounded-[2rem] border transition-all cursor-pointer hover:shadow-md ${!notification.read ? 'border-seller-primary/20 bg-seller-light/5' : 'border-slate-200'}`}
+                className={`group relative bg-white p-4 sm:p-6 rounded-2xl sm:rounded-[2rem] border transition-all cursor-pointer hover:shadow-md ${!notification.read ? 'border-seller-primary/20 bg-seller-light/5' : 'border-slate-200'}`}
               >
                 {!notification.read && (
-                  <div className="absolute top-6 right-8 w-2 h-2 bg-seller-primary rounded-full animate-pulse" />
+                  <div className="absolute top-4 sm:top-6 right-6 sm:right-8 w-2 h-2 bg-seller-primary rounded-full animate-pulse" />
                 )}
                 
-                <div className="flex gap-5">
+                <div className="flex gap-3 sm:gap-5">
                   <div className="shrink-0">
                     {getIcon(notification.type)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-start gap-4">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 sm:gap-4">
                       <div className="space-y-1">
                         <h3 className={`text-base font-semibold transition-colors ${!notification.read ? 'text-slate-900' : 'text-slate-500'}`}>
                           {notification.title}
@@ -127,14 +127,14 @@ const Notifications = () => {
                         </p>
                       </div>
                       
-                      <div className="flex items-center gap-4 shrink-0">
+                      <div className="flex items-center gap-4 shrink-0 self-start sm:self-auto">
                         <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest flex items-center gap-1.5 bg-slate-50 px-2 py-1 rounded-lg">
                           <Clock size={12} />
                           {notification.createdAt ? formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true }) : 'Just now'}
                         </span>
                         <button
                           onClick={(e) => { e.stopPropagation(); deleteNotification(notification._id); }}
-                          className="opacity-0 group-hover:opacity-100 p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                          className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 p-2 text-slate-400 sm:text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
                         >
                           <Trash2 size={16} />
                         </button>

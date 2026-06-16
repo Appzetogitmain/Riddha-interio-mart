@@ -2,21 +2,22 @@ import React from 'react';
 import { Outlet, Link, useNavigate } from 'react-router-dom';
 import DeliverySidebar from './DeliverySidebar';
 import DeliveryBottomNavbar from './DeliveryBottomNavbar';
-import { 
-  LuMenu, 
-  LuUser, 
-  LuChevronDown, 
-  LuTruck, 
-  LuCheck, 
-  LuX, 
-  LuSearch, 
-  LuBell, 
+import {
+  LuMenu,
+  LuUser,
+  LuChevronDown,
+  LuTruck,
+  LuCheck,
+  LuX,
+  LuSearch,
+  LuBell,
   LuZap,
   LuClock,
   LuCircleDot,
   LuNavigation,
   LuLogOut,
-  LuPackage
+  LuPackage,
+  LuWifiOff
 } from 'react-icons/lu';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useUser } from '../../user/data/UserContext';
@@ -48,9 +49,21 @@ const DeliveryLayout = () => {
   const [assignmentRequest, setAssignmentRequest] = React.useState(null);
   const [approvalNotification, setApprovalNotification] = React.useState(null);
   const [notification, setNotification] = React.useState(null);
+  const [isOnline, setIsOnline] = React.useState(navigator.onLine);
   const { user, setUser, logout } = useUser();
   const [updatingStatus, setUpdatingStatus] = React.useState(false);
   const navigate = useNavigate();
+
+  React.useEffect(() => {
+    const handleOnline  = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online',  handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online',  handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   const storedUser = JSON.parse(localStorage.getItem('riddha_user') || 'null');
   const activeUser = user || storedUser;
@@ -353,6 +366,23 @@ const DeliveryLayout = () => {
       <DeliverySidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
       <div className="flex-1 flex flex-col h-full overflow-hidden w-full relative">
+        {/* Offline banner */}
+        <AnimatePresence>
+          {!isOnline && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="overflow-hidden z-[70] sticky top-0"
+            >
+              <div className="bg-rose-600 text-white text-xs font-bold text-center py-2 flex items-center justify-center gap-2">
+                <LuWifiOff size={13} />
+                No internet connection — check your network and try again
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Header */}
         <header className="h-14 md:h-24 bg-white border-b border-slate-100 px-4 md:px-8 flex items-center justify-between z-30 sticky top-0">
           <div className="flex items-center gap-6">

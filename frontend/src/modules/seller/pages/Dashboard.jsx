@@ -183,10 +183,6 @@ const Dashboard = () => {
               ))}
             </div>
             
-            <button className="p-2 bg-white border border-slate-200 rounded-xl text-slate-400 hover:text-seller-primary transition-colors shadow-sm">
-              <Filter size={16} />
-            </button>
-            
             <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 bg-emerald-50 border border-emerald-100 rounded-xl">
                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
                <span className="text-[9px] font-semibold text-emerald-700 uppercase tracking-widest">Operational</span>
@@ -196,29 +192,37 @@ const Dashboard = () => {
 
         {/* Analytics Cards Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard 
-            label="Total Revenue" 
-            value={`₹${stats.totalRevenue.toLocaleString()}`} 
-            icon={Wallet} 
+          <StatCard
+            label="Total Revenue"
+            value={`₹${stats.totalRevenue.toLocaleString()}`}
+            icon={Wallet}
             trend={12.5}
+            onClick={() => navigate('/seller/reports/sales')}
+            linkLabel="Analytics"
           />
-          <StatCard 
-            label="Total Orders" 
-            value={stats.totalOrders} 
-            icon={ShoppingCart} 
+          <StatCard
+            label="Total Orders"
+            value={stats.totalOrders}
+            icon={ShoppingCart}
             trend={8.2}
+            onClick={() => navigate('/seller/orders')}
+            linkLabel="View Orders"
           />
-          <StatCard 
-            label="Pending Fulfillment" 
-            value={stats.pendingOrders} 
-            icon={Clock} 
+          <StatCard
+            label="Pending Fulfillment"
+            value={stats.pendingOrders}
+            icon={Clock}
             trend={-2.4}
+            onClick={() => navigate('/seller/orders')}
+            linkLabel="Manage"
           />
-          <StatCard 
-            label="Wallet Balance" 
-            value={`₹${(stats.walletBalance || 0).toLocaleString()}`} 
-            icon={Layers} 
+          <StatCard
+            label="Wallet Balance"
+            value={`₹${(stats.walletBalance || 0).toLocaleString()}`}
+            icon={Layers}
             trend={5.1}
+            onClick={() => navigate('/seller/wallet')}
+            linkLabel="Wallet"
           />
         </div>
 
@@ -271,7 +275,7 @@ const Dashboard = () => {
               </div>
             </div>
             
-            <div className="h-[350px] w-full">
+            <div className="h-[350px] w-full select-none">
               {loading ? (
                 <div className="w-full h-full flex items-center justify-center space-y-4 flex-col">
                   <div className="w-10 h-10 border-4 border-seller-light border-t-seller-primary rounded-full animate-spin"></div>
@@ -326,7 +330,7 @@ const Dashboard = () => {
             <h3 className="text-lg font-semibold text-slate-900 mb-2">Order Status</h3>
             <p className="text-sm text-slate-500 mb-8">Distribution of fulfillment</p>
             
-            <div className="h-[250px] w-full relative mb-6">
+            <div className="h-[250px] w-full relative mb-6 select-none">
               <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                 <PieChart>
                   <Pie

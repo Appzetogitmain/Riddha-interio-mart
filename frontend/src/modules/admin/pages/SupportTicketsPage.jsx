@@ -11,7 +11,6 @@ import {
   LuBuilding2,
   LuInbox,
   LuSend,
-  LuAlertCircle,
   LuPaperclip,
   LuFileText
 } from 'react-icons/lu';

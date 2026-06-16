@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import PageWrapper from '../components/PageWrapper';
 import { 
   Filter, 
@@ -28,6 +28,7 @@ const MyProducts = () => {
   const [editingProduct, setEditingProduct] = useState(null);
   const [editFormData, setEditFormData] = useState({ name: '', category: '', price: '' });
   const [products, setProducts] = useState([]);
+  const [menuPos, setMenuPos] = useState({ top: 0, right: 0 });
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeMenu, setActiveMenu] = useState(null);
@@ -270,33 +271,34 @@ const MyProducts = () => {
                       <td className="px-8 py-5 text-right relative">
                         <div className="flex items-center justify-end">
                           <div className="relative">
-                            <button 
+                            <button
                               onClick={(e) => {
                                 e.stopPropagation();
                                 const prodId = product._id || product.id;
-                                setActiveMenu(activeMenu === prodId ? null : prodId);
+                                if (activeMenu === prodId) { setActiveMenu(null); return; }
+                                const rect = e.currentTarget.getBoundingClientRect();
+                                setMenuPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
+                                setActiveMenu(prodId);
                               }}
                               className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-xl transition-all cursor-pointer"
                               title="Actions"
                             >
                               <MoreHorizontal size={18} />
                             </button>
-                            
+
                             <AnimatePresence>
                               {activeMenu === (product._id || product.id) && (
                                 <>
-                                  <div 
-                                    className="fixed inset-0 z-40" 
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setActiveMenu(null);
-                                    }} 
+                                  <div
+                                    className="fixed inset-0 z-40"
+                                    onClick={(e) => { e.stopPropagation(); setActiveMenu(null); }}
                                   />
                                   <motion.div
                                     initial={{ opacity: 0, y: 10, scale: 0.95 }}
                                     animate={{ opacity: 1, y: 0, scale: 1 }}
                                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                                    className="absolute right-0 mt-2 w-44 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden z-50 p-1.5 text-left"
+                                    style={{ position: 'fixed', top: menuPos.top, right: menuPos.right }}
+                                    className="w-44 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden z-[100] p-1.5 text-left"
                                   >
                                     <button
                                       onClick={(e) => {

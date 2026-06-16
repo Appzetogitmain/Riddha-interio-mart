@@ -219,9 +219,21 @@ const FeedbackManagement = () => {
                     {/* Product + User */}
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2.5">
-                        <div className="w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center text-[8px] font-black text-gray-500 shrink-0">
-                          #{review._id.slice(-4).toUpperCase()}
-                        </div>
+                        {review.product?.images?.[0] ? (
+                          <img
+                            src={review.product.images[0]}
+                            alt={review.product.name}
+                            className="w-7 h-7 rounded-lg object-cover shrink-0"
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.style.display = 'none';
+                            }}
+                          />
+                        ) : (
+                          <div className="w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center text-[8px] font-black text-gray-500 shrink-0">
+                            #{review._id.slice(-4).toUpperCase()}
+                          </div>
+                        )}
                         <div className="min-w-0">
                           <p className="text-xs font-bold text-gray-900 truncate max-w-[140px]">
                             {review.product?.name || 'Unknown Product'}

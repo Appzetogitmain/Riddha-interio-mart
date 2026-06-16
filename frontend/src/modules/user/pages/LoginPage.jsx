@@ -202,12 +202,12 @@ const LoginPage = () => {
               {/* Phone or Email Input */}
               <div className="space-y-1.5">
                 <label className="text-[11px] font-bold text-slate-700 ml-0.5">
-                  Phone No. / Email
+                  Email
                 </label>
                 <div className="relative">
                   <input
                     type="text"
-                    placeholder="Phone number or email"
+                    placeholder="Email"
                     value={identifier}
                     onChange={(e) => setIdentifier(e.target.value)}
                     className="w-full px-4 py-2.5 bg-slate-50/85 border border-slate-200/80 rounded-xl focus:bg-white focus:border-[#189D91] outline-none transition-all text-xs font-bold text-slate-800 placeholder:text-slate-400 placeholder:font-semibold shadow-sm"

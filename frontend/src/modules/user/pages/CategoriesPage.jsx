@@ -9,6 +9,7 @@ const CategoriesPage = () => {
   const [showAll, setShowAll] = useState(false);
 
   useEffect(() => {
+    window.scrollTo(0, 0);
     const fetchCategories = async () => {
       try {
         const response = await api.get('/categories');

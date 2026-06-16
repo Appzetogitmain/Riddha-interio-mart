@@ -48,6 +48,9 @@ const COLORS = ['#E36666', '#9333EA', '#4F46E5', '#F59E0B', '#10B981', '#F43F5E'
 const SalesReport = () => {
   const navigate = useNavigate();
   const [activeMetric, setActiveMetric] = useState('sales');
+
+  // Always open from the top of the page
+  useEffect(() => { window.scrollTo({ top: 0, behavior: 'instant' }); }, []);
   
   const [loading, setLoading] = useState(true);
   const [chartData, setChartData] = useState([]);
@@ -153,27 +156,6 @@ const SalesReport = () => {
               <div className="w-10" />
            </div>
            
-           {/* Simple & Professional Action Bar */}
-           <div 
-              onClick={handleGenerateReport}
-              className="relative z-10 bg-slate-50 rounded-2xl p-4 flex items-center justify-between border border-slate-100 group-hover:border-seller-primary/30 transition-all cursor-pointer"
-           >
-              <div className="flex items-center gap-3">
-                 <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-seller-primary shadow-sm">
-                    <FileText size={18} />
-                 </div>
-                 <div className="space-y-0.5">
-                    <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-900 leading-none">Generate data report</span>
-                    <p className="text-[8px] font-semibold text-slate-400 uppercase tracking-widest">Full ecosystem performance export</p>
-                 </div>
-              </div>
-              <button 
-                 onClick={(e) => { e.stopPropagation(); handleGenerateReport(); }}
-                 className="w-10 h-10 rounded-full bg-seller-primary text-white flex items-center justify-center shadow-lg shadow-seller-primary/20 hover:scale-105 active:scale-95 transition-all"
-              >
-                 <Plus size={18} />
-              </button>
-           </div>
         </div>
 
         {/* Analytics Content */}

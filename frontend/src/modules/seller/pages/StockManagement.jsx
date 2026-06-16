@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageWrapper from '../components/PageWrapper';
-import { 
-  Search, 
-  AlertCircle, 
-  RefreshCcw, 
-  Package, 
-  ArrowDownCircle, 
+import {
+  Search,
+  AlertCircle,
+  RefreshCcw,
+  Package,
+  ArrowDownCircle,
   CheckCircle2,
   Filter,
   ChevronDown,
@@ -14,7 +14,9 @@ import {
   Plus,
   Zap,
   TrendingDown,
-  BarChart3
+  BarChart3,
+  X,
+  Check
 } from 'lucide-react';
 import api from '../../../shared/utils/api';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -26,10 +28,24 @@ const StockManagement = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState('all'); // all, low, out
+  const [stockEdit, setStockEdit] = useState({ id: null, value: '' }); // inline stock edit
 
   useEffect(() => {
     fetchStockData();
   }, []);
+
+  const handleStockUpdate = async (productId) => {
+    const qty = Number(stockEdit.value);
+    if (isNaN(qty) || qty < 0) { toast.error('Enter a valid quantity'); return; }
+    try {
+      await api.patch(`/products/${productId}`, { countInStock: qty });
+      setProducts(prev => prev.map(p => p._id === productId ? { ...p, countInStock: qty } : p));
+      setStockEdit({ id: null, value: '' });
+      toast.success('Stock updated');
+    } catch {
+      toast.error('Failed to update stock');
+    }
+  };
 
   const fetchStockData = async (isManualRefresh = false) => {
     try {
@@ -189,6 +205,7 @@ const StockManagement = () => {
                     <th className="px-8 py-5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Category</th>
                     <th className="px-8 py-5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-center">Health Status</th>
                     <th className="px-8 py-5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-right">Available Stock</th>
+                    <th className="px-8 py-5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -250,6 +267,34 @@ const StockManagement = () => {
                           </div>
                           {isLow && <p className="text-[10px] font-semibold text-amber-600/70 mt-1 uppercase">Needs Restock</p>}
                           {isOut && <p className="text-[10px] font-semibold text-red-600 mt-1 uppercase">Sold Out</p>}
+                        </td>
+                        <td className="px-8 py-6 text-right">
+                          {stockEdit.id === product._id ? (
+                            <div className="flex items-center justify-end gap-1.5">
+                              <input
+                                type="number"
+                                min="0"
+                                value={stockEdit.value}
+                                onChange={e => setStockEdit(s => ({ ...s, value: e.target.value }))}
+                                onKeyDown={e => { if (e.key === 'Enter') handleStockUpdate(product._id); if (e.key === 'Escape') setStockEdit({ id: null, value: '' }); }}
+                                autoFocus
+                                className="w-20 px-2 py-1.5 text-sm font-bold text-slate-900 bg-slate-50 border border-seller-primary/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-seller-primary/20 text-right"
+                              />
+                              <button onClick={() => handleStockUpdate(product._id)} className="p-1.5 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors">
+                                <Check size={13} />
+                              </button>
+                              <button onClick={() => setStockEdit({ id: null, value: '' })} className="p-1.5 bg-slate-100 text-slate-500 rounded-lg hover:bg-slate-200 transition-colors">
+                                <X size={13} />
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => setStockEdit({ id: product._id, value: String(product.countInStock) })}
+                              className="flex items-center gap-1.5 ml-auto px-3 py-1.5 bg-seller-primary/10 text-seller-primary rounded-lg hover:bg-seller-primary hover:text-white transition-all text-[10px] font-bold uppercase tracking-wider"
+                            >
+                              <Plus size={12} /> Add Stock
+                            </button>
+                          )}
                         </td>
                       </tr>
                     );

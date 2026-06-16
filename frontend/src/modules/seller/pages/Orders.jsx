@@ -49,7 +49,9 @@ const Orders = () => {
       return;
     }
     try {
-      const XLSX = await import('xlsx');
+      // xlsx is CommonJS — unwrap .default when imported via ESM/Vite
+      const xlsxModule = await import('xlsx');
+      const XLSX = xlsxModule.default ?? xlsxModule;
       const dataToExport = filteredOrders.map(order => ({
         'Order ID': order._id ? `#ORD-${order._id.slice(-8).toUpperCase()}` : '-',
         'Date': new Date(order.createdAt).toLocaleDateString('en-GB'),
@@ -63,7 +65,7 @@ const Orders = () => {
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Orders");
       XLSX.writeFile(wb, `Seller_Orders_Report_${new Date().toLocaleDateString().replace(/\//g, '-')}.xlsx`);
-      toast.success("Orders report exported successfully!");
+      toast.success("Orders exported successfully!");
     } catch (err) {
       console.error('Failed to export orders:', err);
       toast.error('Failed to export orders report.');
@@ -179,7 +181,7 @@ const Orders = () => {
 
   return (
     <PageWrapper>
-      <div className="max-w-7xl mx-auto space-y-8">
+      <div className="max-w-7xl mx-auto space-y-4 md:space-y-8">
         
         {/* Header Section - Compact */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -235,14 +237,25 @@ const Orders = () => {
             />
           </div>
           <div className="flex gap-2 w-full md:w-auto shrink-0">
-            <button 
-              onClick={() => setShowRangeModal(true)}
-              className={`flex-1 md:flex-none flex items-center justify-center gap-2 bg-white border px-4 py-2.5 rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-slate-50 transition-all shadow-sm ${startDate || endDate ? 'border-seller-primary text-seller-primary ring-2 ring-seller-primary/10 font-bold' : 'border-slate-200 text-slate-700'}`}
-            >
-              <Calendar size={12} />
-              {startDate || endDate ? 'Filter Active' : 'Range'}
-            </button>
-            <button 
+            <div className="flex-1 md:flex-none flex items-center gap-1">
+              <button
+                onClick={() => setShowRangeModal(true)}
+                className={`flex-1 md:flex-none flex items-center justify-center gap-2 bg-white border px-4 py-2.5 rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-slate-50 transition-all shadow-sm ${startDate || endDate ? 'border-seller-primary text-seller-primary ring-2 ring-seller-primary/10' : 'border-slate-200 text-slate-700'}`}
+              >
+                <Calendar size={12} />
+                {startDate || endDate ? 'Filter Active' : 'Range'}
+              </button>
+              {(startDate || endDate) && (
+                <button
+                  onClick={() => { setStartDate(""); setEndDate(""); }}
+                  title="Clear date filter"
+                  className="flex items-center justify-center w-8 h-8 rounded-xl bg-seller-primary/10 text-seller-primary hover:bg-seller-primary hover:text-white transition-all shadow-sm shrink-0"
+                >
+                  <X size={13} />
+                </button>
+              )}
+            </div>
+            <button
               onClick={exportToExcel}
               className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-seller-primary text-white px-5 py-2.5 rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-seller-dark transition-all shadow-lg shadow-seller-primary/20"
             >
@@ -272,12 +285,13 @@ const Orders = () => {
           ) : (
             <>
               {/* Mobile Card View */}
-              <div className="md:hidden p-3 space-y-3">
+              <div className="md:hidden p-3 space-y-2.5">
                 {filteredOrders.map((order) => (
-                  <OrderCard 
-                    key={order._id} 
-                    order={order} 
+                  <OrderCard
+                    key={order._id}
+                    order={order}
                     onClick={() => navigate(`/seller/orders/${order._id}`)}
+                    onAssign={handleAssignInit}
                   />
                 ))}
               </div>
@@ -378,55 +392,55 @@ const Orders = () => {
                 initial={{ opacity: 0, scale: 0.95, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                className="relative w-full max-w-lg bg-white rounded-[2.5rem] shadow-2xl overflow-hidden z-10 border border-slate-100"
+                className="relative w-full max-w-lg bg-white rounded-2xl md:rounded-[2.5rem] shadow-2xl overflow-hidden z-10 border border-slate-100"
                 onClick={e => e.stopPropagation()}
               >
-                <div className="p-8 border-b border-slate-50 flex items-center justify-between">
+                <div className="px-5 py-4 md:p-8 border-b border-slate-50 flex items-center justify-between">
                   <div>
-                    <h3 className="text-2xl font-bold text-slate-900 tracking-tight">Assign Partner</h3>
-                    <p className="text-sm font-medium text-slate-500 mt-1">Order #{selectedOrderForAssign?._id.slice(-8).toUpperCase()}</p>
+                    <h3 className="text-lg md:text-2xl font-bold text-slate-900 tracking-tight">Assign Partner</h3>
+                    <p className="text-xs md:text-sm font-medium text-slate-500 mt-0.5">Order #{selectedOrderForAssign?._id.slice(-8).toUpperCase()}</p>
                   </div>
                   <button onClick={() => setShowAssignModal(false)} className="p-2 hover:bg-slate-100 rounded-xl transition-colors">
-                    <X size={24} className="text-slate-400" />
+                    <X size={20} className="text-slate-400" />
                   </button>
                 </div>
 
-                <div className="p-8 max-h-[50vh] overflow-y-auto custom-scrollbar space-y-4">
+                <div className="px-4 py-3 md:p-8 max-h-[55vh] overflow-y-auto custom-scrollbar space-y-2.5 md:space-y-4">
                   {deliveryBoys.length === 0 ? (
-                    <div className="text-center py-10 space-y-4">
-                       <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto text-slate-300">
-                          <User size={32} />
+                    <div className="text-center py-8 space-y-3">
+                       <div className="w-14 h-14 bg-slate-50 rounded-full flex items-center justify-center mx-auto text-slate-300">
+                          <User size={28} />
                        </div>
                        <p className="text-sm font-bold text-slate-400">No active delivery partners online.</p>
                     </div>
                   ) : deliveryBoys.map((boy) => (
-                    <div 
+                    <div
                       key={boy._id}
-                      className="p-5 rounded-3xl border border-slate-100 hover:border-seller-primary/30 hover:bg-seller-light/10 transition-all flex items-center justify-between group cursor-pointer"
+                      className="p-3.5 md:p-5 rounded-xl md:rounded-3xl border border-slate-100 hover:border-seller-primary/30 hover:bg-seller-light/10 transition-all flex items-center justify-between group cursor-pointer"
                       onClick={() => handleAssignProcess(boy._id)}
                     >
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-seller-primary flex items-center justify-center text-white relative border-2 border-white shadow-sm">
-                          <User size={20} />
-                          <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full border-2 border-white" />
+                      <div className="flex items-center gap-3 md:gap-4">
+                        <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-seller-primary flex items-center justify-center text-white relative border-2 border-white shadow-sm shrink-0">
+                          <User size={17} />
+                          <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-white" />
                         </div>
-                        <div>
-                          <p className="text-sm font-bold text-slate-900">{boy.fullName}</p>
-                          <div className="flex items-center gap-2 mt-1">
-                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{boy.vehicleType}</span>
-                             <span className="w-1 h-1 rounded-full bg-slate-300"></span>
-                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{boy.phone}</span>
+                        <div className="min-w-0">
+                          <p className="text-sm font-bold text-slate-900 truncate">{boy.fullName}</p>
+                          <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{boy.vehicleType}</span>
+                            <span className="w-1 h-1 rounded-full bg-slate-300"></span>
+                            <span className="text-[10px] font-bold text-slate-400">{boy.phone}</span>
                           </div>
                         </div>
                       </div>
-                      <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-300 group-hover:bg-seller-primary group-hover:text-white transition-all">
-                        <ChevronRight size={20} />
+                      <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-slate-50 flex items-center justify-center text-slate-300 group-hover:bg-seller-primary group-hover:text-white transition-all shrink-0">
+                        <ChevronRight size={16} />
                       </div>
                     </div>
                   ))}
                 </div>
 
-                <div className="p-8 bg-slate-50/50 border-t border-slate-100 text-center">
+                <div className="px-5 py-3 md:p-8 bg-slate-50/50 border-t border-slate-100 text-center">
                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed">Partner selection is prioritized by real-time distance and capacity.</p>
                 </div>
               </motion.div>
@@ -449,20 +463,20 @@ const Orders = () => {
                 initial={{ opacity: 0, scale: 0.95, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                className="relative w-full max-w-md bg-white rounded-[2.5rem] shadow-2xl overflow-hidden z-10 border border-slate-100"
+                className="relative w-full max-w-md bg-white rounded-2xl md:rounded-[2.5rem] shadow-2xl overflow-hidden z-10 border border-slate-100"
                 onClick={e => e.stopPropagation()}
               >
-                <div className="p-8 border-b border-slate-50 flex items-center justify-between">
+                <div className="px-5 py-4 md:p-8 border-b border-slate-50 flex items-center justify-between">
                   <div>
-                    <h3 className="text-2xl font-bold text-slate-900 tracking-tight">Select Date Range</h3>
-                    <p className="text-sm font-medium text-slate-500 mt-1">Filter orders by transaction date</p>
+                    <h3 className="text-lg md:text-2xl font-bold text-slate-900 tracking-tight">Select Date Range</h3>
+                    <p className="text-xs md:text-sm font-medium text-slate-500 mt-0.5">Filter orders by transaction date</p>
                   </div>
                   <button onClick={() => setShowRangeModal(false)} className="p-2 hover:bg-slate-100 rounded-xl transition-colors">
-                    <X size={24} className="text-slate-400" />
+                    <X size={20} className="text-slate-400" />
                   </button>
                 </div>
 
-                <div className="p-8 space-y-5">
+                <div className="px-5 py-4 md:p-8 space-y-4 md:space-y-5">
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-450 uppercase tracking-wider block pl-1">Start Date</label>
                     <input 
@@ -484,20 +498,20 @@ const Orders = () => {
                   </div>
                 </div>
 
-                <div className="p-8 bg-slate-50/50 border-t border-slate-100 flex items-center gap-3">
-                  <button 
+                <div className="px-5 py-4 md:p-8 bg-slate-50/50 border-t border-slate-100 flex items-center gap-3">
+                  <button
                     onClick={() => {
                       setStartDate("");
                       setEndDate("");
                       setShowRangeModal(false);
                     }}
-                    className="flex-1 py-4 border border-slate-200 rounded-xl text-xs font-black uppercase tracking-widest text-slate-500 hover:bg-slate-100 transition-colors"
+                    className="flex-1 py-3 md:py-4 border border-slate-200 rounded-xl text-xs font-black uppercase tracking-widest text-slate-500 hover:bg-slate-100 transition-colors"
                   >
                     Reset & Clear
                   </button>
-                  <button 
+                  <button
                     onClick={() => setShowRangeModal(false)}
-                    className="flex-1 py-4 bg-seller-primary text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-seller-dark transition-all shadow-lg shadow-seller-primary/20"
+                    className="flex-1 py-3 md:py-4 bg-seller-primary text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-seller-dark transition-all shadow-lg shadow-seller-primary/20"
                   >
                     Apply Filter
                   </button>

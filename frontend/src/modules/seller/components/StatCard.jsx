@@ -1,14 +1,14 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { TrendingUp, TrendingDown } from 'lucide-react';
+import { TrendingUp, TrendingDown, ArrowRight } from 'lucide-react';
 import { AreaChart, Area, ResponsiveContainer } from 'recharts';
 
-const StatCard = ({ icon: Icon, label, value, trend, data, color = 'seller-primary' }) => {
+const StatCard = ({ icon: Icon, label, value, trend, data, color = 'seller-primary', onClick, linkLabel }) => {
   const isPositive = trend >= 0;
-  
+
   // Dummy sparkline data if none provided
   const chartData = data || [
-    { value: 30 }, { value: 40 }, { value: 35 }, { value: 50 }, 
+    { value: 30 }, { value: 40 }, { value: 35 }, { value: 50 },
     { value: 45 }, { value: 60 }, { value: 55 }, { value: 70 }
   ];
 
@@ -20,7 +20,8 @@ const StatCard = ({ icon: Icon, label, value, trend, data, color = 'seller-prima
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ y: -2, transition: { duration: 0.2 } }}
-      className="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-lg transition-all group"
+      onClick={onClick}
+      className={`bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-lg transition-all group${onClick ? ' cursor-pointer active:scale-[0.98]' : ''}`}
     >
       <div className="flex items-center justify-between mb-4">
         <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-seller-light/50 group-hover:text-seller-primary transition-all duration-300">
@@ -66,7 +67,13 @@ const StatCard = ({ icon: Icon, label, value, trend, data, color = 'seller-prima
         <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
           vs. last month
         </span>
-        <div className="w-1 h-1 rounded-full bg-slate-200"></div>
+        {onClick && linkLabel ? (
+          <span className="flex items-center gap-0.5 text-[9px] font-black text-seller-primary uppercase tracking-widest group-hover:gap-1.5 transition-all">
+            {linkLabel} <ArrowRight size={10} />
+          </span>
+        ) : (
+          <div className="w-1 h-1 rounded-full bg-slate-200"></div>
+        )}
       </div>
     </motion.div>
   );

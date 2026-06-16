@@ -9,7 +9,7 @@ const { notifyAdminNewDelivery, notifyDeliveryApproval } = require('../socket');
 // @access  Public
 exports.registerDelivery = async (req, res, next) => {
   try {
-    const { fullName, email, password, phone, vehicleType, vehicleNumber, documents } = req.body;
+    const { fullName, email, password, phone, vehicleType, vehicleNumber, documents, referralCode } = req.body;
 
     if (await checkEmailExists(email)) {
       return res.status(400).json({ success: false, error: 'Email already registered' });
@@ -20,7 +20,26 @@ exports.registerDelivery = async (req, res, next) => {
       return res.status(400).json({ success: false, error: 'Phone number already registered' });
     }
 
-    const delivery = await Delivery.create({ fullName, email, password, phone, vehicleType, vehicleNumber, documents });
+    let referredBy = null;
+    if (referralCode) {
+      const User = require('../models/User');
+      const referrer = await User.findOne({ referralCode });
+      if (!referrer) {
+        return res.status(400).json({ success: false, error: 'Invalid referral code' });
+      }
+      referredBy = referrer._id;
+    }
+
+    const delivery = await Delivery.create({ 
+      fullName, 
+      email, 
+      password, 
+      phone, 
+      vehicleType, 
+      vehicleNumber, 
+      documents,
+      referredBy
+    });
     
     // Notify Admin about new registration
     notifyAdminNewDelivery({
@@ -51,6 +70,10 @@ exports.loginDelivery = async (req, res, next) => {
     const delivery = await Delivery.findOne({ email }).select('+password');
     if (!delivery || !(await delivery.matchPassword(password))) {
       return res.status(401).json({ success: false, error: 'Invalid credentials' });
+    }
+
+    if (delivery.isDeleted) {
+      return res.status(403).json({ success: false, error: 'This account has been deleted. Please contact support if you believe this is a mistake.' });
     }
 
     const appStatus = delivery.approvalStatus || 'Approved';
@@ -275,6 +298,11 @@ exports.updateDeliveryApprovalStatus = async (req, res, next) => {
     if (approvalStatus === 'Suspended') {
       updateData.status = 'Offline';
     }
+    if (approvalStatus === 'Approved') {
+      // Clear soft-delete flag if admin explicitly re-approves (restores) the account
+      updateData.isDeleted = false;
+      updateData.deletedAt = null;
+    }
 
     const partner = await Delivery.findByIdAndUpdate(
       req.params.id,
@@ -365,13 +393,17 @@ exports.changeDeliveryPassword = async (req, res, next) => {
   }
 };
 
-// @desc    Delete own delivery account
+// @desc    Delete own delivery account (soft delete — data preserved for admin)
 // @route   DELETE /api/delivery/me
 // @access  Private/Delivery
 exports.deleteDeliveryAccount = async (req, res, next) => {
   try {
-    await Order.updateMany({ deliveryBoy: req.user.id }, { $unset: { deliveryBoy: '' } });
-    await Delivery.findByIdAndDelete(req.user.id);
+    await Delivery.findByIdAndUpdate(req.user.id, {
+      isDeleted: true,
+      deletedAt: new Date(),
+      status: 'Offline',
+      approvalStatus: 'Suspended',
+    });
     res.status(200).json({ success: true, message: 'Account deleted successfully' });
   } catch (err) {
     next(err);

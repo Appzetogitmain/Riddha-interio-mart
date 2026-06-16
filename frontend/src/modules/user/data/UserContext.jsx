@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import api from '../../../shared/utils/api';
 
 const UserContext = createContext();
@@ -61,7 +61,7 @@ export const UserProvider = ({ children }) => {
     }
   }, [user]);
 
-  const fetchAddresses = async () => {
+  const fetchAddresses = useCallback(async () => {
     try {
       const res = await api.get('/address');
       if (res.data.success) {
@@ -73,7 +73,7 @@ export const UserProvider = ({ children }) => {
     } catch (err) {
       console.error('Failed to fetch addresses:', err);
     }
-  };
+  }, []);
 
   const saveAddress = async (addressData) => {
     try {
@@ -150,7 +150,7 @@ export const UserProvider = ({ children }) => {
     deleteAddress,
     fetchAddresses,
     setUser
-  }), [user, loading, isLoggedIn, address, addresses]);
+  }), [user, loading, isLoggedIn, address, addresses, fetchAddresses]);
 
   return (
     <UserContext.Provider value={contextValue}>

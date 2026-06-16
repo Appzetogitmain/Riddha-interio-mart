@@ -90,7 +90,7 @@ const AddressForm = ({ initial = {}, onSave, onCancel, saving }) => {
           <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400">City *</label>
           <input
             value={form.city}
-            onChange={e => set('city', e.target.value)}
+            onChange={e => set('city', e.target.value.replace(/[^a-zA-Z\s]/g, ''))}
             placeholder="City"
             className={`${inputBase} ${errors.city ? err : ok}`}
           />

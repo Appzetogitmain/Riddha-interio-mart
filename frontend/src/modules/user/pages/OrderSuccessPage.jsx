@@ -152,7 +152,7 @@ const OrderSuccessPage = () => {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5">
                     <span className="text-[12px] font-black text-gray-800 font-mono">
-                      #{order._id?.slice(-10).toUpperCase()}
+                      #{order._id?.slice(-8).toUpperCase()}
                     </span>
                     <button onClick={() => handleCopy(order._id)}
                       className="p-0.5 text-gray-300 hover:text-[#189D91] transition-colors shrink-0">

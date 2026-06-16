@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useUser } from '../data/UserContext';
-import { FiArrowLeft, FiUser, FiMail, FiLock, FiEye, FiEyeOff, FiCheck, FiPhone, FiTruck, FiMapPin, FiShoppingBag, FiGift, FiUploadCloud, FiCheckCircle, FiLoader, FiCreditCard, FiShield, FiActivity, FiFileText, FiUserCheck, FiBriefcase } from 'react-icons/fi';
+import { FiArrowLeft, FiUser, FiMail, FiLock, FiEye, FiEyeOff, FiCheck, FiPhone, FiTruck, FiMapPin, FiShoppingBag, FiGift, FiUploadCloud, FiCheckCircle, FiLoader, FiCreditCard, FiShield, FiActivity, FiFileText, FiUserCheck, FiBriefcase, FiX } from 'react-icons/fi';
 import { FaGoogle, FaFacebookF, FaXTwitter } from 'react-icons/fa6';
 import Button from '../../../shared/components/Button';
 import LOGIN_BG from '../../../assets/login_bg_fretshop.png';
@@ -92,6 +92,41 @@ const SignupPage = () => {
   const location = useLocation();
   const { login } = useUser();
 
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [termsContent, setTermsContent] = useState('');
+  const [loadingTerms, setLoadingTerms] = useState(false);
+
+  const referralRef = React.useRef(null);
+  const formRef = React.useRef(null);
+
+  const handleConfirmPasswordFocus = () => {
+    if (referralRef.current) {
+      referralRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  };
+
+  const openTermsModal = async (e) => {
+    e.preventDefault();
+    setShowTermsModal(true);
+    setLoadingTerms(true);
+    try {
+      const role = getRole();
+      const termsType = ['user', 'seller', 'delivery'].includes(role) ? role : 'user';
+      const response = await api.get(`/terms/${termsType}`);
+      if (response.data.success && response.data.data) {
+        setTermsContent(response.data.data.content);
+      } else {
+        setTermsContent('Failed to load terms and conditions.');
+      }
+    } catch (err) {
+      console.error(err);
+      setTermsContent('Failed to load terms and conditions. Please try again.');
+    } finally {
+      setLoadingTerms(false);
+    }
+  };
+
   // Delivery: login-first, then slide up signup (default to signup if path is specifically /signup)
   const [showSignupForm, setShowSignupForm] = useState(() => location.pathname.endsWith('/signup'));
   const [dlId, setDlId] = useState('');
@@ -135,6 +170,7 @@ const SignupPage = () => {
   const handleSignup = async (e) => {
     e.preventDefault();
     setError('');
+    setFieldErrors({});
     setLoading(true);
 
     const role = getRole();
@@ -211,6 +247,7 @@ const SignupPage = () => {
 
       const response = await api.post(`/auth/${role}/register`, {
         ...payload,
+        referralCode: formData.referralCode,
         userType: role === 'user' ? userType : undefined,
         businessDetails: role === 'user' && userType === 'enterpriser' ? {
           shopName: formData.shopName,
@@ -229,7 +266,12 @@ const SignupPage = () => {
         setError('');
       }
     } catch (err) {
-      setError(err.response?.data?.error || 'Registration failed. Please try again.');
+      const errMsg = err.response?.data?.error || 'Registration failed. Please try again.';
+      if (errMsg.toLowerCase().includes('referral')) {
+        setFieldErrors(prev => ({ ...prev, referralCode: errMsg }));
+      } else {
+        setError(errMsg);
+      }
     } finally {
       setLoading(false);
     }
@@ -286,6 +328,14 @@ const SignupPage = () => {
     }
 
     setFormData({ ...formData, [name]: value });
+
+    if (fieldErrors[name]) {
+      setFieldErrors(prev => {
+        const updated = { ...prev };
+        delete updated[name];
+        return updated;
+      });
+    }
   };
 
   // ── Delivery: login form by default, signup slides up full-screen ──
@@ -510,7 +560,7 @@ const SignupPage = () => {
                 )}
 
                 {step === 'signup' ? (
-                  <form onSubmit={handleSignup} className="space-y-3 max-h-[60vh] md:max-h-none overflow-y-auto pr-2 custom-scrollbar">
+                  <form ref={formRef} onSubmit={handleSignup} className="space-y-3 max-h-[60vh] md:max-h-none overflow-y-auto pr-2 custom-scrollbar">
                     {/* Basic Info */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div className="space-y-0.5">
@@ -726,9 +776,9 @@ const SignupPage = () => {
                       <div className="space-y-0.5 relative group">
                         <label className="hidden md:block text-[9px] font-medium uppercase tracking-widest text-white/60 ml-1">Confirm</label>
                         <FiLock className="md:hidden absolute left-5 top-1/2 -translate-y-1/2 text-[#189D91]/40 group-focus-within:text-[#189D91] transition-colors h-4 w-4" />
-                        <input type={showPassword ? "text" : "password"} name="confirmPassword" placeholder={window.innerWidth < 768 ? "Confirm Password" : ""} value={formData.confirmPassword} onChange={handleChange} className="w-full md:pl-5 pl-12 pr-5 py-2.5 rounded-full md:rounded-lg bg-blue-50/50 md:bg-white/10 border border-transparent md:border-white/10 focus:border-[#189D91]/20 md:focus:border-warm-sand/50 focus:bg-white md:focus:bg-white/20 focus:outline-none text-sm md:text-white font-normal transition-all" />
+                        <input type={showPassword ? "text" : "password"} name="confirmPassword" placeholder={window.innerWidth < 768 ? "Confirm Password" : ""} value={formData.confirmPassword} onChange={handleChange} onFocus={handleConfirmPasswordFocus} className="w-full md:pl-5 pl-12 pr-5 py-2.5 rounded-full md:rounded-lg bg-blue-50/50 md:bg-white/10 border border-transparent md:border-white/10 focus:border-[#189D91]/20 md:focus:border-warm-sand/50 focus:bg-white md:focus:bg-white/20 focus:outline-none text-sm md:text-white font-normal transition-all" />
                       </div>
-                      <div className="space-y-0.5 relative group md:col-span-2">
+                      <div ref={referralRef} className="space-y-0.5 relative group md:col-span-2">
                         <label className="hidden md:block text-[9px] font-medium uppercase tracking-widest text-white/60 ml-1">Referral Code (Optional)</label>
                         <FiGift className="md:hidden absolute left-5 top-1/2 -translate-y-1/2 text-[#189D91]/40 group-focus-within:text-[#189D91] transition-colors h-4 w-4" />
                         <input 
@@ -739,13 +789,18 @@ const SignupPage = () => {
                           onChange={handleChange} 
                           className="w-full md:pl-5 pl-12 pr-5 py-2.5 rounded-full md:rounded-lg bg-blue-50/50 md:bg-white/10 border border-transparent md:border-white/10 focus:border-[#189D91]/20 md:focus:border-warm-sand/50 focus:bg-white md:focus:bg-white/20 focus:outline-none text-sm md:text-white font-normal transition-all" 
                         />
+                        {fieldErrors.referralCode && (
+                          <p className="text-[10px] text-rose-500 font-semibold mt-1 ml-2">
+                            {fieldErrors.referralCode}
+                          </p>
+                        )}
                       </div>
                     </div>
 
                     <div className="flex items-center gap-2 pt-2 px-1">
                       <input type="checkbox" checked={agreeTerms} onChange={(e) => setAgreeTerms(e.target.checked)} className="accent-[#189D91] md:accent-warm-sand h-3.5 w-3.5" />
                       <label className="text-[8px] md:text-[9px] font-medium text-gray-400 md:text-white/60 uppercase tracking-widest leading-none">
-                        I agree to the <Link to={getRole() === 'delivery' ? '/delivery/terms' : '/terms'} target="_blank" className="underline font-bold text-gray-600 md:text-white hover:text-[#189D91] md:hover:text-warm-sand transition-colors">Terms & Conditions</Link>
+                        I agree to the <button type="button" onClick={openTermsModal} className="underline font-bold text-gray-600 md:text-white hover:text-[#189D91] md:hover:text-warm-sand transition-colors cursor-pointer bg-transparent border-0 p-0 align-baseline inline-block">Terms & Conditions</button>
                       </label>
                     </div>
 
@@ -820,6 +875,49 @@ const SignupPage = () => {
           </div>
         </div>
       </div>
+      {/* Terms & Conditions Modal Overlay */}
+      {showTermsModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white md:bg-slate-900 rounded-3xl w-full max-w-lg overflow-hidden flex flex-col shadow-2xl border border-slate-100 md:border-white/10 max-h-[80vh]">
+            <div className="px-6 py-4 border-b border-slate-100 md:border-white/5 flex items-center justify-between bg-slate-50 md:bg-white/5">
+              <h3 className="text-sm font-black uppercase tracking-wider text-slate-800 md:text-white">
+                Terms & Conditions
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowTermsModal(false)}
+                className="text-slate-400 hover:text-slate-650 md:text-white/40 md:hover:text-white transition-colors p-1 rounded-full hover:bg-slate-200 md:hover:bg-white/10"
+              >
+                <FiX size={18} />
+              </button>
+            </div>
+            <div className="px-6 py-5 overflow-y-auto text-xs text-slate-600 md:text-white/80 leading-relaxed font-medium space-y-3 flex-1 custom-scrollbar">
+              {loadingTerms ? (
+                <div className="flex flex-col items-center justify-center py-12 gap-3">
+                  <FiLoader className="h-6 w-6 text-[#189D91] md:text-warm-sand animate-spin" />
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Loading terms...</span>
+                </div>
+              ) : (
+                <div className="whitespace-pre-wrap">
+                  {termsContent}
+                </div>
+              )}
+            </div>
+            <div className="px-6 py-4 border-t border-slate-100 md:border-white/5 bg-slate-50 md:bg-white/5 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setAgreeTerms(true);
+                  setShowTermsModal(false);
+                }}
+                className="px-5 py-2.5 bg-[#189D91] md:bg-warm-sand text-white font-bold text-[10px] uppercase tracking-wider rounded-xl hover:bg-black md:hover:bg-white md:hover:text-deep-espresso transition-all active:scale-[0.98]"
+              >
+                Accept & Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

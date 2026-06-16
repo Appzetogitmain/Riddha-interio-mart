@@ -221,7 +221,7 @@ const Settings = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
+            className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 px-4"
             onClick={() => setShowPasswordModal(false)}
           >
             <motion.div
@@ -255,6 +255,7 @@ const Settings = () => {
                         type={show ? 'text' : 'password'}
                         value={cpForm[key]}
                         onChange={(e) => setCpForm(prev => ({ ...prev, [key]: e.target.value }))}
+                        onFocus={(e) => setTimeout(() => e.target.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300)}
                         placeholder={`Enter ${label.toLowerCase()}`}
                         required
                         className="w-full px-4 py-2.5 pr-10 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#189D91]/30"
@@ -289,7 +290,7 @@ const Settings = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
+            className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 px-4"
             onClick={() => setShowDeleteModal(false)}
           >
             <motion.div

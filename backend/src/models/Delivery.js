@@ -91,6 +91,19 @@ const DeliverySchema = new mongoose.Schema({
     default: 0
   },
   otpLockedUntil: Date,
+  referredBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  },
+  isDeleted: {
+    type: Boolean,
+    default: false
+  },
+  deletedAt: {
+    type: Date,
+    default: null
+  },
   createdAt: {
     type: Date,
     default: Date.now

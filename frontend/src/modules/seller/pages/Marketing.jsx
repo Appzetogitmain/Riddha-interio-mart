@@ -225,7 +225,7 @@ const Marketing = () => {
 
   return (
     <PageWrapper>
-      <div className="max-w-6xl mx-auto space-y-6 pb-20 px-4 md:px-0">
+      <div className="max-w-6xl mx-auto space-y-6 pb-20 px-4 md:px-0 overflow-x-hidden">
         
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
@@ -245,7 +245,7 @@ const Marketing = () => {
         </div>
 
         {/* Marketing Hub Tabs */}
-        <div className="flex items-center gap-2 bg-white p-1.5 rounded-2xl border border-slate-100 shadow-sm w-fit">
+        <div className="flex items-center gap-2 bg-white p-1.5 rounded-2xl border border-slate-100 shadow-sm w-full md:w-fit overflow-x-auto no-scrollbar">
            {['Campaigns', 'Coupons', 'Intelligence'].map(tab => (
               <button 
                 key={tab}

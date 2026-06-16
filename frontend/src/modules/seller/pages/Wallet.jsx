@@ -1,13 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { connectSocket } from '../../../shared/utils/socket';
 import PageWrapper from '../components/PageWrapper';
 import api from '../../../shared/utils/api';
-import { 
-  Wallet as WalletIcon, 
-  TrendingUp, 
-  ArrowUpRight, 
-  ArrowDownLeft, 
-  Search, 
+import { useNavigate } from 'react-router-dom';
+import {
+  Wallet as WalletIcon,
+  TrendingUp,
+  ArrowUpRight,
+  ArrowDownLeft,
+  Search,
   Filter,
   DollarSign,
   ChevronRight,
@@ -28,6 +29,8 @@ const initialTransactions = [
 ];
 
 const Wallet = () => {
+  const txnRef = useRef(null);
+  const navigate = useNavigate();
   const [walletData, setWalletData] = useState({
     withdrawableBalance: 0,
     pendingBalance: 0,
@@ -58,6 +61,24 @@ const Wallet = () => {
   React.useEffect(() => {
     fetchWallet();
   }, []);
+
+  const handleDownloadCSV = () => {
+    const txns = walletData.transactions;
+    if (!txns || txns.length === 0) { toast.error('No transactions to export.'); return; }
+    const headers = ['Type', 'Amount (₹)', 'Status', 'Date'];
+    const rows = txns.map(t => [
+      t.orderData ? `${t.orderData.productName}` : t.type?.replace(/_/g, ' '),
+      t.amount,
+      t.status,
+      new Date(t.createdAt || t.date).toLocaleDateString('en-GB')
+    ]);
+    const csv = [headers, ...rows].map(r => r.map(v => `"${v ?? ''}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = 'wallet_transactions.csv'; a.click();
+    URL.revokeObjectURL(url);
+    toast.success('Transactions exported!');
+  };
 
   // Listen for socket events to update wallet in real-time
   React.useEffect(() => {
@@ -136,7 +157,7 @@ const Wallet = () => {
           </div>
           
           <div className="flex items-center gap-3">
-             <button className="p-3 bg-white border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 transition-all shadow-sm">
+             <button onClick={handleDownloadCSV} className="p-3 bg-white border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 transition-all shadow-sm" title="Export transactions as CSV">
                 <Download size={20} />
              </button>
              <button 
@@ -149,85 +170,119 @@ const Wallet = () => {
           </div>
         </div>
 
-        {/* Financial KPI Cards - Compact Professional Style */}
+        {/* Financial KPI Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Main Balance Card - Professional White */}
-          <div className="md:col-span-1 bg-white rounded-3xl p-6 border border-slate-100 shadow-2xl shadow-slate-200/40 relative overflow-hidden group">
-             <div className="absolute top-0 right-0 w-32 h-32 bg-seller-primary/5 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-seller-primary/10 transition-all duration-700"></div>
-             
-             <div className="relative z-10 flex flex-col h-full justify-between">
-                <div className="flex items-center justify-between mb-6">
-                   <div className="w-12 h-12 bg-seller-primary/10 rounded-xl flex items-center justify-center border border-seller-primary/10">
-                      <WalletIcon size={24} className="text-seller-primary" />
-                   </div>
-                   <div className="flex flex-col items-end">
-                      <span className="text-[9px] font-semibold text-slate-400 uppercase tracking-widest leading-none mb-1">Wallet Status</span>
-                      <span className="text-[10px] font-semibold text-slate-900 flex items-center gap-1 uppercase tracking-widest">
-                         <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div> Active
-                      </span>
-                   </div>
+          {/* Main Balance Card — click to open withdraw */}
+          <motion.div
+            whileHover={{ y: -2 }}
+            whileTap={{ scale: 0.985 }}
+            onClick={() => setShowWithdrawModal(true)}
+            className="md:col-span-1 bg-white rounded-3xl p-6 border border-slate-100 shadow-2xl shadow-slate-200/40 relative overflow-hidden group cursor-pointer select-none"
+          >
+            <div className="absolute top-0 right-0 w-32 h-32 bg-seller-primary/5 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-seller-primary/10 transition-all duration-700" />
+
+            <div className="relative z-10 flex flex-col h-full justify-between">
+              <div className="flex items-center justify-between mb-6">
+                <div className="w-12 h-12 bg-seller-primary/10 rounded-xl flex items-center justify-center border border-seller-primary/10 group-hover:bg-seller-primary group-hover:border-seller-primary transition-all duration-300">
+                  <WalletIcon size={24} className="text-seller-primary group-hover:text-white transition-colors duration-300" />
                 </div>
-                 <div>
-                   <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-1.5 leading-none">Available Balance</p>
-                   <h2 className="text-3xl font-semibold tracking-tight text-slate-900">₹{walletData.withdrawableBalance.toLocaleString()}</h2>
+                <div className="flex flex-col items-end">
+                  <span className="text-[9px] font-semibold text-slate-400 uppercase tracking-widest leading-none mb-1">Wallet Status</span>
+                  <span className="text-[10px] font-semibold text-slate-900 flex items-center gap-1 uppercase tracking-widest">
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Active
+                  </span>
                 </div>
-                <div className="mt-6 pt-6 border-t border-slate-50 flex items-center justify-between">
-                   <div className="flex flex-col">
-                      <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Total Earnings</span>
-                      <span className="text-[10px] font-black text-slate-900 uppercase tracking-widest">₹{walletData.totalEarnings.toLocaleString()}</span>
-                   </div>
-                   <button className="text-[10px] font-semibold text-seller-primary bg-seller-primary/5 px-3 py-1.5 rounded-lg border border-seller-primary/10 hover:bg-seller-primary hover:text-white transition-all flex items-center gap-1 uppercase tracking-widest">
-                      Details <ChevronRight size={14} />
-                   </button>
+              </div>
+
+              <div>
+                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-1.5 leading-none">Available Balance</p>
+                <h2 className="text-3xl font-semibold tracking-tight text-slate-900">₹{walletData.withdrawableBalance.toLocaleString()}</h2>
+              </div>
+
+              <div className="mt-6 pt-6 border-t border-slate-50 flex items-center justify-between">
+                <div className="flex flex-col">
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Total Earnings</span>
+                  <span className="text-[10px] font-black text-slate-900 uppercase tracking-widest">₹{walletData.totalEarnings.toLocaleString()}</span>
                 </div>
-             </div>
-          </div>
-          {/* Secondary Stats - Compact */}
+                <button
+                  onClick={(e) => { e.stopPropagation(); txnRef.current?.scrollIntoView({ behavior: 'smooth' }); }}
+                  className="text-[10px] font-semibold text-seller-primary bg-seller-primary/5 px-3 py-1.5 rounded-lg border border-seller-primary/10 hover:bg-seller-primary hover:text-white transition-all flex items-center gap-1 uppercase tracking-widest"
+                >
+                  Details <ChevronRight size={14} />
+                </button>
+              </div>
+
+              {/* Hover hint */}
+              <p className="text-[9px] font-semibold text-seller-primary/0 group-hover:text-seller-primary/60 uppercase tracking-widest mt-3 transition-all duration-300 text-center">
+                Click to withdraw funds
+              </p>
+            </div>
+          </motion.div>
+
+          {/* Secondary Stats */}
           <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6">
-             <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm group hover:shadow-md transition-all">
-                <div className="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600 mb-4 group-hover:scale-110 transition-transform">
-                   <TrendingUp size={24} />
+            {/* Total Gross Revenue — navigate to analytics */}
+            <motion.div
+              whileHover={{ y: -2 }}
+              whileTap={{ scale: 0.985 }}
+              onClick={() => navigate('/seller/reports/sales')}
+              className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm group hover:shadow-lg transition-all cursor-pointer select-none"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600 group-hover:scale-110 group-hover:bg-emerald-100 transition-all">
+                  <TrendingUp size={24} />
                 </div>
-                <div>
-                   <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-1 leading-none">Total Gross Revenue</p>
-                   <h3 className="text-2xl font-semibold text-slate-900 tracking-tight">₹{walletData.totalEarnings.toLocaleString()}</h3>
-                   <div className="flex items-center gap-2 mt-3">
-                      <div className="flex items-center gap-1 px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded-lg text-[9px] font-semibold uppercase tracking-widest">
-                         <ArrowUpRight size={10} /> Lifetime
-                      </div>
-                   </div>
+                <ChevronRight size={16} className="text-slate-200 group-hover:text-emerald-400 group-hover:translate-x-0.5 transition-all" />
+              </div>
+              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-1 leading-none">Total Gross Revenue</p>
+              <h3 className="text-2xl font-semibold text-slate-900 tracking-tight">₹{walletData.totalEarnings.toLocaleString()}</h3>
+              <div className="flex items-center justify-between mt-3">
+                <div className="flex items-center gap-1 px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded-lg text-[9px] font-semibold uppercase tracking-widest">
+                  <ArrowUpRight size={10} /> Lifetime
                 </div>
-             </div>
- 
-             <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm group hover:shadow-md transition-all">
-                <div className="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-600 mb-4 group-hover:scale-110 transition-transform">
-                   <History size={24} />
+                <span className="text-[9px] font-semibold text-slate-300 group-hover:text-emerald-500 uppercase tracking-widest transition-colors">View Report →</span>
+              </div>
+            </motion.div>
+
+            {/* Processing Payouts — navigate to orders */}
+            <motion.div
+              whileHover={{ y: -2 }}
+              whileTap={{ scale: 0.985 }}
+              onClick={() => navigate('/seller/orders')}
+              className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm group hover:shadow-lg transition-all cursor-pointer select-none"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-600 group-hover:scale-110 group-hover:bg-amber-100 transition-all">
+                  <History size={24} />
                 </div>
-                <div>
-                   <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-1 leading-none">Processing Payouts (Pending)</p>
-                   <h3 className="text-2xl font-semibold text-slate-900 tracking-tight">₹{walletData.pendingBalance.toLocaleString()}</h3>
-                   <div className="flex items-center gap-2 mt-3 text-[9px] font-semibold text-slate-400 uppercase tracking-widest">
-                      <Clock size={12} className="text-amber-500" /> Awaiting Delivery
-                   </div>
+                <ChevronRight size={16} className="text-slate-200 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all" />
+              </div>
+              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-1 leading-none">Processing Payouts (Pending)</p>
+              <h3 className="text-2xl font-semibold text-slate-900 tracking-tight">₹{walletData.pendingBalance.toLocaleString()}</h3>
+              <div className="flex items-center justify-between mt-3">
+                <div className="flex items-center gap-2 text-[9px] font-semibold text-slate-400 uppercase tracking-widest">
+                  <Clock size={12} className="text-amber-500" /> Awaiting Delivery
                 </div>
-             </div>
+                <span className="text-[9px] font-semibold text-slate-300 group-hover:text-amber-500 uppercase tracking-widest transition-colors">View Orders →</span>
+              </div>
+            </motion.div>
           </div>
         </div>
 
         {/* Transaction History */}
-        <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden">
-          <div className="p-8 border-b border-slate-100 flex items-center justify-between">
-            <div className="flex items-center gap-3">
+        <div ref={txnRef} className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden">
+          <div className="px-6 md:px-8 py-5 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div className="flex items-center gap-3 shrink-0">
                <History className="text-slate-400" size={20} />
                <h3 className="text-lg font-semibold text-slate-900">Recent Transactions</h3>
             </div>
-            <div className="flex items-center gap-3">
-               <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                  <input type="text" placeholder="Search..." className="pl-9 pr-4 py-2 bg-slate-50 border-none rounded-xl text-xs font-semibold focus:ring-2 focus:ring-seller-primary/10 w-40 md:w-64" />
+            <div className="flex items-center gap-2 w-full md:w-auto">
+               <div className="relative flex-1 md:flex-none">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+                  <input type="text" placeholder="Search..." className="pl-9 pr-4 py-2 bg-slate-50 border-none rounded-xl text-xs font-semibold focus:ring-2 focus:ring-seller-primary/10 w-full md:w-52" />
                </div>
-               <button className="p-2.5 bg-slate-50 text-slate-400 rounded-xl hover:bg-slate-100 transition-colors">
-                  <Filter size={18} />
+               <button className="p-2.5 bg-slate-50 text-slate-400 rounded-xl hover:bg-slate-100 transition-colors shrink-0">
+                  <Filter size={16} />
                </button>
             </div>
           </div>

@@ -31,7 +31,11 @@ const SellerSignup = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [termsContent, setTermsContent] = useState('');
+  const [loadingTerms, setLoadingTerms] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -47,41 +51,120 @@ const SellerSignup = () => {
     }
     
     setFormData({ ...formData, [name]: value });
+    // Clear field-specific error as user types
+    if (fieldErrors[name]) {
+      setFieldErrors({ ...fieldErrors, [name]: '' });
+    }
   };
 
   const handleFileChange = (e) => {
-    setDocs({ ...docs, [e.target.name]: e.target.files[0] });
+    const file = e.target.files[0];
+    setDocs({ ...docs, [e.target.name]: file });
+    if (fieldErrors[e.target.name]) {
+      setFieldErrors({ ...fieldErrors, [e.target.name]: '' });
+    }
+  };
+
+  const openTermsModal = async () => {
+    setShowTermsModal(true);
+    if (termsContent) return;
+    try {
+      setLoadingTerms(true);
+      const { data } = await api.get('/terms/seller');
+      if (data.success && data.data) {
+        setTermsContent(data.data.content || 'No terms content found.');
+      }
+    } catch (err) {
+      console.error('Failed to load seller terms:', err);
+      setTermsContent('Failed to load terms and conditions.');
+    } finally {
+      setLoadingTerms(false);
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+    if (!formData.fullName.trim()) {
+      newErrors.fullName = 'Full name is required';
+    } else if (formData.fullName.trim().length < 3) {
+      newErrors.fullName = 'Name must be at least 3 characters';
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email address is required';
+    } else if (!emailRegex.test(formData.email)) {
+      newErrors.email = 'Please enter a valid email address';
+    }
+
+    if (!formData.shopName.trim()) {
+      newErrors.shopName = 'Shop name is required';
+    } else if (formData.shopName.trim().length < 3) {
+      newErrors.shopName = 'Shop name must be at least 3 characters';
+    }
+
+    if (!formData.phone.trim()) {
+      newErrors.phone = 'Phone number is required';
+    } else if (formData.phone.length !== 10) {
+      newErrors.phone = 'Phone number must be exactly 10 digits';
+    }
+
+    const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+    if (!formData.gstNumber.trim()) {
+      newErrors.gstNumber = 'GST number is required';
+    } else if (!gstRegex.test(formData.gstNumber)) {
+      newErrors.gstNumber = 'Please enter a valid 15-character GSTIN';
+    }
+
+    const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
+    if (!formData.panNumber.trim()) {
+      newErrors.panNumber = 'PAN number is required';
+    } else if (!panRegex.test(formData.panNumber)) {
+      newErrors.panNumber = 'Please enter a valid 10-character PAN';
+    }
+
+    if (!docs.gstDoc) {
+      newErrors.gstDoc = 'GST certificate is required';
+    }
+    if (!docs.panDoc) {
+      newErrors.panDoc = 'PAN card document is required';
+    }
+    if (!docs.shopDoc) {
+      newErrors.shopDoc = 'Shop document is required';
+    }
+
+    if (!formData.shopAddress.trim()) {
+      newErrors.shopAddress = 'Business address is required';
+    } else if (formData.shopAddress.trim().length < 10) {
+      newErrors.shopAddress = 'Address must be at least 10 characters';
+    }
+
+    if (!formData.password) {
+      newErrors.password = 'Password is required';
+    } else if (formData.password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters';
+    }
+
+    if (!formData.confirmPassword) {
+      newErrors.confirmPassword = 'Please confirm password';
+    } else if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = 'Passwords do not match';
+    }
+
+    if (!agreeTerms) {
+      newErrors.agreeTerms = 'You must agree to the terms';
+    }
+
+    setFieldErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSignup = async (e) => {
     e.preventDefault();
     setError('');
+    setFieldErrors({});
     
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
-
-    const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
-    if (!panRegex.test(formData.panNumber)) {
-      setError('Please enter a valid PAN number');
-      return;
-    }
-
-    const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
-    if (!gstRegex.test(formData.gstNumber)) {
-      setError('Please enter a valid GST number');
-      return;
-    }
-
-    if (!agreeTerms) {
-      setError('Please agree to the terms and conditions');
-      return;
-    }
-
-    // Check if documents are uploaded
-    if (!docs.gstDoc || !docs.panDoc || !docs.shopDoc) {
-      setError('Please upload all required business documents');
+    if (!validateForm()) {
       return;
     }
 
@@ -224,10 +307,10 @@ const SellerSignup = () => {
                         value={formData.fullName}
                         onChange={handleChange}
                         placeholder="Legal name"
-                        className="w-full pl-12 pr-4 py-2.5 md:py-2 md:pl-9 rounded-xl bg-[#FDF8F8] border-2 border-transparent focus:border-[#E36666]/20 focus:bg-white focus:outline-none text-sm md:text-[11px] font-medium text-slate-700 transition-all"
-                        required
+                        className={`w-full pl-12 pr-4 py-2.5 md:py-2 md:pl-9 rounded-xl bg-[#FDF8F8] border-2 ${fieldErrors.fullName ? 'border-red-500/50' : 'border-transparent'} focus:border-[#E36666]/20 focus:bg-white focus:outline-none text-sm md:text-[11px] font-medium text-slate-700 transition-all`}
                       />
                     </div>
+                    {fieldErrors.fullName && <p className="text-[10px] text-red-500 font-semibold mt-1 ml-1">{fieldErrors.fullName}</p>}
                   </div>
                   <div className="space-y-1 md:space-y-0.5">
                     <label className="text-[10px] md:text-[8px] font-semibold uppercase tracking-widest text-slate-400 ml-1">Email Address</label>
@@ -239,10 +322,10 @@ const SellerSignup = () => {
                         value={formData.email}
                         onChange={handleChange}
                         placeholder="Business email"
-                        className="w-full pl-12 pr-4 py-2.5 md:py-2 md:pl-9 rounded-xl bg-[#FDF8F8] border-2 border-transparent focus:border-[#E36666]/20 focus:bg-white focus:outline-none text-sm md:text-[11px] font-medium text-slate-700 transition-all"
-                        required
+                        className={`w-full pl-12 pr-4 py-2.5 md:py-2 md:pl-9 rounded-xl bg-[#FDF8F8] border-2 ${fieldErrors.email ? 'border-red-500/50' : 'border-transparent'} focus:border-[#E36666]/20 focus:bg-white focus:outline-none text-sm md:text-[11px] font-medium text-slate-700 transition-all`}
                       />
                     </div>
+                    {fieldErrors.email && <p className="text-[10px] text-red-500 font-semibold mt-1 ml-1">{fieldErrors.email}</p>}
                   </div>
                 </div>
 
@@ -257,10 +340,10 @@ const SellerSignup = () => {
                         value={formData.shopName}
                         onChange={handleChange}
                         placeholder="Store name"
-                        className="w-full pl-12 pr-4 py-2.5 md:py-2 md:pl-9 rounded-xl bg-[#FDF8F8] border-2 border-transparent focus:border-[#E36666]/20 focus:bg-white focus:outline-none text-sm md:text-[11px] font-medium text-slate-700 transition-all"
-                        required
+                        className={`w-full pl-12 pr-4 py-2.5 md:py-2 md:pl-9 rounded-xl bg-[#FDF8F8] border-2 ${fieldErrors.shopName ? 'border-red-500/50' : 'border-transparent'} focus:border-[#E36666]/20 focus:bg-white focus:outline-none text-sm md:text-[11px] font-medium text-slate-700 transition-all`}
                       />
                     </div>
+                    {fieldErrors.shopName && <p className="text-[10px] text-red-500 font-semibold mt-1 ml-1">{fieldErrors.shopName}</p>}
                   </div>
                   <div className="space-y-1 md:space-y-0.5">
                     <label className="text-[10px] md:text-[8px] font-semibold uppercase tracking-widest text-slate-400 ml-1">Phone Number</label>
@@ -272,10 +355,10 @@ const SellerSignup = () => {
                         value={formData.phone}
                         onChange={handleChange}
                         placeholder="Direct contact"
-                        className="w-full pl-12 pr-4 py-2.5 md:py-2 md:pl-9 rounded-xl bg-[#FDF8F8] border-2 border-transparent focus:border-[#E36666]/20 focus:bg-white focus:outline-none text-sm md:text-[11px] font-medium text-slate-700 transition-all"
-                        required
+                        className={`w-full pl-12 pr-4 py-2.5 md:py-2 md:pl-9 rounded-xl bg-[#FDF8F8] border-2 ${fieldErrors.phone ? 'border-red-500/50' : 'border-transparent'} focus:border-[#E36666]/20 focus:bg-white focus:outline-none text-sm md:text-[11px] font-medium text-slate-700 transition-all`}
                       />
                     </div>
+                    {fieldErrors.phone && <p className="text-[10px] text-red-500 font-semibold mt-1 ml-1">{fieldErrors.phone}</p>}
                   </div>
                 </div>
               </div>
@@ -296,9 +379,9 @@ const SellerSignup = () => {
                       value={formData.gstNumber}
                       onChange={handleChange}
                       placeholder="GSTIN"
-                      className="w-full px-4 py-2.5 md:py-2 rounded-xl bg-[#FDF8F8] border-2 border-transparent focus:border-[#E36666]/20 focus:bg-white focus:outline-none text-sm md:text-[11px] font-medium text-slate-700 transition-all"
-                      required
+                      className={`w-full px-4 py-2.5 md:py-2 rounded-xl bg-[#FDF8F8] border-2 ${fieldErrors.gstNumber ? 'border-red-500/50' : 'border-transparent'} focus:border-[#E36666]/20 focus:bg-white focus:outline-none text-sm md:text-[11px] font-medium text-slate-700 transition-all`}
                     />
+                    {fieldErrors.gstNumber && <p className="text-[10px] text-red-500 font-semibold mt-1 ml-1">{fieldErrors.gstNumber}</p>}
                   </div>
                   <div className="space-y-1 md:space-y-0.5">
                     <label className="text-[10px] md:text-[8px] font-semibold uppercase tracking-widest text-slate-400 ml-1">PAN Number</label>
@@ -308,9 +391,9 @@ const SellerSignup = () => {
                       value={formData.panNumber}
                       onChange={handleChange}
                       placeholder="PAN"
-                      className="w-full px-4 py-2.5 md:py-2 rounded-xl bg-[#FDF8F8] border-2 border-transparent focus:border-[#E36666]/20 focus:bg-white focus:outline-none text-sm md:text-[11px] font-medium text-slate-700 transition-all"
-                      required
+                      className={`w-full px-4 py-2.5 md:py-2 rounded-xl bg-[#FDF8F8] border-2 ${fieldErrors.panNumber ? 'border-red-500/50' : 'border-transparent'} focus:border-[#E36666]/20 focus:bg-white focus:outline-none text-sm md:text-[11px] font-medium text-slate-700 transition-all`}
                     />
+                    {fieldErrors.panNumber && <p className="text-[10px] text-red-500 font-semibold mt-1 ml-1">{fieldErrors.panNumber}</p>}
                   </div>
                 </div>
 
@@ -318,33 +401,36 @@ const SellerSignup = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-3">
                   <div className="space-y-2">
                     <label className="text-[9px] font-semibold uppercase tracking-widest text-slate-400 ml-1">GST Certificate</label>
-                    <label className="relative flex flex-col items-center justify-center p-4 border-2 border-dashed border-slate-100 rounded-2xl bg-[#FDF8F8] hover:bg-white hover:border-[#E36666]/20 transition-all cursor-pointer group">
+                    <label className={`relative flex flex-col items-center justify-center p-4 border-2 border-dashed ${fieldErrors.gstDoc ? 'border-red-500/50' : 'border-slate-100'} rounded-2xl bg-[#FDF8F8] hover:bg-white hover:border-[#E36666]/20 transition-all cursor-pointer group`}>
                       <FiFileText className={`size-6 ${docs.gstDoc ? 'text-emerald-500' : 'text-slate-300'} mb-1`} />
                       <span className="text-[10px] font-semibold text-slate-400 text-center truncate w-full px-2">
                         {docs.gstDoc ? docs.gstDoc.name : 'Upload PDF/JPG'}
                       </span>
                       <input type="file" name="gstDoc" onChange={handleFileChange} className="sr-only" accept="image/*,application/pdf,.pdf,.jpg,.jpeg,.png" />
                     </label>
+                    {fieldErrors.gstDoc && <p className="text-[10px] text-red-500 font-semibold mt-0.5 text-center">{fieldErrors.gstDoc}</p>}
                   </div>
                   <div className="space-y-2">
                     <label className="text-[9px] font-semibold uppercase tracking-widest text-slate-400 ml-1">PAN Card Doc</label>
-                    <label className="relative flex flex-col items-center justify-center p-4 border-2 border-dashed border-slate-100 rounded-2xl bg-[#FDF8F8] hover:bg-white hover:border-[#E36666]/20 transition-all cursor-pointer group">
+                    <label className={`relative flex flex-col items-center justify-center p-4 border-2 border-dashed ${fieldErrors.panDoc ? 'border-red-500/50' : 'border-slate-100'} rounded-2xl bg-[#FDF8F8] hover:bg-white hover:border-[#E36666]/20 transition-all cursor-pointer group`}>
                       <FiFileText className={`size-6 ${docs.panDoc ? 'text-emerald-500' : 'text-slate-300'} mb-1`} />
                       <span className="text-[10px] font-semibold text-slate-400 text-center truncate w-full px-2">
                         {docs.panDoc ? docs.panDoc.name : 'Upload PDF/JPG'}
                       </span>
                       <input type="file" name="panDoc" onChange={handleFileChange} className="sr-only" accept="image/*,application/pdf,.pdf,.jpg,.jpeg,.png" />
                     </label>
+                    {fieldErrors.panDoc && <p className="text-[10px] text-red-500 font-semibold mt-0.5 text-center">{fieldErrors.panDoc}</p>}
                   </div>
                   <div className="space-y-2">
                     <label className="text-[9px] font-semibold uppercase tracking-widest text-slate-400 ml-1">Shop Establishment</label>
-                    <label className="relative flex flex-col items-center justify-center p-4 border-2 border-dashed border-slate-100 rounded-2xl bg-[#FDF8F8] hover:bg-white hover:border-[#E36666]/20 transition-all cursor-pointer group">
+                    <label className={`relative flex flex-col items-center justify-center p-4 border-2 border-dashed ${fieldErrors.shopDoc ? 'border-red-500/50' : 'border-slate-100'} rounded-2xl bg-[#FDF8F8] hover:bg-white hover:border-[#E36666]/20 transition-all cursor-pointer group`}>
                       <FiFileText className={`size-6 ${docs.shopDoc ? 'text-emerald-500' : 'text-slate-300'} mb-1`} />
                       <span className="text-[10px] font-semibold text-slate-400 text-center truncate w-full px-2">
                         {docs.shopDoc ? docs.shopDoc.name : 'Upload PDF/JPG'}
                       </span>
                       <input type="file" name="shopDoc" onChange={handleFileChange} className="sr-only" accept="image/*,application/pdf,.pdf,.jpg,.jpeg,.png" />
                     </label>
+                    {fieldErrors.shopDoc && <p className="text-[10px] text-red-500 font-semibold mt-0.5 text-center">{fieldErrors.shopDoc}</p>}
                   </div>
                 </div>
 
@@ -357,10 +443,10 @@ const SellerSignup = () => {
                       value={formData.shopAddress}
                       onChange={handleChange}
                       placeholder="Full operating address"
-                      className="w-full pl-12 pr-4 py-2.5 md:py-2 md:pl-9 rounded-xl bg-[#FDF8F8] border-2 border-transparent focus:border-[#E36666]/20 focus:bg-white focus:outline-none text-sm md:text-[11px] font-medium text-slate-700 transition-all"
-                      required
+                      className={`w-full pl-12 pr-4 py-2.5 md:py-2 md:pl-9 rounded-xl bg-[#FDF8F8] border-2 ${fieldErrors.shopAddress ? 'border-red-500/50' : 'border-transparent'} focus:border-[#E36666]/20 focus:bg-white focus:outline-none text-sm md:text-[11px] font-medium text-slate-700 transition-all`}
                     />
                   </div>
+                  {fieldErrors.shopAddress && <p className="text-[10px] text-red-500 font-semibold mt-1 ml-1">{fieldErrors.shopAddress}</p>}
                 </div>
               </div>
 
@@ -381,13 +467,13 @@ const SellerSignup = () => {
                         value={formData.password}
                         onChange={handleChange}
                         placeholder="••••••••"
-                        className="w-full pl-12 pr-10 py-2.5 md:py-2 md:pl-9 rounded-xl bg-[#FDF8F8] border-2 border-transparent focus:border-[#E36666]/20 focus:bg-white focus:outline-none text-sm md:text-[11px] font-medium text-slate-700 transition-all"
-                        required
+                        className={`w-full pl-12 pr-10 py-2.5 md:py-2 md:pl-9 rounded-xl bg-[#FDF8F8] border-2 ${fieldErrors.password ? 'border-red-500/50' : 'border-transparent'} focus:border-[#E36666]/20 focus:bg-white focus:outline-none text-sm md:text-[11px] font-medium text-slate-700 transition-all`}
                       />
                       <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300">
                         {showPassword ? <FiEyeOff size={16} /> : <FiEye size={16} />}
                       </button>
                     </div>
+                    {fieldErrors.password && <p className="text-[10px] text-red-500 font-semibold mt-1 ml-1">{fieldErrors.password}</p>}
                   </div>
                   <div className="space-y-1 md:space-y-0.5">
                     <label className="text-[10px] md:text-[8px] font-semibold uppercase tracking-widest text-slate-400 ml-1">Confirm Password</label>
@@ -399,14 +485,14 @@ const SellerSignup = () => {
                         value={formData.confirmPassword}
                         onChange={handleChange}
                         placeholder="••••••••"
-                        className="w-full pl-12 pr-4 py-2.5 md:py-2 md:pl-9 rounded-xl bg-[#FDF8F8] border-2 border-transparent focus:border-[#E36666]/20 focus:bg-white focus:outline-none text-sm md:text-[11px] font-medium text-slate-700 transition-all"
-                        required
+                        className={`w-full pl-12 pr-4 py-2.5 md:py-2 md:pl-9 rounded-xl bg-[#FDF8F8] border-2 ${fieldErrors.confirmPassword ? 'border-red-500/50' : 'border-transparent'} focus:border-[#E36666]/20 focus:bg-white focus:outline-none text-sm md:text-[11px] font-medium text-slate-700 transition-all`}
                       />
                     </div>
+                    {fieldErrors.confirmPassword && <p className="text-[10px] text-red-500 font-semibold mt-1 ml-1">{fieldErrors.confirmPassword}</p>}
                   </div>
                 </div>
 
-                <div className="flex flex-col md:flex-row items-center gap-4 pt-2">
+                <div className="flex flex-col md:flex-row items-start md:items-center gap-4 pt-2">
                   <div className="w-full md:w-1/2 space-y-1 md:space-y-0.5">
                     <label className="text-[10px] md:text-[8px] font-semibold uppercase tracking-widest text-slate-400 ml-1">Referral (Optional)</label>
                     <div className="relative group">
@@ -421,16 +507,24 @@ const SellerSignup = () => {
                       />
                     </div>
                   </div>
-                  <div className="w-full md:w-1/2 flex items-center gap-3 mt-4 md:mt-2">
-                    <input 
-                      type="checkbox" 
-                      checked={agreeTerms} 
-                      onChange={(e) => setAgreeTerms(e.target.checked)} 
-                      className="w-5 h-5 md:w-4 md:h-4 accent-[#E36666] rounded cursor-pointer"
-                    />
-                    <label className="text-[11px] md:text-[9px] font-semibold text-slate-400 uppercase tracking-widest leading-none cursor-pointer">
-                      I agree to the <Link to="/seller/terms" target="_blank" className="text-slate-900 underline decoration-[#E36666]/30 hover:text-[#E36666] transition-colors">Terms & Conditions</Link>
-                    </label>
+                  <div className="w-full md:w-1/2 flex flex-col gap-1.5 mt-4 md:mt-2">
+                    <div className="flex items-center gap-3">
+                      <input 
+                        type="checkbox" 
+                        checked={agreeTerms} 
+                        onChange={(e) => {
+                          setAgreeTerms(e.target.checked);
+                          if (e.target.checked && fieldErrors.agreeTerms) {
+                            setFieldErrors({ ...fieldErrors, agreeTerms: '' });
+                          }
+                        }} 
+                        className="w-5 h-5 md:w-4 md:h-4 accent-[#E36666] rounded cursor-pointer"
+                      />
+                      <label className="text-[11px] md:text-[9px] font-semibold text-slate-400 uppercase tracking-widest leading-none cursor-pointer">
+                        I agree to the <button type="button" onClick={openTermsModal} className="text-slate-900 underline decoration-[#E36666]/30 hover:text-[#E36666] transition-colors font-semibold uppercase tracking-widest">Terms & Conditions</button>
+                      </label>
+                    </div>
+                    {fieldErrors.agreeTerms && <p className="text-[10px] text-red-500 font-semibold ml-1">{fieldErrors.agreeTerms}</p>}
                   </div>
                 </div>
               </div>
@@ -489,6 +583,77 @@ const SellerSignup = () => {
         </motion.div>
       </div>
       </div>
+
+      {/* Terms & Conditions Modal */}
+      <AnimatePresence>
+        {showTermsModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowTermsModal(false)}
+              className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl border border-slate-100 flex flex-col max-h-[80vh] overflow-hidden z-10 font-sans"
+            >
+              {/* Modal Header */}
+              <div className="p-6 border-b border-slate-100 flex justify-between items-center shrink-0">
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900 leading-tight">Seller Terms & Conditions</h3>
+                  <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-1">Merchant Partner Agreement</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowTermsModal(false)}
+                  className="w-8 h-8 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Modal Body */}
+              <div className="p-6 overflow-y-auto text-slate-600 text-xs leading-relaxed font-normal whitespace-pre-wrap flex-1 min-h-0">
+                {loadingTerms ? (
+                  <div className="flex justify-center items-center py-12">
+                    <div className="w-8 h-8 border-4 border-[#E36666] border-t-transparent rounded-full animate-spin"></div>
+                  </div>
+                ) : (
+                  termsContent
+                )}
+              </div>
+
+              {/* Modal Footer */}
+              <div className="p-5 border-t border-slate-100 bg-slate-50 flex justify-end gap-3 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAgreeTerms(true);
+                    if (fieldErrors.agreeTerms) {
+                      setFieldErrors(prev => ({ ...prev, agreeTerms: '' }));
+                    }
+                    setShowTermsModal(false);
+                  }}
+                  className="px-5 py-2.5 bg-[#E36666] text-white rounded-xl font-bold text-[10px] uppercase tracking-wider hover:bg-[#c95353] transition-all shadow-md shadow-[#E36666]/10"
+                >
+                  Accept & Close
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowTermsModal(false)}
+                  className="px-5 py-2.5 border border-slate-200 text-slate-600 rounded-xl font-bold text-[10px] uppercase tracking-wider hover:bg-slate-100 transition-all"
+                >
+                  Close
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

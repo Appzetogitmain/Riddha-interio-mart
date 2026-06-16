@@ -110,7 +110,7 @@ const AddressPage = () => {
                   placeholder="Bengaluru" 
                   className="w-full px-4 py-3 md:px-6 md:py-4 rounded-xl md:rounded-2xl border-2 border-gray-100 bg-white focus:border-warm-sand focus:outline-none font-medium transition-all shadow-sm text-sm"
                   value={formData.city}
-                  onChange={(e) => setFormData({...formData, city: e.target.value})}
+                  onChange={(e) => setFormData({...formData, city: e.target.value.replace(/[^a-zA-Z\s]/g, '')})}
                 />
               </div>
             </div>

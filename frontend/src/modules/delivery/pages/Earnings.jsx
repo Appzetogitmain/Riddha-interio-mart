@@ -123,9 +123,9 @@ const Earnings = () => {
             </p>
           </div>
           
-          <button onClick={handleExport} className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl font-bold text-xs transition-all shadow-sm">
-             <LuFileText size={16} />
-             Export Report
+          <button onClick={handleExport} title="Export earnings as CSV" className="flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl font-bold text-xs transition-all shadow-sm">
+             <LuFileText size={14} />
+             Export
           </button>
         </div>
 
@@ -232,7 +232,10 @@ const Earnings = () => {
                  <h3 className="text-slate-900 font-bold text-base">Earnings History</h3>
                  <p className="text-slate-500 text-xs mt-0.5">Past payouts and delivery records</p>
               </div>
-              <button className="p-2 bg-white border border-slate-200 text-slate-500 hover:text-[#2A458A] hover:border-[#2A458A]/30 rounded-lg transition-all shadow-sm">
+              <button
+                onClick={() => navigate('/delivery/delivery-history')}
+                title="Filter by date in Delivery History"
+                className="p-2 bg-white border border-slate-200 text-slate-500 hover:text-[#2A458A] hover:border-[#2A458A]/30 rounded-lg transition-all shadow-sm">
                  <LuCalendar size={16} />
               </button>
            </div>

@@ -385,15 +385,17 @@ const AddProductPage = () => {
                        <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest">Category</label>
                        <div className="relative group">
                           <input 
-                            type="text"
-                            placeholder={formData.category || "Search or select category..."}
-                            value={catSearch}
-                            onChange={(e) => {
-                               setCatSearch(e.target.value);
-                               setIsCatOpen(true);
-                            }}
-                            onFocus={() => setIsCatOpen(true)}
-                            className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-warm-sand transition-all font-medium"
+                             type="text"
+                             placeholder={formData.category || "Search or select category..."}
+                             value={catSearch}
+                             onChange={(e) => {
+                                setCatSearch(e.target.value);
+                                setIsCatOpen(true);
+                             }}
+                             onFocus={() => setIsCatOpen(true)}
+                             className={`w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-warm-sand transition-all font-medium ${
+                               formData.category ? 'placeholder:text-slate-900 placeholder:opacity-100 placeholder:font-semibold' : 'placeholder:text-slate-400'
+                             }`}
                           />
                           <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-warm-sand">
                              <FiTag size={14} className={isCatOpen ? 'rotate-180 transition-transform' : 'transition-transform'} />

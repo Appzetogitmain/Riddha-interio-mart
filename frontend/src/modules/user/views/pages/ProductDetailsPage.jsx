@@ -181,7 +181,15 @@ const ProductDetailsPage = () => {
           </motion.div>
 
           <motion.div variants={fadeInUp} className="mt-auto hidden md:block">
-            {currentQuantity === 0 ? (
+            {product.countInStock !== undefined && product.countInStock <= 0 ? (
+              <Button
+                disabled
+                size="lg"
+                className="w-full h-16 rounded-2xl bg-gray-200 text-gray-400 font-black text-xs uppercase tracking-[0.2em] cursor-not-allowed flex items-center justify-center gap-3"
+              >
+                Out of Stock
+              </Button>
+            ) : currentQuantity === 0 ? (
               <Button
                 size="lg"
                 className="w-full h-16 rounded-2xl bg-[var(--color-header-red)] text-white font-black text-xs uppercase tracking-[0.2em] shadow-xl shadow-[var(--color-header-red)]/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3"
@@ -283,54 +291,65 @@ const ProductDetailsPage = () => {
 
       {/* Mobile Action Bar (Fixed above Bottom Navbar) */}
       <div className="md:hidden fixed bottom-[72px] left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-soft-oatmeal/10 px-4 py-2.5 pb-4 shadow-[0_-12px_30px_rgba(0,0,0,0.08)]">
-        <div className="flex gap-4 px-1">
-          {currentQuantity === 0 ? (
-            <motion.button
-              whileTap={{ scale: 0.96 }}
-              onClick={() => addToCart(product, 1)}
-              className="flex-1 py-3 bg-white border-2 border-[var(--color-header-red)] text-[var(--color-header-red)] rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all shadow-sm"
+        <div className="flex gap-4 px-1 w-full">
+          {product.countInStock !== undefined && product.countInStock <= 0 ? (
+            <button
+              disabled
+              className="w-full py-3 bg-gray-200 text-gray-400 rounded-2xl font-black text-[11px] uppercase tracking-widest cursor-not-allowed border-2 border-gray-200 flex justify-center items-center"
             >
-              Add To Cart
-            </motion.button>
+              Out of Stock
+            </button>
           ) : (
-            <div className="flex-1 flex items-center justify-between bg-white border-2 border-[var(--color-header-red)] text-[var(--color-header-red)] rounded-2xl px-4 h-[46px] shadow-sm">
-              <motion.button
-                whileTap={{ scale: 0.8 }}
-                onClick={() => updateQuantity(product.id, currentQuantity - 1)}
-                className="h-8 w-8 flex items-center justify-center text-[var(--color-header-red)] bg-[var(--color-header-red)]/10 rounded-lg"
-              >
-                <FiMinus className="h-4 w-4" />
-              </motion.button>
-              <div className="flex flex-col items-center">
-                <span className="text-base font-black leading-none">{currentQuantity}</span>
-                <span className="text-[7px] uppercase font-bold tracking-tighter">In Cart</span>
-              </div>
-              <motion.button
-                whileTap={{ scale: 0.8 }}
-                onClick={() => updateQuantity(product.id, currentQuantity + 1)}
-                className="h-8 w-8 flex items-center justify-center text-[var(--color-header-red)] bg-[var(--color-header-red)]/10 rounded-lg"
-              >
-                <FiPlus className="h-4 w-4" />
-              </motion.button>
-            </div>
-          )}
+            <>
+              {currentQuantity === 0 ? (
+                <motion.button
+                  whileTap={{ scale: 0.96 }}
+                  onClick={() => addToCart(product, 1)}
+                  className="flex-1 py-3 bg-white border-2 border-[var(--color-header-red)] text-[var(--color-header-red)] rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all shadow-sm"
+                >
+                  Add To Cart
+                </motion.button>
+              ) : (
+                <div className="flex-1 flex items-center justify-between bg-white border-2 border-[var(--color-header-red)] text-[var(--color-header-red)] rounded-2xl px-4 h-[46px] shadow-sm">
+                  <motion.button
+                    whileTap={{ scale: 0.8 }}
+                    onClick={() => updateQuantity(product.id, currentQuantity - 1)}
+                    className="h-8 w-8 flex items-center justify-center text-[var(--color-header-red)] bg-[var(--color-header-red)]/10 rounded-lg"
+                  >
+                    <FiMinus className="h-4 w-4" />
+                  </motion.button>
+                  <div className="flex flex-col items-center">
+                    <span className="text-base font-black leading-none">{currentQuantity}</span>
+                    <span className="text-[7px] uppercase font-bold tracking-tighter">In Cart</span>
+                  </div>
+                  <motion.button
+                    whileTap={{ scale: 0.8 }}
+                    onClick={() => updateQuantity(product.id, currentQuantity + 1)}
+                    className="h-8 w-8 flex items-center justify-center text-[var(--color-header-red)] bg-[var(--color-header-red)]/10 rounded-lg"
+                  >
+                    <FiPlus className="h-4 w-4" />
+                  </motion.button>
+                </div>
+              )}
 
-          <Link
-            to="/cart"
-            className="flex-1"
-            onClick={() => {
-              if (currentQuantity === 0) {
-                addToCart(product, 1);
-              }
-            }}
-          >
-            <motion.button
-              whileTap={{ scale: 0.96 }}
-              className="w-full py-3 bg-[var(--color-header-red)] text-white rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-xl shadow-[var(--color-header-red)]/20 transition-all border-2 border-[var(--color-header-red)]"
-            >
-              Buy Now
-            </motion.button>
-          </Link>
+              <Link
+                to="/cart"
+                className="flex-1"
+                onClick={() => {
+                  if (currentQuantity === 0) {
+                    addToCart(product, 1);
+                  }
+                }}
+              >
+                <motion.button
+                  whileTap={{ scale: 0.96 }}
+                  className="w-full py-3 bg-[var(--color-header-red)] text-white rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-xl shadow-[var(--color-header-red)]/20 transition-all border-2 border-[var(--color-header-red)]"
+                >
+                  Buy Now
+                </motion.button>
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </motion.div>

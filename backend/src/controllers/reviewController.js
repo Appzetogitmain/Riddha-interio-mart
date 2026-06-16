@@ -356,7 +356,7 @@ exports.getAdminReviews = async (req, res) => {
     const query = {};
     const populateOptions = [
       { path: 'user', select: 'fullName avatar' },
-      { path: 'product', select: 'name' }
+      { path: 'product', select: 'name images' }
     ];
 
     const result = await paginate(Review, query, req, populateOptions);

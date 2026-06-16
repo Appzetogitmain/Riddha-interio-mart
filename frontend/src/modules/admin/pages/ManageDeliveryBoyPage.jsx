@@ -79,7 +79,7 @@ const ManageDeliveryBoyPage = () => {
       boy.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const StatusBadge = ({ status, type = 'approval' }) => {
+  const StatusBadge = ({ status }) => {
     const styles = {
       Approved: 'text-green-700 bg-green-50 border-green-700/10',
       Rejected: 'text-red-700 bg-red-50 border-red-700/10',
@@ -87,7 +87,8 @@ const ManageDeliveryBoyPage = () => {
       Pending: 'text-amber-700 bg-amber-50 border-amber-700/10',
       Available: 'text-emerald-700 bg-emerald-50 border-emerald-700/10',
       Busy: 'text-blue-700 bg-blue-50 border-blue-700/10',
-      Offline: 'text-gray-700 bg-gray-50 border-gray-700/10'
+      Offline: 'text-gray-700 bg-gray-50 border-gray-700/10',
+      'Self-Deleted': 'text-slate-500 bg-slate-100 border-slate-300/40 line-through',
     };
 
     return (
@@ -182,7 +183,7 @@ const ManageDeliveryBoyPage = () => {
                     filteredBoys.map((boy) => (
                       <tr
                         key={boy._id}
-                        className="hover:bg-soft-oatmeal/5 transition-colors group"
+                        className={`hover:bg-soft-oatmeal/5 transition-colors group ${boy.isDeleted ? 'opacity-60 bg-slate-50/50' : ''}`}
                       >
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
@@ -190,9 +191,14 @@ const ManageDeliveryBoyPage = () => {
                               <LuUser size={20} />
                             </div>
                             <div>
-                              <p className="font-bold text-deep-espresso">
-                                {boy.fullName}
-                              </p>
+                              <div className="flex items-center gap-2">
+                                <p className={`font-bold text-deep-espresso ${boy.isDeleted ? 'line-through text-slate-400' : ''}`}>
+                                  {boy.fullName}
+                                </p>
+                                {boy.isDeleted && (
+                                  <span className="text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded bg-rose-100 text-rose-500 border border-rose-200">Deleted</span>
+                                )}
+                              </div>
                               <p className="text-[10px] font-black text-warm-sand uppercase tracking-tighter">Joined {new Date(boy.createdAt).toLocaleDateString()}</p>
                             </div>
                           </div>
@@ -236,10 +242,10 @@ const ManageDeliveryBoyPage = () => {
                           <StatusBadge status={boy.status} />
                         </td>
                         <td className="px-6 py-4">
-                          <StatusBadge status={boy.approvalStatus} />
+                          <StatusBadge status={boy.isDeleted ? 'Self-Deleted' : boy.approvalStatus} />
                         </td>
                         <td className="px-6 py-4 text-right relative">
-                          <button 
+                          <button
                             onClick={() => setActiveMenu(activeMenu === boy._id ? null : boy._id)}
                             className="p-2 text-deep-espresso hover:bg-soft-oatmeal rounded-lg transition-colors"
                           >
@@ -248,45 +254,56 @@ const ManageDeliveryBoyPage = () => {
 
                           {activeMenu === boy._id && (
                             <>
-                              <div 
-                                className="fixed inset-0 z-10" 
+                              <div
+                                className="fixed inset-0 z-10"
                                 onClick={() => setActiveMenu(null)}
                               ></div>
                               <div className="absolute right-6 top-14 w-52 bg-white rounded-2xl shadow-2xl border border-soft-oatmeal py-2 z-20 overflow-hidden animate-in fade-in zoom-in duration-200">
-                                {boy.approvalStatus !== 'Approved' && boy.approvalStatus !== 'Suspended' && (
-                                  <button 
+                                {boy.isDeleted ? (
+                                  <button
                                     onClick={() => handleStatusUpdate(boy._id, 'Approved')}
                                     className="w-full text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-emerald-600 hover:bg-emerald-50 transition-colors flex items-center gap-3"
                                   >
-                                    <LuCheck size={14} /> Approve Partner
+                                    <LuCheck size={14} /> Restore Account
                                   </button>
-                                )}
-                                {boy.approvalStatus === 'Approved' && (
-                                  <button 
-                                    onClick={() => handleStatusUpdate(boy._id, 'Suspended')}
-                                    className="w-full text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-amber-600 hover:bg-amber-50 transition-colors flex items-center gap-3"
-                                  >
-                                    <LuX size={14} /> Suspend Partner
-                                  </button>
-                                )}
-                                {boy.approvalStatus === 'Suspended' && (
-                                  <button 
-                                    onClick={() => handleStatusUpdate(boy._id, 'Approved')}
-                                    className="w-full text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-emerald-600 hover:bg-emerald-50 transition-colors flex items-center gap-3"
-                                  >
-                                    <LuCheck size={14} /> Unsuspend Partner
-                                  </button>
-                                )}
-                                {boy.approvalStatus !== 'Rejected' && boy.approvalStatus !== 'Suspended' && (
-                                  <button 
-                                    onClick={() => handleStatusUpdate(boy._id, 'Rejected')}
-                                    className="w-full text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-rose-600 hover:bg-rose-50 transition-colors flex items-center gap-3"
-                                  >
-                                    <LuX size={14} /> Reject Partner
-                                  </button>
+                                ) : (
+                                  <>
+                                    {boy.approvalStatus !== 'Approved' && boy.approvalStatus !== 'Suspended' && (
+                                      <button
+                                        onClick={() => handleStatusUpdate(boy._id, 'Approved')}
+                                        className="w-full text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-emerald-600 hover:bg-emerald-50 transition-colors flex items-center gap-3"
+                                      >
+                                        <LuCheck size={14} /> Approve Partner
+                                      </button>
+                                    )}
+                                    {boy.approvalStatus === 'Approved' && (
+                                      <button
+                                        onClick={() => handleStatusUpdate(boy._id, 'Suspended')}
+                                        className="w-full text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-amber-600 hover:bg-amber-50 transition-colors flex items-center gap-3"
+                                      >
+                                        <LuX size={14} /> Suspend Partner
+                                      </button>
+                                    )}
+                                    {boy.approvalStatus === 'Suspended' && (
+                                      <button
+                                        onClick={() => handleStatusUpdate(boy._id, 'Approved')}
+                                        className="w-full text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-emerald-600 hover:bg-emerald-50 transition-colors flex items-center gap-3"
+                                      >
+                                        <LuCheck size={14} /> Unsuspend Partner
+                                      </button>
+                                    )}
+                                    {boy.approvalStatus !== 'Rejected' && boy.approvalStatus !== 'Suspended' && (
+                                      <button
+                                        onClick={() => handleStatusUpdate(boy._id, 'Rejected')}
+                                        className="w-full text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-rose-600 hover:bg-rose-50 transition-colors flex items-center gap-3"
+                                      >
+                                        <LuX size={14} /> Reject Partner
+                                      </button>
+                                    )}
+                                  </>
                                 )}
                                 <div className="h-px bg-soft-oatmeal my-1 mx-2"></div>
-                                <button 
+                                <button
                                   onClick={() => handleDelete(boy._id)}
                                   className="w-full text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-red-800 hover:bg-red-50 transition-colors flex items-center gap-3"
                                 >

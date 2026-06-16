@@ -35,6 +35,7 @@ const CatalogPage = () => {
       ]);
       
       const catalogData = catalogRes.data.data || [];
+      catalogData.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       setProducts(catalogData);
       setInventory(inventoryRes.data.data || []);
 

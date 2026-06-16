@@ -22,6 +22,12 @@ import {
   Layers,
   Palette,
   Maximize2,
+  Eye,
+  ShoppingCart,
+  Zap,
+  Star,
+  Ruler,
+  Layers as LayersIcon,
 } from "lucide-react";
 import api from "../../../shared/utils/api";
 
@@ -56,6 +62,10 @@ const AddProduct = () => {
   const [subSubSearch, setSubSubSearch] = useState("");
 
   const fileInputRef = useRef(null);
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewImgIdx, setPreviewImgIdx] = useState(0);
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [touched, setTouched] = useState({});
 
   const [formData, setFormData] = useState({
     name: "",
@@ -150,27 +160,106 @@ const AddProduct = () => {
     }
   };
 
+  // ── Validation helpers ──────────────────────────────────────────────────────
+  const validateField = (name, value, data = formData) => {
+    switch (name) {
+      case 'name':
+        if (!value?.trim()) return 'Product title is required';
+        if (value.trim().length < 3) return 'Must be at least 3 characters';
+        if (value.trim().length > 120) return 'Must be under 120 characters';
+        return '';
+      case 'hsnCode':
+        if (!value) return 'HSN code is required';
+        if (!/^\d{4}$|^\d{6}$|^\d{8}$/.test(value)) return 'Must be exactly 4, 6, or 8 digits';
+        return '';
+      case 'brand':
+        if (!value) return 'Please select a brand';
+        return '';
+      case 'description':
+        if (!value?.trim()) return 'Description is required';
+        if (value.trim().length < 20) return 'Must be at least 20 characters';
+        return '';
+      case 'category':
+        if (!value) return 'Please select a category';
+        return '';
+      case 'price':
+        if (value === '' || value === undefined || value === null) return 'Base price is required';
+        if (isNaN(Number(value)) || Number(value) <= 0) return 'Price must be greater than ₹0';
+        return '';
+      case 'discountPrice': {
+        if (!value && value !== 0) return '';
+        const dp = Number(value);
+        const p = Number(data.price);
+        if (isNaN(dp) || dp <= 0) return 'Must be a positive number';
+        if (p > 0 && dp >= p) return 'Must be less than base price';
+        if (p > 0 && dp < p * 0.5) return 'Max discount is 50% — offer price too low';
+        return '';
+      }
+      case 'countInStock':
+        if (value === '' || value === undefined || value === null) return 'Stock quantity is required';
+        if (!Number.isInteger(Number(value)) || Number(value) < 0) return 'Must be a whole number ≥ 0';
+        return '';
+      case 'sku':
+        if (value && !/^[A-Za-z0-9\-_\/\.]+$/.test(value)) return 'Only letters, numbers, and - _ / . allowed';
+        return '';
+      default:
+        return '';
+    }
+  };
+
+  const fc = (name) => {
+    const hasErr = touched[name] && fieldErrors[name];
+    const isOk  = touched[name] && !fieldErrors[name] && (formData[name] !== '' && formData[name] != null);
+    if (hasErr) return 'bg-red-50 ring-2 ring-red-300/50 focus:ring-red-300/50';
+    if (isOk)   return 'bg-emerald-50/50 ring-1 ring-emerald-200 focus:ring-emerald-200/50';
+    return 'bg-slate-50 focus:ring-2 focus:ring-seller-primary/10';
+  };
+
+  const fieldErr = (name) =>
+    touched[name] && fieldErrors[name]
+      ? <p className="text-[10px] font-bold text-red-500 flex items-center gap-1 mt-1.5 ml-1"><X size={9} />{fieldErrors[name]}</p>
+      : null;
+
+  const handleBlur = (name) => {
+    setTouched(prev => ({ ...prev, [name]: true }));
+    setFieldErrors(prev => ({ ...prev, [name]: validateField(name, formData[name]) }));
+  };
+
+  const handleFieldChange = (name, value) => {
+    const newData = { ...formData, [name]: value };
+    setFormData(newData);
+    if (touched[name]) {
+      setFieldErrors(prev => ({ ...prev, [name]: validateField(name, value, newData) }));
+    }
+    if (name === 'price' && touched['discountPrice']) {
+      setFieldErrors(prev => ({ ...prev, discountPrice: validateField('discountPrice', newData.discountPrice, newData) }));
+    }
+  };
+  // ────────────────────────────────────────────────────────────────────────────
+
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
     setError("");
 
+    const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
+    const MAX_SIZE = 5 * 1024 * 1024; // 5 MB
+
     const validFiles = [];
-    const invalidFiles = [];
+    const errors = [];
 
     files.forEach((file) => {
-      if (file.size > 5 * 1024 * 1024) {
-        invalidFiles.push(file.name);
+      if (!ALLOWED_TYPES.includes(file.type)) {
+        errors.push(`"${file.name}" is not a supported format (JPG/PNG/WEBP only)`);
+      } else if (file.size > MAX_SIZE) {
+        errors.push(`"${file.name}" exceeds 5 MB limit (${(file.size / 1024 / 1024).toFixed(1)} MB)`);
+      } else if (formData.images.length + validFiles.length >= 5) {
+        errors.push(`Max 5 images allowed — "${file.name}" was skipped`);
       } else {
         validFiles.push(file);
       }
     });
 
-    if (invalidFiles.length > 0) {
-      setError(
-        `Some images exceeded the 5MB limit and were skipped: ${invalidFiles.join(", ")}`,
-      );
-    }
-
+    if (errors.length > 0) setError(errors[0]);
     if (validFiles.length === 0) return;
 
     setImgFiles((prev) => [...prev, ...validFiles]);
@@ -241,35 +330,24 @@ const AddProduct = () => {
     setIsSubmitting(true);
     setError("");
 
-    try {
-      if (!/^\d{4}$|^\d{6}$|^\d{8}$/.test(formData.hsnCode)) {
-        throw new Error("HSN code must be a 4, 6, or 8 digit number");
-      }
+    // Validate all fields upfront
+    const fieldsToCheck = ['name', 'hsnCode', 'brand', 'description', 'category', 'price', 'countInStock', 'sku', 'discountPrice'];
+    const newTouched = {};
+    const newErrors = {};
+    fieldsToCheck.forEach(f => {
+      newTouched[f] = true;
+      newErrors[f] = validateField(f, formData[f]);
+    });
+    setTouched(prev => ({ ...prev, ...newTouched }));
+    setFieldErrors(prev => ({ ...prev, ...newErrors }));
+    if (Object.values(newErrors).some(e => e)) {
+      setIsSubmitting(false);
+      return;
+    }
 
+    try {
       if (formData.images.length === 0) {
         throw new Error("Please upload at least one product image");
-      }
-
-      if (
-        formData.dimensions &&
-        !/^(\d+(\.\d+)?\s*[xX]\s*\d+(\.\d+)?(\s*[xX]\s*\d+(\.\d+)?)?\s*(mm|cm|inches|inch|feet|ft|m|mtrs|in)?)$|^([a-zA-Z0-9\s\-\/\(\)\.\,]+)$/i.test(
-          formData.dimensions.trim(),
-        )
-      ) {
-        throw new Error(
-          "Dimensions must be a numeric layout (e.g. 600x600 mm, 24x24 inches) or descriptive text (e.g. Standard, King Size)",
-        );
-      }
-
-      if (
-        formData.thickness &&
-        !/^(\d+(\.\d+)?\s*(mm|cm|inches|inch|feet|ft|m|mtrs|in)?)$|^([a-zA-Z0-9\s\-\/\(\)\.\,]+)$/i.test(
-          formData.thickness.trim(),
-        )
-      ) {
-        throw new Error(
-          "Thickness must be a number with optional unit (e.g. 12mm, 6 inch) or descriptive text (e.g. Medium, Thick)",
-        );
       }
 
       const uploadData = new FormData();
@@ -427,13 +505,6 @@ const AddProduct = () => {
                     >
                       <ChevronLeft size={16} /> Back to selection
                     </button>
-                    <button
-                      type="button"
-                      onClick={autoAddProducts}
-                      className="ml-4 flex items-center gap-2 text-xs font-bold text-white bg-seller-primary px-3 py-1.5 rounded-lg hover:bg-seller-dark transition-colors uppercase tracking-widest mb-2 shadow-sm"
-                    >
-                      <Plus size={14} /> Auto Add 5 Products (Sheetal)
-                    </button>
                   </div>
                   <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
                     {selection === "new" ? "New Listing" : "Sync Catalog Item"}
@@ -491,69 +562,88 @@ const AddProduct = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                       <div className="space-y-2 md:col-span-2">
                         <label className="text-xs font-bold text-slate-600 uppercase tracking-wider ml-1">
-                          Product Title
+                          Product Title <span className="text-red-400">*</span>
                         </label>
                         <input
                           required
                           type="text"
                           placeholder="e.g. Premium Italian Marble Slab"
                           value={formData.name}
-                          onChange={(e) =>
-                            setFormData({ ...formData, name: e.target.value })
-                          }
+                          onChange={(e) => handleFieldChange('name', e.target.value)}
+                          onBlur={() => handleBlur('name')}
                           readOnly={selection === "catalog"}
-                          className={`w-full px-6 py-4 rounded-2xl border-none font-semibold text-sm focus:ring-2 focus:ring-seller-primary/10 transition-all ${selection === "catalog" ? "bg-slate-50 text-slate-400 cursor-not-allowed" : "bg-slate-50 text-slate-900"}`}
+                          className={`w-full px-6 py-4 rounded-2xl border-none font-semibold text-sm transition-all ${selection === "catalog" ? "bg-slate-50 text-slate-400 cursor-not-allowed focus:ring-0" : fc('name')} text-slate-900`}
                         />
+                        {selection !== "catalog" && fieldErr('name')}
                       </div>
 
                       <div className="space-y-2">
                         <label className="text-xs font-bold text-slate-600 uppercase tracking-wider ml-1">
-                          Universal SKU
+                          Universal SKU <span className="text-slate-300 font-medium normal-case tracking-normal text-[10px]">(optional)</span>
                         </label>
                         <input
                           type="text"
                           placeholder="WH-MAR-001"
                           value={formData.sku}
-                          onChange={(e) =>
-                            setFormData({ ...formData, sku: e.target.value })
-                          }
+                          onChange={(e) => handleFieldChange('sku', e.target.value)}
+                          onBlur={() => handleBlur('sku')}
                           readOnly={selection === "catalog"}
-                          className={`w-full px-6 py-4 rounded-2xl border-none font-semibold text-sm focus:ring-2 focus:ring-seller-primary/10 transition-all ${selection === "catalog" ? "bg-slate-50 text-slate-400 cursor-not-allowed" : "bg-slate-50 text-slate-900"}`}
+                          className={`w-full px-6 py-4 rounded-2xl border-none font-semibold text-sm transition-all ${selection === "catalog" ? "bg-slate-50 text-slate-400 cursor-not-allowed focus:ring-0" : fc('sku')} text-slate-900`}
                         />
+                        {selection !== "catalog" && fieldErr('sku')}
                       </div>
 
                       <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-600 uppercase tracking-wider ml-1">
-                          HSN Code
-                        </label>
+                        <div className="flex items-center justify-between ml-1">
+                          <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">
+                            HSN Code <span className="text-red-400">*</span>
+                          </label>
+                          {formData.hsnCode.length > 0 && (() => {
+                            const valid = /^\d{4}$|^\d{6}$|^\d{8}$/.test(formData.hsnCode);
+                            return valid
+                              ? <span className="text-[9px] font-black text-emerald-600 uppercase tracking-wider flex items-center gap-1"><Check size={10} /> Valid</span>
+                              : <span className="text-[9px] font-black text-red-500 uppercase tracking-wider">4, 6, or 8 digits only</span>;
+                          })()}
+                        </div>
                         <input
                           required
                           type="text"
-                          placeholder="6802"
+                          inputMode="numeric"
+                          placeholder="e.g. 6802 or 680210"
                           value={formData.hsnCode}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              hsnCode: e.target.value,
-                            })
-                          }
+                          onChange={(e) => {
+                            const val = e.target.value.replace(/\D/g, "").slice(0, 8);
+                            handleFieldChange('hsnCode', val);
+                          }}
+                          onBlur={() => handleBlur('hsnCode')}
                           readOnly={selection === "catalog"}
-                          className={`w-full px-6 py-4 rounded-2xl border-none font-semibold text-sm focus:ring-2 focus:ring-seller-primary/10 transition-all ${selection === "catalog" ? "bg-slate-50 text-slate-400 cursor-not-allowed" : "bg-slate-50 text-slate-900"}`}
+                          className={`w-full px-6 py-4 rounded-2xl font-semibold text-sm transition-all border ${
+                            selection === "catalog"
+                              ? "bg-slate-50 text-slate-400 cursor-not-allowed border-transparent focus:ring-0"
+                              : formData.hsnCode.length === 0
+                                ? `${touched['hsnCode'] ? 'bg-red-50 border-red-200 ring-2 ring-red-300/40' : 'bg-slate-50 border-transparent focus:ring-2 focus:ring-seller-primary/10'} text-slate-900`
+                                : /^\d{4}$|^\d{6}$|^\d{8}$/.test(formData.hsnCode)
+                                  ? "bg-emerald-50 text-slate-900 border-emerald-200 ring-1 ring-emerald-200"
+                                  : "bg-red-50 text-slate-900 border-red-200 ring-2 ring-red-300/40"
+                          } text-slate-900`}
                         />
+                        {touched['hsnCode'] && fieldErrors['hsnCode']
+                          ? <p className="text-[10px] font-bold text-red-500 flex items-center gap-1 mt-1.5 ml-1"><X size={9} />{fieldErrors['hsnCode']}</p>
+                          : <p className="text-[9px] text-slate-400 font-medium ml-1">Digits only · <span className="font-black text-slate-500">4, 6, or 8 digits</span> (e.g. 6802, 680210, 68021010)</p>
+                        }
                       </div>
 
                       <div className="space-y-2">
                         <label className="text-xs font-bold text-slate-600 uppercase tracking-wider ml-1">
-                          Brand Identity
+                          Brand Identity <span className="text-red-400">*</span>
                         </label>
                         <select
                           required
                           value={formData.brand}
-                          onChange={(e) =>
-                            setFormData({ ...formData, brand: e.target.value })
-                          }
+                          onChange={(e) => handleFieldChange('brand', e.target.value)}
+                          onBlur={() => handleBlur('brand')}
                           disabled={selection === "catalog" && !!formData.brand}
-                          className={`w-full px-6 py-4 rounded-2xl border-none font-semibold text-sm focus:ring-2 focus:ring-seller-primary/10 transition-all ${selection === "catalog" && !!formData.brand ? "bg-slate-50 text-slate-400 cursor-not-allowed" : "bg-slate-50 text-slate-900"}`}
+                          className={`w-full px-6 py-4 rounded-2xl border-none font-semibold text-sm transition-all ${selection === "catalog" && !!formData.brand ? "bg-slate-50 text-slate-400 cursor-not-allowed focus:ring-0" : fc('brand')} text-slate-900`}
                         >
                           <option value="">Select Brand</option>
                           {brands.map((brand) => (
@@ -562,26 +652,29 @@ const AddProduct = () => {
                             </option>
                           ))}
                         </select>
+                        {selection !== "catalog" && fieldErr('brand')}
                       </div>
 
                       <div className="space-y-2 md:col-span-2">
-                        <label className="text-xs font-bold text-slate-600 uppercase tracking-wider ml-1">
-                          Description
-                        </label>
+                        <div className="flex items-center justify-between ml-1">
+                          <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">
+                            Description <span className="text-red-400">*</span>
+                          </label>
+                          <span className={`text-[9px] font-bold uppercase tracking-wider ${formData.description.length < 20 ? 'text-slate-300' : 'text-emerald-500'}`}>
+                            {formData.description.length}/20 min
+                          </span>
+                        </div>
                         <textarea
                           required
                           rows="4"
-                          placeholder="Detailed product narrative..."
+                          placeholder="Detailed product narrative (min 20 characters)..."
                           value={formData.description}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              description: e.target.value,
-                            })
-                          }
+                          onChange={(e) => handleFieldChange('description', e.target.value)}
+                          onBlur={() => handleBlur('description')}
                           readOnly={selection === "catalog"}
-                          className={`w-full px-6 py-4 rounded-2xl border-none font-semibold text-sm focus:ring-2 focus:ring-seller-primary/10 transition-all resize-none ${selection === "catalog" ? "bg-slate-50 text-slate-400 cursor-not-allowed" : "bg-slate-50 text-slate-900"}`}
+                          className={`w-full px-6 py-4 rounded-2xl border-none font-semibold text-sm transition-all resize-none ${selection === "catalog" ? "bg-slate-50 text-slate-400 cursor-not-allowed focus:ring-0" : fc('description')} text-slate-900`}
                         />
+                        {selection !== "catalog" && fieldErr('description')}
                       </div>
                     </div>
                   </div>
@@ -600,15 +693,13 @@ const AddProduct = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                       <div className="space-y-2 relative">
                         <label className="text-xs font-bold text-slate-600 uppercase tracking-wider ml-1">
-                          Category
+                          Category <span className="text-red-400">*</span>
                         </label>
                         <div className="relative">
                           <input
                             type="text"
                             readOnly={selection === "catalog"}
-                            placeholder={
-                              formData.category || "Select category..."
-                            }
+                            placeholder={formData.category || "Select category..."}
                             value={catSearch}
                             onChange={(e) => {
                               if (selection === "catalog") return;
@@ -618,7 +709,21 @@ const AddProduct = () => {
                             onFocus={() => {
                               if (selection !== "catalog") setIsCatOpen(true);
                             }}
-                            className={`w-full px-6 py-4 rounded-2xl border-none font-semibold text-sm focus:ring-2 focus:ring-seller-primary/10 transition-all ${selection === "catalog" ? "bg-slate-50 text-slate-400 cursor-not-allowed" : "bg-slate-50 text-slate-900"}`}
+                            onBlur={() => {
+                              setTimeout(() => {
+                                setIsCatOpen(false);
+                                if (selection !== "catalog") handleBlur('category');
+                              }, 150);
+                            }}
+                            className={`w-full px-6 py-4 rounded-2xl border-none font-semibold text-sm transition-all ${
+                              selection === "catalog"
+                                ? "bg-slate-50 text-slate-400 cursor-not-allowed focus:ring-0"
+                                : formData.category
+                                  ? "bg-emerald-50/50 ring-1 ring-emerald-200 text-slate-900"
+                                  : touched['category'] && fieldErrors['category']
+                                    ? "bg-red-50 ring-2 ring-red-300/50 text-slate-900"
+                                    : "bg-slate-50 text-slate-900 focus:ring-2 focus:ring-seller-primary/10"
+                            }`}
                           />
                           {isCatOpen && (
                             <div className="absolute left-0 right-0 top-full mt-3 bg-white border border-slate-100 rounded-2xl shadow-2xl z-50 max-h-60 overflow-y-auto overflow-x-hidden p-2">
@@ -627,20 +732,12 @@ const AddProduct = () => {
                                   key={cat._id}
                                   type="button"
                                   onClick={() => {
-                                    const selectedCat = categories.find(
-                                      (c) => c.name === cat.name,
-                                    );
-                                    setFormData({
-                                      ...formData,
-                                      category: cat.name,
-                                      subcategory: "",
-                                      subsubcategory: "",
-                                    });
-                                    setSubcategories(
-                                      selectedCat
-                                        ? selectedCat.subcategories || []
-                                        : [],
-                                    );
+                                    const selectedCat = categories.find((c) => c.name === cat.name);
+                                    handleFieldChange('category', cat.name);
+                                    setFormData(prev => ({ ...prev, category: cat.name, subcategory: "", subsubcategory: "" }));
+                                    setTouched(prev => ({ ...prev, category: true }));
+                                    setFieldErrors(prev => ({ ...prev, category: '' }));
+                                    setSubcategories(selectedCat ? selectedCat.subcategories || [] : []);
                                     setSubsubcategories([]);
                                     setCatSearch("");
                                     setIsCatOpen(false);
@@ -653,6 +750,7 @@ const AddProduct = () => {
                             </div>
                           )}
                         </div>
+                        {selection !== "catalog" && fieldErr('category')}
                       </div>
 
                       <div className="space-y-2 relative">
@@ -854,35 +952,56 @@ const AddProduct = () => {
                     <div className="space-y-6">
                       <div className="space-y-2">
                         <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                          Base Rate (₹)
+                          Base Rate (₹) <span className="text-red-400">*</span>
                         </label>
                         <input
                           required
                           type="number"
+                          min="1"
                           placeholder="0.00"
                           value={formData.price}
-                          onChange={(e) =>
-                            setFormData({ ...formData, price: e.target.value })
-                          }
-                          className="w-full px-6 py-4 rounded-2xl bg-slate-50 border-none font-bold text-slate-900 focus:ring-2 focus:ring-emerald-500/10 transition-all"
+                          onChange={(e) => handleFieldChange('price', e.target.value)}
+                          onBlur={() => handleBlur('price')}
+                          className={`w-full px-6 py-4 rounded-2xl border-none font-bold text-slate-900 transition-all ${fc('price')}`}
                         />
+                        {fieldErr('price')}
                       </div>
                       <div className="space-y-2">
-                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                          Offer Price (Optional)
-                        </label>
+                        <div className="flex items-center justify-between">
+                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                            Offer Price <span className="text-slate-300 font-medium normal-case tracking-normal text-[10px]">(optional)</span>
+                          </label>
+                          {(() => {
+                            const dp = Number(formData.discountPrice);
+                            const p = Number(formData.price);
+                            if (dp > 0 && p > 0 && dp < p && dp >= p * 0.5) {
+                              const pct = Math.round((1 - dp / p) * 100);
+                              return <span className="text-[9px] font-black text-emerald-600 uppercase tracking-wider">{pct}% off</span>;
+                            }
+                            return null;
+                          })()}
+                        </div>
                         <input
                           type="number"
+                          min="1"
                           placeholder="Special deal price"
                           value={formData.discountPrice}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              discountPrice: e.target.value,
-                            })
-                          }
-                          className="w-full px-6 py-4 rounded-2xl bg-slate-50 border-none font-bold text-emerald-600 placeholder:text-emerald-200 focus:ring-2 focus:ring-emerald-500/10 transition-all"
+                          onChange={(e) => handleFieldChange('discountPrice', e.target.value)}
+                          onBlur={() => handleBlur('discountPrice')}
+                          className={`w-full px-6 py-4 rounded-2xl border-none font-bold transition-all ${
+                            touched['discountPrice'] && fieldErrors['discountPrice']
+                              ? 'bg-red-50 ring-2 ring-red-300/50 text-slate-900'
+                              : touched['discountPrice'] && !fieldErrors['discountPrice'] && formData.discountPrice
+                                ? 'bg-emerald-50/50 ring-1 ring-emerald-200 text-emerald-700'
+                                : 'bg-slate-50 text-emerald-600 focus:ring-2 focus:ring-emerald-500/10'
+                          } placeholder:text-emerald-200`}
                         />
+                        {fieldErr('discountPrice')}
+                        {!fieldErrors['discountPrice'] && formData.price && (
+                          <p className="text-[9px] text-slate-400 font-medium ml-1">
+                            Must be between <span className="font-black text-slate-500">₹{Math.ceil(Number(formData.price) * 0.5)}</span> and <span className="font-black text-slate-500">₹{Number(formData.price) - 1}</span>
+                          </p>
+                        )}
                       </div>
                       <div className="space-y-2">
                         <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
@@ -926,21 +1045,20 @@ const AddProduct = () => {
                         </div>
                         <div className="space-y-2">
                           <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                            Initial Qty
+                            Initial Qty <span className="text-red-400">*</span>
                           </label>
                           <input
                             required
                             type="number"
+                            min="0"
+                            step="1"
                             placeholder="0"
                             value={formData.countInStock}
-                            onChange={(e) =>
-                              setFormData({
-                                ...formData,
-                                countInStock: e.target.value,
-                              })
-                            }
-                            className="w-full px-4 py-4 rounded-2xl bg-slate-50 border-none font-bold text-sm text-slate-900"
+                            onChange={(e) => handleFieldChange('countInStock', e.target.value)}
+                            onBlur={() => handleBlur('countInStock')}
+                            className={`w-full px-4 py-4 rounded-2xl border-none font-bold text-sm text-slate-900 transition-all ${fc('countInStock')}`}
                           />
+                          {fieldErr('countInStock')}
                         </div>
                       </div>
                     </div>
@@ -1009,6 +1127,23 @@ const AddProduct = () => {
                       accept="image/png, image/jpeg, image/webp"
                     />
 
+                    {/* Image required error */}
+                    {Object.keys(touched).length > 0 && formData.images.length === 0 && selection !== "catalog" && (
+                      <p className="text-[10px] font-bold text-red-500 flex items-center gap-1 -mt-2 ml-1"><X size={9} />At least one product image is required</p>
+                    )}
+
+                    {/* Image upload hints */}
+                    <div className="flex items-start gap-2 bg-slate-50 rounded-xl px-3 py-2.5">
+                      <Info size={11} className="text-slate-400 shrink-0 mt-0.5" />
+                      <div className="space-y-0.5">
+                        <p className="text-[9px] font-black text-slate-500 uppercase tracking-wider">Image Requirements</p>
+                        <p className="text-[9px] text-slate-400 font-medium leading-relaxed">
+                          Max <span className="font-black text-slate-600">5 MB</span> per image &nbsp;•&nbsp; Formats: <span className="font-black text-slate-600">JPG, PNG, WEBP</span> &nbsp;•&nbsp; Up to <span className="font-black text-slate-600">5 photos</span>
+                        </p>
+                        <p className="text-[9px] text-slate-400 font-medium">Recommended: square images at 800×800 px or higher</p>
+                      </div>
+                    </div>
+
                     <div className="space-y-6">
                       <div className="space-y-2">
                         <div className="flex items-center justify-between px-1">
@@ -1045,12 +1180,15 @@ const AddProduct = () => {
                         />
                         {videoFile && (
                           <div className="flex items-center justify-between p-3 bg-emerald-50 text-emerald-600 rounded-xl text-[10px] font-bold uppercase tracking-widest px-4">
-                            <span className="truncate max-w-[150px]">
+                            <span className="truncate max-w-[130px]">
                               {videoFile.name}
+                            </span>
+                            <span className="text-[8px] text-emerald-500 font-bold shrink-0 mx-2">
+                              {(videoFile.size / 1024 / 1024).toFixed(1)} MB
                             </span>
                             <X
                               size={14}
-                              className="cursor-pointer"
+                              className="cursor-pointer shrink-0"
                               onClick={() => setVideoFile(null)}
                             />
                           </div>
@@ -1060,9 +1198,40 @@ const AddProduct = () => {
                             type="file"
                             id="video-upload"
                             hidden
-                            accept="video/*"
-                            onChange={(e) => setVideoFile(e.target.files[0])}
+                            accept="video/mp4,video/webm,video/quicktime"
+                            onChange={(e) => {
+                              const file = e.target.files[0];
+                              if (!file) return;
+                              const MAX_VIDEO = 100 * 1024 * 1024; // 100 MB
+                              const ALLOWED_VIDEO = ["video/mp4", "video/webm", "video/quicktime"];
+                              if (!ALLOWED_VIDEO.includes(file.type)) {
+                                setError("Video must be MP4, WEBM, or MOV format");
+                                e.target.value = "";
+                                return;
+                              }
+                              if (file.size > MAX_VIDEO) {
+                                setError(`Video exceeds 100 MB limit (${(file.size / 1024 / 1024).toFixed(0)} MB). Please compress it first.`);
+                                e.target.value = "";
+                                return;
+                              }
+                              setError("");
+                              setVideoFile(file);
+                            }}
                           />
+                        )}
+
+                        {/* Video upload hints */}
+                        {selection !== "catalog" && (
+                          <div className="flex items-start gap-2 bg-slate-50 rounded-xl px-3 py-2.5">
+                            <Info size={11} className="text-slate-400 shrink-0 mt-0.5" />
+                            <div className="space-y-0.5">
+                              <p className="text-[9px] font-black text-slate-500 uppercase tracking-wider">Video Requirements</p>
+                              <p className="text-[9px] text-slate-400 font-medium leading-relaxed">
+                                Max <span className="font-black text-slate-600">100 MB</span> &nbsp;•&nbsp; Formats: <span className="font-black text-slate-600">MP4, WEBM, MOV</span>
+                              </p>
+                              <p className="text-[9px] text-slate-400 font-medium">Or paste a YouTube / direct video URL above instead</p>
+                            </div>
+                          </div>
                         )}
                       </div>
 
@@ -1074,6 +1243,16 @@ const AddProduct = () => {
                           </p>
                         </div>
                       )}
+
+                      {/* Preview button */}
+                      <button
+                        type="button"
+                        onClick={() => { setPreviewImgIdx(0); setShowPreview(true); }}
+                        className="w-full py-4 rounded-[2rem] font-bold text-sm uppercase tracking-widest flex items-center justify-center gap-2 border-2 border-seller-primary/20 text-seller-primary hover:bg-seller-primary/5 transition-all active:scale-95"
+                      >
+                        <Eye size={16} />
+                        Preview Listing
+                      </button>
 
                       <button
                         type="submit"
@@ -1110,6 +1289,192 @@ const AddProduct = () => {
           )}
         </AnimatePresence>
       </div>
+
+      {/* ── Product Preview Modal ── */}
+      <AnimatePresence>
+        {showPreview && (
+          <div className="fixed inset-0 z-[200] flex items-end md:items-center justify-center">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowPreview(false)}
+              className="absolute inset-0 bg-slate-900/70 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, y: 60 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 60 }}
+              transition={{ type: "spring", damping: 28, stiffness: 300 }}
+              className="relative w-full max-w-sm md:max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl z-10 overflow-hidden max-h-[92vh] flex flex-col"
+              onClick={e => e.stopPropagation()}
+            >
+              {/* Modal header */}
+              <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 shrink-0">
+                <div className="flex items-center gap-2">
+                  <Eye size={14} className="text-seller-primary" />
+                  <span className="text-[11px] font-black text-slate-700 uppercase tracking-widest">Customer Preview</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[9px] font-bold text-amber-600 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-full uppercase tracking-wide">Pending Approval</span>
+                  <button onClick={() => setShowPreview(false)} className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors">
+                    <X size={16} className="text-slate-400" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Scrollable content */}
+              <div className="overflow-y-auto flex-1">
+                {(() => {
+                  const basePrice = Number(formData.price || 0);
+                  const parsedDiscount = Number(formData.discountPrice || 0);
+                  const validDiscount = parsedDiscount > 0 && parsedDiscount < basePrice && parsedDiscount >= basePrice * 0.5;
+                  const displayPrice = validDiscount ? parsedDiscount : basePrice;
+                  const discountPct = validDiscount ? Math.round((1 - displayPrice / basePrice) * 100) : 0;
+                  const currentImg = formData.images[previewImgIdx] || null;
+
+                  return (
+                    <>
+                      {/* Image carousel */}
+                      <div className="relative bg-slate-50 aspect-square">
+                        {currentImg ? (
+                          <img src={currentImg} alt="preview" className="w-full h-full object-contain" />
+                        ) : (
+                          <div className="w-full h-full flex flex-col items-center justify-center text-slate-300 gap-2">
+                            <ImageIcon size={40} />
+                            <span className="text-[10px] font-bold uppercase tracking-wider">No image uploaded</span>
+                          </div>
+                        )}
+                        {discountPct > 0 && (
+                          <span className="absolute top-3 left-3 bg-[#EC008C] text-white text-[9px] font-black px-2 py-0.5 rounded-md uppercase">
+                            {discountPct}% OFF
+                          </span>
+                        )}
+                        {/* Thumbnail strip */}
+                        {formData.images.length > 1 && (
+                          <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5">
+                            {formData.images.map((img, i) => (
+                              <button
+                                key={i}
+                                onClick={() => setPreviewImgIdx(i)}
+                                className={`w-10 h-10 rounded-lg overflow-hidden border-2 transition-all ${i === previewImgIdx ? 'border-[#189D91] scale-110' : 'border-white/60'}`}
+                              >
+                                <img src={img} alt="" className="w-full h-full object-cover" />
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Product info */}
+                      <div className="px-5 py-4 space-y-4">
+                        {/* Name + category */}
+                        <div>
+                          <p className="text-[10px] font-bold text-[#189D91] uppercase tracking-widest">
+                            {formData.category || 'Category'}{formData.subcategory ? ` › ${formData.subcategory}` : ''}
+                          </p>
+                          <h2 className="text-lg font-black text-slate-900 leading-tight mt-0.5">
+                            {formData.name || 'Product Name'}
+                          </h2>
+                        </div>
+
+                        {/* Price row */}
+                        <div className="flex items-baseline gap-2.5">
+                          <span className="text-2xl font-black text-slate-900">
+                            ₹{basePrice > 0 ? displayPrice.toLocaleString('en-IN') : '—'}
+                          </span>
+                          {validDiscount && (
+                            <span className="text-sm text-slate-400 line-through font-medium">
+                              ₹{basePrice.toLocaleString('en-IN')}
+                            </span>
+                          )}
+                          {discountPct > 0 && (
+                            <span className="text-xs font-black text-emerald-600">
+                              {discountPct}% off
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Stock & delivery */}
+                        <div className="flex items-center gap-3">
+                          <span className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-600">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse inline-block" />
+                            In Stock
+                          </span>
+                          <span className="text-slate-300">•</span>
+                          <span className="flex items-center gap-1 text-[11px] font-bold text-[#189D91]">
+                            <Zap size={11} /> Fast Delivery
+                          </span>
+                        </div>
+
+                        {/* Description */}
+                        {formData.description && (
+                          <div className="bg-slate-50 rounded-2xl p-4">
+                            <p className="text-[11px] text-slate-600 leading-relaxed">
+                              {formData.description}
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Specs */}
+                        {(formData.material || formData.dimensions || formData.thickness || formData.color) && (
+                          <div className="space-y-2">
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Specifications</p>
+                            <div className="grid grid-cols-2 gap-2">
+                              {formData.material && (
+                                <div className="bg-slate-50 rounded-xl p-3">
+                                  <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Material</p>
+                                  <p className="text-[11px] font-bold text-slate-800 mt-0.5">{formData.material}</p>
+                                </div>
+                              )}
+                              {formData.dimensions && (
+                                <div className="bg-slate-50 rounded-xl p-3">
+                                  <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Dimensions</p>
+                                  <p className="text-[11px] font-bold text-slate-800 mt-0.5">{formData.dimensions}</p>
+                                </div>
+                              )}
+                              {formData.thickness && (
+                                <div className="bg-slate-50 rounded-xl p-3">
+                                  <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Thickness</p>
+                                  <p className="text-[11px] font-bold text-slate-800 mt-0.5">{formData.thickness}</p>
+                                </div>
+                              )}
+                              {formData.color && (
+                                <div className="bg-slate-50 rounded-xl p-3">
+                                  <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Finish</p>
+                                  <p className="text-[11px] font-bold text-slate-800 mt-0.5">{formData.color}</p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Add to cart (visual only) */}
+                        <div className="flex gap-2 pb-2">
+                          <button
+                            type="button"
+                            disabled
+                            className="flex-1 py-3.5 bg-[#189D91] text-white text-[11px] font-black uppercase tracking-widest rounded-2xl flex items-center justify-center gap-2 opacity-70 cursor-not-allowed"
+                          >
+                            <ShoppingCart size={14} /> Add to Cart
+                          </button>
+                          <button
+                            type="button"
+                            disabled
+                            className="flex-1 py-3.5 bg-slate-900 text-white text-[11px] font-black uppercase tracking-widest rounded-2xl opacity-70 cursor-not-allowed"
+                          >
+                            Buy Now
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  );
+                })()}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </PageWrapper>
   );
 };

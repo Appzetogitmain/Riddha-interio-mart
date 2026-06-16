@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import PageWrapper from '../components/PageWrapper';
 import { LuScale, LuShield, LuShieldCheck, LuBookOpen, LuFileText, LuArrowLeft } from 'react-icons/lu';
 import api from '../../../shared/utils/api';
 import logo from '../../../assets/transparent_logo.png';
 
 const TermsConditions = () => {
+  const navigate = useNavigate();
   const [content, setContent] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -118,8 +120,14 @@ const TermsConditions = () => {
             {/* Close button for signup flow */}
             <div className="flex justify-center">
               <button
-                onClick={() => window.close()}
-                className="w-full py-3.5 bg-slate-800 text-white rounded-2xl font-semibold text-xs uppercase tracking-widest hover:bg-slate-900 transition-all flex items-center justify-center gap-2 shadow-lg"
+                onClick={() => {
+                  if (window.history.length > 1) {
+                    navigate(-1);
+                  } else {
+                    window.close();
+                  }
+                }}
+                className="w-full py-3.5 bg-slate-800 text-white rounded-2xl font-semibold text-xs uppercase tracking-widest hover:bg-slate-900 transition-all flex items-center justify-center gap-2 shadow-lg cursor-pointer"
               >
                 <LuArrowLeft /> Close Window
               </button>

@@ -254,12 +254,12 @@ const ProductDetailsPage = () => {
                 { label: 'Finish',    value: product.finish || 'Matte' },
                 { label: 'Thickness', value: product.thickness || '12 mm' },
                 { label: 'SKU',       value: product.sku || 'VWP-001' },
-                { label: 'Stock',     value: product.stock > 0 ? `In Stock (${product.stock})` : 'In Stock', badge: true },
+                { label: 'Stock',     value: (product.countInStock !== undefined && product.countInStock <= 0) ? 'Out of Stock' : `In Stock (${product.countInStock || 0})`, badge: true },
               ].map((r, i) => (
                 <div key={i} className="flex items-center py-1.5 text-[13px]">
                   <span className="w-28 text-gray-400 font-medium shrink-0">{r.label}</span>
                   {r.badge
-                    ? <span className="bg-emerald-50 border border-emerald-100 text-emerald-600 text-[11px] font-bold px-2 py-0.5">{r.value}</span>
+                    ? <span className={`border text-[11px] font-bold px-2 py-0.5 ${r.value === 'Out of Stock' ? 'bg-red-50 border-red-100 text-red-600' : 'bg-emerald-50 border-emerald-100 text-emerald-600'}`}>{r.value}</span>
                     : <span className="text-gray-800 font-semibold">{r.value}</span>
                   }
                 </div>
@@ -276,38 +276,49 @@ const ProductDetailsPage = () => {
 
             {/* Desktop action buttons */}
             <div className="hidden lg:flex gap-2 mt-5 max-w-md">
-              {currentQuantity === 0 ? (
+              {product.countInStock !== undefined && product.countInStock <= 0 ? (
                 <button
-                  onClick={handleAddToCart}
-                  className="flex-1 h-11 bg-[#189D91] hover:bg-[#14847a] text-white font-bold text-[11px] uppercase tracking-wider transition-colors flex items-center justify-center gap-2"
+                  disabled
+                  className="w-full h-11 bg-gray-200 text-gray-400 font-bold text-[11px] uppercase tracking-wider cursor-not-allowed flex items-center justify-center gap-2"
                 >
-                  <FiShoppingCart size={14} /> Add to Cart
+                  Out of Stock
                 </button>
               ) : (
-                <div className="flex-1 h-11 flex items-center border-2 border-[#189D91] bg-white">
+                <>
+                  {currentQuantity === 0 ? (
+                    <button
+                      onClick={handleAddToCart}
+                      className="flex-1 h-11 bg-[#189D91] hover:bg-[#14847a] text-white font-bold text-[11px] uppercase tracking-wider transition-colors flex items-center justify-center gap-2"
+                    >
+                      <FiShoppingCart size={14} /> Add to Cart
+                    </button>
+                  ) : (
+                    <div className="flex-1 h-11 flex items-center border-2 border-[#189D91] bg-white">
+                      <button
+                        onClick={() => updateQuantity(product._id || product.id, Math.max(0, currentQuantity - 1))}
+                        className="w-11 h-full flex items-center justify-center text-[#189D91] hover:bg-[#189D91]/5 transition-colors"
+                      >
+                        <FiMinus size={14} />
+                      </button>
+                      <div className="flex-1 h-full flex items-center justify-center font-black text-[#189D91] text-sm border-x border-[#189D91]/20">
+                        {currentQuantity} in cart
+                      </div>
+                      <button
+                        onClick={() => updateQuantity(product._id || product.id, currentQuantity + 1)}
+                        className="w-11 h-full flex items-center justify-center text-[#189D91] hover:bg-[#189D91]/5 transition-colors"
+                      >
+                        <FiPlus size={14} />
+                      </button>
+                    </div>
+                  )}
                   <button
-                    onClick={() => updateQuantity(product._id || product.id, Math.max(0, currentQuantity - 1))}
-                    className="w-11 h-full flex items-center justify-center text-[#189D91] hover:bg-[#189D91]/5 transition-colors"
+                    onClick={handleBuyNow}
+                    className="flex-1 h-11 bg-gray-900 hover:bg-black text-white font-bold text-[11px] uppercase tracking-wider transition-colors flex items-center justify-center gap-2"
                   >
-                    <FiMinus size={14} />
+                    <FiZap size={13} /> Buy Now
                   </button>
-                  <div className="flex-1 h-full flex items-center justify-center font-black text-[#189D91] text-sm border-x border-[#189D91]/20">
-                    {currentQuantity} in cart
-                  </div>
-                  <button
-                    onClick={() => updateQuantity(product._id || product.id, currentQuantity + 1)}
-                    className="w-11 h-full flex items-center justify-center text-[#189D91] hover:bg-[#189D91]/5 transition-colors"
-                  >
-                    <FiPlus size={14} />
-                  </button>
-                </div>
+                </>
               )}
-              <button
-                onClick={handleBuyNow}
-                className="flex-1 h-11 bg-gray-900 hover:bg-black text-white font-bold text-[11px] uppercase tracking-wider transition-colors flex items-center justify-center gap-2"
-              >
-                <FiZap size={13} /> Buy Now
-              </button>
             </div>
 
             {/* Features (desktop inline) */}
@@ -453,19 +464,30 @@ const ProductDetailsPage = () => {
 
       {/* ── Mobile fixed action bar ── */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-white px-4 py-3 pb-5 flex gap-3 border-t border-gray-100 shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
-        <button
-          onClick={handleAddToCart}
-          className="flex-1 h-12 bg-[#189D91] hover:bg-[#14847a] text-white font-bold text-[13px] uppercase tracking-wider transition-colors flex items-center justify-center gap-2"
-        >
-          <FiShoppingCart size={15} />
-          {currentQuantity > 0 ? `In Cart (${currentQuantity})` : 'Add to Cart'}
-        </button>
-        <button
-          onClick={handleBuyNow}
-          className="flex-1 h-12 bg-gray-900 hover:bg-black text-white font-bold text-[13px] uppercase tracking-wider transition-colors flex items-center justify-center gap-2"
-        >
-          <FiZap size={14} /> Buy Now
-        </button>
+        {product.countInStock !== undefined && product.countInStock <= 0 ? (
+          <button
+            disabled
+            className="w-full h-12 bg-gray-200 text-gray-400 font-bold text-[13px] uppercase tracking-wider cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            Out of Stock
+          </button>
+        ) : (
+          <>
+            <button
+              onClick={handleAddToCart}
+              className="flex-1 h-12 bg-[#189D91] hover:bg-[#14847a] text-white font-bold text-[13px] uppercase tracking-wider transition-colors flex items-center justify-center gap-2"
+            >
+              <FiShoppingCart size={15} />
+              {currentQuantity > 0 ? `In Cart (${currentQuantity})` : 'Add to Cart'}
+            </button>
+            <button
+              onClick={handleBuyNow}
+              className="flex-1 h-12 bg-gray-900 hover:bg-black text-white font-bold text-[13px] uppercase tracking-wider transition-colors flex items-center justify-center gap-2"
+            >
+              <FiZap size={14} /> Buy Now
+            </button>
+          </>
+        )}
       </div>
     </div>
   );

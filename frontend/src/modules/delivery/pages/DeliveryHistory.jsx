@@ -10,28 +10,30 @@ const DeliveryHistory = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   
-  // Pagination & Filtering
+  // Pagination
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalResults, setTotalResults] = useState(0);
+
+  // UI filter state (controlled inputs — doesn't trigger API until "Filter" is clicked)
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+
+  // Applied filter state (drives the API call)
+  const [appliedStart, setAppliedStart] = useState('');
+  const [appliedEnd, setAppliedEnd] = useState('');
+
+  const isFilterActive = appliedStart || appliedEnd;
 
   const fetchHistory = useCallback(async () => {
     try {
       setLoading(true);
-      // Construct query string
-      const params = new URLSearchParams({
-        page,
-        limit: 10,
-        deliveryStatus: 'Delivered'
-      });
-      if (startDate) params.append('startDate', startDate);
-      if (endDate) params.append('endDate', endDate);
+      const params = new URLSearchParams({ page, limit: 10, deliveryStatus: 'Delivered' });
+      if (appliedStart) params.append('startDate', appliedStart);
+      if (appliedEnd)   params.append('endDate', appliedEnd);
 
       const res = await api.get(`/orders?${params.toString()}`);
       if (res.data.success) {
-        // Map backend order data to OrderCard expected props
         const formattedOrders = res.data.data.map(o => ({
           id: o._id,
           status: o.deliveryStatus || o.status,
@@ -48,8 +50,8 @@ const DeliveryHistory = () => {
           phone: o.shippingAddress?.phone || o.user?.phone || ''
         }));
         setOrders(formattedOrders);
-        setTotalPages(res.data.totalPages);
-        setTotalResults(res.data.totalResults);
+        setTotalPages(res.data.totalPages || 1);
+        setTotalResults(res.data.totalResults || 0);
       }
     } catch (err) {
       console.error('Failed to fetch delivery history', err);
@@ -57,7 +59,7 @@ const DeliveryHistory = () => {
     } finally {
       setLoading(false);
     }
-  }, [page, startDate, endDate]);
+  }, [page, appliedStart, appliedEnd]);
 
   useEffect(() => {
     fetchHistory();
@@ -65,13 +67,18 @@ const DeliveryHistory = () => {
 
   const handleFilter = (e) => {
     e.preventDefault();
-    setPage(1); // Reset to first page on new filter
-    fetchHistory();
+    if (!startDate && !endDate) { toast.error('Please select at least one date to filter.'); return; }
+    if (startDate && endDate && startDate > endDate) { toast.error('Start date cannot be after end date.'); return; }
+    setAppliedStart(startDate);
+    setAppliedEnd(endDate);
+    setPage(1);
   };
 
   const handleClearFilters = () => {
     setStartDate('');
     setEndDate('');
+    setAppliedStart('');
+    setAppliedEnd('');
     setPage(1);
   };
 
@@ -81,46 +88,69 @@ const DeliveryHistory = () => {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl md:text-4xl font-display font-bold text-deep-espresso">Delivery History</h1>
-            <p className="text-warm-sand mt-2">View your completed deliveries ({totalResults} total)</p>
+            <p className="text-warm-sand mt-2">
+              View your completed deliveries ({totalResults} total)
+              {isFilterActive && (
+                <span className="ml-2 text-[10px] font-bold text-[#189D91] bg-teal-50 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                  Filtered
+                </span>
+              )}
+            </p>
           </div>
           
-          <form onSubmit={handleFilter} className="flex flex-wrap items-center gap-3 bg-white p-2 rounded-2xl border border-slate-100 shadow-sm w-fit">
-             <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 rounded-xl">
-                <LuCalendar className="text-[#189D91]" size={16} />
-                <input 
-                  type="date" 
+          <form onSubmit={handleFilter} className="flex flex-col sm:flex-row sm:items-end gap-3 bg-white p-3 rounded-2xl border border-slate-100 shadow-sm">
+            {/* From date */}
+            <div className="space-y-1">
+              <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-1">
+                <LuCalendar size={10} className="text-[#189D91]" /> From
+              </label>
+              <div className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border transition-all ${startDate ? 'bg-teal-50 border-[#189D91]/30' : 'bg-slate-50 border-transparent'}`}>
+                <input
+                  type="date"
                   value={startDate}
+                  max={endDate || undefined}
                   onChange={e => setStartDate(e.target.value)}
-                  className="bg-transparent text-sm font-semibold text-slate-700 outline-none"
+                  className="bg-transparent text-sm font-semibold text-slate-700 outline-none cursor-pointer"
                 />
-             </div>
-             <span className="text-slate-300 font-bold">to</span>
-             <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 rounded-xl">
-                <LuCalendar className="text-[#189D91]" size={16} />
-                <input 
-                  type="date" 
+              </div>
+            </div>
+
+            <span className="hidden sm:block text-slate-300 font-bold pb-2.5">→</span>
+
+            {/* To date */}
+            <div className="space-y-1">
+              <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-1">
+                <LuCalendar size={10} className="text-[#189D91]" /> To
+              </label>
+              <div className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border transition-all ${endDate ? 'bg-teal-50 border-[#189D91]/30' : 'bg-slate-50 border-transparent'}`}>
+                <input
+                  type="date"
                   value={endDate}
+                  min={startDate || undefined}
                   onChange={e => setEndDate(e.target.value)}
-                  className="bg-transparent text-sm font-semibold text-slate-700 outline-none"
+                  className="bg-transparent text-sm font-semibold text-slate-700 outline-none cursor-pointer"
                 />
-             </div>
-             <div className="flex gap-2">
-               <button 
-                 type="submit"
-                 className="flex items-center gap-2 px-4 py-2 bg-[#189D91] text-white text-xs font-bold uppercase tracking-wider rounded-xl hover:bg-[#15877c] transition-all shadow-md"
-               >
-                 <LuFilter size={14} /> Filter
-               </button>
-               {(startDate || endDate) && (
-                 <button 
-                   type="button"
-                   onClick={handleClearFilters}
-                   className="px-4 py-2 bg-slate-100 text-slate-600 text-xs font-bold uppercase tracking-wider rounded-xl hover:bg-slate-200 transition-all"
-                 >
-                   Clear
-                 </button>
-               )}
-             </div>
+              </div>
+            </div>
+
+            {/* Action buttons */}
+            <div className="flex gap-2 sm:pb-0">
+              <button
+                type="submit"
+                className="flex items-center gap-2 px-4 py-2.5 bg-[#189D91] text-white text-xs font-bold uppercase tracking-wider rounded-xl hover:bg-[#15877c] active:scale-95 transition-all shadow-md shadow-[#189D91]/20"
+              >
+                <LuFilter size={14} /> Filter
+              </button>
+              {isFilterActive && (
+                <button
+                  type="button"
+                  onClick={handleClearFilters}
+                  className="px-4 py-2.5 bg-slate-100 text-slate-600 text-xs font-bold uppercase tracking-wider rounded-xl hover:bg-slate-200 active:scale-95 transition-all"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
           </form>
         </div>
 

@@ -127,11 +127,6 @@
     "category": "Carrara Marble"
   },
   {
-    "_id": "6a28153ccc75d9dddcce3185",
-    "name": "Sheetal Premium Item 1",
-    "category": "Carrara Marble"
-  },
-  {
     "_id": "6a28153ccc75d9dddcce3186",
     "name": "Sheetal Premium Item 2",
     "category": "Carrara Marble"
@@ -139,11 +134,6 @@
   {
     "_id": "6a28153dcc75d9dddcce3187",
     "name": "Sheetal Premium Item 3",
-    "category": "Carrara Marble"
-  },
-  {
-    "_id": "6a28153dcc75d9dddcce3188",
-    "name": "Sheetal Premium Item 4",
     "category": "Carrara Marble"
   },
   {
@@ -169,6 +159,63 @@
   {
     "_id": "6a28153fcc75d9dddcce318d",
     "name": "Sheetal Premium Item 4",
+    "category": "Carrara Marble"
+  },
+  {
+    "_id": "6a2be13474e4adc0617a9e8b",
+    "name": "Seller tile",
+    "category": "furniture",
+    "subcategory": "Sofa",
+    "subsubcategory": ""
+  },
+  {
+    "_id": "6a2d0ba874e4adc0617aa2cd",
+    "name": "Sheetal Premium Item 1",
+    "category": "Carrara Marble"
+  },
+  {
+    "_id": "6a2d0ba874e4adc0617aa2ce",
+    "name": "Sheetal Premium Item 2",
+    "category": "Carrara Marble"
+  },
+  {
+    "_id": "6a2d0ba974e4adc0617aa2cf",
+    "name": "Sheetal Premium Item 3",
+    "category": "Carrara Marble"
+  },
+  {
+    "_id": "6a2d0ba974e4adc0617aa2d0",
+    "name": "Sheetal Premium Item 4",
+    "category": "Carrara Marble"
+  },
+  {
+    "_id": "6a2d0ba974e4adc0617aa2d1",
+    "name": "Sheetal Premium Item 5",
+    "category": "Carrara Marble"
+  },
+  {
+    "_id": "6a2d0ba974e4adc0617aa2d2",
+    "name": "Sheetal Premium Item 1",
+    "category": "Carrara Marble"
+  },
+  {
+    "_id": "6a2d0ba974e4adc0617aa2d3",
+    "name": "Sheetal Premium Item 2",
+    "category": "Carrara Marble"
+  },
+  {
+    "_id": "6a2d0ba974e4adc0617aa2d4",
+    "name": "Sheetal Premium Item 3",
+    "category": "Carrara Marble"
+  },
+  {
+    "_id": "6a2d0ba974e4adc0617aa2d5",
+    "name": "Sheetal Premium Item 4",
+    "category": "Carrara Marble"
+  },
+  {
+    "_id": "6a2d0ba974e4adc0617aa2d6",
+    "name": "Sheetal Premium Item 5",
     "category": "Carrara Marble"
   }
 ]

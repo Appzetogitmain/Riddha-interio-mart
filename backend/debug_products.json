@@ -1,9 +1,6 @@
 {
-  "timestamp": "2026-06-12T08:42:24.807Z",
-  "query": {
-    "isApproved": "pending",
-    "isActive": "all"
-  },
+  "timestamp": "2026-06-16T05:46:13.749Z",
+  "query": {},
   "builtFilter": {
     "isApproved": true,
     "isActive": true,
@@ -16,6 +13,18 @@
   },
   "resultCount": 10,
   "results": [
+    {
+      "_id": "6a2d0ba974e4adc0617aa2d6",
+      "name": "Sheetal Premium Item 5",
+      "category": "Carrara Marble"
+    },
+    {
+      "_id": "6a2be13474e4adc0617a9e8b",
+      "name": "Seller tile",
+      "category": "furniture",
+      "subcategory": "Sofa",
+      "subsubcategory": ""
+    },
     {
       "_id": "6a28153fcc75d9dddcce318b",
       "name": "Sheetal Premium Item 2",
@@ -34,11 +43,6 @@
     {
       "_id": "6a28153ccc75d9dddcce3186",
       "name": "Sheetal Premium Item 2",
-      "category": "Carrara Marble"
-    },
-    {
-      "_id": "6a28153ccc75d9dddcce3185",
-      "name": "Sheetal Premium Item 1",
       "category": "Carrara Marble"
     },
     {
@@ -61,13 +65,6 @@
       "name": "Swan Neck Golden Faucet",
       "category": "Bath",
       "subcategory": "",
-      "subsubcategory": ""
-    },
-    {
-      "_id": "6a23ee5b614854ee3ba485c7",
-      "name": "red fort",
-      "category": "Flooring",
-      "subcategory": "Terracotta Tiles",
       "subsubcategory": ""
     }
   ]

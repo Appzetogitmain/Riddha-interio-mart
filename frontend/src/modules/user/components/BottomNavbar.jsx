@@ -11,7 +11,31 @@ const BottomNavbar = () => {
   const hideOnRoutes = ['/cart', '/checkout', '/address', '/payment', '/splash', '/onboarding'];
   const shouldHide = hideOnRoutes.some(route => location.pathname.toLowerCase().includes(route));
 
-  if (shouldHide) return null;
+  const [isKeyboardVisible, setIsKeyboardVisible] = React.useState(false);
+
+  React.useEffect(() => {
+    const handleFocusIn = () => {
+      setTimeout(() => {
+        const activeEl = document.activeElement;
+        if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA')) {
+          setIsKeyboardVisible(true);
+        }
+      }, 50);
+    };
+
+    const handleFocusOut = () => {
+      setIsKeyboardVisible(false);
+    };
+
+    document.addEventListener('focusin', handleFocusIn);
+    document.addEventListener('focusout', handleFocusOut);
+    return () => {
+      document.removeEventListener('focusin', handleFocusIn);
+      document.removeEventListener('focusout', handleFocusOut);
+    };
+  }, []);
+
+  if (shouldHide || isKeyboardVisible) return null;
 
   const navItems = [
     { name: 'Home', path: '/', icon: FiHome },

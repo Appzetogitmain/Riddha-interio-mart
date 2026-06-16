@@ -5,6 +5,7 @@ import ProductCard from '../components/ProductCard';
 import { categories } from '../data/categories';
 import { FiFilter, FiChevronDown, FiX } from 'react-icons/fi';
 import api from '../../../shared/utils/api';
+import Button from '../../../shared/components/Button';
 
 const ProductListingPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -17,6 +18,7 @@ const ProductListingPage = () => {
   const searchQuery = searchParams.get('search') || '';
 
   useEffect(() => {
+    window.scrollTo(0, 0);
     const fetchProducts = async () => {
       try {
         setLoading(true);

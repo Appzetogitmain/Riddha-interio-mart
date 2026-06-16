@@ -1,12 +1,7 @@
 {
-  "timestamp": "2026-06-15T13:23:15.242Z",
-  "query": {
-    "isApproved": "pending",
-    "isActive": "all"
-  },
-  "builtFilter": {
-    "isApproved": false
-  },
+  "timestamp": "2026-06-16T03:21:10.214Z",
+  "query": {},
+  "builtFilter": {},
   "resultCount": 10,
   "results": [
     {

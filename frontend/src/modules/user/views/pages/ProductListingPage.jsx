@@ -5,8 +5,13 @@ import ProductCard from '../components/ProductCard';
 import { products } from '../../models/products';
 import { categories } from '../../models/categories';
 import { FiFilter, FiChevronDown, FiX } from 'react-icons/fi';
+import Button from '../../../../views/shared/Button';
 
 const ProductListingPage = () => {
+  React.useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   const [searchParams, setSearchParams] = useSearchParams();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [sortBy, setSortBy] = useState('featured');

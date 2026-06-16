@@ -4,6 +4,10 @@ import { Link } from 'react-router-dom';
 import { categories } from '../../models/categories';
 
 const CategoriesPage = () => {
+  React.useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   return (
     <div className="min-h-screen bg-white pb-24 pt-10 px-4 md:px-12">
       <div className="max-w-7xl mx-auto">

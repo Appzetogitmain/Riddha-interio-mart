@@ -149,7 +149,7 @@ const AddressPage = () => {
                   type="text"
                   placeholder="City"
                   value={formData.city}
-                  onChange={e => set('city', e.target.value)}
+                  onChange={e => set('city', e.target.value.replace(/[^a-zA-Z\s]/g, ''))}
                   className={`${inputBase} ${errors.city ? inputErr : inputOk}`}
                 />
                 {errors.city && <p className="text-[11px] text-red-500 font-medium">{errors.city}</p>}

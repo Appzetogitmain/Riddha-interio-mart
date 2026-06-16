@@ -18,7 +18,13 @@ const BulkOrderModal = ({ isOpen, onClose }) => {
   useEffect(() => {
     if (isOpen) {
       fetchCategories();
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
     }
+    return () => {
+      document.body.style.overflow = '';
+    };
   }, [isOpen]);
 
   const fetchCategories = async () => {
@@ -402,6 +408,7 @@ const BulkOrderModal = ({ isOpen, onClose }) => {
                       rows="2" 
                       value={formData.message} 
                       onChange={e => setFormData({...formData, message: e.target.value})} 
+                      onFocus={e => e.target.scrollIntoView({ behavior: 'smooth', block: 'center' })}
                       className="w-full bg-gray-50/80 border border-gray-150 focus:border-[#189D91] focus:bg-white rounded-xl py-2.5 pl-11 pr-4 outline-none text-xs font-semibold text-gray-800 transition-all placeholder:text-gray-400 resize-none" 
                     />
                   </div>

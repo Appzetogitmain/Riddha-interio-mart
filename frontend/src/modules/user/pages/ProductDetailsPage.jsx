@@ -6,9 +6,10 @@ import {
   FiShoppingCart, FiArrowLeft, FiTruck, FiShield, FiRotateCcw,
   FiPlus, FiMinus, FiCheck, FiChevronDown, FiChevronUp,
   FiPlay, FiStar, FiPackage, FiBox, FiExternalLink, FiMaximize,
-  FiChevronRight, FiHeart, FiZap
+  FiChevronRight, FiHeart, FiZap, FiShare2, FiCopy, FiX
 } from 'react-icons/fi';
-import { FaStar } from 'react-icons/fa';
+import { FaStar, FaWhatsapp, FaFacebook, FaTwitter } from 'react-icons/fa';
+import toast from 'react-hot-toast';
 import ProductCard from '../components/ProductCard';
 import ReviewSection from '../components/ReviewSection';
 import { useWishlist } from '../data/WishlistContext';
@@ -26,6 +27,8 @@ const ProductDetailsPage = () => {
   const [activeMediaIndex, setActiveMediaIndex] = useState(0);
   const [pincode] = useState(localStorage.getItem('userPincode') || '452018');
   const [openSection, setOpenSection] = useState('specs');
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const allMedia = product ? [
     ...(product.images || []),
@@ -87,6 +90,41 @@ const ProductDetailsPage = () => {
     navigate('/cart');
   };
 
+  const productUrl = `${window.location.origin}/products/${id}`;
+
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(productUrl);
+      setCopied(true);
+      toast.success('Product link copied to clipboard!');
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      toast.error('Failed to copy link.');
+    }
+  };
+
+  const handleSystemShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: product?.name || 'Product Details',
+          text: `Check out ${product?.name || 'this product'} on Riddha Interior Mart`,
+          url: productUrl,
+        });
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          toast.error('Sharing failed.');
+        }
+      }
+    } else {
+      handleCopyLink();
+    }
+  };
+
+  const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(`Check out ${product?.name || 'this product'} on Riddha Interior Mart: ${productUrl}`)}`;
+  const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(productUrl)}`;
+  const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(`Check out ${product?.name || 'this product'} on Riddha Interior Mart:`)}&url=${encodeURIComponent(productUrl)}`;
+
   const toggleSection = (key) => setOpenSection(prev => prev === key ? null : key);
 
   return (
@@ -118,10 +156,18 @@ const ProductDetailsPage = () => {
                 <FiArrowLeft size={18} className="text-gray-800" />
               </button>
 
+              {/* Share */}
+              <button
+                onClick={() => setShowShareModal(true)}
+                className="absolute top-4 right-16 z-10 p-2.5 bg-white/90 backdrop-blur-sm rounded-full shadow border border-gray-100 hover:bg-gray-100 transition-colors"
+              >
+                <FiShare2 size={18} className="text-gray-500 hover:text-[#189D91] transition-colors" />
+              </button>
+
               {/* Wishlist */}
               <button
                 onClick={() => toggleWishlist(product)}
-                className="absolute top-4 right-4 z-10 p-2.5 bg-white/90 backdrop-blur-sm rounded-full shadow border border-gray-100"
+                className="absolute top-4 right-4 z-10 p-2.5 bg-white/90 backdrop-blur-sm rounded-full shadow border border-gray-100 hover:bg-gray-100 transition-colors"
               >
                 <FiHeart size={18} className={wishlisted ? 'text-red-500 fill-red-500' : 'text-gray-400'} />
               </button>
@@ -489,6 +535,119 @@ const ProductDetailsPage = () => {
           </>
         )}
       </div>
+
+      {/* Share Modal */}
+      <AnimatePresence>
+        {showShareModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowShareModal(false)}
+              className="absolute inset-0 bg-black/40 backdrop-blur-xs"
+            />
+            
+            {/* Modal Content */}
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              transition={{ type: 'spring', duration: 0.35 }}
+              className="relative bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl border border-gray-100 z-10"
+            >
+              <div className="flex justify-between items-center mb-5">
+                <h3 className="text-sm font-black text-gray-900 uppercase tracking-wider">Share Product</h3>
+                <button
+                  onClick={() => setShowShareModal(false)}
+                  className="p-1.5 hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+                >
+                  <FiX size={18} />
+                </button>
+              </div>
+
+              {/* Share channels grid */}
+              <div className="grid grid-cols-4 gap-3 mb-6">
+                <button
+                  onClick={handleCopyLink}
+                  className="flex flex-col items-center gap-1.5 hover:scale-105 active:scale-95 transition-transform cursor-pointer"
+                >
+                  <div className="w-12 h-12 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center text-[#189D91]">
+                    {copied ? <FiCheck size={20} className="text-emerald-500" /> : <FiCopy size={18} />}
+                  </div>
+                  <span className="text-[10px] font-bold text-gray-500">{copied ? 'Copied' : 'Copy Link'}</span>
+                </button>
+
+                <a
+                  href={whatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex flex-col items-center gap-1.5 hover:scale-105 active:scale-95 transition-transform"
+                >
+                  <div className="w-12 h-12 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-500">
+                    <FaWhatsapp size={22} />
+                  </div>
+                  <span className="text-[10px] font-bold text-gray-500">WhatsApp</span>
+                </a>
+
+                <a
+                  href={facebookUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex flex-col items-center gap-1.5 hover:scale-105 active:scale-95 transition-transform"
+                >
+                  <div className="w-12 h-12 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600">
+                    <FaFacebook size={22} />
+                  </div>
+                  <span className="text-[10px] font-bold text-gray-500">Facebook</span>
+                </a>
+
+                {navigator.share ? (
+                  <button
+                    onClick={handleSystemShare}
+                    className="flex flex-col items-center gap-1.5 hover:scale-105 active:scale-95 transition-transform cursor-pointer"
+                  >
+                    <div className="w-12 h-12 rounded-full bg-[#189D91]/10 border border-[#189D91]/20 flex items-center justify-center text-[#189D91]">
+                      <FiShare2 size={18} />
+                    </div>
+                    <span className="text-[10px] font-bold text-gray-500">More</span>
+                  </button>
+                ) : (
+                  <a
+                    href={twitterUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex flex-col items-center gap-1.5 hover:scale-105 active:scale-95 transition-transform"
+                  >
+                    <div className="w-12 h-12 rounded-full bg-sky-50 border border-sky-100 flex items-center justify-center text-sky-500">
+                      <FaTwitter size={20} />
+                    </div>
+                    <span className="text-[10px] font-bold text-gray-500">Twitter</span>
+                  </a>
+                )}
+              </div>
+
+              {/* Copy input field */}
+              <div className="flex gap-2 bg-gray-50 border border-gray-100 rounded-xl p-2">
+                <input
+                  type="text"
+                  readOnly
+                  value={productUrl}
+                  onClick={(e) => e.target.select()}
+                  className="flex-1 bg-transparent text-[11px] text-gray-500 outline-none select-all truncate px-2 font-medium"
+                />
+                <button
+                  onClick={handleCopyLink}
+                  className="bg-[#189D91] hover:bg-[#14847a] text-white text-[11px] font-bold px-3 py-1.5 rounded-lg transition-colors shadow-xs shrink-0 cursor-pointer"
+                >
+                  {copied ? 'Copied' : 'Copy'}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

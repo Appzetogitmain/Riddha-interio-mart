@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Outlet, useNavigate, Link } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import { useUser } from '../../../user/models/UserContext';
-import { LuMenu, LuBell, LuUser, LuLogOut, LuChevronDown, LuCheck, LuX } from 'react-icons/lu';
+import { LuMenu, LuBell, LuUser, LuLogOut, LuChevronDown, LuCheck, LuX, LuSearch } from 'react-icons/lu';
+import api from '../../../../shared/utils/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { connectSocket, disconnectSocket } from '../../../../shared/utils/socket';
 import { playNewOrderChime, primeNotificationAudio, isSoundEnabled } from '../../seller/utils/notificationSound';
@@ -14,8 +15,43 @@ const AdminLayout = () => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState(() => getAdminNotifications());
   const [toast, setToast] = useState(null);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
   const { logout, user } = useUser();
   const navigate = useNavigate();
+  const searchRef = React.useRef(null);
+
+  useEffect(() => {
+    if (!searchQuery.trim()) { setSearchResults([]); return; }
+    const timer = setTimeout(async () => {
+      try {
+        setIsSearching(true);
+        const { data: res } = await api.get(`/auth/admin/orders/search?query=${searchQuery}`);
+        if (res.success) setSearchResults(res.data);
+      } catch (err) {
+        console.error('Search failed:', err);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    if (searchOpen && searchRef.current) searchRef.current.focus();
+  }, [searchOpen]);
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/admin/orders/all?search=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchOpen(false);
+      setSearchQuery('');
+      setSearchResults([]);
+    }
+  };
 
   const unreadCount = notifications.filter(n => n.status === 'unread').length;
 
@@ -114,6 +150,7 @@ const AdminLayout = () => {
       onClick={() => {
         setShowUserMenu(false);
         setShowNotifications(false);
+        if (searchOpen) { setSearchOpen(false); setSearchQuery(''); setSearchResults([]); }
       }}
     >
       <AnimatePresence>
@@ -165,7 +202,7 @@ const AdminLayout = () => {
         {/* Header */}
         <header className="h-16 md:h-20 bg-white shadow-sm border-b border-soft-oatmeal px-4 md:px-6 flex items-center justify-between z-30">
           <div className="flex items-center gap-4">
-            <button 
+            <button
               onClick={() => setIsSidebarOpen(true)}
               className="lg:hidden p-2 hover:bg-soft-oatmeal rounded-lg"
             >
@@ -177,6 +214,113 @@ const AdminLayout = () => {
           </div>
 
           <div className="flex items-center gap-4">
+            {/* Global Search */}
+            <div className="relative search-container" onClick={(e) => e.stopPropagation()}>
+              <AnimatePresence>
+                {searchOpen ? (
+                  <motion.form
+                    initial={{ width: 40, opacity: 0.8 }}
+                    animate={{ width: 300, opacity: 1 }}
+                    exit={{ width: 40, opacity: 0.8 }}
+                    transition={{ duration: 0.2 }}
+                    onSubmit={handleSearchSubmit}
+                    className="flex items-center bg-soft-oatmeal/30 border border-soft-oatmeal rounded-xl overflow-hidden"
+                  >
+                    <LuSearch size={16} className="ml-3 text-warm-sand shrink-0" />
+                    <input
+                      ref={searchRef}
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Search orders, customers..."
+                      className="bg-transparent border-none focus:ring-0 focus:outline-none text-xs font-medium text-deep-espresso w-full px-2 py-2 placeholder-warm-sand"
+                    />
+                    {searchQuery && (
+                      <button
+                        type="button"
+                        onClick={() => { setSearchQuery(''); setSearchResults([]); }}
+                        className="p-1 mr-1 text-warm-sand hover:text-deep-espresso"
+                      >
+                        <LuX size={14} />
+                      </button>
+                    )}
+                  </motion.form>
+                ) : (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setSearchOpen(true); }}
+                    className="p-2 rounded-full text-dusty-cocoa hover:bg-soft-oatmeal hover:text-deep-espresso transition-all"
+                    title="Search orders"
+                  >
+                    <LuSearch size={20} />
+                  </button>
+                )}
+              </AnimatePresence>
+
+              {/* Search Results Dropdown */}
+              <AnimatePresence>
+                {searchOpen && (searchResults.length > 0 || isSearching) && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 8 }}
+                    className="absolute right-0 top-full mt-2 w-[320px] bg-white rounded-2xl shadow-2xl border border-soft-oatmeal overflow-hidden z-50"
+                  >
+                    {isSearching ? (
+                      <div className="p-4 text-center text-[10px] font-bold text-warm-sand animate-pulse uppercase tracking-wider">
+                        Searching...
+                      </div>
+                    ) : (
+                      <div className="max-h-[300px] overflow-y-auto divide-y divide-soft-oatmeal/50">
+                        {searchResults.map(order => (
+                          <div
+                            key={order._id}
+                            onClick={() => {
+                              navigate(`/admin/orders/view/${order._id}`);
+                              setSearchOpen(false);
+                              setSearchQuery('');
+                              setSearchResults([]);
+                            }}
+                            className="p-3 hover:bg-soft-oatmeal/20 cursor-pointer transition-colors flex items-center justify-between"
+                          >
+                            <div>
+                              <p className="text-xs font-bold text-deep-espresso">
+                                #{order._id.toString().slice(-8).toUpperCase()}
+                              </p>
+                              <p className="text-[10px] text-warm-sand mt-0.5">
+                                {order.shippingAddress?.fullName || order.user?.fullName || 'Customer'}
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <span className="text-[9px] font-bold uppercase px-2 py-0.5 rounded-full bg-soft-oatmeal text-dusty-cocoa border border-soft-oatmeal">
+                                {order.status}
+                              </span>
+                              <p className="text-xs font-bold text-deep-espresso mt-1">
+                                ₹{order.totalPrice?.toLocaleString()}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {!isSearching && searchResults.length > 0 && (
+                      <div
+                        onClick={() => {
+                          if (searchQuery.trim()) {
+                            navigate(`/admin/orders/all?search=${encodeURIComponent(searchQuery.trim())}`);
+                            setSearchOpen(false); setSearchQuery(''); setSearchResults([]);
+                          }
+                        }}
+                        className="p-2.5 text-center bg-soft-oatmeal/10 border-t border-soft-oatmeal cursor-pointer hover:bg-soft-oatmeal/20 transition-colors"
+                      >
+                        <span className="text-[10px] font-bold text-warm-sand uppercase tracking-widest">
+                          View all results →
+                        </span>
+                      </div>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
             <div className="relative">
               <button 
                 onClick={(e) => { e.stopPropagation(); setShowNotifications(!showNotifications); }}

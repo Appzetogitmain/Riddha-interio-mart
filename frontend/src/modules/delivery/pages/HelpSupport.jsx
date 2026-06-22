@@ -92,17 +92,16 @@ const HelpSupport = () => {
 
         {/* Contact Options */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            onClick={() => toast('Live Chat coming soon', { icon: '💬' })}
-            className="bg-white border border-soft-oatmeal rounded-xl p-6 text-left hover:border-warm-sand transition-colors"
+          <motion.div
+            className="bg-white border border-soft-oatmeal rounded-xl p-6 text-left opacity-50 relative"
           >
+            <span className="absolute top-3 right-3 text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-600 border border-amber-200">Coming Soon</span>
             <div className="w-12 h-12 bg-warm-sand/10 text-warm-sand rounded-xl flex items-center justify-center mb-4">
               <LuMessageCircle size={24} />
             </div>
             <h3 className="font-bold text-deep-espresso mb-1">Live Chat</h3>
             <p className="text-sm text-dusty-cocoa">Chat with our support team</p>
-          </motion.button>
+          </motion.div>
 
           <motion.button
             whileHover={{ scale: 1.02 }}

@@ -1,71 +1,63 @@
 {
-  "timestamp": "2026-06-17T10:05:04.009Z",
-  "query": {},
+  "timestamp": "2026-06-22T09:51:29.284Z",
+  "query": {
+    "isApproved": "pending",
+    "isActive": "all"
+  },
   "builtFilter": {
-    "isApproved": true,
-    "isActive": true,
-    "seller": {
-      "$nin": [
-        "6a100b07a3cc06ac3f65be01",
-        "6a10057431fa10db6ebdaaff"
-      ]
-    }
+    "isApproved": false
   },
   "resultCount": 10,
   "results": [
     {
-      "_id": "6a2d0ba974e4adc0617aa2d6",
-      "name": "Sheetal Premium Item 5",
-      "category": "Carrara Marble"
-    },
-    {
-      "_id": "6a2be13474e4adc0617a9e8b",
-      "name": "Seller tile",
-      "category": "furniture",
-      "subcategory": "Sofa",
-      "subsubcategory": ""
-    },
-    {
-      "_id": "6a28153fcc75d9dddcce318b",
-      "name": "Sheetal Premium Item 2",
-      "category": "Carrara Marble"
-    },
-    {
-      "_id": "6a28153fcc75d9dddcce318a",
-      "name": "Sheetal Premium Item 1",
-      "category": "Carrara Marble"
-    },
-    {
-      "_id": "6a28153dcc75d9dddcce3187",
-      "name": "Sheetal Premium Item 3",
-      "category": "Carrara Marble"
-    },
-    {
-      "_id": "6a28153ccc75d9dddcce3186",
-      "name": "Sheetal Premium Item 2",
-      "category": "Carrara Marble"
-    },
-    {
-      "_id": "6a280eefcc75d9dddcce307b",
-      "name": "Sheetal Premium Item 5",
-      "category": "Carrara Marble"
-    },
-    {
-      "_id": "6a280eefcc75d9dddcce307a",
+      "_id": "6a2d0ba974e4adc0617aa2d5",
       "name": "Sheetal Premium Item 4",
       "category": "Carrara Marble"
     },
     {
-      "_id": "6a280eeecc75d9dddcce3077",
+      "_id": "6a2d0ba974e4adc0617aa2d4",
+      "name": "Sheetal Premium Item 3",
+      "category": "Carrara Marble"
+    },
+    {
+      "_id": "6a2d0ba974e4adc0617aa2d3",
+      "name": "Sheetal Premium Item 2",
+      "category": "Carrara Marble"
+    },
+    {
+      "_id": "6a2d0ba974e4adc0617aa2d2",
       "name": "Sheetal Premium Item 1",
       "category": "Carrara Marble"
     },
     {
-      "_id": "6a26b59d8ed1bca80e591e9c",
-      "name": "Swan Neck Golden Faucet",
-      "category": "Bath",
-      "subcategory": "",
-      "subsubcategory": ""
+      "_id": "6a2d0ba974e4adc0617aa2d1",
+      "name": "Sheetal Premium Item 5",
+      "category": "Carrara Marble"
+    },
+    {
+      "_id": "6a2d0ba974e4adc0617aa2d0",
+      "name": "Sheetal Premium Item 4",
+      "category": "Carrara Marble"
+    },
+    {
+      "_id": "6a2d0ba974e4adc0617aa2cf",
+      "name": "Sheetal Premium Item 3",
+      "category": "Carrara Marble"
+    },
+    {
+      "_id": "6a2d0ba874e4adc0617aa2ce",
+      "name": "Sheetal Premium Item 2",
+      "category": "Carrara Marble"
+    },
+    {
+      "_id": "6a2d0ba874e4adc0617aa2cd",
+      "name": "Sheetal Premium Item 1",
+      "category": "Carrara Marble"
+    },
+    {
+      "_id": "6a28153fcc75d9dddcce318d",
+      "name": "Sheetal Premium Item 4",
+      "category": "Carrara Marble"
     }
   ]
 }

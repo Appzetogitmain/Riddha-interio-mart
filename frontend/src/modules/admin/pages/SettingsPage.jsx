@@ -10,6 +10,7 @@ import {
   FiRefreshCw,
 } from "react-icons/fi";
 import api from "../../../shared/utils/api";
+import { toast } from "react-hot-toast";
 
 const SettingsPage = () => {
   const [activeTab, setActiveTab] = useState("Profile");
@@ -81,10 +82,12 @@ const SettingsPage = () => {
       });
       if (data.success) {
         setIsSaved(true);
+        toast.success("Profile updated successfully");
         setTimeout(() => setIsSaved(false), 3000);
       }
     } catch (err) {
       console.error("Failed to update profile", err);
+      toast.error(err.response?.data?.error || "Failed to update profile.");
       setError(err.response?.data?.error || "Failed to update profile.");
     } finally {
       setIsSaving(false);
@@ -112,6 +115,7 @@ const SettingsPage = () => {
       });
       if (data.success) {
         setIsSaved(true);
+        toast.success("Password updated successfully");
         setPasswordData({
           currentPassword: "",
           newPassword: "",
@@ -121,6 +125,7 @@ const SettingsPage = () => {
       }
     } catch (err) {
       console.error("Failed to update password", err);
+      toast.error(err.response?.data?.error || "Failed to update password.");
       setError(err.response?.data?.error || "Failed to update password.");
     } finally {
       setIsSaving(false);
@@ -134,6 +139,7 @@ const SettingsPage = () => {
     setTimeout(() => {
       setIsSaving(false);
       setIsSaved(true);
+      toast.success("Notification preferences updated");
       setTimeout(() => setIsSaved(false), 3000);
     }, 600);
   };
@@ -147,10 +153,12 @@ const SettingsPage = () => {
       const { data } = await api.put("/settings", systemSettings);
       if (data.success) {
         setIsSaved(true);
+        toast.success("System settings updated");
         setTimeout(() => setIsSaved(false), 3000);
       }
     } catch (err) {
       console.error("Failed to update system settings", err);
+      toast.error(err.response?.data?.error || "Failed to update system settings.");
       setError(
         err.response?.data?.error || "Failed to update system settings.",
       );

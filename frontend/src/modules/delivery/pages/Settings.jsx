@@ -126,8 +126,8 @@ const Settings = () => {
       title: 'Security',
       icon: LuShieldCheck,
       items: [
-        { label: 'Two-Factor Authentication', description: 'Add extra security', action: '2fa' },
-        { label: 'Login History', description: 'View recent logins', action: 'history' },
+        { label: 'Two-Factor Authentication', description: 'Add extra security', action: '2fa', comingSoon: true },
+        { label: 'Login History', description: 'View recent logins', action: 'history', comingSoon: true },
       ]
     }
   ];
@@ -158,11 +158,16 @@ const Settings = () => {
               {section.items.map((item, index) => (
                 <div
                   key={index}
-                  onClick={() => item.action && handleAction(item.action)}
-                  className={`px-5 py-3 flex items-center justify-between hover:bg-slate-50 transition-colors ${item.action ? 'cursor-pointer' : ''}`}
+                  onClick={() => item.action && !item.comingSoon && handleAction(item.action)}
+                  className={`px-5 py-3 flex items-center justify-between transition-colors ${item.comingSoon ? 'opacity-50 cursor-default' : item.action ? 'cursor-pointer hover:bg-slate-50' : ''}`}
                 >
                   <div className="flex-1">
-                    <p className="text-sm font-bold text-slate-800">{item.label}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-bold text-slate-800">{item.label}</p>
+                      {item.comingSoon && (
+                        <span className="text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-600 border border-amber-200">Soon</span>
+                      )}
+                    </div>
                     <p className="text-[10px] font-medium text-slate-500">{item.description}</p>
                   </div>
                   <div className="flex items-center gap-3">

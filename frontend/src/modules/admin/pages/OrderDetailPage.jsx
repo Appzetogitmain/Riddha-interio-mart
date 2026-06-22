@@ -245,11 +245,44 @@ const OrderDetailPage = () => {
               <div className="bg-soft-oatmeal/5 p-6 space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-warm-sand">Subtotal</span>
-                  <span className="font-medium text-deep-espresso">₹{(order.totalPrice - order.shippingPrice).toLocaleString()}</span>
+                  <span className="font-medium text-deep-espresso">₹{(order.itemsPrice || order.pricingBreakdown?.subtotal || order.totalPrice - (order.shippingPrice || 0) - (order.taxAmount || 0)).toLocaleString()}</span>
                 </div>
+                {(order.taxAmount > 0 || order.pricingBreakdown?.taxAmount > 0) && (
+                  <>
+                    {order.taxType === 'inter-state' ? (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-warm-sand">IGST</span>
+                        <span className="font-medium text-deep-espresso">₹{(order.igst || order.pricingBreakdown?.igst || 0).toLocaleString()}</span>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-warm-sand">CGST</span>
+                          <span className="font-medium text-deep-espresso">₹{(order.cgst || order.pricingBreakdown?.cgst || 0).toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-warm-sand">SGST</span>
+                          <span className="font-medium text-deep-espresso">₹{(order.sgst || order.pricingBreakdown?.sgst || 0).toLocaleString()}</span>
+                        </div>
+                      </>
+                    )}
+                  </>
+                )}
+                {(order.taxAmount > 0 || order.pricingBreakdown?.taxAmount > 0) && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-warm-sand">Total GST</span>
+                    <span className="font-medium text-deep-espresso">₹{(order.taxAmount || order.pricingBreakdown?.taxAmount || 0).toLocaleString()}</span>
+                  </div>
+                )}
+                {(order.discountAmount > 0 || order.pricingBreakdown?.discountAmount > 0) && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-warm-sand">Discount</span>
+                    <span className="font-medium text-green-600">-₹{(order.discountAmount || order.pricingBreakdown?.discountAmount || 0).toLocaleString()}</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-sm">
                   <span className="text-warm-sand">Shipping</span>
-                  <span className="font-medium text-deep-espresso">₹{order.shippingPrice.toLocaleString()}</span>
+                  <span className="font-medium text-deep-espresso">₹{(order.shippingPrice || 0).toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between text-lg pt-2 border-t border-soft-oatmeal">
                   <span className="font-bold text-deep-espresso">Total Amount</span>

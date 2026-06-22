@@ -117,6 +117,7 @@ const menuGroups = [
             icon: FiClock,
             label: "Pending Orders",
           },
+          { path: "/admin/bulk-orders", icon: FiLayers, label: "Bulk Orders" },
         ],
       },
       {
@@ -263,7 +264,7 @@ const menuGroups = [
   {
     title: "Financial & Core System",
     items: [
-      { path: "/admin/product-batches", icon: FiLayers, label: "Bulk Orders", showBadge: true, badgeType: "batch" },
+      { path: "/admin/product-batches", icon: FiLayers, label: "Product Batches", showBadge: true, badgeType: "batch" },
       {
         label: "Payments",
         icon: FiDollarSign,

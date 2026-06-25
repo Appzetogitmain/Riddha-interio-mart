@@ -4,6 +4,8 @@ import PageWrapper from '../components/PageWrapper';
 import { FiArrowLeft, FiImage, FiVideo, FiSave, FiInfo, FiTag, FiDollarSign, FiType, FiUser, FiPackage, FiTrash2, FiPlus, FiX } from 'react-icons/fi';
 import api from '../../../shared/utils/api';
 import { toast } from 'react-hot-toast';
+import BulkUploadModal from '../components/BulkUploadModal';
+import { FiUploadCloud } from 'react-icons/fi';
 
 const AddProductPage = () => {
   const navigate = useNavigate();
@@ -14,6 +16,7 @@ const AddProductPage = () => {
   const [statusMessage, setStatusMessage] = useState('');
   const [imgFiles, setImgFiles] = useState([]);
   const [videoFile, setVideoFile] = useState(null);
+  const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
   
   // Custom Dropdown State
   const [isCatOpen, setIsCatOpen] = useState(false);
@@ -241,12 +244,22 @@ const AddProductPage = () => {
             <h1 className="text-2xl md:text-3xl lg:text-4xl font-display font-bold text-deep-espresso">Add New Product</h1>
             <p className="text-warm-sand text-sm md:text-base font-medium">Populate your catalog with premium items.</p>
           </div>
-          {statusMessage && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded-xl text-xs font-bold">
-               {statusMessage}
-            </div>
-          )}
+          <div className="flex items-center gap-4">
+            {statusMessage && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded-xl text-xs font-bold">
+                 {statusMessage}
+              </div>
+            )}
+            <button 
+              onClick={() => setIsBulkModalOpen(true)}
+              className="bg-soft-oatmeal text-deep-espresso text-xs font-black uppercase tracking-widest px-6 py-3 rounded-xl hover:bg-warm-sand/20 transition-all flex items-center gap-2"
+            >
+              <FiUploadCloud size={16} /> Bulk Upload
+            </button>
+          </div>
         </div>
+
+        <BulkUploadModal isOpen={isBulkModalOpen} onClose={() => setIsBulkModalOpen(false)} />
 
         <form onSubmit={handleSubmit} noValidate className="space-y-6 md:space-y-8 pb-12">
           {/* Main Form Card */}

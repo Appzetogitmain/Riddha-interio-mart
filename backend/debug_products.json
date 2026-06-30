@@ -1,9 +1,14 @@
 {
+<<<<<<< HEAD
   "timestamp": "2026-06-22T09:51:29.284Z",
   "query": {
     "isApproved": "pending",
     "isActive": "all"
   },
+=======
+  "timestamp": "2026-06-17T10:05:04.009Z",
+  "query": {},
+>>>>>>> 137b11c17726552301a88105ad5e00f0e1d34394
   "builtFilter": {
     "isApproved": false
   },
@@ -35,6 +40,7 @@
       "category": "Carrara Marble"
     },
     {
+<<<<<<< HEAD
       "_id": "6a2d0ba974e4adc0617aa2d0",
       "name": "Sheetal Premium Item 4",
       "category": "Carrara Marble"
@@ -46,18 +52,65 @@
     },
     {
       "_id": "6a2d0ba874e4adc0617aa2ce",
+=======
+      "_id": "6a2be13474e4adc0617a9e8b",
+      "name": "Seller tile",
+      "category": "furniture",
+      "subcategory": "Sofa",
+      "subsubcategory": ""
+    },
+    {
+      "_id": "6a28153fcc75d9dddcce318b",
+>>>>>>> 137b11c17726552301a88105ad5e00f0e1d34394
       "name": "Sheetal Premium Item 2",
       "category": "Carrara Marble"
     },
     {
+<<<<<<< HEAD
       "_id": "6a2d0ba874e4adc0617aa2cd",
+=======
+      "_id": "6a28153fcc75d9dddcce318a",
+>>>>>>> 137b11c17726552301a88105ad5e00f0e1d34394
       "name": "Sheetal Premium Item 1",
       "category": "Carrara Marble"
     },
     {
+<<<<<<< HEAD
       "_id": "6a28153fcc75d9dddcce318d",
       "name": "Sheetal Premium Item 4",
       "category": "Carrara Marble"
+=======
+      "_id": "6a28153dcc75d9dddcce3187",
+      "name": "Sheetal Premium Item 3",
+      "category": "Carrara Marble"
+    },
+    {
+      "_id": "6a28153ccc75d9dddcce3186",
+      "name": "Sheetal Premium Item 2",
+      "category": "Carrara Marble"
+    },
+    {
+      "_id": "6a280eefcc75d9dddcce307b",
+      "name": "Sheetal Premium Item 5",
+      "category": "Carrara Marble"
+    },
+    {
+      "_id": "6a280eefcc75d9dddcce307a",
+      "name": "Sheetal Premium Item 4",
+      "category": "Carrara Marble"
+    },
+    {
+      "_id": "6a280eeecc75d9dddcce3077",
+      "name": "Sheetal Premium Item 1",
+      "category": "Carrara Marble"
+    },
+    {
+      "_id": "6a26b59d8ed1bca80e591e9c",
+      "name": "Swan Neck Golden Faucet",
+      "category": "Bath",
+      "subcategory": "",
+      "subsubcategory": ""
+>>>>>>> 137b11c17726552301a88105ad5e00f0e1d34394
     }
   ]
 }

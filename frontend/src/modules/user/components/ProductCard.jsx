@@ -94,6 +94,28 @@ const ProductCard = ({ product, index = 0, variant = 'grid' }) => {
   // Derive "trending" from high discount or explicit flag
   const isTrending = product.isTrending === true || discountPercent >= 15;
 
+  const getDeliveryEstimate = () => {
+    const idString = String(productId || '');
+    let charCodeSum = 0;
+    for (let i = 0; i < idString.length; i++) {
+      charCodeSum += idString.charCodeAt(i);
+    }
+    const daysToAdd = (charCodeSum % 3) + 1; // 1, 2, or 3 days
+    
+    const deliveryDate = new Date();
+    deliveryDate.setDate(deliveryDate.getDate() + daysToAdd);
+    
+    if (daysToAdd === 1) {
+      return 'Tomorrow';
+    }
+    
+    return deliveryDate.toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
   return (
     <div
       className={`group bg-white ${isMinimal ? 'rounded-xl' : 'rounded-2xl md:rounded-3xl border border-soft-oatmeal/10'} shadow-sm hover:shadow-2xl transition-all duration-500 overflow-hidden ${isList ? 'flex flex-row md:flex-col' : 'flex flex-col'
@@ -216,9 +238,16 @@ const ProductCard = ({ product, index = 0, variant = 'grid' }) => {
             </div>
           )}
         </div>
+
+        {/* Compact Delivery Estimate UI */}
+        <div className="mt-2 pt-2 border-t border-slate-100 flex items-center gap-1 text-[9px] md:text-[11px] text-slate-500">
+          <span className="text-[#189D91] text-xs">🚚</span>
+          <span>Delivery by: <span className="font-semibold text-slate-700">{getDeliveryEstimate()}</span></span>
+        </div>
       </div>
     </div>
   );
 };
 
 export default ProductCard;
+

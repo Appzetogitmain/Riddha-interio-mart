@@ -1,9 +1,6 @@
 {
-  "timestamp": "2026-06-25T09:34:20.655Z",
-  "query": {
-    "isApproved": "pending",
-    "isActive": "all"
-  },
+  "timestamp": "2026-06-30T08:31:51.238Z",
+  "query": {},
   "builtFilter": {
     "isApproved": true,
     "isActive": true,
@@ -16,6 +13,38 @@
   },
   "resultCount": 10,
   "results": [
+    {
+      "_id": "6a436c626e92a38dc1208f8b",
+      "name": "abc",
+      "category": "Carrara Marble",
+      "subcategory": "Polished",
+      "subsubcategory": ""
+    },
+    {
+      "_id": "6a40ff188830e3fa4fc3a77d",
+      "name": "Sheetal Premium Item 5",
+      "category": "Carrara Marble"
+    },
+    {
+      "_id": "6a40ff178830e3fa4fc3a77c",
+      "name": "Sheetal Premium Item 4",
+      "category": "Carrara Marble"
+    },
+    {
+      "_id": "6a40ff178830e3fa4fc3a77b",
+      "name": "Sheetal Premium Item 3",
+      "category": "Carrara Marble"
+    },
+    {
+      "_id": "6a40ff178830e3fa4fc3a77a",
+      "name": "Sheetal Premium Item 2",
+      "category": "Carrara Marble"
+    },
+    {
+      "_id": "6a40ff178830e3fa4fc3a779",
+      "name": "Sheetal Premium Item 1",
+      "category": "Carrara Marble"
+    },
     {
       "_id": "6a3cf1ca3c72ab885b351ee6",
       "name": "Terra 2 LED Long",
@@ -34,36 +63,6 @@
     {
       "_id": "6a3cf1c63c72ab885b351ee3",
       "name": "Compact LED Evo IP65",
-      "category": "Architectural Lighting"
-    },
-    {
-      "_id": "6a3cf1c43c72ab885b351ee2",
-      "name": "Compact LED Hygienic",
-      "category": "Architectural Lighting"
-    },
-    {
-      "_id": "6a3cf1c33c72ab885b351ee1",
-      "name": "Tripact LED",
-      "category": "Architectural Lighting"
-    },
-    {
-      "_id": "6a3cf1c13c72ab885b351ee0",
-      "name": "Terra 2 LED Long Asymmetric",
-      "category": "Architectural Lighting"
-    },
-    {
-      "_id": "6a3cf1c03c72ab885b351edf",
-      "name": "Baris 40 LED",
-      "category": "Architectural Lighting"
-    },
-    {
-      "_id": "6a3cf1be3c72ab885b351ede",
-      "name": "Baris 52 LED",
-      "category": "Architectural Lighting"
-    },
-    {
-      "_id": "6a3cf1bd3c72ab885b351edd",
-      "name": "Baris Square 40 LED",
       "category": "Architectural Lighting"
     }
   ]

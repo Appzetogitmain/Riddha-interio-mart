@@ -55,6 +55,28 @@ const SectionGrid = ({ products, loading, containerVariants }) => {
           const displayPrice = hasDiscount ? rawDiscount : rawPrice;
           const originalPrice = hasDiscount ? rawPrice : null;
 
+          const getDeliveryEstimate = () => {
+            const idString = String(productId || '');
+            let charCodeSum = 0;
+            for (let i = 0; i < idString.length; i++) {
+              charCodeSum += idString.charCodeAt(i);
+            }
+            const daysToAdd = (charCodeSum % 3) + 1;
+            
+            const deliveryDate = new Date();
+            deliveryDate.setDate(deliveryDate.getDate() + daysToAdd);
+            
+            if (daysToAdd === 1) {
+              return 'Tomorrow';
+            }
+            
+            return deliveryDate.toLocaleDateString('en-US', {
+              weekday: 'short',
+              month: 'short',
+              day: 'numeric'
+            });
+          };
+
           return (
             <Motion.div
               key={productId}
@@ -85,22 +107,30 @@ const SectionGrid = ({ products, loading, containerVariants }) => {
                 </div>
 
                 {/* Product Info */}
-                <div className="p-2 flex flex-col gap-0.5">
-                  <p className="line-clamp-1 text-[10px] md:text-xs font-black text-gray-800 leading-tight">
-                    {product?.name}
-                  </p>
-                  <p className="line-clamp-1 text-[8px] md:text-[10px] font-bold text-[#189D91] uppercase tracking-wide">
-                    {product?.category}
-                  </p>
-                  <div className="flex items-center gap-1.5 mt-1">
-                    <span className="text-[11px] md:text-sm font-black text-gray-900">
-                      {toMoney(displayPrice)}
-                    </span>
-                    {hasDiscount && (
-                      <span className="text-[9px] text-gray-400 line-through">
-                        {toMoney(originalPrice)}
+                <div className="p-2 flex flex-col gap-0.5 flex-1 justify-between">
+                  <div>
+                    <p className="line-clamp-1 text-[10px] md:text-xs font-black text-gray-800 leading-tight">
+                      {product?.name}
+                    </p>
+                    <p className="line-clamp-1 text-[8px] md:text-[10px] font-bold text-[#189D91] uppercase tracking-wide">
+                      {product?.category}
+                    </p>
+                    <div className="flex items-center gap-1.5 mt-1">
+                      <span className="text-[11px] md:text-sm font-black text-gray-900">
+                        {toMoney(displayPrice)}
                       </span>
-                    )}
+                      {hasDiscount && (
+                        <span className="text-[9px] text-gray-400 line-through">
+                          {toMoney(originalPrice)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* Compact Delivery Estimate UI */}
+                  <div className="mt-1.5 pt-1.5 border-t border-gray-50 flex items-center gap-1 text-[8px] md:text-[10px] text-slate-500">
+                    <span>🚚</span>
+                    <span className="truncate">Del: <span className="font-semibold text-slate-700">{getDeliveryEstimate()}</span></span>
                   </div>
                 </div>
               </Link>

@@ -128,8 +128,10 @@ if (process.env.NODE_ENV === 'development') {
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Mount routes
+const bulkUploadRoutes = require('./routes/bulkUploadRoutes');
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
+app.use('/api/products', bulkUploadRoutes);
 app.use('/api/auth/user', userRoutes);
 app.use('/api/auth/admin', adminRoutes);
 

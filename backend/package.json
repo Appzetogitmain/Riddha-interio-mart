@@ -32,6 +32,8 @@
     "nodemailer": "^8.0.7",
     "pdfkit": "^0.18.0",
     "razorpay": "^2.9.6",
+    "csv-parser": "^3.0.0",
+    "adm-zip": "^0.5.10",
     "socket.io": "^4.8.1"
   },
   "devDependencies": {

@@ -1,116 +1,70 @@
 {
-<<<<<<< HEAD
-  "timestamp": "2026-06-22T09:51:29.284Z",
+  "timestamp": "2026-06-25T09:34:20.655Z",
   "query": {
     "isApproved": "pending",
     "isActive": "all"
   },
-=======
-  "timestamp": "2026-06-17T10:05:04.009Z",
-  "query": {},
->>>>>>> 137b11c17726552301a88105ad5e00f0e1d34394
   "builtFilter": {
-    "isApproved": false
+    "isApproved": true,
+    "isActive": true,
+    "seller": {
+      "$nin": [
+        "6a100b07a3cc06ac3f65be01",
+        "6a10057431fa10db6ebdaaff"
+      ]
+    }
   },
   "resultCount": 10,
   "results": [
     {
-      "_id": "6a2d0ba974e4adc0617aa2d5",
-      "name": "Sheetal Premium Item 4",
-      "category": "Carrara Marble"
+      "_id": "6a3cf1ca3c72ab885b351ee6",
+      "name": "Terra 2 LED Long",
+      "category": "Architectural Lighting"
     },
     {
-      "_id": "6a2d0ba974e4adc0617aa2d4",
-      "name": "Sheetal Premium Item 3",
-      "category": "Carrara Marble"
+      "_id": "6a3cf1c83c72ab885b351ee5",
+      "name": "Baris 40 LED Wall lamp",
+      "category": "Architectural Lighting"
     },
     {
-      "_id": "6a2d0ba974e4adc0617aa2d3",
-      "name": "Sheetal Premium Item 2",
-      "category": "Carrara Marble"
+      "_id": "6a3cf1c73c72ab885b351ee4",
+      "name": "Baris 52 LED Wall lamp",
+      "category": "Architectural Lighting"
     },
     {
-      "_id": "6a2d0ba974e4adc0617aa2d2",
-      "name": "Sheetal Premium Item 1",
-      "category": "Carrara Marble"
+      "_id": "6a3cf1c63c72ab885b351ee3",
+      "name": "Compact LED Evo IP65",
+      "category": "Architectural Lighting"
     },
     {
-      "_id": "6a2d0ba974e4adc0617aa2d1",
-      "name": "Sheetal Premium Item 5",
-      "category": "Carrara Marble"
+      "_id": "6a3cf1c43c72ab885b351ee2",
+      "name": "Compact LED Hygienic",
+      "category": "Architectural Lighting"
     },
     {
-<<<<<<< HEAD
-      "_id": "6a2d0ba974e4adc0617aa2d0",
-      "name": "Sheetal Premium Item 4",
-      "category": "Carrara Marble"
+      "_id": "6a3cf1c33c72ab885b351ee1",
+      "name": "Tripact LED",
+      "category": "Architectural Lighting"
     },
     {
-      "_id": "6a2d0ba974e4adc0617aa2cf",
-      "name": "Sheetal Premium Item 3",
-      "category": "Carrara Marble"
+      "_id": "6a3cf1c13c72ab885b351ee0",
+      "name": "Terra 2 LED Long Asymmetric",
+      "category": "Architectural Lighting"
     },
     {
-      "_id": "6a2d0ba874e4adc0617aa2ce",
-=======
-      "_id": "6a2be13474e4adc0617a9e8b",
-      "name": "Seller tile",
-      "category": "furniture",
-      "subcategory": "Sofa",
-      "subsubcategory": ""
+      "_id": "6a3cf1c03c72ab885b351edf",
+      "name": "Baris 40 LED",
+      "category": "Architectural Lighting"
     },
     {
-      "_id": "6a28153fcc75d9dddcce318b",
->>>>>>> 137b11c17726552301a88105ad5e00f0e1d34394
-      "name": "Sheetal Premium Item 2",
-      "category": "Carrara Marble"
+      "_id": "6a3cf1be3c72ab885b351ede",
+      "name": "Baris 52 LED",
+      "category": "Architectural Lighting"
     },
     {
-<<<<<<< HEAD
-      "_id": "6a2d0ba874e4adc0617aa2cd",
-=======
-      "_id": "6a28153fcc75d9dddcce318a",
->>>>>>> 137b11c17726552301a88105ad5e00f0e1d34394
-      "name": "Sheetal Premium Item 1",
-      "category": "Carrara Marble"
-    },
-    {
-<<<<<<< HEAD
-      "_id": "6a28153fcc75d9dddcce318d",
-      "name": "Sheetal Premium Item 4",
-      "category": "Carrara Marble"
-=======
-      "_id": "6a28153dcc75d9dddcce3187",
-      "name": "Sheetal Premium Item 3",
-      "category": "Carrara Marble"
-    },
-    {
-      "_id": "6a28153ccc75d9dddcce3186",
-      "name": "Sheetal Premium Item 2",
-      "category": "Carrara Marble"
-    },
-    {
-      "_id": "6a280eefcc75d9dddcce307b",
-      "name": "Sheetal Premium Item 5",
-      "category": "Carrara Marble"
-    },
-    {
-      "_id": "6a280eefcc75d9dddcce307a",
-      "name": "Sheetal Premium Item 4",
-      "category": "Carrara Marble"
-    },
-    {
-      "_id": "6a280eeecc75d9dddcce3077",
-      "name": "Sheetal Premium Item 1",
-      "category": "Carrara Marble"
-    },
-    {
-      "_id": "6a26b59d8ed1bca80e591e9c",
-      "name": "Swan Neck Golden Faucet",
-      "category": "Bath",
-      "subcategory": "",
-      "subsubcategory": ""
->>>>>>> 137b11c17726552301a88105ad5e00f0e1d34394
+      "_id": "6a3cf1bd3c72ab885b351edd",
+      "name": "Baris Square 40 LED",
+      "category": "Architectural Lighting"
     }
   ]
 }

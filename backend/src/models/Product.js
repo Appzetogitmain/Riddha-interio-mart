@@ -176,17 +176,40 @@ ProductSchema.index({ subcategory: 1, isApproved: 1, isActive: 1 });
 ProductSchema.index({ brand: 1, isApproved: 1, isActive: 1 });
 ProductSchema.index({ price: 1, isApproved: 1, isActive: 1 });
 
-ProductSchema.post('save', function() {
+ProductSchema.post('save', function(doc) {
   try {
     const searchService = require('../services/searchService');
     searchService.clearCache();
+    const cacheService = require('../services/cacheService');
+    cacheService.del('analytics:admin:dashboard');
+    cacheService.delPattern('products:list:*');
+    if (doc) {
+      cacheService.del(`products:single:${doc._id}`);
+    }
   } catch (err) {}
 });
 
-ProductSchema.post('remove', function() {
+ProductSchema.post('findOneAndUpdate', function(doc) {
+  try {
+    const cacheService = require('../services/cacheService');
+    cacheService.del('analytics:admin:dashboard');
+    cacheService.delPattern('products:list:*');
+    if (doc) {
+      cacheService.del(`products:single:${doc._id}`);
+    }
+  } catch (err) {}
+});
+
+ProductSchema.post('remove', function(doc) {
   try {
     const searchService = require('../services/searchService');
     searchService.clearCache();
+    const cacheService = require('../services/cacheService');
+    cacheService.del('analytics:admin:dashboard');
+    cacheService.delPattern('products:list:*');
+    if (doc) {
+      cacheService.del(`products:single:${doc._id}`);
+    }
   } catch (err) {}
 });
 

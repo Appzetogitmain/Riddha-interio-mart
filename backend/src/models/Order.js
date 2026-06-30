@@ -205,4 +205,25 @@ OrderSchema.index({ user: 1, createdAt: -1 });
 OrderSchema.index({ status: 1, createdAt: -1 });
 OrderSchema.index({ paymentStatus: 1, createdAt: -1 });
 
+OrderSchema.post('save', function() {
+  try {
+    const cacheService = require('../services/cacheService');
+    cacheService.del('analytics:admin:dashboard');
+  } catch (e) {}
+});
+
+OrderSchema.post('findOneAndUpdate', function() {
+  try {
+    const cacheService = require('../services/cacheService');
+    cacheService.del('analytics:admin:dashboard');
+  } catch (e) {}
+});
+
+OrderSchema.post('updateMany', function() {
+  try {
+    const cacheService = require('../services/cacheService');
+    cacheService.del('analytics:admin:dashboard');
+  } catch (e) {}
+});
+
 module.exports = mongoose.model('Order', OrderSchema);

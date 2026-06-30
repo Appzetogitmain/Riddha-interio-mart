@@ -128,15 +128,17 @@ SellerSchema.post('save', function(doc) {
   try {
     const cacheService = require('../services/cacheService');
     cacheService.del(`user:profile:seller:${doc._id}`);
+    cacheService.del('analytics:admin:dashboard');
   } catch (e) {}
 });
 
 SellerSchema.post('findOneAndUpdate', function(doc) {
   try {
+    const cacheService = require('../services/cacheService');
     if (doc) {
-      const cacheService = require('../services/cacheService');
       cacheService.del(`user:profile:seller:${doc._id}`);
     }
+    cacheService.del('analytics:admin:dashboard');
   } catch (e) {}
 });
 

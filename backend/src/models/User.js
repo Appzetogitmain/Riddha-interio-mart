@@ -139,15 +139,17 @@ UserSchema.post('save', function(doc) {
   try {
     const cacheService = require('../services/cacheService');
     cacheService.del(`user:profile:${doc.role || 'user'}:${doc._id}`);
+    cacheService.del('analytics:admin:dashboard');
   } catch (e) {}
 });
 
 UserSchema.post('findOneAndUpdate', function(doc) {
   try {
+    const cacheService = require('../services/cacheService');
     if (doc) {
-      const cacheService = require('../services/cacheService');
       cacheService.del(`user:profile:${doc.role || 'user'}:${doc._id}`);
     }
+    cacheService.del('analytics:admin:dashboard');
   } catch (e) {}
 });
 

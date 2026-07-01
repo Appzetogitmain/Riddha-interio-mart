@@ -34,7 +34,7 @@ const TopBrands = ({ title }) => {
           <div className="space-y-2">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/80 border border-slate-200/70 shadow-sm">
               <span className="h-1.5 w-1.5 rounded-full bg-[#189D91]" />
-              <span className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.22em] text-slate-500">Curated partners</span>
+              <span className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.22em] text-slate-500">Curated Brands</span>
             </div>
             <h2 className="text-lg md:text-2xl lg:text-3xl font-display font-black text-slate-950 tracking-tight">
               {title || "Explore Top Brands"}
@@ -72,7 +72,7 @@ const TopBrands = ({ title }) => {
 
                 <div className="relative px-3 md:px-5 py-3 md:py-4 space-y-1 w-full">
                   <p className="text-[8px] md:text-[9px] font-black uppercase tracking-[0.24em] text-slate-400">
-                    Partner
+                    Brand
                   </p>
                   <p className="text-[10px] md:text-[12px] font-bold text-slate-950 tracking-tight line-clamp-1">
                     {brand.name}

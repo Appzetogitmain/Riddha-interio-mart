@@ -219,7 +219,7 @@ const BrandPage = () => {
       <section className="max-w-7xl mx-auto px-4 md:px-10 lg:px-12 py-8 md:py-10">
          <div className="rounded-[32px] md:rounded-[36px] bg-[#F2F2F2] p-6 md:p-10 lg:p-12 flex flex-col md:flex-row items-center gap-6 md:gap-10 border border-gray-100">
             <div className="flex-1 space-y-4 md:space-y-6 text-center md:text-left">
-               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#189D91]">Official Brand Partner</span>
+               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#189D91]">Official Brand</span>
                <h2 className="text-2xl md:text-4xl lg:text-5xl font-display font-bold text-deep-espresso leading-tight">
                   Authentic {brand.name} <br /> Products at Wholesale.
                </h2>

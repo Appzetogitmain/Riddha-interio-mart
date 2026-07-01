@@ -34,7 +34,7 @@ const SplashPage = () => {
           initial={{ scale: 0.8, opacity: 0, y: 20 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
           transition={{ duration: 0.7, ease: "easeOut" }}
-          className="w-[280px] sm:w-[320px] flex items-center justify-center mb-10 relative"
+          className="w-[160px] sm:w-[180px] flex items-center justify-center mb-8 relative"
         >
           <img
             src={TransparentLogo}
@@ -73,7 +73,7 @@ const SplashPage = () => {
             <div className="w-2 h-2 rounded-full bg-[#EC008C] animate-pulse delay-75" />
           </div>
 
-          <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden relative shadow-inner">
+          <div className="w-48 h-1.5 bg-slate-100 rounded-full overflow-hidden relative shadow-inner">
             <motion.div
               initial={{ width: "0%" }}
               animate={{ width: "100%" }}

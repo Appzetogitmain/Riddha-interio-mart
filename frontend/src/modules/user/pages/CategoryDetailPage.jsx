@@ -223,7 +223,7 @@ const CategoryDetailPage = () => {
       </div>
 
       <div className="border-t border-soft-oatmeal/10 py-12 md:py-24 bg-white/30 backdrop-blur-xl">
-        <BrandScroll title="Premium Partners" />
+        <BrandScroll title="Premium Brands" />
       </div>
     </div>
   );

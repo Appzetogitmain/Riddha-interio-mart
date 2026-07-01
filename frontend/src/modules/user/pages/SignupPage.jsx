@@ -32,7 +32,6 @@ const SignupPage = () => {
     // Business Details for Enterprisers
     shopName: '',
     gstNumber: '',
-    taxationCode: '',
     // Legacy fields for other roles
     shopAddress: '',
     vehicleType: 'Bike',
@@ -251,8 +250,7 @@ const SignupPage = () => {
         userType: role === 'user' ? userType : undefined,
         businessDetails: role === 'user' && userType === 'enterpriser' ? {
           shopName: formData.shopName,
-          gstNumber: formData.gstNumber,
-          taxationCode: formData.taxationCode
+          gstNumber: formData.gstNumber
         } : undefined
       });
 
@@ -407,94 +405,59 @@ const SignupPage = () => {
   }
 
   return (
-    <div className="relative min-h-screen bg-white md:bg-deep-espresso overflow-hidden selection:bg-warm-sand selection:text-white">
-      {/* Desktop Background Layer */}
-      <div className="hidden md:block fixed inset-0 z-0">
-        <img
-          src={LOGIN_BG}
-          alt="Luxury Interior"
-          className="w-full h-full object-cover opacity-100"
-        />
-        <div className="absolute inset-0 bg-black/40"></div>
-      </div>
+    <div className="min-h-screen w-full bg-[radial-gradient(circle_at_top_left,rgba(24,157,145,0.06),transparent_30%),radial-gradient(circle_at_bottom_right,rgba(236,0,140,0.04),transparent_28%),linear-gradient(180deg,#f8fafc_0%,#f1f5f9_100%)] flex items-center justify-center font-sans overflow-y-auto p-4 md:p-8">
+      {/* Device wrapper for desktop, seamless on mobile */}
+      <div className="w-full max-w-5xl h-auto md:h-[82vh] md:min-h-[620px] bg-white flex flex-col md:flex-row justify-between md:justify-start rounded-2xl shadow-2xl overflow-hidden relative border border-slate-100">
+        
+        {/* Back Button */}
+        <button
+          onClick={() => navigate(-1)}
+          className="absolute top-6 left-6 p-2 md:p-2.5 bg-slate-50 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-all border border-slate-100 shadow-sm md:bg-white/80 md:shadow-md z-50"
+          aria-label="Go Back"
+        >
+          <FiArrowLeft size={18} />
+        </button>
 
-      <div className="relative z-10 flex flex-col md:flex-row min-h-screen">
-        {/* Mobile Header Image (Only on Mobile) */}
-        <div className="md:hidden relative h-[28vh] min-h-[200px] w-full overflow-hidden">
+        {/* Left Side: Brand Story (Desktop only) */}
+        <div className="hidden md:block md:w-1/2 md:h-full relative overflow-hidden bg-slate-100 border-r border-slate-100">
           <img
             src={LOGIN_BG}
             alt="Luxury Interior"
-            className="w-full h-full object-cover"
+            className="absolute inset-0 w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-black/10" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent z-10" />
 
-          <button
-            onClick={() => getRole() === 'delivery' ? setShowSignupForm(false) : navigate(-1)}
-            className="absolute top-6 left-6 h-10 w-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white border border-white/30 shadow-lg active:scale-90 transition-all z-20"
-          >
-            <FiArrowLeft className="h-5 w-5" />
-          </button>
-
-          {/* Curve Effect */}
-          <div className="absolute bottom-0 left-0 right-0 h-12 pointer-events-none">
-            <svg viewBox="0 0 1440 320" className="absolute bottom-[-1px] left-0 w-full h-[120%] rotate-180" preserveAspectRatio="none">
-              <path fill="#ffffff" fillOpacity="1" d="M0,160L48,176C96,192,192,224,288,229.3C384,235,480,213,576,192C672,171,768,149,864,154.7C960,160,1056,192,1152,192C1248,192,1344,160,1392,144L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
-            </svg>
-          </div>
-        </div>
-
-        {/* Left Side: Brand Story (Desktop only) */}
-        <div className="hidden lg:flex flex-col justify-between w-1/2 p-20 text-white">
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex items-center gap-4 group cursor-pointer"
-            onClick={() => navigate('/')}
-          >
-            <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center group-hover:bg-warm-sand transition-colors duration-500 shadow-2xl">
-              <FiArrowLeft className="text-deep-espresso group-hover:text-white w-6 h-6" />
+          <div className="absolute inset-0 z-20 flex flex-col justify-end p-12 text-white">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 border border-white/30 shadow-sm w-fit mb-3">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#4DD9CE]" />
+              <span className="text-[9px] font-black uppercase tracking-[0.22em] text-white/90">
+                Premium Interior Mart
+              </span>
             </div>
-            <span className="text-sm font-black uppercase tracking-[0.3em]">Back to Store</span>
-          </motion.div>
-
-          <div className="space-y-6">
-            <motion.h1 className="font-display text-8xl font-black leading-tight tracking-tighter">
+            <h1 className="text-3xl xl:text-4xl font-black leading-[1.1] tracking-tight mb-2">
               Join the <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-warm-sand via-white italic font-serif">Family.</span>
-            </motion.h1>
-          </div>
-
-          <div className="flex gap-12">
-            <div className="space-y-1">
-              <div className="text-2xl font-black text-warm-sand">Elite</div>
-              <div className="text-[10px] font-black uppercase tracking-widest text-white/40">Partner Network</div>
-            </div>
+              <span className="text-[#4DD9CE] italic font-serif">Riddha Family.</span>
+            </h1>
+            <p className="max-w-sm text-xs font-medium leading-relaxed text-white/70">
+              Get access to premium collection of luxury fittings, dedicated project management, and designer-tier pricing.
+            </p>
           </div>
         </div>
 
         {/* Right Side: Signup Form */}
-        <div className="flex-1 flex flex-col md:min-h-screen">
-          <div className="flex-1 flex items-center justify-center pt-2 pb-6 px-6 md:p-12 lg:p-24 relative">
-            {/* Desktop Back Button */}
-            <button
-              onClick={() => navigate(-1)}
-              className="hidden md:flex absolute top-10 right-10 flex items-center gap-2 group text-white/50 hover:text-white transition-all font-semibold text-xs tracking-widest uppercase z-50"
-            >
-              <FiArrowLeft className="group-hover:-translate-x-1 transition-transform" />
-              Back
-            </button>
-
+        <div className="flex-1 md:w-1/2 w-full flex flex-col justify-center bg-white relative px-6 md:px-12 py-8 overflow-y-auto">
+          <div className="w-full max-w-[460px] mx-auto md:mx-0">
             <motion.div
-              initial={{ y: 50, opacity: 0 }}
+              initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              className="w-full max-w-[560px] md:max-w-lg bg-white md:bg-white/10 md:backdrop-blur-3xl md:border md:border-white/20 p-4 md:p-8 rounded-none shadow-2xl md:shadow-none relative"
+              className="w-full relative"
             >
               <div className="relative z-10 px-2 md:px-0">
                 <div className="hidden md:flex items-center justify-between mb-4">
-                  <h2 className="font-display text-2xl font-semibold text-white italic font-serif">Sign Up</h2>
+                  <h2 className="font-display text-2xl font-semibold text-slate-800 italic font-serif">Sign Up</h2>
                   <div className="flex gap-3">
-                    <button onClick={() => navigate(getLoginPath())} className="text-[9px] font-semibold uppercase tracking-widest text-white/40 hover:text-white transition-colors">Log In</button>
-                    <div className="w-8 h-0.5 bg-warm-sand mt-2.5"></div>
+                    <button onClick={() => navigate(getLoginPath())} className="text-[9px] font-bold uppercase tracking-widest text-slate-400 hover:text-slate-600 transition-colors">Log In</button>
+                    <div className="w-8 h-0.5 bg-[#189D91] mt-2.5"></div>
                   </div>
                 </div>
 
@@ -535,18 +498,18 @@ const SignupPage = () => {
                   )}
 
                   {getRole() === 'user' && (
-                    <div className="flex bg-blue-50/50 md:bg-white/5 p-1 rounded-xl border border-gray-100 md:border-white/10">
+                    <div className="mb-4 p-1 bg-slate-100 rounded-2xl border border-slate-200/60 flex max-w-[460px]">
                       <button
                         type="button"
                         onClick={() => setUserType('customer')}
-                        className={`flex-1 py-2 rounded-lg text-[9px] font-semibold uppercase tracking-widest transition-all ${userType === 'customer' ? 'bg-[#189D91] md:bg-warm-sand text-white shadow-lg' : 'text-gray-400 md:text-white/40 hover:text-deep-espresso md:hover:text-white'}`}
+                        className={`flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${userType === 'customer' ? 'bg-[#189D91] text-white shadow-sm shadow-[#189D91]/20' : 'text-slate-600 hover:text-slate-800'}`}
                       >
                         Individual
                       </button>
                       <button
                         type="button"
                         onClick={() => setUserType('enterpriser')}
-                        className={`flex-1 py-2 rounded-lg text-[9px] font-semibold uppercase tracking-widest transition-all ${userType === 'enterpriser' ? 'bg-[#189D91] md:bg-warm-sand text-white shadow-lg' : 'text-gray-400 md:text-white/40 hover:text-deep-espresso md:hover:text-white'}`}
+                        className={`flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${userType === 'enterpriser' ? 'bg-[#189D91] text-white shadow-sm shadow-[#189D91]/20' : 'text-slate-600 hover:text-slate-800'}`}
                       >
                         Enterpriser
                       </button>
@@ -560,82 +523,67 @@ const SignupPage = () => {
                 )}
 
                 {step === 'signup' ? (
-                  <form ref={formRef} onSubmit={handleSignup} className="space-y-3 max-h-[60vh] md:max-h-none overflow-y-auto pr-2 custom-scrollbar">
+                  <form ref={formRef} onSubmit={handleSignup} className="space-y-3.5 max-h-[60vh] md:max-h-none overflow-y-auto pr-1 custom-scrollbar flex flex-col">
                     {/* Basic Info */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <div className="space-y-0.5">
-                        <label className="hidden md:block text-[9px] font-medium uppercase tracking-widest text-white/60 ml-1">Full Name</label>
+                      <div className="space-y-1.5">
+                        <label className="block text-[10px] font-black uppercase tracking-[0.18em] text-slate-500 ml-0.5">Full Name</label>
                         <div className="relative group">
-                          <FiUser className="md:hidden absolute left-5 top-1/2 -translate-y-1/2 text-[#189D91]/40 group-focus-within:text-[#189D91] transition-colors h-4 w-4" />
                           <input
                             type="text"
                             name="fullName"
-                            placeholder={window.innerWidth < 768 ? "Full Name" : ""}
+                            placeholder="Full Name"
                             value={formData.fullName}
                             onChange={handleChange}
-                            className="w-full md:pl-5 pl-12 pr-5 py-2.5 rounded-full md:rounded-lg bg-blue-50/50 md:bg-white/10 border border-transparent md:border-white/10 focus:border-[#189D91]/20 md:focus:border-warm-sand/50 focus:bg-white md:focus:bg-white/20 focus:outline-none text-sm md:text-white font-normal transition-all"
+                            className="w-full px-4 py-2.5 bg-slate-50/85 border border-slate-200/80 rounded-xl focus:bg-white focus:border-[#189D91] focus:ring-[#189D91]/5 focus:outline-none text-xs font-semibold text-slate-800 placeholder:text-slate-400 placeholder:font-semibold shadow-sm transition-all"
                             required
                           />
                         </div>
                       </div>
-                      <div className="space-y-0.5">
-                        <label className="hidden md:block text-[9px] font-medium uppercase tracking-widest text-white/60 ml-1">Email</label>
+                      <div className="space-y-1.5">
+                        <label className="block text-[10px] font-black uppercase tracking-[0.18em] text-slate-500 ml-0.5">Email Address</label>
                         <div className="relative group">
-                          <FiMail className="md:hidden absolute left-5 top-1/2 -translate-y-1/2 text-[#189D91]/40 group-focus-within:text-[#189D91] transition-colors h-4 w-4" />
                           <input
                             type="email"
                             name="email"
-                            placeholder={window.innerWidth < 768 ? "Email ID" : ""}
+                            placeholder="name@example.com"
                             value={formData.email}
                             onChange={handleChange}
-                            className="w-full md:pl-5 pl-12 pr-5 py-2.5 rounded-full md:rounded-lg bg-blue-50/50 md:bg-white/10 border border-transparent md:border-white/10 focus:border-[#189D91]/20 md:focus:border-warm-sand/50 focus:bg-white md:focus:bg-white/20 focus:outline-none text-sm md:text-white font-normal transition-all"
+                            className="w-full px-4 py-2.5 bg-slate-50/85 border border-slate-200/80 rounded-xl focus:bg-white focus:border-[#189D91] focus:ring-[#189D91]/5 focus:outline-none text-xs font-semibold text-slate-800 placeholder:text-slate-400 placeholder:font-semibold shadow-sm transition-all"
                             required
                           />
                         </div>
-
                       </div>
                     </div>
 
                     {/* Enterpriser Fields */}
                     {getRole() === 'user' && userType === 'enterpriser' && (
-                      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
-                        <div className="space-y-0.5">
-                          <label className="hidden md:block text-[9px] font-medium uppercase tracking-widest text-white/60 ml-1">Shop / Business Name</label>
+                      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-3.5">
+                        <div className="space-y-1.5">
+                          <label className="block text-[10px] font-black uppercase tracking-[0.18em] text-slate-500 ml-0.5">Shop / Business Name</label>
                           <div className="relative group">
-                            <FiShoppingBag className="md:hidden absolute left-5 top-1/2 -translate-y-1/2 text-[#189D91]/40 group-focus-within:text-[#189D91] transition-colors h-4 w-4" />
                             <input
                               type="text"
                               name="shopName"
-                              placeholder={window.innerWidth < 768 ? "Business Name" : "e.g. Riddha Designs"}
+                              placeholder="e.g. Riddha Designs"
                               value={formData.shopName}
                               onChange={handleChange}
-                              className="w-full md:pl-5 pl-12 pr-5 py-2.5 rounded-full md:rounded-lg bg-blue-50/50 md:bg-white/10 border border-transparent md:border-white/10 focus:border-[#189D91]/20 md:focus:border-warm-sand/50 focus:bg-white md:focus:bg-white/20 focus:outline-none text-sm md:text-white font-normal transition-all"
+                              className="w-full px-4 py-2.5 bg-slate-50/85 border border-slate-200/80 rounded-xl focus:bg-white focus:border-[#189D91] focus:ring-[#189D91]/5 focus:outline-none text-xs font-semibold text-slate-800 placeholder:text-slate-400 placeholder:font-semibold shadow-sm transition-all"
                               required
                             />
                           </div>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          <div className="space-y-0.5">
-                            <label className="hidden md:block text-[9px] font-medium uppercase tracking-widest text-white/60 ml-1">GST Number</label>
+                          <div className="space-y-1.5">
+                            <label className="block text-[10px] font-black uppercase tracking-[0.18em] text-slate-500 ml-0.5">GST Number</label>
                             <input
                               type="text"
                               name="gstNumber"
-                              placeholder={window.innerWidth < 768 ? "GST Number" : "22AAAAA0000A1Z5"}
+                              placeholder="22AAAAA0000A1Z5"
                               value={formData.gstNumber}
                               onChange={handleChange}
-                              className="w-full px-5 py-2.5 rounded-full md:rounded-lg bg-blue-50/50 md:bg-white/10 border border-transparent md:border-white/10 focus:border-[#189D91]/20 md:focus:border-warm-sand/50 focus:bg-white md:focus:bg-white/20 focus:outline-none text-sm md:text-white font-normal transition-all"
+                              className="w-full px-4 py-2.5 bg-slate-50/85 border border-slate-200/80 rounded-xl focus:bg-white focus:border-[#189D91] focus:ring-[#189D91]/5 focus:outline-none text-xs font-semibold text-slate-800 placeholder:text-slate-400 placeholder:font-semibold shadow-sm transition-all"
                               required
-                            />
-                          </div>
-                          <div className="space-y-0.5">
-                            <label className="hidden md:block text-[9px] font-medium uppercase tracking-widest text-white/60 ml-1">Trade/Tax Code</label>
-                            <input
-                              type="text"
-                              name="taxationCode"
-                              placeholder={window.innerWidth < 768 ? "Code (Optional)" : "Optional"}
-                              value={formData.taxationCode}
-                              onChange={handleChange}
-                              className="w-full px-5 py-2.5 rounded-full md:rounded-lg bg-blue-50/50 md:bg-white/10 border border-transparent md:border-white/10 focus:border-[#189D91]/20 md:focus:border-warm-sand/50 focus:bg-white md:focus:bg-white/20 focus:outline-none text-sm md:text-white font-normal transition-all"
                             />
                           </div>
                         </div>
@@ -644,28 +592,46 @@ const SignupPage = () => {
 
                     {/* Seller Fields */}
                     {getRole() === 'seller' && (
-                      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-3 !mt-1">
+                      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-3.5 !mt-1">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          <div className="space-y-0.5">
-                            <label className="hidden md:block text-[9px] font-medium uppercase tracking-widest text-white/60 ml-1">Shop Name</label>
+                          <div className="space-y-1.5">
+                            <label className="block text-[10px] font-black uppercase tracking-[0.18em] text-slate-500 ml-0.5">Shop Name</label>
                             <div className="relative group">
-                              <FiShoppingBag className="md:hidden absolute left-5 top-1/2 -translate-y-1/2 text-[#189D91]/40 group-focus-within:text-[#189D91] transition-colors h-4 w-4" />
-                              <input type="text" name="shopName" placeholder={window.innerWidth < 768 ? "Shop Name" : ""} value={formData.shopName} onChange={handleChange} className="w-full md:pl-5 pl-12 pr-5 py-2.5 rounded-full md:rounded-lg bg-blue-50/50 md:bg-white/10 border border-transparent md:border-white/10 focus:border-[#189D91]/20 md:focus:border-warm-sand/50 focus:bg-white md:focus:bg-white/20 focus:outline-none text-sm md:text-white font-normal transition-all" />
+                              <input 
+                                type="text" 
+                                name="shopName" 
+                                placeholder="Shop Name" 
+                                value={formData.shopName} 
+                                onChange={handleChange} 
+                                className="w-full px-4 py-2.5 bg-slate-50/85 border border-slate-200/80 rounded-xl focus:bg-white focus:border-[#189D91] focus:ring-[#189D91]/5 focus:outline-none text-xs font-semibold text-slate-800 placeholder:text-slate-400 placeholder:font-semibold shadow-sm transition-all" 
+                              />
                             </div>
                           </div>
-                          <div className="space-y-0.5">
-                            <label className="hidden md:block text-[9px] font-medium uppercase tracking-widest text-white/60 ml-1">Phone</label>
+                          <div className="space-y-1.5">
+                            <label className="block text-[10px] font-black uppercase tracking-[0.18em] text-slate-500 ml-0.5">Phone</label>
                             <div className="relative group">
-                              <FiPhone className="md:hidden absolute left-5 top-1/2 -translate-y-1/2 text-[#189D91]/40 group-focus-within:text-[#189D91] transition-colors h-4 w-4" />
-                              <input type="tel" name="phone" placeholder={window.innerWidth < 768 ? "Phone Number" : ""} value={formData.phone} onChange={handleChange} className="w-full md:pl-5 pl-12 pr-5 py-2.5 rounded-full md:rounded-lg bg-blue-50/50 md:bg-white/10 border border-transparent md:border-white/10 focus:border-[#189D91]/20 md:focus:border-warm-sand/50 focus:bg-white md:focus:bg-white/20 focus:outline-none text-sm md:text-white font-normal transition-all" />
+                              <input 
+                                type="tel" 
+                                name="phone" 
+                                placeholder="Phone Number" 
+                                value={formData.phone} 
+                                onChange={handleChange} 
+                                className="w-full px-4 py-2.5 bg-slate-50/85 border border-slate-200/80 rounded-xl focus:bg-white focus:border-[#189D91] focus:ring-[#189D91]/5 focus:outline-none text-xs font-semibold text-slate-800 placeholder:text-slate-400 placeholder:font-semibold shadow-sm transition-all" 
+                              />
                             </div>
                           </div>
                         </div>
-                        <div className="space-y-0.5">
-                          <label className="hidden md:block text-[9px] font-medium uppercase tracking-widest text-white/60 ml-1">Shop Address</label>
+                        <div className="space-y-1.5">
+                          <label className="block text-[10px] font-black uppercase tracking-[0.18em] text-slate-500 ml-0.5">Shop Address</label>
                           <div className="relative group">
-                            <FiMapPin className="md:hidden absolute left-5 top-4 -translate-y-1/2 text-[#189D91]/40 group-focus-within:text-[#189D91] transition-colors h-4 w-4" />
-                            <textarea name="shopAddress" placeholder={window.innerWidth < 768 ? "Shop Address" : ""} value={formData.shopAddress} onChange={handleChange} rows="2" className="w-full md:pl-5 pl-12 pr-5 py-2.5 rounded-2xl md:rounded-lg bg-blue-50/50 md:bg-white/10 border border-transparent md:border-white/10 focus:border-[#189D91]/20 md:focus:border-warm-sand/50 focus:bg-white md:focus:bg-white/20 focus:outline-none text-sm md:text-white font-normal transition-all resize-none"></textarea>
+                            <textarea 
+                              name="shopAddress" 
+                              placeholder="Shop Address" 
+                              value={formData.shopAddress} 
+                              onChange={handleChange} 
+                              rows="2" 
+                              className="w-full px-4 py-2.5 bg-slate-50/85 border border-slate-200/80 rounded-xl focus:bg-white focus:border-[#189D91] focus:ring-[#189D91]/5 focus:outline-none text-xs font-semibold text-slate-800 placeholder:text-slate-400 placeholder:font-semibold shadow-sm transition-all resize-none"
+                            ></textarea>
                           </div>
                         </div>
                       </motion.div>
@@ -676,49 +642,51 @@ const SignupPage = () => {
                       <motion.div 
                         initial={{ opacity: 0 }} 
                         animate={{ opacity: 1 }} 
-                        className="space-y-3 !mt-1"
+                        className="space-y-3.5 !mt-1"
                       >
-                        <div className="space-y-0.5">
+                        <div className="space-y-1.5">
+                          <label className="block text-[10px] font-black uppercase tracking-[0.18em] text-slate-500 ml-0.5">Phone</label>
                           <div className="relative group">
-                            <FiPhone className="md:hidden absolute left-5 top-1/2 -translate-y-1/2 text-[#189D91]/40 h-4 w-4" />
                             <input 
                               type="tel" 
                               name="phone" 
                               placeholder="Phone Number" 
                               value={formData.phone} 
                               onChange={handleChange} 
-                              className="w-full md:pl-5 pl-12 pr-5 py-2.5 rounded-full md:rounded-lg bg-blue-50/50 md:bg-white/10 border-2 border-transparent md:border-white/10 focus:border-[#189D91]/20 md:focus:outline-none text-sm md:text-white font-medium transition-all" 
+                              className="w-full px-4 py-2.5 bg-slate-50/85 border border-slate-200/80 rounded-xl focus:bg-white focus:border-[#189D91] focus:ring-[#189D91]/5 focus:outline-none text-xs font-semibold text-slate-800 placeholder:text-slate-400 placeholder:font-semibold shadow-sm transition-all" 
                             />
                           </div>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          <div className="space-y-0.5">
+                          <div className="space-y-1.5">
+                            <label className="block text-[10px] font-black uppercase tracking-[0.18em] text-slate-500 ml-0.5">Vehicle Type</label>
                             <select 
                               name="vehicleType" 
                               value={formData.vehicleType} 
                               onChange={handleChange} 
-                              className="w-full px-5 py-2.5 rounded-full md:rounded-lg bg-blue-50/50 md:bg-white/10 border-2 border-transparent md:border-white/10 focus:border-[#189D91]/20 md:focus:outline-none text-sm md:text-white md:bg-slate-900 font-medium transition-all appearance-none"
+                              className="w-full px-4 py-2.5 bg-slate-50/85 border border-slate-200/80 rounded-xl focus:bg-white focus:border-[#189D91] focus:outline-none text-xs font-semibold text-slate-800 shadow-sm transition-all appearance-none"
                             >
                               <option value="Bike">Bike</option>
                               <option value="Van">Van</option>
                               <option value="Truck">Truck</option>
                             </select>
                           </div>
-                          <div className="space-y-0.5">
+                          <div className="space-y-1.5">
+                            <label className="block text-[10px] font-black uppercase tracking-[0.18em] text-slate-500 ml-0.5">Vehicle Number</label>
                             <input 
                               type="text" 
                               name="vehicleNumber" 
                               placeholder="Vehicle Number" 
                               value={formData.vehicleNumber} 
                               onChange={handleChange} 
-                              className="w-full px-5 py-2.5 rounded-full md:rounded-lg bg-blue-50/50 md:bg-white/10 border-2 border-transparent md:border-white/10 focus:border-[#189D91]/20 md:focus:outline-none text-sm md:text-white font-medium transition-all" 
+                              className="w-full px-4 py-2.5 bg-slate-50/85 border border-slate-200/80 rounded-xl focus:bg-white focus:border-[#189D91] focus:ring-[#189D91]/5 focus:outline-none text-xs font-semibold text-slate-800 placeholder:text-slate-400 placeholder:font-semibold shadow-sm transition-all" 
                             />
                           </div>
                         </div>
 
                         {/* Compact Verification Documents Section */}
                         <div className="space-y-2 pt-1 text-left">
-                           <label className="text-[9px] font-semibold uppercase tracking-wider text-slate-500 md:text-white/60 ml-1">
+                           <label className="block text-[10px] font-black uppercase tracking-[0.18em] text-slate-500 ml-0.5">
                               Verification Documents
                            </label>
                            <div className="grid grid-cols-2 gap-2">
@@ -730,12 +698,12 @@ const SignupPage = () => {
 
                                  return (
                                     <div key={doc.key} className="relative">
-                                       <label className={`flex flex-col items-center justify-center p-2.5 rounded-xl border border-dashed transition-all cursor-pointer text-center h-[70px] ${
+                                       <label className={`flex flex-col items-center justify-center p-2 rounded-xl border border-dashed transition-all cursor-pointer text-center h-[65px] ${
                                          hasError
-                                           ? 'bg-red-50/60 border-red-400 md:bg-red-500/10 md:border-red-400/60'
+                                           ? 'bg-rose-50 border-rose-300'
                                            : isUploaded
                                              ? 'bg-[#189D91]/10 border-[#189D91]/40'
-                                             : 'bg-blue-50/40 md:bg-white/5 border-slate-200 md:border-white/10 hover:border-[#189D91]/30'
+                                             : 'bg-slate-50/50 border-slate-200 hover:border-[#189D91]/30'
                                        }`}>
                                           <input
                                              type="file"
@@ -744,17 +712,16 @@ const SignupPage = () => {
                                              accept="image/*,application/pdf"
                                           />
                                           {isUploading ? (
-                                             <FiLoader className="h-4 w-4 text-[#189D91] md:text-warm-sand animate-spin mb-1" />
+                                             <FiLoader className="h-4 w-4 text-[#189D91] animate-spin mb-1" />
                                           ) : isUploaded ? (
-                                             <FiCheckCircle className="h-4 w-4 text-teal-600 md:text-teal-400 mb-1" />
+                                             <FiCheckCircle className="h-4 w-4 text-teal-600 mb-1" />
                                           ) : hasError ? (
-                                             <FiUploadCloud className="h-4 w-4 text-red-500 mb-1" />
+                                             <FiUploadCloud className="h-4 w-4 text-rose-500 mb-1" />
                                           ) : (
-                                             <Icon className="h-4 w-4 text-slate-400 md:text-white/40 mb-1" />
+                                             <Icon className="h-4 w-4 text-slate-400 mb-1" />
                                           )}
-                                          <span className={`text-[8.5px] font-medium leading-tight ${isUploaded ? 'text-[#189D91] md:text-teal-400' : hasError ? 'text-red-500' : 'text-slate-500 md:text-white/60'}`}>{doc.label}</span>
-                                          <span className={`text-[7px] mt-0.5 font-normal ${hasError ? 'text-red-400 font-semibold' : 'text-slate-400 md:text-white/30'}`}>
-                                            {isUploading ? 'Uploading...' : isUploaded ? 'Uploaded' : hasError ? 'Failed — Tap to retry' : 'Tap to Upload'}
+                                          <span className="text-[8px] font-black uppercase tracking-wider text-slate-500">
+                                             {doc.label}
                                           </span>
                                        </label>
                                     </div>
@@ -767,27 +734,24 @@ const SignupPage = () => {
 
                     {/* Password Fields */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
-                      <div className="space-y-0.5 relative group">
-                        <label className="hidden md:block text-[9px] font-medium uppercase tracking-widest text-white/60 ml-1">Password</label>
-                        <FiLock className="md:hidden absolute left-5 top-1/2 -translate-y-1/2 text-[#189D91]/40 group-focus-within:text-[#189D91] transition-colors h-4 w-4" />
-                        <input type={showPassword ? "text" : "password"} name="password" placeholder={window.innerWidth < 768 ? "Password" : ""} value={formData.password} onChange={handleChange} className="w-full md:pl-5 pl-12 pr-5 py-2.5 rounded-full md:rounded-lg bg-blue-50/50 md:bg-white/10 border border-transparent md:border-white/10 focus:border-[#189D91]/20 md:focus:border-warm-sand/50 focus:bg-white md:focus:bg-white/20 focus:outline-none text-sm md:text-white font-normal transition-all" />
-                        <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400 md:text-white/40">{showPassword ? <FiEyeOff className="h-4 w-4" /> : <FiEye className="h-4 w-4 opacity-50" />}</button>
+                      <div className="space-y-1.5 relative group">
+                        <label className="block text-[10px] font-black uppercase tracking-[0.18em] text-slate-500 ml-0.5">Password</label>
+                        <input type={showPassword ? "text" : "password"} name="password" placeholder="Password" value={formData.password} onChange={handleChange} className="w-full px-4 py-2.5 bg-slate-50/85 border border-slate-200/80 rounded-xl focus:bg-white focus:border-[#189D91] focus:ring-[#189D91]/5 focus:outline-none text-xs font-semibold text-slate-800 placeholder:text-slate-400 placeholder:font-semibold shadow-sm transition-all" />
+                        <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-9 text-slate-450 hover:text-slate-600 transition-colors">{showPassword ? <FiEyeOff className="h-4 w-4" /> : <FiEye className="h-4 w-4" />}</button>
                       </div>
-                      <div className="space-y-0.5 relative group">
-                        <label className="hidden md:block text-[9px] font-medium uppercase tracking-widest text-white/60 ml-1">Confirm</label>
-                        <FiLock className="md:hidden absolute left-5 top-1/2 -translate-y-1/2 text-[#189D91]/40 group-focus-within:text-[#189D91] transition-colors h-4 w-4" />
-                        <input type={showPassword ? "text" : "password"} name="confirmPassword" placeholder={window.innerWidth < 768 ? "Confirm Password" : ""} value={formData.confirmPassword} onChange={handleChange} onFocus={handleConfirmPasswordFocus} className="w-full md:pl-5 pl-12 pr-5 py-2.5 rounded-full md:rounded-lg bg-blue-50/50 md:bg-white/10 border border-transparent md:border-white/10 focus:border-[#189D91]/20 md:focus:border-warm-sand/50 focus:bg-white md:focus:bg-white/20 focus:outline-none text-sm md:text-white font-normal transition-all" />
+                      <div className="space-y-1.5 relative group">
+                        <label className="block text-[10px] font-black uppercase tracking-[0.18em] text-slate-500 ml-0.5">Confirm Password</label>
+                        <input type={showPassword ? "text" : "password"} name="confirmPassword" placeholder="Confirm" value={formData.confirmPassword} onChange={handleChange} onFocus={handleConfirmPasswordFocus} className="w-full px-4 py-2.5 bg-slate-50/85 border border-slate-200/80 rounded-xl focus:bg-white focus:border-[#189D91] focus:ring-[#189D91]/5 focus:outline-none text-xs font-semibold text-slate-800 placeholder:text-slate-400 placeholder:font-semibold shadow-sm transition-all" />
                       </div>
-                      <div ref={referralRef} className="space-y-0.5 relative group md:col-span-2">
-                        <label className="hidden md:block text-[9px] font-medium uppercase tracking-widest text-white/60 ml-1">Referral Code (Optional)</label>
-                        <FiGift className="md:hidden absolute left-5 top-1/2 -translate-y-1/2 text-[#189D91]/40 group-focus-within:text-[#189D91] transition-colors h-4 w-4" />
+                      <div ref={referralRef} className="space-y-1.5 relative group md:col-span-2">
+                        <label className="block text-[10px] font-black uppercase tracking-[0.18em] text-slate-500 ml-0.5">Referral Code (Optional)</label>
                         <input 
-                          type="text" 
-                          name="referralCode" 
-                          placeholder={window.innerWidth < 768 ? "Referral Code (Optional)" : "e.g. RIDDHA-123"} 
-                          value={formData.referralCode || ''} 
-                          onChange={handleChange} 
-                          className="w-full md:pl-5 pl-12 pr-5 py-2.5 rounded-full md:rounded-lg bg-blue-50/50 md:bg-white/10 border border-transparent md:border-white/10 focus:border-[#189D91]/20 md:focus:border-warm-sand/50 focus:bg-white md:focus:bg-white/20 focus:outline-none text-sm md:text-white font-normal transition-all" 
+                           type="text" 
+                           name="referralCode" 
+                           placeholder="e.g. RIDDHA-123" 
+                           value={formData.referralCode || ''} 
+                           onChange={handleChange} 
+                           className="w-full px-4 py-2.5 bg-slate-50/85 border border-slate-200/80 rounded-xl focus:bg-white focus:border-[#189D91] focus:ring-[#189D91]/5 focus:outline-none text-xs font-semibold text-slate-800 placeholder:text-slate-400 placeholder:font-semibold shadow-sm transition-all" 
                         />
                         {fieldErrors.referralCode && (
                           <p className="text-[10px] text-rose-500 font-semibold mt-1 ml-2">
@@ -798,18 +762,18 @@ const SignupPage = () => {
                     </div>
 
                     <div className="flex items-center gap-2 pt-2 px-1">
-                      <input type="checkbox" checked={agreeTerms} onChange={(e) => setAgreeTerms(e.target.checked)} className="accent-[#189D91] md:accent-warm-sand h-3.5 w-3.5" />
-                      <label className="text-[8px] md:text-[9px] font-medium text-gray-400 md:text-white/60 uppercase tracking-widest leading-none">
-                        I agree to the <button type="button" onClick={openTermsModal} className="underline font-bold text-gray-600 md:text-white hover:text-[#189D91] md:hover:text-warm-sand transition-colors cursor-pointer bg-transparent border-0 p-0 align-baseline inline-block">Terms & Conditions</button>
+                      <input type="checkbox" checked={agreeTerms} onChange={(e) => setAgreeTerms(e.target.checked)} className="accent-[#189D91] h-3.5 w-3.5" />
+                      <label className="text-[9px] font-bold text-slate-500 uppercase tracking-widest leading-none">
+                        I agree to the <button type="button" onClick={openTermsModal} className="underline font-black text-[#189D91] hover:text-[#137d74] transition-colors cursor-pointer bg-transparent border-0 p-0 align-baseline inline-block">Terms & Conditions</button>
                       </label>
                     </div>
 
                     <Button
                       type="submit"
                       disabled={loading}
-                      className={`w-full h-12 md:h-11 mt-2 rounded-full md:rounded-lg bg-[#189D91] md:bg-warm-sand hover:bg-black md:hover:bg-white text-white md:text-white md:hover:text-deep-espresso font-semibold text-xs md:text-[10px] uppercase tracking-[0.2em] shadow-2xl shadow-[#189D91]/20 transition-all active:scale-[0.98] ${loading ? 'opacity-50' : ''}`}
+                      className="w-full bg-[#8A3B8B] hover:bg-[#722b73] text-white py-3 rounded-full font-bold text-[13px] uppercase tracking-wider transition-all active:scale-[0.98] shadow-md shadow-[#8A3B8B]/20"
                     >
-                      {loading ? 'Creating...' : 'Create Account'}
+                      {loading ? 'Creating...' : 'CREATE ACCOUNT'}
                     </Button>
 
                     <p className="md:hidden text-center text-[10px] font-semibold text-gray-400 uppercase tracking-widest pt-4">
@@ -819,21 +783,21 @@ const SignupPage = () => {
                 ) : step === 'otp' ? (
                   <form onSubmit={handleVerifyOtp} className="space-y-4">
                     <div className="text-center mb-6">
-                      <h3 className="text-xl md:text-2xl font-black text-deep-espresso md:text-white mb-2">Verify Your Email</h3>
-                      <p className="text-sm text-gray-500 md:text-white/70">
+                      <h3 className="text-xl md:text-2xl font-black text-slate-800 mb-2">Verify Your Email</h3>
+                      <p className="text-sm text-slate-500">
                         We've sent a 6-digit OTP to <strong>{registeredEmail}</strong>.
                       </p>
                     </div>
                     
                     <div className="space-y-1">
-                      <label className="hidden md:block text-[10px] font-black uppercase tracking-widest text-white/60 ml-1">Enter OTP</label>
+                      <label className="block text-[10px] font-black uppercase tracking-[0.18em] text-slate-500 ml-0.5 text-center">Enter OTP</label>
                       <input
                         type="text"
                         maxLength={6}
                         placeholder="6-digit OTP"
                         value={otp}
                         onChange={(e) => setOtp(e.target.value)}
-                        className="w-full text-center tracking-[0.5em] text-2xl py-4 rounded-xl bg-blue-50/50 md:bg-white/10 border-2 border-transparent md:border-white/10 focus:border-[#189D91]/20 md:focus:border-warm-sand/50 focus:bg-white md:focus:bg-white/20 focus:outline-none md:text-white font-bold transition-all"
+                        className="w-full text-center tracking-[0.5em] text-2xl py-3 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#189D91] focus:ring-[#189D91]/5 focus:outline-none text-slate-800 font-bold transition-all shadow-sm"
                         required
                       />
                     </div>
@@ -841,30 +805,30 @@ const SignupPage = () => {
                     <Button
                       type="submit"
                       disabled={loading}
-                      className={`w-full h-14 md:h-12 mt-2 rounded-xl bg-[#189D91] md:bg-warm-sand hover:bg-black md:hover:bg-white text-white md:hover:text-deep-espresso font-black text-xs md:text-sm uppercase tracking-[0.2em] shadow-xl transition-all ${loading ? 'opacity-50' : ''}`}
+                      className="w-full bg-[#8A3B8B] hover:bg-[#722b73] text-white py-3 rounded-full font-bold text-[13px] uppercase tracking-wider transition-all active:scale-[0.98] shadow-md shadow-[#8A3B8B]/20"
                     >
-                      {loading ? 'Verifying...' : 'Verify Email'}
+                      {loading ? 'Verifying...' : 'VERIFY EMAIL'}
                     </Button>
 
-                    <p className="text-center text-[10px] font-bold text-gray-500 md:text-white/60 uppercase tracking-widest mt-6">
-                      Didn't receive it? <button type="button" onClick={handleResendOtp} className="text-[#189D91] md:text-warm-sand cursor-pointer font-black border-b border-[#189D91]/30 md:border-warm-sand/30 pb-0.5 ml-1 hover:text-black md:hover:text-white transition-colors">RESEND OTP</button>
+                    <p className="text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-6">
+                      Didn't receive it? <button type="button" onClick={handleResendOtp} className="text-[#189D91] hover:text-[#137d74] cursor-pointer font-black border-b border-[#189D91]/30 pb-0.5 ml-1 transition-colors">RESEND OTP</button>
                     </p>
                   </form>
                 ) : (
                   <div className="text-center space-y-6 py-4">
-                    <div className="w-20 h-20 bg-teal-500/10 rounded-full flex items-center justify-center mx-auto mb-4 text-[#189D91] md:text-warm-sand">
+                    <div className="w-20 h-20 bg-teal-500/10 rounded-full flex items-center justify-center mx-auto mb-4 text-[#189D91]">
                       <FiCheckCircle size={40} />
                     </div>
-                    <h3 className="text-xl md:text-2xl font-semibold text-deep-espresso md:text-white mb-2 font-display italic font-serif">Application Submitted!</h3>
-                    <p className="text-xs text-gray-500 md:text-white/70 leading-relaxed max-w-sm mx-auto font-medium">
+                    <h3 className="text-xl md:text-2xl font-semibold text-slate-800 mb-2 font-display italic font-serif">Application Submitted!</h3>
+                    <p className="text-xs text-slate-500 leading-relaxed max-w-sm mx-auto font-medium">
                       Your delivery partner account has been successfully registered and is pending admin review.
                     </p>
-                    <p className="text-[10px] text-gray-400 md:text-white/40 leading-relaxed max-w-sm mx-auto font-normal">
+                    <p className="text-[10px] text-slate-400 leading-relaxed max-w-sm mx-auto font-normal">
                       We will verify your documents (RC, Driving License, Aadhar Card, etc.) and update your approval status shortly.
                     </p>
                     <Button
                       onClick={() => navigate('/delivery/login')}
-                      className="w-full h-12 md:h-11 mt-4 rounded-full md:rounded-lg bg-[#189D91] md:bg-warm-sand hover:bg-black md:hover:bg-white text-white md:hover:text-deep-espresso font-semibold text-xs md:text-[10px] uppercase tracking-[0.2em] shadow-2xl transition-all active:scale-[0.98]"
+                      className="w-full bg-[#8A3B8B] hover:bg-[#722b73] text-white py-3 rounded-full font-bold text-[13px] uppercase tracking-wider transition-all active:scale-[0.98] shadow-md shadow-[#8A3B8B]/20"
                     >
                       Back to Login
                     </Button>

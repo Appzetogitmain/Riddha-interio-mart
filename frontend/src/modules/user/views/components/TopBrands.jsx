@@ -82,7 +82,7 @@ const TopBrands = ({ title }) => {
                 </div>
                 <div className="space-y-1">
                   <p className="text-[10px] md:text-xs font-black uppercase tracking-widest text-gray-400 opacity-0 group-hover/brand:opacity-100 transition-opacity">
-                    Official Partner
+                    Official Brand
                   </p>
                   <p className="text-[#189D91] text-[10px] md:text-lg font-bold tracking-tight">
                     {brand.offer}

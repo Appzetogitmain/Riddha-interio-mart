@@ -25,7 +25,7 @@ const BrandsPage = () => {
       {/* Header */}
       <div className="bg-white border-b border-gray-100 px-4 md:px-12 py-8">
         <div className="max-w-6xl mx-auto">
-          <p className="text-[10px] uppercase tracking-[0.25em] font-black text-[#189D91] mb-1">Curated Partners</p>
+          <p className="text-[10px] uppercase tracking-[0.25em] font-black text-[#189D91] mb-1">Curated Brands</p>
           <h1 className="text-2xl md:text-3xl font-display font-bold text-slate-900">All Brands</h1>
           <p className="text-sm text-gray-400 font-medium mt-1">
             {brands.length} trusted brand{brands.length !== 1 ? 's' : ''} available

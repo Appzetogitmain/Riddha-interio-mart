@@ -43,7 +43,9 @@ if (typeof document !== 'undefined') {
   setupAutoPrime();
 }
 
-export async function playNotificationSound({ volume = 0.18 } = {}) {
+export async function playNotificationSound({ volume = 0.6 } = {}) {
+  if (!isSoundEnabled()) return false;
+  
   const ctx = getAudioContext();
   if (!ctx) return false;
   if (ctx.state === 'suspended') {
@@ -53,29 +55,56 @@ export async function playNotificationSound({ volume = 0.18 } = {}) {
   const now = ctx.currentTime;
   const master = ctx.createGain();
   master.gain.setValueAtTime(0.0001, now);
-  master.gain.exponentialRampToValueAtTime(volume, now + 0.02);
-  master.gain.exponentialRampToValueAtTime(0.0001, now + 0.85);
+  master.gain.exponentialRampToValueAtTime(volume, now + 0.05);
+  
+  // Total ring duration: 2.0 seconds
+  master.gain.setValueAtTime(volume, now + 1.9);
+  master.gain.exponentialRampToValueAtTime(0.0001, now + 2.0);
   master.connect(ctx.destination);
 
-  const playTone = (freq, start, dur, type = 'sine') => {
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = type;
-    osc.frequency.setValueAtTime(freq, now + start);
-    gain.gain.setValueAtTime(0.0001, now + start);
-    gain.gain.exponentialRampToValueAtTime(0.9, now + start + 0.01);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + start + dur);
-    osc.connect(gain);
-    gain.connect(master);
-    osc.start(now + start);
-    osc.stop(now + start + dur);
+  // Classic telephone ring (440 + 480 Hz) modulated by 20 Hz
+  const playRingTone = (start, dur) => {
+    const osc1 = ctx.createOscillator();
+    const osc2 = ctx.createOscillator();
+    const lfo = ctx.createOscillator();
+    const lfoGain = ctx.createGain();
+    
+    osc1.type = 'sine';
+    osc2.type = 'sine';
+    osc1.frequency.value = 440;
+    osc2.frequency.value = 480;
+
+    lfo.type = 'square';
+    lfo.frequency.value = 20; // 20 Hz "trill"
+    lfoGain.gain.value = 0.5;
+    
+    lfo.connect(lfoGain);
+    
+    const ringGain = ctx.createGain();
+    ringGain.gain.setValueAtTime(0, now + start);
+    ringGain.gain.linearRampToValueAtTime(1.0, now + start + 0.05);
+    ringGain.gain.setValueAtTime(1.0, now + start + dur - 0.05);
+    ringGain.gain.linearRampToValueAtTime(0, now + start + dur);
+
+    lfoGain.connect(ringGain.gain);
+    
+    osc1.connect(ringGain);
+    osc2.connect(ringGain);
+    ringGain.connect(master);
+    
+    osc1.start(now + start);
+    osc2.start(now + start);
+    lfo.start(now + start);
+    
+    osc1.stop(now + start + dur);
+    osc2.stop(now + start + dur);
+    lfo.stop(now + start + dur);
   };
 
-  // Warm "luxury" chime
-  playTone(659.25, 0.0, 0.14, 'sine'); // E5
-  playTone(987.77, 0.05, 0.18, 'triangle'); // B5
-  playTone(1318.51, 0.12, 0.22, 'sine'); // E6
-  playTone(880.0, 0.33, 0.26, 'sine'); // A5
+  // Three loud bursts
+  playRingTone(0.0, 0.5);
+  playRingTone(0.7, 0.5);
+  playRingTone(1.4, 0.5);
 
   return true;
 }

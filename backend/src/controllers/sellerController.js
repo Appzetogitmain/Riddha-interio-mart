@@ -8,7 +8,7 @@ const { notifyAdminNewSeller } = require('../socket');
 // @access  Public
 exports.registerSeller = async (req, res, next) => {
   try {
-    const { fullName, email, phone, shopName, shopAddress, password, gstNumber, panNumber, hsnNumber } = req.body;
+    const { fullName, email, phone, shopName, shopAddress, password, gstNumber, panNumber, hsnNumber, termsSignature, termsVersion } = req.body;
 
     // Handle uploaded documents
     const gstDoc = req.files && req.files.gstDoc ? req.files.gstDoc[0].path : undefined;
@@ -33,7 +33,10 @@ exports.registerSeller = async (req, res, next) => {
       gstDoc,
       panDoc,
       shopDoc,
-      status: 'pending'
+      status: 'pending',
+      termsSignature: termsSignature || '',
+      termsAgreedAt: termsSignature ? new Date() : undefined,
+      termsVersion: termsVersion || ''
     });
 
     const otp = seller.getVerificationOtp();
@@ -55,6 +58,11 @@ exports.registerSeller = async (req, res, next) => {
     try {
       const emailService = require('../services/emailService');
       await emailService.queueEmail(seller.email, 'Riddha Mart - Verify Your Registration', 'otp', { otp });
+      
+      // Send Terms & Conditions & Privacy Policy PDF (with embedded signature)
+      emailService.sendRegistrationDocuments(seller.email, seller.fullName, 'seller', termsSignature || '').catch(err => {
+        console.error('Error sending registration documents to seller:', err);
+      });
     } catch (e) {
       console.error('Failed to queue seller verification email:', e);
     }

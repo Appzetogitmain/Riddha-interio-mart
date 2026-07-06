@@ -6,15 +6,13 @@ const Delivery = require('../models/Delivery');
 
 // Protect routes
 exports.protect = async (req, res, next) => {
-  let token = req.cookies?.access_token || req.signedCookies?.access_token;
-
-  if (
-    !token &&
-    req.headers.authorization &&
-    req.headers.authorization.startsWith('Bearer')
-  ) {
-    // Set token from Bearer token in header
+  let token;
+  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
     token = req.headers.authorization.split(' ')[1];
+  } else if (req.cookies?.access_token) {
+    token = req.cookies.access_token;
+  } else if (req.signedCookies?.access_token) {
+    token = req.signedCookies.access_token;
   }
 
   // Make sure token exists
@@ -127,9 +125,13 @@ exports.authorize = (...roles) => {
 };
 // Optional protect: tries to find user but proceeds if not found
 exports.tryProtect = async (req, res, next) => {
-  let token = req.cookies?.access_token || req.signedCookies?.access_token;
-  if (!token && req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+  let token;
+  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
     token = req.headers.authorization.split(' ')[1];
+  } else if (req.cookies?.access_token) {
+    token = req.cookies.access_token;
+  } else if (req.signedCookies?.access_token) {
+    token = req.signedCookies.access_token;
   }
 
   if (!token) {

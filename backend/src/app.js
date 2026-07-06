@@ -205,6 +205,10 @@ const startServer = async () => {
     const inventoryService = require('./services/inventoryService');
     inventoryService.startReservationDaemon();
 
+    // Start background escrow clearance daemon
+    const cronService = require('./services/cronService');
+    cronService.start();
+
     const server = http.createServer(app);
     initSocket(server);
     server.on('error', (error) => {

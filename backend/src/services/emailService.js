@@ -1,6 +1,7 @@
 const nodemailer = require('nodemailer');
 const EmailQueue = require('../models/EmailQueue');
 const templates = require('../utils/emailTemplates');
+const path = require('path');
 
 class EmailService {
   constructor() {
@@ -42,7 +43,7 @@ class EmailService {
   /**
    * Directly sends mail with primary and fallback transporters
    */
-  async sendMailDirect(to, subject, htmlContent) {
+  async sendMailDirect(to, subject, htmlContent, attachments = []) {
     const from = process.env.FROM_EMAIL || 'noreply@riddhamart.com';
     
     try {
@@ -51,7 +52,8 @@ class EmailService {
         from,
         to,
         subject,
-        html: htmlContent
+        html: htmlContent,
+        attachments
       });
       return { success: true, provider: 'primary' };
     } catch (primaryErr) {
@@ -63,13 +65,77 @@ class EmailService {
           from: 'fallback@riddhamart.com',
           to,
           subject,
-          html: htmlContent
+          html: htmlContent,
+          attachments
         });
         return { success: true, provider: 'fallback' };
       } catch (fallbackErr) {
         console.error('[EmailService] All email transporters failed.');
         throw new Error(`SMTP Outbound Error: ${fallbackErr.message}`);
       }
+    }
+  }
+
+  /**
+   * Generates and sends terms & conditions & privacy policy PDF to registered users
+   */
+  async sendRegistrationDocuments(to, fullName, roleType, signatureBase64 = '') {
+    try {
+      const TermsCondition = require('../models/TermsCondition');
+      const { generateAgreementPDF } = require('../utils/documentPdfGenerator');
+
+      // Fetch Terms & Conditions
+      let terms = await TermsCondition.findOne({ type: roleType });
+      let termsText = terms ? terms.content : `Welcome to Riddha Interior Mart. These are the default ${roleType} terms and conditions.`;
+
+      // Fetch Privacy Policy
+      let privacy = await TermsCondition.findOne({ type: `${roleType}_privacy` });
+      let privacyText = privacy ? privacy.content : `Welcome to Riddha Interior Mart. This is the default ${roleType} privacy policy.`;
+
+      // Generate the PDF
+      const pdfBuffer = await generateAgreementPDF(roleType, termsText, privacyText, fullName, signatureBase64);
+
+      // Email template body
+      const roleLabel = roleType === 'user' ? 'Customer' : roleType === 'seller' ? 'Seller' : 'Delivery Partner';
+      const subject = `Riddha Mart - ${roleLabel} Terms & Conditions and Privacy Policy`;
+      const htmlContent = `
+        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
+          <div style="background-color: #718096; padding: 20px; text-align: center;">
+            <img src="cid:riddhalogo" alt="Riddha Interior Mart" style="max-height: 60px; max-width: 100%; object-fit: contain; margin: 0 auto; display: block;" />
+          </div>
+          <div style="padding: 30px;">
+            <p>Dear ${fullName},</p>
+            <p>Thank you for registering with Riddha Interior Mart as a <strong>${roleLabel}</strong>!</p>
+            <p>As part of our onboarding process, we have attached a copy of our current <strong>Terms & Conditions</strong> and <strong>Privacy Policy</strong> for your reference.</p>
+            <p>Please review these documents carefully. By using our platform and services, you agree to abide by these guidelines and policies.</p>
+            <p>If you have any questions or require support, feel free to reply to this email or contact us at <a href="mailto:support@riddhamart.com" style="color: #c5a880; text-decoration: none; font-weight: bold;">support@riddhamart.com</a>.</p>
+            <br/>
+            <p>Best regards,<br/><strong>Team Riddha</strong></p>
+          </div>
+          <div style="background-color: #f7fafc; padding: 15px; text-align: center; font-size: 12px; color: #718096; border-top: 1px solid #e2e8f0;">
+            This is an automated email. Please do not reply directly if you wish to write to support.
+          </div>
+        </div>
+      `;
+
+      const logoPath = path.resolve(__dirname, '../../../frontend/public/logo.png');
+      const attachments = [
+        {
+          filename: `Riddha_${roleLabel}_Agreements.pdf`,
+          content: pdfBuffer
+        },
+        {
+          filename: 'logo.png',
+          path: logoPath,
+          cid: 'riddhalogo'
+        }
+      ];
+
+      // Send the email directly
+      await this.sendMailDirect(to, subject, htmlContent, attachments);
+      console.log(`[EmailService] Sent agreement documents PDF to ${to}`);
+    } catch (err) {
+      console.error(`[EmailService] Failed to send registration documents to ${to}:`, err.message);
     }
   }
 
@@ -137,7 +203,14 @@ class EmailService {
           }
 
           // Trigger direct SMTP call
-          await this.sendMailDirect(job.to, job.subject, html);
+          const logoPath = path.resolve(__dirname, '../../../frontend/public/logo.png');
+          await this.sendMailDirect(job.to, job.subject, html, [
+            {
+              filename: 'logo.png',
+              path: logoPath,
+              cid: 'riddhalogo'
+            }
+          ]);
 
           job.status = 'sent';
           await job.save();

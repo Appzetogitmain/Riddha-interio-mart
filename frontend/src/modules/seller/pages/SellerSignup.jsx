@@ -6,6 +6,7 @@ import api from '../../../shared/utils/api';
 import { toast } from 'react-hot-toast';
 import logo from '../../../assets/transparent_logo.png';
 import warehouseImg from '../../../assets/seller_onboarding_warehouse_1778923798789.png';
+import TermsAgreementModal from '../../../shared/components/TermsAgreementModal';
 
 const SellerSignup = () => {
   const [step, setStep] = useState('signup'); // 'signup' or 'otp'
@@ -36,6 +37,7 @@ const SellerSignup = () => {
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [termsContent, setTermsContent] = useState('');
   const [loadingTerms, setLoadingTerms] = useState(false);
+  const [signatureData, setSignatureData] = useState(null);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -173,6 +175,10 @@ const SellerSignup = () => {
     const signupData = new FormData();
     Object.keys(formData).forEach(key => signupData.append(key, formData[key]));
     Object.keys(docs).forEach(key => signupData.append(key, docs[key]));
+    if (signatureData) {
+      signupData.append('termsSignature', signatureData.signature);
+      signupData.append('termsVersion', signatureData.termsVersion);
+    }
 
     try {
       const response = await api.post('/auth/seller/register', signupData, {
@@ -512,16 +518,11 @@ const SellerSignup = () => {
                       <input 
                         type="checkbox" 
                         checked={agreeTerms} 
-                        onChange={(e) => {
-                          setAgreeTerms(e.target.checked);
-                          if (e.target.checked && fieldErrors.agreeTerms) {
-                            setFieldErrors({ ...fieldErrors, agreeTerms: '' });
-                          }
-                        }} 
-                        className="w-5 h-5 md:w-4 md:h-4 accent-[#E36666] rounded cursor-pointer"
+                        readOnly
+                        className="w-5 h-5 md:w-4 md:h-4 accent-[#E36666] rounded cursor-default"
                       />
                       <label className="text-[11px] md:text-[9px] font-semibold text-slate-400 uppercase tracking-widest leading-none cursor-pointer">
-                        I agree to the <button type="button" onClick={openTermsModal} className="text-slate-900 underline decoration-[#E36666]/30 hover:text-[#E36666] transition-colors font-semibold uppercase tracking-widest">Terms & Conditions</button>
+                        I agree to the <button type="button" onClick={() => setShowTermsModal(true)} className="text-slate-900 underline decoration-[#E36666]/30 hover:text-[#E36666] transition-colors font-semibold uppercase tracking-widest">Terms & Conditions</button>
                       </label>
                     </div>
                     {fieldErrors.agreeTerms && <p className="text-[10px] text-red-500 font-semibold ml-1">{fieldErrors.agreeTerms}</p>}
@@ -584,76 +585,21 @@ const SellerSignup = () => {
       </div>
       </div>
 
-      {/* Terms & Conditions Modal */}
-      <AnimatePresence>
-        {showTermsModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowTermsModal(false)}
-              className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl border border-slate-100 flex flex-col max-h-[80vh] overflow-hidden z-10 font-sans"
-            >
-              {/* Modal Header */}
-              <div className="p-6 border-b border-slate-100 flex justify-between items-center shrink-0">
-                <div>
-                  <h3 className="text-lg font-bold text-slate-900 leading-tight">Seller Terms & Conditions</h3>
-                  <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-1">Merchant Partner Agreement</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setShowTermsModal(false)}
-                  className="w-8 h-8 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors"
-                >
-                  ✕
-                </button>
-              </div>
-
-              {/* Modal Body */}
-              <div className="p-6 overflow-y-auto text-slate-600 text-xs leading-relaxed font-normal whitespace-pre-wrap flex-1 min-h-0">
-                {loadingTerms ? (
-                  <div className="flex justify-center items-center py-12">
-                    <div className="w-8 h-8 border-4 border-[#E36666] border-t-transparent rounded-full animate-spin"></div>
-                  </div>
-                ) : (
-                  termsContent
-                )}
-              </div>
-
-              {/* Modal Footer */}
-              <div className="p-5 border-t border-slate-100 bg-slate-50 flex justify-end gap-3 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAgreeTerms(true);
-                    if (fieldErrors.agreeTerms) {
-                      setFieldErrors(prev => ({ ...prev, agreeTerms: '' }));
-                    }
-                    setShowTermsModal(false);
-                  }}
-                  className="px-5 py-2.5 bg-[#E36666] text-white rounded-xl font-bold text-[10px] uppercase tracking-wider hover:bg-[#c95353] transition-all shadow-md shadow-[#E36666]/10"
-                >
-                  Accept & Close
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowTermsModal(false)}
-                  className="px-5 py-2.5 border border-slate-200 text-slate-600 rounded-xl font-bold text-[10px] uppercase tracking-wider hover:bg-slate-100 transition-all"
-                >
-                  Close
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+      <TermsAgreementModal 
+        isOpen={showTermsModal} 
+        onClose={() => setShowTermsModal(false)}
+        roleType="seller"
+        initialSignature={signatureData?.signature}
+        onAgree={(data) => {
+          setSignatureData(data);
+          setAgreeTerms(true);
+          setShowTermsModal(false);
+          setError('');
+          if (fieldErrors.agreeTerms) {
+            setFieldErrors({ ...fieldErrors, agreeTerms: '' });
+          }
+        }}
+      />
     </div>
   );
 };

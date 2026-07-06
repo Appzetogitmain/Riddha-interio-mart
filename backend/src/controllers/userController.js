@@ -10,7 +10,7 @@ const referralService = require('../services/referralService');
 // @access  Public
 exports.registerUser = async (req, res, next) => {
   try {
-    const { fullName, email, password, userType, businessDetails, referralCode } = req.body;
+    const { fullName, email, password, userType, businessDetails, referralCode, termsSignature, termsVersion } = req.body;
 
     if (await checkEmailExists(email)) {
       return res.status(400).json({ success: false, error: 'Email already registered' });
@@ -22,7 +22,10 @@ exports.registerUser = async (req, res, next) => {
       password,
       userType: userType || 'customer',
       businessDetails: userType === 'enterpriser' ? businessDetails : undefined,
-      isEmailVerified: false
+      isEmailVerified: false,
+      termsSignature: termsSignature || '',
+      termsAgreedAt: termsSignature ? new Date() : undefined,
+      termsVersion: termsVersion || ''
     });
 
     // Track Referral if referralCode is supplied
@@ -46,6 +49,11 @@ exports.registerUser = async (req, res, next) => {
     try {
       const emailService = require('../services/emailService');
       await emailService.queueEmail(user.email, 'Riddha Mart - Verify Your Email', 'otp', { otp });
+      
+      // Send Terms & Conditions & Privacy Policy PDF (with embedded signature)
+      emailService.sendRegistrationDocuments(user.email, user.fullName, 'user', termsSignature || '').catch(err => {
+        console.error('Error sending registration documents to user:', err);
+      });
 
       res.status(201).json({ 
         success: true, 

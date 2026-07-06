@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Check, X, XCircle, ArrowRight, ShoppingBag, Phone, Mail } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { connectSocket } from '../../../shared/utils/socket';
-import { playSellerBatchSound, playBulkOrderSound } from '../../../shared/utils/notificationSound';
+import { playSellerBatchSound, playBulkOrderSound, playNotificationSound } from '../../../shared/utils/notificationSound';
 
 // ── Batch product reviewed popup (existing) ──────────────────────
 const BatchReviewedPopup = ({ notification, onDismiss }) => {
@@ -163,9 +163,62 @@ const BulkOrderPopup = ({ notification, onDismiss }) => {
   );
 };
 
+// ── New regular order popup ──────────────────────────────────────
+const OrderPopup = ({ notification, onDismiss }) => {
+  const navigate = useNavigate();
+
+  return (
+    <motion.div
+      key={'order_' + notification.orderId}
+      initial={{ opacity: 0, scale: 0.82, y: 56, x: '-50%' }}
+      animate={{ opacity: 1, scale: 1,    y: 0,  x: '-50%' }}
+      exit={{   opacity: 0, scale: 0.82, y: 28,  x: '-50%' }}
+      transition={{ type: 'spring', damping: 24, stiffness: 300 }}
+      className="fixed bottom-10 left-1/2 z-[9999] w-[92%] max-w-md bg-white rounded-3xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.28)] border border-slate-100 p-6 flex items-start gap-4 overflow-hidden"
+    >
+      <div className="absolute top-0 left-0 w-full h-1.5 rounded-t-3xl bg-[#E36666]" />
+
+      <div className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 bg-red-50 text-[#E36666]">
+        <ShoppingBag size={28} className="animate-bounce" />
+      </div>
+
+      <div className="flex-1 min-w-0 space-y-2">
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-500">
+            📦 New Order Received
+          </h3>
+          <button onClick={onDismiss} className="p-1 -mt-0.5 hover:bg-slate-100 rounded-full transition-colors text-slate-400 shrink-0">
+            <X size={16} />
+          </button>
+        </div>
+
+        <p className="text-lg font-bold text-slate-900 leading-snug">
+          Order ID: {notification.orderId?.substring(0, 8)}...
+        </p>
+        
+        <p className="text-sm font-semibold text-slate-700 leading-snug">
+          Amount: ₹{notification.totalAmount}
+        </p>
+
+        <div className="pt-1 flex gap-2.5">
+          <button
+            onClick={() => { navigate('/seller/orders'); onDismiss(); }}
+            className="flex-1 text-[10px] font-black uppercase tracking-widest py-2.5 rounded-xl flex items-center justify-center gap-1.5 bg-[#E36666] text-white hover:bg-[#c95353] transition-all"
+          >
+            View Orders <ArrowRight size={13} />
+          </button>
+          <button onClick={onDismiss} className="px-5 py-2.5 border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-50 transition-all">
+            Dismiss
+          </button>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
 // ── Main component ───────────────────────────────────────────────
 const SellerNotifications = ({ token }) => {
-  // Each entry: { type: 'batch_reviewed' | 'bulk_order', data: payload }
+  // Each entry: { type: 'batch_reviewed' | 'bulk_order' | 'order', data: payload }
   const [queue, setQueue]   = useState([]);
   const current             = queue[0] || null;
 
@@ -187,12 +240,19 @@ const SellerNotifications = ({ token }) => {
       setQueue(q => [...q, { type: 'bulk_order', data: payload }]);
     };
 
+    const onOrderNew = (payload) => {
+      playNotificationSound();
+      setQueue(q => [...q, { type: 'order', data: payload }]);
+    };
+
     socket.on('batch:product_reviewed', onBatchReviewed);
     socket.on('bulk_order:new',         onBulkOrder);
+    socket.on('order:new',              onOrderNew);
 
     return () => {
       socket.off('batch:product_reviewed', onBatchReviewed);
       socket.off('bulk_order:new',         onBulkOrder);
+      socket.off('order:new',              onOrderNew);
     };
   }, [token]);
 
@@ -208,7 +268,9 @@ const SellerNotifications = ({ token }) => {
       {current && (
         current.type === 'batch_reviewed'
           ? <BatchReviewedPopup key="br" notification={current.data} onDismiss={dismiss} />
-          : <BulkOrderPopup     key="bo" notification={current.data} onDismiss={dismiss} />
+          : current.type === 'bulk_order' 
+            ? <BulkOrderPopup     key="bo" notification={current.data} onDismiss={dismiss} />
+            : <OrderPopup         key="od" notification={current.data} onDismiss={dismiss} />
       )}
     </AnimatePresence>
   );

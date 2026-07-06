@@ -17,6 +17,11 @@ const ManageTerms = () => {
     try {
       setIsLoading(true);
       setError('');
+      // Reset content and metadata to prevent showing stale state while loading
+      setContent('');
+      setLastUpdated('');
+      setUpdatedBy('');
+      
       const { data } = await api.get(`/terms/${type}`);
       if (data.success && data.data) {
         setContent(data.data.content || '');
@@ -25,7 +30,7 @@ const ManageTerms = () => {
       }
     } catch (err) {
       console.error(`Failed to fetch terms for ${type}:`, err);
-      setError('Failed to load terms and conditions content.');
+      setError('Failed to load content.');
     } finally {
       setIsLoading(false);
     }
@@ -63,9 +68,15 @@ const ManageTerms = () => {
 
   const getTabIcon = (tab) => {
     switch (tab) {
-      case 'user': return <FiUser className="size-4" />;
-      case 'seller': return <FiBriefcase className="size-4" />;
-      case 'delivery': return <FiTruck className="size-4" />;
+      case 'user': 
+      case 'user_privacy': 
+        return <FiUser className="size-4" />;
+      case 'seller': 
+      case 'seller_privacy': 
+        return <FiBriefcase className="size-4" />;
+      case 'delivery': 
+      case 'delivery_privacy': 
+        return <FiTruck className="size-4" />;
       default: return null;
     }
   };
@@ -73,8 +84,11 @@ const ManageTerms = () => {
   const getTabLabel = (tab) => {
     switch (tab) {
       case 'user': return 'User T&C';
+      case 'user_privacy': return 'User Privacy Policy';
       case 'seller': return 'Seller T&C';
+      case 'seller_privacy': return 'Seller Privacy Policy';
       case 'delivery': return 'Delivery Partner T&C';
+      case 'delivery_privacy': return 'Delivery Partner Privacy Policy';
       default: return '';
     }
   };
@@ -84,7 +98,7 @@ const ManageTerms = () => {
       <div className="max-w-4xl mx-auto space-y-8">
         <div className="space-y-1">
           <h1 className="text-2xl md:text-3xl lg:text-4xl font-display font-bold text-deep-espresso">
-            Terms & Conditions Management
+            Terms & Conditions & Privacy Policy Management
           </h1>
           <p className="text-warm-sand text-sm md:text-base font-medium">
             Manage legal agreements, policies, and onboarding terms for Users, Sellers, and Delivery Partners.
@@ -100,8 +114,8 @@ const ManageTerms = () => {
 
         <div className="bg-white rounded-2xl md:rounded-[32px] shadow-xl border border-soft-oatmeal overflow-hidden">
           {/* Tabs Header */}
-          <div className="flex border-b border-soft-oatmeal px-4 md:px-8 bg-soft-oatmeal/5 overflow-x-auto no-scrollbar">
-            {['user', 'seller', 'delivery'].map((tab) => (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 border-b border-soft-oatmeal bg-soft-oatmeal/5 w-full">
+            {['user', 'user_privacy', 'seller', 'seller_privacy', 'delivery', 'delivery_privacy'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => {
@@ -109,14 +123,14 @@ const ManageTerms = () => {
                   setError('');
                   setIsSaved(false);
                 }}
-                className={`py-5 px-6 text-[10px] font-black uppercase tracking-[0.2em] transition-all whitespace-nowrap border-b-2 flex items-center gap-2 ${
+                className={`py-4 px-2 text-[9px] md:text-[10px] font-black uppercase tracking-[0.1em] transition-all border-b-2 flex items-center justify-center gap-1.5 min-h-[60px] text-center ${
                   activeTab === tab 
-                    ? 'text-dusty-cocoa border-dusty-cocoa font-bold' 
-                    : 'text-warm-sand border-transparent hover:text-deep-espresso'
+                    ? 'text-dusty-cocoa border-dusty-cocoa font-bold bg-white/50' 
+                    : 'text-warm-sand border-transparent hover:text-deep-espresso hover:bg-white/30'
                 }`}
               >
                 {getTabIcon(tab)}
-                {getTabLabel(tab)}
+                <span>{getTabLabel(tab)}</span>
               </button>
             ))}
           </div>

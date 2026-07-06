@@ -73,7 +73,8 @@ const MyProducts = () => {
     setEditFormData({ 
       name: product.name, 
       category: product.category, 
-      price: product.sellerPrice || product.price 
+      price: product.sellerPrice || product.price,
+      countInStock: product.countInStock || 0
     });
     setShowEditModal(true);
   };
@@ -445,6 +446,19 @@ const MyProducts = () => {
                         value={editFormData.price}
                         onChange={(e) => setEditFormData({...editFormData, price: e.target.value})}
                         className="w-full bg-slate-50 border-none rounded-2xl pl-10 pr-5 py-4 text-sm font-bold focus:ring-2 focus:ring-seller-primary/20 transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider ml-1">Available Stock</label>
+                    <div className="relative">
+                       <input 
+                        type="number" required 
+                        min="0"
+                        value={editFormData.countInStock}
+                        onChange={(e) => setEditFormData({...editFormData, countInStock: e.target.value})}
+                        className="w-full bg-slate-50 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-seller-primary/20 transition-all"
                       />
                     </div>
                   </div>

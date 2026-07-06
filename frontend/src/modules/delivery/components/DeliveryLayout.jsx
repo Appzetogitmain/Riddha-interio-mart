@@ -24,7 +24,7 @@ import { useUser } from '../../user/data/UserContext';
 import NotificationDropdown from '../../../shared/components/NotificationDropdown';
 import api from '../../../shared/utils/api';
 import { connectSocket } from '../../../shared/utils/socket';
-import { primeNotificationAudio, isSoundEnabled, playNotificationSound } from '../../../shared/utils/notificationSound';
+import { isSoundEnabled, playNotificationSound, primeNotificationAudio } from '../../../shared/utils/notificationSound';
 import { toast } from 'react-hot-toast';
 
 const formatTime = (dateStr) => {
@@ -164,6 +164,7 @@ const DeliveryLayout = () => {
     const socket = connectSocket({ token: user.token || 'cookie' });
 
     const onAssigned = (payload) => {
+      if (isSoundEnabled()) playNotificationSound();
       setAssignmentRequest(payload);
     };
 

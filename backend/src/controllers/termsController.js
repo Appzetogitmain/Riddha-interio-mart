@@ -6,8 +6,9 @@ const TermsCondition = require('../models/TermsCondition');
 exports.getTermsByType = async (req, res) => {
   try {
     const { type } = req.params;
-    if (!['user', 'seller', 'delivery'].includes(type)) {
-      return res.status(400).json({ success: false, error: 'Invalid terms type' });
+    const validTypes = ['user', 'seller', 'delivery', 'user_privacy', 'seller_privacy', 'delivery_privacy'];
+    if (!validTypes.includes(type)) {
+      return res.status(400).json({ success: false, error: 'Invalid terms or privacy type' });
     }
 
     const terms = await TermsCondition.findOne({ type }).populate('updatedBy', 'fullName email');
@@ -18,7 +19,9 @@ exports.getTermsByType = async (req, res) => {
         success: true,
         data: {
           type,
-          content: `Welcome to Riddha Interior Mart. These are the default ${type} terms and conditions. Please edit this text in the Admin control panel.`,
+          content: type.endsWith('_privacy')
+            ? `Welcome to Riddha Interior Mart. This is the default ${type.replace('_privacy', '')} privacy policy. Please edit this text in the Admin control panel.`
+            : `Welcome to Riddha Interior Mart. These are the default ${type} terms and conditions. Please edit this text in the Admin control panel.`,
           updatedAt: new Date()
         }
       });
@@ -42,8 +45,9 @@ exports.updateTermsByType = async (req, res) => {
     const { type } = req.params;
     const { content } = req.body;
 
-    if (!['user', 'seller', 'delivery'].includes(type)) {
-      return res.status(400).json({ success: false, error: 'Invalid terms type' });
+    const validTypes = ['user', 'seller', 'delivery', 'user_privacy', 'seller_privacy', 'delivery_privacy'];
+    if (!validTypes.includes(type)) {
+      return res.status(400).json({ success: false, error: 'Invalid terms or privacy type' });
     }
 
     if (!content || content.trim() === '') {

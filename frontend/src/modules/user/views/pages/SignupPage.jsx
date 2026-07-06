@@ -6,6 +6,7 @@ import { FiArrowLeft, FiUser, FiMail, FiLock, FiEye, FiEyeOff, FiCheck } from 'r
 import { FaGoogle, FaFacebookF, FaXTwitter } from 'react-icons/fa6';
 import Button from '../../../../views/shared/Button';
 import LOGIN_BG from '../../../assets/login_bg_fretshop.png';
+import TermsAgreementModal from '../../../shared/components/TermsAgreementModal';
 
 const SignupPage = () => {
   const [formData, setFormData] = useState({
@@ -16,6 +17,8 @@ const SignupPage = () => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [signatureData, setSignatureData] = useState(null);
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const location = useLocation();
@@ -137,10 +140,25 @@ const SignupPage = () => {
           password: formData.password,
           shopName: `${formData.fullName}'s Shop`,
           shopAddress: 'Demo Shop Address',
-          phone: '+91 99999 99999'
+          phone: '+91 99999 99999',
+          termsSignature: signatureData?.signature,
+          termsVersion: signatureData?.termsVersion
         });
       } catch (err) {
         console.warn('Backend seller registration failed:', err.response?.data?.error || err.message);
+      }
+    } else {
+      try {
+        await api.post('/auth/register', {
+          fullName: formData.fullName,
+          email: formData.email,
+          password: formData.password,
+          userType: 'customer',
+          termsSignature: signatureData?.signature,
+          termsVersion: signatureData?.termsVersion
+        });
+      } catch (err) {
+        console.warn('Backend user registration failed:', err.response?.data?.error || err.message);
       }
     }
 
@@ -325,13 +343,13 @@ const SignupPage = () => {
 
                 {/* Terms and Conditions */}
                 <div className="flex items-start gap-3 px-2 py-2">
-                  <button type="button" onClick={() => setAgreeTerms(!agreeTerms)} className="mt-0.5 flex-shrink-0">
+                  <button type="button" onClick={() => setShowTermsModal(true)} className="mt-0.5 flex-shrink-0">
                     <div className={`h-4 w-4 rounded border flex items-center justify-center transition-all ${agreeTerms ? 'bg-warm-sand border-warm-sand md:bg-white md:border-white' : 'border-gray-300 md:border-white/30'}`}>
                       {agreeTerms && <FiCheck className="md:text-deep-espresso text-white text-[10px] stroke-[4]" />}
                     </div>
                   </button>
                   <p className="text-[10px] font-bold text-gray-400 md:text-white/60 leading-relaxed uppercase tracking-wider">
-                    I agree to the <span className="text-warm-sand md:text-white cursor-pointer border-b border-warm-sand/30 md:border-white/30">Terms & Conditions</span>
+                    I agree to the <span onClick={() => setShowTermsModal(true)} className="text-warm-sand md:text-white cursor-pointer border-b border-warm-sand/30 md:border-white/30">Terms & Conditions</span>
                   </p>
                 </div>
 
@@ -363,6 +381,19 @@ const SignupPage = () => {
           </div>
         </div>
       </div>
+
+      <TermsAgreementModal 
+        isOpen={showTermsModal} 
+        onClose={() => setShowTermsModal(false)}
+        roleType={location.pathname.startsWith('/seller') ? 'seller' : 'user'}
+        initialSignature={signatureData?.signature}
+        onAgree={(data) => {
+          setSignatureData(data);
+          setAgreeTerms(true);
+          setShowTermsModal(false);
+          setError('');
+        }}
+      />
     </div>
   );
 };

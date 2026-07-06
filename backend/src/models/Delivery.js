@@ -104,6 +104,18 @@ const DeliverySchema = new mongoose.Schema({
     type: Date,
     default: null
   },
+  // Terms & Conditions Agreement
+  termsSignature: {
+    type: String,
+    default: ''
+  },
+  termsAgreedAt: {
+    type: Date
+  },
+  termsVersion: {
+    type: String,
+    default: ''
+  },
   createdAt: {
     type: Date,
     default: Date.now

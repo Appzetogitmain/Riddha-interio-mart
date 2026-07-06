@@ -52,6 +52,7 @@ router.put('/:id/approval', protect, authorize('admin'), updateApprovalStatus);
 router.route('/:id')
   .get(tryProtect, getProduct)
   .put(protect, authorize('seller', 'admin'), updateProduct)
+  .patch(protect, authorize('seller', 'admin'), updateProduct)
   .delete(protect, authorize('seller', 'admin'), deleteProduct);
 
 module.exports = router;

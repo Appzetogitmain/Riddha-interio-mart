@@ -9,7 +9,7 @@ const { notifyAdminNewDelivery, notifyDeliveryApproval } = require('../socket');
 // @access  Public
 exports.registerDelivery = async (req, res, next) => {
   try {
-    const { fullName, email, password, phone, vehicleType, vehicleNumber, documents, referralCode } = req.body;
+    const { fullName, email, password, phone, vehicleType, vehicleNumber, documents, referralCode, termsSignature, termsVersion } = req.body;
 
     if (await checkEmailExists(email)) {
       return res.status(400).json({ success: false, error: 'Email already registered' });
@@ -38,7 +38,10 @@ exports.registerDelivery = async (req, res, next) => {
       vehicleType, 
       vehicleNumber, 
       documents,
-      referredBy
+      referredBy,
+      termsSignature: termsSignature || '',
+      termsAgreedAt: termsSignature ? new Date() : undefined,
+      termsVersion: termsVersion || ''
     });
     
     // Notify Admin about new registration
@@ -49,6 +52,16 @@ exports.registerDelivery = async (req, res, next) => {
       phone: delivery.phone,
       vehicleType: delivery.vehicleType
     });
+
+    // Send Terms & Conditions & Privacy Policy PDF (with embedded signature)
+    try {
+      const emailService = require('../services/emailService');
+      emailService.sendRegistrationDocuments(delivery.email, delivery.fullName, 'delivery', termsSignature || '').catch(err => {
+        console.error('Error sending registration documents to delivery partner:', err);
+      });
+    } catch (e) {
+      console.error('Failed to trigger delivery verification email:', e);
+    }
 
     res.status(201).json({
       success: true,

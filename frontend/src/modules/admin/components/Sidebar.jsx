@@ -52,6 +52,8 @@ const menuGroups = [
         label: "Inventory",
         icon: FiBox,
         path: "/admin/inventory",
+        showBadge: true,
+        badgeType: "product",
         children: [
           { path: "/admin/inventory", icon: FiGrid, label: "All Products" },
           {
@@ -72,6 +74,8 @@ const menuGroups = [
         label: "Delivery Management",
         icon: FiTruck,
         path: "/admin/delivery",
+        showBadge: true,
+        badgeType: "delivery",
         children: [
           {
             path: "/admin/delivery/pending",
@@ -160,12 +164,15 @@ const menuGroups = [
         label: "Seller Management",
         icon: FiUsers,
         path: "/admin/sellers",
+        showBadge: true,
+        badgeType: "seller",
         children: [
           {
             path: "/admin/sellers/pending",
             icon: FiGrid,
             label: "Pending Sellers",
             showBadge: true,
+            badgeType: "seller",
           },
           {
             path: "/admin/sellers/active",
@@ -331,7 +338,7 @@ const NavItem = ({
     item.children.some((child) => location.pathname === child.path || (item.label === "Order Management" && location.pathname.startsWith("/admin/orders")));
   const isActive = isSelfActive || isChildActive;
 
-  const itemBadgeCount = item.showBadge && !hasChildren
+  const itemBadgeCount = item.showBadge
     ? (item.badgeType === 'batch' ? batchCount
       : item.badgeType === 'delivery' ? deliveryCount
       : item.badgeType === 'product' ? productCount

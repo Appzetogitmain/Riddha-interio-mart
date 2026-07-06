@@ -725,11 +725,13 @@ exports.updateOrderStatus = async (req, res) => {
 
       const updatedOrder = await order.save();
 
-      // Clear pending seller escrow earnings and credit delivery partner wallet
+      // Credit delivery partner wallet and set deliveredAt
       if (newStatus === 'Delivered') {
         try {
+          order.deliveredAt = Date.now();
+          
           const walletService = require('../services/walletService');
-          await walletService.clearPendingSale(updatedOrder._id);
+          // Note: walletService.clearPendingSale is now handled asynchronously by the background escrow service after 7 days
           
           if (updatedOrder.deliveryBoy) {
             await walletService.recordDeliveryEarning(
@@ -740,7 +742,7 @@ exports.updateOrderStatus = async (req, res) => {
             );
           }
         } catch (walletErr) {
-          console.error('Failed to update wallets upon delivery:', walletErr.message);
+          console.error('Failed to update delivery wallets upon delivery:', walletErr.message);
         }
       }
       
@@ -1262,7 +1264,7 @@ exports.verifyDeliveryOtp = async (req, res) => {
     
     try {
       const walletService = require('../services/walletService');
-      await walletService.clearPendingSale(updatedOrder._id);
+      // Note: walletService.clearPendingSale is now handled asynchronously by the background escrow service after 7 days
       
       if (updatedOrder.deliveryBoy) {
         await walletService.recordDeliveryEarning(

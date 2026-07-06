@@ -28,7 +28,7 @@ const getBaseTemplate = (title, bodyContent) => `
       border: 1px solid #edf2f7;
     }
     .header {
-      background: linear-gradient(135deg, #1a365d 0%, #2a4365 100%);
+      background: linear-gradient(135deg, #718096 0%, #4a5568 100%);
       padding: 30px;
       text-align: center;
     }
@@ -90,7 +90,7 @@ const getBaseTemplate = (title, bodyContent) => `
   <div class="wrapper">
     <div class="container">
       <div class="header">
-        <h1>Riddha Interior Mart</h1>
+        <img src="cid:riddhalogo" alt="Riddha Interior Mart" style="max-height: 60px; max-width: 100%; object-fit: contain; margin: 0 auto; display: block;" />
       </div>
       <div class="content">
         ${bodyContent}

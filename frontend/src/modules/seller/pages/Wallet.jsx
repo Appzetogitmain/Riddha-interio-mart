@@ -380,7 +380,7 @@ const Wallet = () => {
                   </button>
                 </div>
 
-                <div className="bg-gradient-to-br from-[#E36666] via-[#D64F4F] to-[#B93E3E] rounded-[2rem] p-6 mb-8 text-white relative overflow-hidden">
+                <div className="bg-gradient-to-br from-[#E36666] via-[#D64F4F] to-[#B93E3E] rounded-[2rem] p-6 mb-6 text-white relative overflow-hidden">
                    <div className="absolute top-0 right-0 w-20 h-20 bg-seller-primary/20 rounded-full blur-2xl -mr-10 -mt-10"></div>
                    <div className="relative z-10 flex items-center justify-between">
                       <div>
@@ -388,6 +388,14 @@ const Wallet = () => {
                          <p className="text-2xl font-semibold">₹{walletData.withdrawableBalance.toLocaleString()}</p>
                       </div>
                       <CreditCard className="text-white/20" size={32} />
+                   </div>
+                </div>
+
+                <div className="bg-amber-50/80 border border-amber-100 rounded-2xl p-4 mb-6 flex items-start gap-3 text-amber-800">
+                   <AlertCircle className="shrink-0 mt-0.5" size={16} />
+                   <div className="text-xs">
+                     <p className="font-semibold mb-0.5">7-Day Escrow Policy</p>
+                     <p className="text-amber-700/80">Funds from delivered orders will automatically become available for withdrawal exactly 7 days after delivery.</p>
                    </div>
                 </div>
 

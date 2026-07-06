@@ -67,6 +67,9 @@ const DeliverySidebar = ({ isOpen, onClose }) => {
     if (!socket) return;
 
     const handleDeliveryAssigned = (payload) => {
+      import('../../../shared/utils/notificationSound').then(({ playNotificationSound }) => {
+        playNotificationSound();
+      });
       toast.success(payload.message || 'New Delivery Assigned!', {
         position: 'top-right',
         duration: 4000,

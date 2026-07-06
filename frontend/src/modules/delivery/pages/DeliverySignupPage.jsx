@@ -5,10 +5,11 @@ import {
   FiTruck, FiFileText, FiCreditCard, FiUserCheck, FiBriefcase,
   FiShield, FiActivity, FiUploadCloud, FiCheckCircle, FiLoader, FiX,
 } from 'react-icons/fi';
-import { useUser } from '../../user/data/UserContext';
 import { uploadRegistrationDocument } from '../../../shared/utils/upload';
 import api from '../../../shared/utils/api';
 import logo from '../../../assets/transparent_logo.png';
+import TermsAgreementModal from '../../../shared/components/TermsAgreementModal';
+import { useUser } from '../../user/data/UserContext';
 
 const documentTypes = [
   { key: 'rc',          label: 'RC Book',       icon: FiFileText },
@@ -44,13 +45,14 @@ const DeliverySignupPage = () => {
   const [uploadingDocs, setUploadingDocs] = useState({ rc: false, dl: false, aadhar: false, bankDetails: false, insurance: false, pollution: false });
   const [uploadErrors, setUploadErrors] = useState({ rc: false, dl: false, aadhar: false, bankDetails: false, insurance: false, pollution: false });
   const [showPwd, setShowPwd] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
-  const [showTermsModal, setShowTermsModal] = useState(false);
   const [termsContent, setTermsContent] = useState('');
   const [loadingTerms, setLoadingTerms] = useState(false);
+  const [signatureData, setSignatureData] = useState(null);
   const vehicleSectionRef = useRef(null);
 
   const handleChange = (e) => {
@@ -176,6 +178,8 @@ const DeliverySignupPage = () => {
         vehicleNumber: formData.vehicleNumber,
         documents,
         referralCode: formData.referralCode,
+        termsSignature: signatureData?.signature,
+        termsVersion: signatureData?.termsVersion
       });
       if (data.success) setMode('success');
     } catch (err) {
@@ -439,18 +443,13 @@ const DeliverySignupPage = () => {
                 {/* Terms + Submit */}
                 <div className="pt-1 space-y-4">
                   <label className="flex items-start gap-2.5 cursor-pointer">
-                    <input type="checkbox" checked={agreeTerms} onChange={e => {
-                      setAgreeTerms(e.target.checked);
-                      if (e.target.checked && fieldErrors.agreeTerms) {
-                        setFieldErrors(p => ({ ...p, agreeTerms: '' }));
-                      }
-                    }}
-                      className="mt-0.5 accent-[#001B4E] h-3.5 w-3.5 shrink-0" />
+                    <input type="checkbox" checked={agreeTerms} readOnly
+                      className="mt-0.5 accent-[#001B4E] h-3.5 w-3.5 shrink-0 cursor-default" />
                     <span className="text-xs text-slate-500 leading-relaxed">
                       I agree to the{' '}
                       <button
                         type="button"
-                        onClick={openTermsModal}
+                        onClick={() => setShowTermsModal(true)}
                         className="text-[#001B4E] font-semibold hover:underline bg-transparent border-none p-0 inline focus:outline-none cursor-pointer"
                       >
                         Terms & Conditions
@@ -480,61 +479,21 @@ const DeliverySignupPage = () => {
 
       </div>
 
-      {/* Terms and Conditions Modal */}
-      {showTermsModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-2xl rounded-2xl overflow-hidden shadow-2xl border border-slate-100 flex flex-col max-h-[85vh]">
-            {/* Modal Header */}
-            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50">
-              <h3 className="text-sm font-bold text-[#001B4E] uppercase tracking-wider flex items-center gap-2">
-                <FiFileText size={16} /> Terms & Conditions
-              </h3>
-              <button
-                type="button"
-                onClick={() => setShowTermsModal(false)}
-                className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors text-slate-400 hover:text-slate-600 cursor-pointer"
-              >
-                <FiX size={18} />
-              </button>
-            </div>
-            {/* Modal Body */}
-            <div className="flex-1 overflow-y-auto p-6 text-slate-600 text-xs leading-relaxed font-normal whitespace-pre-wrap">
-              {loadingTerms ? (
-                <div className="flex justify-center items-center py-20">
-                  <FiLoader className="text-[#001B4E] animate-spin" size={24} />
-                </div>
-              ) : termsContent ? (
-                termsContent
-              ) : (
-                <p className="text-center text-slate-400 py-10">Failed to load Terms & Conditions.</p>
-              )}
-            </div>
-            {/* Modal Footer */}
-            <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3 bg-gray-50">
-              <button
-                type="button"
-                onClick={() => setShowTermsModal(false)}
-                className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold uppercase tracking-wider rounded-xl transition-all cursor-pointer"
-              >
-                Close
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setAgreeTerms(true);
-                  setShowTermsModal(false);
-                  if (fieldErrors.agreeTerms) {
-                    setFieldErrors(p => ({ ...p, agreeTerms: '' }));
-                  }
-                }}
-                className="px-5 py-2.5 bg-[#001B4E] hover:bg-[#001B4E]/90 text-white text-xs font-bold uppercase tracking-wider rounded-xl transition-all shadow-md cursor-pointer"
-              >
-                Accept & Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <TermsAgreementModal 
+        isOpen={showTermsModal} 
+        onClose={() => setShowTermsModal(false)}
+        roleType="delivery"
+        initialSignature={signatureData?.signature}
+        onAgree={(data) => {
+          setSignatureData(data);
+          setAgreeTerms(true);
+          setShowTermsModal(false);
+          setError('');
+          if (fieldErrors.agreeTerms) {
+            setFieldErrors(p => ({ ...p, agreeTerms: '' }));
+          }
+        }}
+      />
     </div>
   );
 };

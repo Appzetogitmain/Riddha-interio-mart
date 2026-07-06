@@ -83,6 +83,18 @@ const UserSchema = new mongoose.Schema({
   otpLockedUntil: {
     type: Date
   },
+  // Terms & Conditions Agreement
+  termsSignature: {
+    type: String,
+    default: ''
+  },
+  termsAgreedAt: {
+    type: Date
+  },
+  termsVersion: {
+    type: String,
+    default: ''
+  },
   createdAt: {
     type: Date,
     default: Date.now

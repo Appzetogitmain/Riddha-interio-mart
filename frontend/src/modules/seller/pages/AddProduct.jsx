@@ -731,7 +731,8 @@ const AddProduct = () => {
                                 <button
                                   key={cat._id}
                                   type="button"
-                                  onClick={() => {
+                                  onMouseDown={(e) => {
+                                    e.preventDefault();
                                     const selectedCat = categories.find((c) => c.name === cat.name);
                                     handleFieldChange('category', cat.name);
                                     setFormData(prev => ({ ...prev, category: cat.name, subcategory: "", subsubcategory: "" }));
@@ -783,7 +784,8 @@ const AddProduct = () => {
                                 <button
                                   key={sub._id || sub.name}
                                   type="button"
-                                  onClick={() => {
+                                  onMouseDown={(e) => {
+                                    e.preventDefault();
                                     const selectedSub = subcategories.find(
                                       (s) => s.name === sub.name,
                                     );
@@ -842,7 +844,8 @@ const AddProduct = () => {
                                 <button
                                   key={subsub._id || subsub.name}
                                   type="button"
-                                  onClick={() => {
+                                  onMouseDown={(e) => {
+                                    e.preventDefault();
                                     setFormData({
                                       ...formData,
                                       subsubcategory: subsub.name,

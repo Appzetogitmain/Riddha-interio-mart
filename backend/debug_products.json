@@ -1,27 +1,75 @@
 {
-  "timestamp": "2026-07-06T11:46:01.389Z",
-  "query": {
-    "limit": "1"
-  },
+  "timestamp": "2026-07-07T09:57:32.151Z",
+  "query": {},
   "builtFilter": {
     "isApproved": true,
     "isActive": true,
     "seller": {
       "$nin": [
-        "6a4b718bcf4902f690a5fb7d",
         "6a100b07a3cc06ac3f65be01",
         "6a10057431fa10db6ebdaaff"
       ]
     }
   },
-  "resultCount": 1,
+  "resultCount": 10,
   "results": [
+    {
+      "_id": "6a4ca1ff53791a8751587337",
+      "name": "testing product again",
+      "category": "Flooring",
+      "subcategory": "Travertine Tiles",
+      "subsubcategory": ""
+    },
+    {
+      "_id": "6a4ca14153791a875158732d",
+      "name": "Baris 40 LED Wall lamp",
+      "category": "Furniture",
+      "subcategory": "Modern Decor",
+      "subsubcategory": ""
+    },
     {
       "_id": "6a48edd76331e95a259cda0a",
       "name": "test sheetal",
       "category": "Flooring",
       "subcategory": "Vitrified Tiles",
       "subsubcategory": "Nano Polished"
+    },
+    {
+      "_id": "6a436c626e92a38dc1208f8b",
+      "name": "abc",
+      "category": " Marble",
+      "subcategory": "Polished",
+      "subsubcategory": ""
+    },
+    {
+      "_id": "6a40ff188830e3fa4fc3a77d",
+      "name": "Sheetal Premium Item 5",
+      "category": " Marble"
+    },
+    {
+      "_id": "6a40ff178830e3fa4fc3a77c",
+      "name": "Sheetal Premium Item 4",
+      "category": " Marble"
+    },
+    {
+      "_id": "6a40ff178830e3fa4fc3a77b",
+      "name": "Sheetal Premium Item 3",
+      "category": " Marble"
+    },
+    {
+      "_id": "6a40ff178830e3fa4fc3a77a",
+      "name": "Sheetal Premium Item 2",
+      "category": " Marble"
+    },
+    {
+      "_id": "6a40ff178830e3fa4fc3a779",
+      "name": "Sheetal Premium Item 1",
+      "category": " Marble"
+    },
+    {
+      "_id": "6a3cf1ca3c72ab885b351ee6",
+      "name": "Terra 2 LED Long",
+      "category": "Architectural Lighting"
     }
   ]
 }

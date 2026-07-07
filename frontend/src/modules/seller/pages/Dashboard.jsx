@@ -57,15 +57,7 @@ const Dashboard = () => {
 
   const exportChartToExcel = async () => {
     setShowChartOptions(false);
-    const dataToExport = (revenueTrends.length > 0 ? revenueTrends : [
-      { date: '01 May', revenue: 4000 },
-      { date: '05 May', revenue: 3000 },
-      { date: '10 May', revenue: 5000 },
-      { date: '15 May', revenue: 4500 },
-      { date: '20 May', revenue: 6500 },
-      { date: '25 May', revenue: 5500 },
-      { date: '30 May', revenue: 8000 },
-    ]).map(item => ({
+    const dataToExport = revenueTrends.map(item => ({
       'Date Period': item.date,
       'Revenue Amount (₹)': item.revenue
     }));
@@ -107,15 +99,13 @@ const Dashboard = () => {
   const orderStatusData = [
     { name: 'Completed', value: stats.completedOrders || 0, color: '#10B981' },
     { name: 'Pending', value: stats.pendingOrders || 0, color: '#F59E0B' },
-    { name: 'Cancelled', value: (stats.totalOrders - stats.completedOrders - stats.pendingOrders) || 0, color: '#EF4444' },
-  ].filter(item => item.value > 0);
-
-  // If no data, show dummy for visualization
-  const pieData = orderStatusData.length > 0 ? orderStatusData : [
-    { name: 'Completed', value: 65, color: '#10B981' },
-    { name: 'Pending', value: 25, color: '#F59E0B' },
-    { name: 'Cancelled', value: 10, color: '#EF4444' },
+    { name: 'Cancelled', value: Math.max(0, (stats.totalOrders || 0) - (stats.completedOrders || 0) - (stats.pendingOrders || 0)), color: '#EF4444' },
   ];
+
+  // If no data, show a default empty circle
+  const pieChartData = stats.totalOrders > 0 
+    ? orderStatusData.filter(item => item.value > 0)
+    : [{ name: 'No Orders', value: 1, color: '#F1F5F9' }];
 
   return (
     <PageWrapper>
@@ -283,15 +273,7 @@ const Dashboard = () => {
                 </div>
               ) : (
                 <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-                  <AreaChart data={revenueTrends.length > 0 ? revenueTrends : [
-                    { date: '01 May', revenue: 4000 },
-                    { date: '05 May', revenue: 3000 },
-                    { date: '10 May', revenue: 5000 },
-                    { date: '15 May', revenue: 4500 },
-                    { date: '20 May', revenue: 6500 },
-                    { date: '25 May', revenue: 5500 },
-                    { date: '30 May', revenue: 8000 },
-                  ]}>
+                  <AreaChart data={revenueTrends}>
                     <defs>
                       <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="#D63384" stopOpacity={0.1}/>
@@ -334,7 +316,7 @@ const Dashboard = () => {
               <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                 <PieChart>
                   <Pie
-                    data={pieData}
+                    data={pieChartData}
                     cx="50%"
                     cy="50%"
                     innerRadius={70}
@@ -342,7 +324,7 @@ const Dashboard = () => {
                     paddingAngle={8}
                     dataKey="value"
                   >
-                    {pieData.map((entry, index) => (
+                    {pieChartData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
                     ))}
                   </Pie>
@@ -358,7 +340,7 @@ const Dashboard = () => {
             </div>
 
             <div className="space-y-3 flex-1">
-              {pieData.map((item) => (
+              {orderStatusData.map((item) => (
                 <div key={item.name} className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition-colors">
                   <div className="flex items-center gap-3">
                     <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }}></div>
@@ -397,7 +379,15 @@ const Dashboard = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {topProducts.length > 0 ? topProducts.map((product) => (
+                    {loading ? (
+                      [1,2,3].map(i => (
+                        <tr key={i} className="animate-pulse">
+                           <td className="px-8 py-4 flex items-center gap-4"><div className="w-12 h-12 bg-slate-100 rounded-xl"></div><div className="space-y-2"><div className="w-32 h-3 bg-slate-100 rounded"></div><div className="w-20 h-2 bg-slate-100 rounded"></div></div></td>
+                           <td className="px-8 py-4"><div className="w-10 h-3 bg-slate-100 rounded mx-auto"></div></td>
+                           <td className="px-8 py-4 text-right"><div className="w-16 h-3 bg-slate-100 rounded ml-auto"></div></td>
+                        </tr>
+                      ))
+                    ) : topProducts.length > 0 ? topProducts.map((product) => (
                       <tr key={product._id} className="hover:bg-slate-50/80 transition-colors group">
                         <td className="px-8 py-4">
                           <div className="flex items-center gap-4">
@@ -417,13 +407,13 @@ const Dashboard = () => {
                           <p className="text-sm font-semibold text-slate-900">₹{product.totalRevenue.toLocaleString()}</p>
                         </td>
                       </tr>
-                    )) : [1,2,3].map(i => (
-                      <tr key={i} className="animate-pulse">
-                         <td className="px-8 py-4 flex items-center gap-4"><div className="w-12 h-12 bg-slate-100 rounded-xl"></div><div className="space-y-2"><div className="w-32 h-3 bg-slate-100 rounded"></div><div className="w-20 h-2 bg-slate-100 rounded"></div></div></td>
-                         <td className="px-8 py-4"><div className="w-10 h-3 bg-slate-100 rounded mx-auto"></div></td>
-                         <td className="px-8 py-4 text-right"><div className="w-16 h-3 bg-slate-100 rounded ml-auto"></div></td>
+                    )) : (
+                      <tr>
+                        <td colSpan="3" className="px-8 py-8 text-center text-sm text-slate-500">
+                          No products sold yet.
+                        </td>
                       </tr>
-                    ))}
+                    )}
                   </tbody>
                 </table>
              </div>

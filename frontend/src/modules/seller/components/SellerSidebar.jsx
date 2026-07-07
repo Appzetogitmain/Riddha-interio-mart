@@ -187,10 +187,17 @@ const SellerSidebar = ({ isOpen, onClose }) => {
                         {item.label}
                       </span>
                     </div>
-                    <ChevronRight
-                      size={16}
-                      className={`transition-transform duration-300 ${isMenuOpen ? "rotate-90" : ""} text-slate-400`}
-                    />
+                    <div className="flex items-center gap-2">
+                      {item.label === "Orders" && pendingOrdersCount > 0 && (
+                        <span className="w-5 h-5 rounded-full bg-seller-primary text-white flex items-center justify-center text-[10px] font-semibold">
+                          {pendingOrdersCount}
+                        </span>
+                      )}
+                      <ChevronRight
+                        size={16}
+                        className={`transition-transform duration-300 ${isMenuOpen ? "rotate-90" : ""} text-slate-400`}
+                      />
+                    </div>
                   </button>
 
                   <AnimatePresence>

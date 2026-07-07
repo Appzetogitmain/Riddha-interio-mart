@@ -228,7 +228,8 @@ const Orders = () => {
                       })),
                       totalBill: order.totalPrice,
                       paymentMode: order.paymentMethod,
-                      otp: order.deliveryOtp
+                      otp: order.deliveryOtp,
+                      invoiceUrl: order.invoiceUrl
                     }} 
                     onAccept={(id) => handleDeliveryResponse(id, 'Accepted')}
                     onReject={(id) => handleDeliveryResponse(id, 'Rejected')}

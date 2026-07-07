@@ -165,10 +165,10 @@ exports.updateDeliveryProfile = async (req, res, next) => {
 exports.getAvailableDeliveryBoys = async (req, res, next) => {
   try {
     const { pincode } = req.query;
-    const filter = { status: 'Available', approvalStatus: 'Approved' };
-    if (pincode) {
-      filter.servicePincodes = pincode;
-    }
+    const filter = { approvalStatus: 'Approved' };
+    
+    // We have removed strict pincode and online-status filtering. 
+    // All approved delivery partners will now show up so the seller can assign anyone.
     const deliveryBoys = await Delivery.find(filter).select('-password');
     res.status(200).json({ success: true, data: deliveryBoys });
   } catch (err) {

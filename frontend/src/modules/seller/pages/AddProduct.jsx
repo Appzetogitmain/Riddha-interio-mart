@@ -571,10 +571,9 @@ const AddProduct = () => {
                           value={formData.name}
                           onChange={(e) => handleFieldChange('name', e.target.value)}
                           onBlur={() => handleBlur('name')}
-                          readOnly={selection === "catalog"}
-                          className={`w-full px-6 py-4 rounded-2xl border-none font-semibold text-sm transition-all ${selection === "catalog" ? "bg-slate-50 text-slate-400 cursor-not-allowed focus:ring-0" : fc('name')} text-slate-900`}
+                          className={`w-full px-6 py-4 rounded-2xl border-none font-semibold text-sm transition-all ${fc('name')} text-slate-900`}
                         />
-                        {selection !== "catalog" && fieldErr('name')}
+                        {fieldErr('name')}
                       </div>
 
                       <div className="space-y-2">
@@ -587,10 +586,9 @@ const AddProduct = () => {
                           value={formData.sku}
                           onChange={(e) => handleFieldChange('sku', e.target.value)}
                           onBlur={() => handleBlur('sku')}
-                          readOnly={selection === "catalog"}
-                          className={`w-full px-6 py-4 rounded-2xl border-none font-semibold text-sm transition-all ${selection === "catalog" ? "bg-slate-50 text-slate-400 cursor-not-allowed focus:ring-0" : fc('sku')} text-slate-900`}
+                          className={`w-full px-6 py-4 rounded-2xl border-none font-semibold text-sm transition-all ${fc('sku')} text-slate-900`}
                         />
-                        {selection !== "catalog" && fieldErr('sku')}
+                        {fieldErr('sku')}
                       </div>
 
                       <div className="space-y-2">
@@ -616,15 +614,12 @@ const AddProduct = () => {
                             handleFieldChange('hsnCode', val);
                           }}
                           onBlur={() => handleBlur('hsnCode')}
-                          readOnly={selection === "catalog"}
                           className={`w-full px-6 py-4 rounded-2xl font-semibold text-sm transition-all border ${
-                            selection === "catalog"
-                              ? "bg-slate-50 text-slate-400 cursor-not-allowed border-transparent focus:ring-0"
-                              : formData.hsnCode.length === 0
-                                ? `${touched['hsnCode'] ? 'bg-red-50 border-red-200 ring-2 ring-red-300/40' : 'bg-slate-50 border-transparent focus:ring-2 focus:ring-seller-primary/10'} text-slate-900`
-                                : /^\d{4}$|^\d{6}$|^\d{8}$/.test(formData.hsnCode)
-                                  ? "bg-emerald-50 text-slate-900 border-emerald-200 ring-1 ring-emerald-200"
-                                  : "bg-red-50 text-slate-900 border-red-200 ring-2 ring-red-300/40"
+                            formData.hsnCode.length === 0
+                              ? `${touched['hsnCode'] ? 'bg-red-50 border-red-200 ring-2 ring-red-300/40' : 'bg-slate-50 border-transparent focus:ring-2 focus:ring-seller-primary/10'} text-slate-900`
+                              : /^\d{4}$|^\d{6}$|^\d{8}$/.test(formData.hsnCode)
+                                ? "bg-emerald-50 text-slate-900 border-emerald-200 ring-1 ring-emerald-200"
+                                : "bg-red-50 text-slate-900 border-red-200 ring-2 ring-red-300/40"
                           } text-slate-900`}
                         />
                         {touched['hsnCode'] && fieldErrors['hsnCode']
@@ -642,8 +637,7 @@ const AddProduct = () => {
                           value={formData.brand}
                           onChange={(e) => handleFieldChange('brand', e.target.value)}
                           onBlur={() => handleBlur('brand')}
-                          disabled={selection === "catalog" && !!formData.brand}
-                          className={`w-full px-6 py-4 rounded-2xl border-none font-semibold text-sm transition-all ${selection === "catalog" && !!formData.brand ? "bg-slate-50 text-slate-400 cursor-not-allowed focus:ring-0" : fc('brand')} text-slate-900`}
+                          className={`w-full px-6 py-4 rounded-2xl border-none font-semibold text-sm transition-all ${fc('brand')} text-slate-900`}
                         >
                           <option value="">Select Brand</option>
                           {brands.map((brand) => (
@@ -652,7 +646,7 @@ const AddProduct = () => {
                             </option>
                           ))}
                         </select>
-                        {selection !== "catalog" && fieldErr('brand')}
+                        {fieldErr('brand')}
                       </div>
 
                       <div className="space-y-2 md:col-span-2">
@@ -671,10 +665,9 @@ const AddProduct = () => {
                           value={formData.description}
                           onChange={(e) => handleFieldChange('description', e.target.value)}
                           onBlur={() => handleBlur('description')}
-                          readOnly={selection === "catalog"}
-                          className={`w-full px-6 py-4 rounded-2xl border-none font-semibold text-sm transition-all resize-none ${selection === "catalog" ? "bg-slate-50 text-slate-400 cursor-not-allowed focus:ring-0" : fc('description')} text-slate-900`}
+                          className={`w-full px-6 py-4 rounded-2xl border-none font-semibold text-sm transition-all resize-none ${fc('description')} text-slate-900`}
                         />
-                        {selection !== "catalog" && fieldErr('description')}
+                        {fieldErr('description')}
                       </div>
                     </div>
                   </div>
@@ -698,31 +691,27 @@ const AddProduct = () => {
                         <div className="relative">
                           <input
                             type="text"
-                            readOnly={selection === "catalog"}
                             placeholder={formData.category || "Select category..."}
                             value={catSearch}
                             onChange={(e) => {
-                              if (selection === "catalog") return;
                               setCatSearch(e.target.value);
                               setIsCatOpen(true);
                             }}
                             onFocus={() => {
-                              if (selection !== "catalog") setIsCatOpen(true);
+                              setIsCatOpen(true);
                             }}
                             onBlur={() => {
                               setTimeout(() => {
                                 setIsCatOpen(false);
-                                if (selection !== "catalog") handleBlur('category');
+                                handleBlur('category');
                               }, 150);
                             }}
                             className={`w-full px-6 py-4 rounded-2xl border-none font-semibold text-sm transition-all ${
-                              selection === "catalog"
-                                ? "bg-slate-50 text-slate-400 cursor-not-allowed focus:ring-0"
-                                : formData.category
-                                  ? "bg-emerald-50/50 ring-1 ring-emerald-200 text-slate-900"
-                                  : touched['category'] && fieldErrors['category']
-                                    ? "bg-red-50 ring-2 ring-red-300/50 text-slate-900"
-                                    : "bg-slate-50 text-slate-900 focus:ring-2 focus:ring-seller-primary/10"
+                              formData.category
+                                ? "bg-emerald-50/50 ring-1 ring-emerald-200 text-slate-900"
+                                : touched['category'] && fieldErrors['category']
+                                  ? "bg-red-50 ring-2 ring-red-300/50 text-slate-900"
+                                  : "bg-slate-50 text-slate-900 focus:ring-2 focus:ring-seller-primary/10"
                             }`}
                           />
                           {isCatOpen && (
@@ -751,7 +740,7 @@ const AddProduct = () => {
                             </div>
                           )}
                         </div>
-                        {selection !== "catalog" && fieldErr('category')}
+                        {fieldErr('category')}
                       </div>
 
                       <div className="space-y-2 relative">
@@ -761,22 +750,19 @@ const AddProduct = () => {
                         <div className="relative">
                           <input
                             type="text"
-                            disabled={
-                              !formData.category || selection === "catalog"
-                            }
+                            disabled={!formData.category}
                             placeholder={
                               formData.subcategory || "Select subcategory..."
                             }
                             value={subSearch}
                             onChange={(e) => {
-                              if (selection === "catalog") return;
                               setSubSearch(e.target.value);
                               setIsSubOpen(true);
                             }}
                             onFocus={() => {
-                              if (selection !== "catalog") setIsSubOpen(true);
+                              setIsSubOpen(true);
                             }}
-                            className={`w-full px-6 py-4 rounded-2xl border-none font-semibold text-sm focus:ring-2 focus:ring-seller-primary/10 transition-all ${!formData.category || selection === "catalog" ? "bg-slate-50 text-slate-400 cursor-not-allowed" : "bg-slate-50 text-slate-900"}`}
+                            className={`w-full px-6 py-4 rounded-2xl border-none font-semibold text-sm focus:ring-2 focus:ring-seller-primary/10 transition-all ${!formData.category ? "bg-slate-50 text-slate-400 cursor-not-allowed" : "bg-slate-50 text-slate-900"}`}
                           />
                           {isSubOpen && (
                             <div className="absolute left-0 right-0 top-full mt-3 bg-white border border-slate-100 rounded-2xl shadow-2xl z-50 max-h-60 overflow-y-auto overflow-x-hidden p-2">
@@ -819,24 +805,20 @@ const AddProduct = () => {
                         <div className="relative">
                           <input
                             type="text"
-                            disabled={
-                              !formData.subcategory || selection === "catalog"
-                            }
+                            disabled={!formData.subcategory}
                             placeholder={
                               formData.subsubcategory ||
                               "Select sub-subcategory..."
                             }
                             value={subSubSearch}
                             onChange={(e) => {
-                              if (selection === "catalog") return;
                               setSubSubSearch(e.target.value);
                               setIsSubSubOpen(true);
                             }}
                             onFocus={() => {
-                              if (selection !== "catalog")
-                                setIsSubSubOpen(true);
+                              setIsSubSubOpen(true);
                             }}
-                            className={`w-full px-6 py-4 rounded-2xl border-none font-semibold text-sm focus:ring-2 focus:ring-seller-primary/10 transition-all ${!formData.subcategory || selection === "catalog" ? "bg-slate-50 text-slate-400 cursor-not-allowed" : "bg-slate-50 text-slate-900"}`}
+                            className={`w-full px-6 py-4 rounded-2xl border-none font-semibold text-sm focus:ring-2 focus:ring-seller-primary/10 transition-all ${!formData.subcategory ? "bg-slate-50 text-slate-400 cursor-not-allowed" : "bg-slate-50 text-slate-900"}`}
                           />
                           {isSubSubOpen && (
                             <div className="absolute left-0 right-0 top-full mt-3 bg-white border border-slate-100 rounded-2xl shadow-2xl z-50 max-h-60 overflow-y-auto overflow-x-hidden p-2">
@@ -877,8 +859,7 @@ const AddProduct = () => {
                               material: e.target.value,
                             })
                           }
-                          readOnly={selection === "catalog"}
-                          className={`w-full px-6 py-4 rounded-2xl border-none font-semibold text-sm focus:ring-2 focus:ring-seller-primary/10 transition-all ${selection === "catalog" ? "bg-slate-50 text-slate-400 cursor-not-allowed" : "bg-slate-50 text-slate-900"}`}
+                          className="w-full px-6 py-4 rounded-2xl border-none font-semibold text-sm focus:ring-2 focus:ring-seller-primary/10 transition-all bg-slate-50 text-slate-900"
                         />
                       </div>
 
@@ -896,8 +877,7 @@ const AddProduct = () => {
                               dimensions: e.target.value,
                             })
                           }
-                          readOnly={selection === "catalog"}
-                          className={`w-full px-6 py-4 rounded-2xl border-none font-semibold text-sm focus:ring-2 focus:ring-seller-primary/10 transition-all ${selection === "catalog" ? "bg-slate-50 text-slate-400 cursor-not-allowed" : "bg-slate-50 text-slate-900"}`}
+                          className="w-full px-6 py-4 rounded-2xl border-none font-semibold text-sm focus:ring-2 focus:ring-seller-primary/10 transition-all bg-slate-50 text-slate-900"
                         />
                       </div>
 
@@ -915,8 +895,7 @@ const AddProduct = () => {
                               thickness: e.target.value,
                             })
                           }
-                          readOnly={selection === "catalog"}
-                          className={`w-full px-6 py-4 rounded-2xl border-none font-semibold text-sm focus:ring-2 focus:ring-seller-primary/10 transition-all ${selection === "catalog" ? "bg-slate-50 text-slate-400 cursor-not-allowed" : "bg-slate-50 text-slate-900"}`}
+                          className="w-full px-6 py-4 rounded-2xl border-none font-semibold text-sm focus:ring-2 focus:ring-seller-primary/10 transition-all bg-slate-50 text-slate-900"
                         />
                       </div>
 
@@ -931,8 +910,7 @@ const AddProduct = () => {
                           onChange={(e) =>
                             setFormData({ ...formData, color: e.target.value })
                           }
-                          readOnly={selection === "catalog"}
-                          className={`w-full px-6 py-4 rounded-2xl border-none font-semibold text-sm focus:ring-2 focus:ring-seller-primary/10 transition-all ${selection === "catalog" ? "bg-slate-50 text-slate-400 cursor-not-allowed" : "bg-slate-50 text-slate-900"}`}
+                          className="w-full px-6 py-4 rounded-2xl border-none font-semibold text-sm focus:ring-2 focus:ring-seller-primary/10 transition-all bg-slate-50 text-slate-900"
                         />
                       </div>
                     </div>
@@ -1096,17 +1074,14 @@ const AddProduct = () => {
                           />
                           <button
                             type="button"
-                            onClick={() =>
-                              selection !== "catalog" && removeImage(idx)
-                            }
-                            className={`absolute inset-0 bg-red-600/60 backdrop-blur-sm flex items-center justify-center opacity-0 transition-all text-white ${selection === "catalog" ? "cursor-not-allowed" : "group-hover:opacity-100"}`}
+                            onClick={() => removeImage(idx)}
+                            className="absolute inset-0 bg-red-600/60 backdrop-blur-sm flex items-center justify-center opacity-0 transition-all text-white group-hover:opacity-100"
                           >
                             <Trash2 size={20} />
                           </button>
                         </div>
                       ))}
-                      {formData.images.length < 5 &&
-                        selection !== "catalog" && (
+                      {formData.images.length < 5 && (
                           <div
                             onClick={() => fileInputRef.current.click()}
                             className="aspect-square bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center text-slate-300 hover:border-seller-primary hover:text-seller-primary transition-all cursor-pointer group"
@@ -1131,7 +1106,7 @@ const AddProduct = () => {
                     />
 
                     {/* Image required error */}
-                    {Object.keys(touched).length > 0 && formData.images.length === 0 && selection !== "catalog" && (
+                    {Object.keys(touched).length > 0 && formData.images.length === 0 && (
                       <p className="text-[10px] font-bold text-red-500 flex items-center gap-1 -mt-2 ml-1"><X size={9} />At least one product image is required</p>
                     )}
 
@@ -1153,32 +1128,24 @@ const AddProduct = () => {
                           <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
                             <Video size={14} /> Video Asset
                           </label>
-                          {selection !== "catalog" && (
-                            <label
-                              htmlFor="video-upload"
-                              className="text-[9px] font-bold text-seller-primary uppercase tracking-widest cursor-pointer hover:underline"
-                            >
-                              {videoFile ? "Replace" : "Upload File"}
-                            </label>
-                          )}
+                          <label
+                            htmlFor="video-upload"
+                            className="text-[9px] font-bold text-seller-primary uppercase tracking-widest cursor-pointer hover:underline"
+                          >
+                            {videoFile ? "Replace" : "Upload File"}
+                          </label>
                         </div>
 
                         <input
                           type="url"
-                          placeholder={
-                            selection === "catalog"
-                              ? "Catalog linked"
-                              : "Paste YouTube/Video URL"
-                          }
+                          placeholder="Paste YouTube/Video URL"
                           value={formData.videoUrl}
                           onChange={(e) =>
-                            selection !== "catalog" &&
                             setFormData({
                               ...formData,
                               videoUrl: e.target.value,
                             })
                           }
-                          readOnly={selection === "catalog"}
                           className="w-full px-5 py-4 rounded-2xl bg-slate-50 border-none text-xs font-bold text-slate-900 focus:ring-2 focus:ring-seller-primary/10 transition-all"
                         />
                         {videoFile && (
@@ -1196,46 +1163,42 @@ const AddProduct = () => {
                             />
                           </div>
                         )}
-                        {selection !== "catalog" && (
-                          <input
-                            type="file"
-                            id="video-upload"
-                            hidden
-                            accept="video/mp4,video/webm,video/quicktime"
-                            onChange={(e) => {
-                              const file = e.target.files[0];
-                              if (!file) return;
-                              const MAX_VIDEO = 100 * 1024 * 1024; // 100 MB
-                              const ALLOWED_VIDEO = ["video/mp4", "video/webm", "video/quicktime"];
-                              if (!ALLOWED_VIDEO.includes(file.type)) {
-                                setError("Video must be MP4, WEBM, or MOV format");
-                                e.target.value = "";
-                                return;
-                              }
-                              if (file.size > MAX_VIDEO) {
-                                setError(`Video exceeds 100 MB limit (${(file.size / 1024 / 1024).toFixed(0)} MB). Please compress it first.`);
-                                e.target.value = "";
-                                return;
-                              }
-                              setError("");
-                              setVideoFile(file);
-                            }}
-                          />
-                        )}
+                        <input
+                          type="file"
+                          id="video-upload"
+                          hidden
+                          accept="video/mp4,video/webm,video/quicktime"
+                          onChange={(e) => {
+                            const file = e.target.files[0];
+                            if (!file) return;
+                            const MAX_VIDEO = 100 * 1024 * 1024; // 100 MB
+                            const ALLOWED_VIDEO = ["video/mp4", "video/webm", "video/quicktime"];
+                            if (!ALLOWED_VIDEO.includes(file.type)) {
+                              setError("Video must be MP4, WEBM, or MOV format");
+                              e.target.value = "";
+                              return;
+                            }
+                            if (file.size > MAX_VIDEO) {
+                              setError(`Video exceeds 100 MB limit (${(file.size / 1024 / 1024).toFixed(0)} MB). Please compress it first.`);
+                              e.target.value = "";
+                              return;
+                            }
+                            setError("");
+                            setVideoFile(file);
+                          }}
+                        />
 
                         {/* Video upload hints */}
-                        {selection !== "catalog" && (
-                          <div className="flex items-start gap-2 bg-slate-50 rounded-xl px-3 py-2.5">
-                            <Info size={11} className="text-slate-400 shrink-0 mt-0.5" />
-                            <div className="space-y-0.5">
-                              <p className="text-[9px] font-black text-slate-500 uppercase tracking-wider">Video Requirements</p>
-                              <p className="text-[9px] text-slate-400 font-medium leading-relaxed">
-                                Max <span className="font-black text-slate-600">100 MB</span> &nbsp;•&nbsp; Formats: <span className="font-black text-slate-600">MP4, WEBM, MOV</span>
-                              </p>
-                              <p className="text-[9px] text-slate-400 font-medium">Or paste a YouTube / direct video URL above instead</p>
-                            </div>
+                        <div className="flex items-start gap-2 bg-slate-50 rounded-xl px-3 py-2.5">
+                          <Info size={11} className="text-slate-400 shrink-0 mt-0.5" />
+                          <div className="space-y-0.5">
+                            <p className="text-[9px] font-black text-slate-500 uppercase tracking-wider">Video Requirements</p>
+                            <p className="text-[9px] text-slate-400 font-medium leading-relaxed">
+                              Max <span className="font-black text-slate-600">100 MB</span> &nbsp;•&nbsp; Formats: <span className="font-black text-slate-600">MP4, WEBM, MOV</span>
+                            </p>
+                            <p className="text-[9px] text-slate-400 font-medium">Or paste a YouTube / direct video URL above instead</p>
                           </div>
-                        )}
+                        </div>
                       </div>
 
                       {error && (

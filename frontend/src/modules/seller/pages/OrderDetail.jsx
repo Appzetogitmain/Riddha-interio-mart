@@ -72,7 +72,61 @@ const OrderDetail = () => {
     }
   };
 
-  const handlePrintInvoice = () => window.print();
+  const handleDeliveryStatusUpdate = async (nextStatus) => {
+    setUpdating(true);
+    try {
+      await api.put(`/orders/${id}/seller-delivery-status`, { status: nextStatus });
+      await fetchOrderDetail();
+      toast.success(`Delivery marked as ${nextStatus}`);
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Failed to update delivery status');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleGenerateOrPrintInvoice = async () => {
+    setUpdating(true);
+    try {
+      toast.loading('Preparing invoice...', { id: 'pdf-download' });
+      
+      // Always use the backend proxy download endpoint.
+      // It auto-generates if missing, then streams the PDF directly.
+      const authData = JSON.parse(localStorage.getItem('riddha_user') || '{}');
+      const token = authData?.token || authData?.user?.token || '';
+      const API_BASE = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000/api`;
+      const downloadUrl = `${API_BASE}/orders/${id}/download-invoice`;
+      
+      const response = await fetch(downloadUrl, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.message || 'Download failed');
+      }
+
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = `invoice_${id?.slice(-8).toUpperCase()}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(blobUrl);
+      
+      toast.success('Invoice downloaded!', { id: 'pdf-download' });
+      fetchOrderDetail();
+    } catch (err) {
+      toast.error(err.message || 'Failed to download invoice', { id: 'pdf-download' });
+    } finally {
+      setUpdating(false);
+    }
+  };
 
   const handleDownloadLabel = () => {
     if (!order) return;
@@ -169,10 +223,11 @@ const OrderDetail = () => {
 
           <div className="flex items-center gap-2">
             <button
-              onClick={handlePrintInvoice}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all"
+              onClick={handleGenerateOrPrintInvoice}
+              disabled={updating}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all disabled:opacity-50"
             >
-              <LuPrinter size={13} /> Print Invoice
+              <LuPrinter size={13} /> {order?.invoiceUrl ? 'Print Invoice' : 'Generate Invoice'}
             </button>
             <button
               onClick={handleDownloadLabel}
@@ -312,6 +367,35 @@ const OrderDetail = () => {
               </div>
             )}
 
+            {/* Delivery actions (Seller Managed) */}
+            {order.deliveryType === 'seller-managed' && !['Delivered', 'Cancelled'].includes(order.status) && (
+              <div className="bg-white rounded-2xl border border-slate-100 px-4 py-4">
+                <p className="text-xs font-black text-slate-700 uppercase tracking-widest mb-3">Self Delivery Updates</p>
+                <div className="space-y-2">
+                  {order.deliveryStatus !== 'Out for Delivery' && order.deliveryStatus !== 'Delivered' && (
+                    <button
+                      disabled={updating}
+                      onClick={() => handleDeliveryStatusUpdate('Out for Delivery')}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50"
+                    >
+                      {updating ? <LuRefreshCw size={13} className="animate-spin" /> : <LuTruck size={13} />}
+                      Mark Out for Delivery
+                    </button>
+                  )}
+                  {order.deliveryStatus !== 'Delivered' && (
+                    <button
+                      disabled={updating}
+                      onClick={() => handleDeliveryStatusUpdate('Delivered')}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
+                    >
+                      {updating ? <LuRefreshCw size={13} className="animate-spin" /> : <LuCheck size={13} />}
+                      Mark Delivered
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Shipping address */}
             <div className="bg-white rounded-2xl border border-slate-100 px-4 py-4">
               <p className="text-xs font-black text-slate-700 uppercase tracking-widest mb-3 flex items-center gap-1.5">
@@ -367,10 +451,11 @@ const OrderDetail = () => {
               <p className="text-xs font-black text-slate-700 uppercase tracking-widest mb-3">Quick Actions</p>
               <div className="space-y-2">
                 <button
-                  onClick={handlePrintInvoice}
-                  className="w-full flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-100 text-xs font-bold text-slate-700 hover:bg-slate-100 transition-all"
+                  onClick={handleGenerateOrPrintInvoice}
+                  disabled={updating}
+                  className="w-full flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-100 text-xs font-bold text-slate-700 hover:bg-slate-100 transition-all disabled:opacity-50"
                 >
-                  <LuPrinter size={13} className="text-slate-400" /> Print Invoice
+                  <LuPrinter size={13} className="text-slate-400" /> {order?.invoiceUrl ? 'Print Invoice' : 'Generate Invoice'}
                 </button>
                 <button
                   onClick={handleDownloadLabel}

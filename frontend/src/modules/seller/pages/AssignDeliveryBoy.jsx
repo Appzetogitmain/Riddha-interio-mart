@@ -12,6 +12,7 @@ const AssignDeliveryBoy = () => {
   const [selectedOrder, setSelectedOrder] = React.useState(null);
   const [showModal, setShowModal] = React.useState(false);
   const [assigning, setAssigning] = React.useState(false);
+  const [assignmentMode, setAssignmentMode] = React.useState('select-type');
 
   const fetchData = async () => {
     setLoading(true);
@@ -21,7 +22,7 @@ const AssignDeliveryBoy = () => {
       if (ordersRes.data.success) {
         // Show orders that need assignment (Processing and no deliveryBoy yet or rejected)
         const filtered = (ordersRes.data.data || []).filter(o => 
-          o.status === 'Processing' && (!o.deliveryBoy || o.deliveryStatus === 'Rejected' || o.deliveryStatus === 'None')
+          o.status === 'Processing' && (!o.deliveryBoy || o.deliveryStatus === 'Rejected' || o.deliveryStatus === 'None') && o.deliveryType !== 'seller-managed'
         );
         setOrders(filtered);
       }
@@ -35,7 +36,6 @@ const AssignDeliveryBoy = () => {
   React.useEffect(() => {
     fetchData();
     
-    // Listen for response updates to refresh list
     const onResponse = () => fetchData();
     window.addEventListener('delivery:response_received', onResponse);
     return () => window.removeEventListener('delivery:response_received', onResponse);
@@ -43,28 +43,53 @@ const AssignDeliveryBoy = () => {
 
   const handleAssignClick = async (order) => {
     setSelectedOrder(order);
+    setAssignmentMode('select-type');
+    setShowModal(true);
+  };
+
+  const handleInAppSelect = async () => {
+    setAssignmentMode('in-app');
+    setLoading(true);
     try {
-      const res = await api.get(`/delivery/available?pincode=${order.shippingAddress?.pincode}`);
+      const res = await api.get(`/delivery/available?pincode=${selectedOrder.shippingAddress?.pincode}`);
       if (res.data.success) {
         setDeliveryBoys(res.data.data || []);
       }
     } catch (err) {
       console.error('Failed to fetch delivery boys for pincode:', err);
+    } finally {
+      setLoading(false);
     }
-    setShowModal(true);
+  };
+
+  const handleSellerManagedSelect = async () => {
+    setAssigning(true);
+    try {
+      const { data } = await api.put(`/orders/${selectedOrder._id}/assign-delivery`, {
+        deliveryType: 'seller-managed'
+      });
+      if (data.success) {
+        setShowModal(false);
+        fetchData();
+      }
+    } catch (err) {
+      console.error('Assignment failed:', err);
+    } finally {
+      setAssigning(false);
+    }
   };
 
   const handleAssignProcess = async (dbId) => {
     setAssigning(true);
     try {
       const { data } = await api.put(`/orders/${selectedOrder._id}/assign-delivery`, {
-        deliveryBoyId: dbId
+        deliveryBoyId: dbId,
+        deliveryType: 'in-app'
       });
 
       if (data.success) {
         setShowModal(false);
         fetchData();
-        // Success toast/alert would be good here
       }
     } catch (err) {
       console.error('Assignment failed:', err);
@@ -203,52 +228,120 @@ const AssignDeliveryBoy = () => {
                 className="relative w-full max-w-xl bg-white rounded-[2.5rem] shadow-2xl overflow-hidden"
                 onClick={e => e.stopPropagation()}
               >
-                <div className="p-8 border-b border-slate-50 flex items-center justify-between bg-slate-50/50">
-                  <div>
-                    <h3 className="text-xl font-display font-black text-slate-900 uppercase italic">Select <span className="text-seller-primary">Partner</span></h3>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Available delivery boys in your region</p>
-                  </div>
-                  <button onClick={() => setShowModal(false)} className="w-10 h-10 border border-slate-200 rounded-full flex items-center justify-center hover:bg-white transition-all">
-                    <LuX size={20} />
-                  </button>
-                </div>
-
-                <div className="p-8 max-h-[60vh] overflow-y-auto no-scrollbar space-y-4">
-                  {deliveryBoys.length === 0 ? (
-                    <div className="text-center py-10">
-                       <p className="text-sm font-bold text-slate-400">No active delivery boys found online.</p>
-                    </div>
-                  ) : deliveryBoys.map((boy) => (
-                    <div 
-                      key={boy._id}
-                      className="p-5 rounded-2xl border border-slate-100 hover:border-seller-primary/30 transition-all flex items-center justify-between group"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-seller-primary flex items-center justify-center text-white relative shadow-lg shadow-seller-primary/10">
-                          <LuUser size={20} />
-                          <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full border-2 border-white" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-black text-slate-900 uppercase tracking-tight">{boy.fullName}</p>
-                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1 flex items-center gap-2">
-                             <LuTruck size={12} /> {boy.vehicleType} • {boy.phone}
-                          </p>
-                        </div>
+                {assignmentMode === 'select-type' ? (
+                  <>
+                    <div className="p-8 border-b border-slate-50 flex items-center justify-between bg-slate-50/50">
+                      <div>
+                        <h3 className="text-xl font-display font-black text-slate-900 uppercase italic">Delivery <span className="text-seller-primary">Method</span></h3>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Choose how you want to deliver this order</p>
                       </div>
-                      <button 
-                        onClick={() => handleAssignProcess(boy._id)}
-                        disabled={assigning}
-                        className="bg-seller-primary text-white px-6 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-seller-dark transition-all shadow-lg shadow-seller-primary/20 disabled:opacity-50"
-                      >
-                        {assigning ? 'Assigning...' : 'Assign'}
+                      <button onClick={() => setShowModal(false)} className="w-10 h-10 border border-slate-200 rounded-full flex items-center justify-center hover:bg-white transition-all">
+                        <LuX size={20} />
                       </button>
                     </div>
-                  ))}
-                </div>
+                    <div className="p-8 space-y-4">
+                      {/* Option 1: In App Delivery */}
+                      <button
+                        onClick={handleInAppSelect}
+                        className="w-full p-5 rounded-2xl border border-slate-200 hover:border-seller-primary/50 transition-all flex items-center gap-4 group text-left"
+                      >
+                        <div className="w-12 h-12 rounded-xl bg-seller-primary/10 text-seller-primary flex items-center justify-center group-hover:bg-seller-primary group-hover:text-white transition-all">
+                          <LuTruck size={24} />
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-black text-slate-900 uppercase tracking-tight">In-App Delivery Network</h4>
+                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Assign to available delivery boys in your region</p>
+                        </div>
+                      </button>
+                      
+                      {/* Option 2: Seller Managed */}
+                      <button
+                        onClick={handleSellerManagedSelect}
+                        disabled={assigning}
+                        className="w-full p-5 rounded-2xl border border-slate-200 hover:border-seller-primary/50 transition-all flex items-center gap-4 group text-left disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <div className="w-12 h-12 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center group-hover:bg-slate-200 transition-all">
+                          <LuUser size={24} />
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-black text-slate-900 uppercase tracking-tight">Self / Seller-Managed</h4>
+                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">You will manage this delivery and update status manually</p>
+                        </div>
+                      </button>
 
-                <div className="p-6 bg-gray-50/50 border-t border-gray-50 text-center">
-                   <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Partner selection is based on real-time availability and region proximity.</p>
-                </div>
+                      {/* Option 3: Shiprocket */}
+                      <button
+                        disabled
+                        className="w-full p-5 rounded-2xl border border-slate-200 opacity-60 bg-slate-50 flex items-center gap-4 text-left cursor-not-allowed"
+                      >
+                        <div className="w-12 h-12 rounded-xl bg-slate-200 text-slate-400 flex items-center justify-center">
+                          <LuPackage size={24} />
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between">
+                            <h4 className="text-sm font-black text-slate-900 uppercase tracking-tight">Shiprocket</h4>
+                            <span className="text-[9px] bg-slate-200 text-slate-500 font-bold px-2 py-1 rounded-md uppercase">Pending</span>
+                          </div>
+                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Automated shipping via Shiprocket API (Coming Soon)</p>
+                        </div>
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="p-8 border-b border-slate-50 flex items-center justify-between bg-slate-50/50">
+                      <div>
+                        <h3 className="text-xl font-display font-black text-slate-900 uppercase italic">Select <span className="text-seller-primary">Partner</span></h3>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Available delivery boys in your region</p>
+                      </div>
+                      <button onClick={() => setAssignmentMode('select-type')} className="w-10 h-10 border border-slate-200 rounded-full flex items-center justify-center hover:bg-white transition-all text-xs font-bold text-slate-500 uppercase tracking-wider">
+                        Back
+                      </button>
+                    </div>
+
+                    <div className="p-8 max-h-[60vh] overflow-y-auto no-scrollbar space-y-4">
+                      {loading ? (
+                        <div className="text-center py-10">
+                           <div className="w-8 h-8 border-2 border-slate-100 border-t-seller-primary rounded-full animate-spin mx-auto mb-2" />
+                           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Finding partners...</p>
+                        </div>
+                      ) : deliveryBoys.length === 0 ? (
+                        <div className="text-center py-10">
+                           <p className="text-sm font-bold text-slate-400">No active delivery boys found online.</p>
+                        </div>
+                      ) : deliveryBoys.map((boy) => (
+                        <div 
+                          key={boy._id}
+                          className="p-5 rounded-2xl border border-slate-100 hover:border-seller-primary/30 transition-all flex items-center justify-between group"
+                        >
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-2xl bg-seller-primary flex items-center justify-center text-white relative shadow-lg shadow-seller-primary/10">
+                              <LuUser size={20} />
+                              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full border-2 border-white" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-black text-slate-900 uppercase tracking-tight">{boy.fullName}</p>
+                              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1 flex items-center gap-2">
+                                 <LuTruck size={12} /> {boy.vehicleType} • {boy.phone}
+                              </p>
+                            </div>
+                          </div>
+                          <button 
+                            onClick={() => handleAssignProcess(boy._id)}
+                            disabled={assigning}
+                            className="bg-seller-primary text-white px-6 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-seller-dark transition-all shadow-lg shadow-seller-primary/20 disabled:opacity-50"
+                          >
+                            {assigning ? 'Assigning...' : 'Assign'}
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="p-6 bg-gray-50/50 border-t border-gray-50 text-center">
+                       <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Partner selection is based on real-time availability and region proximity.</p>
+                    </div>
+                  </>
+                )}
               </motion.div>
             </div>
           )}

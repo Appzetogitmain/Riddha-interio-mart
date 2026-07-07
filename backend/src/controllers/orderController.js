@@ -655,11 +655,14 @@ exports.updateOrderStatus = async (req, res) => {
       }
       
       // Define valid overall statuses for the Order model
-      const validOverallStatuses = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
+      const validOverallStatuses = ['Pending', 'Processing', 'Packed', 'Shipped', 'Delivered', 'Cancelled'];
       
       // If the new status is a valid overall status, update it
       if (validOverallStatuses.includes(newStatus)) {
         order.status = newStatus;
+        if (newStatus === 'Processing' && !order.processingAt) order.processingAt = Date.now();
+        if (newStatus === 'Packed' && !order.packedAt) order.packedAt = Date.now();
+        if (newStatus === 'Shipped' && !order.shippedAt) order.shippedAt = Date.now();
       }
       
       // Always handle delivery status tracking
@@ -670,6 +673,7 @@ exports.updateOrderStatus = async (req, res) => {
         // Logical mapping: if picked or out for delivery, overall status is 'Shipped'
         if (newStatus === 'Picked' || newStatus === 'Out for Delivery') {
           order.status = 'Shipped';
+          if (!order.shippedAt) order.shippedAt = Date.now();
         }
 
         // Generate and Send OTP
@@ -779,22 +783,97 @@ exports.assignOrderToDeliveryBoy = async (req, res) => {
       return res.status(403).json({ success: false, error: 'Not authorized: You do not own this order.' });
     }
 
-    const { deliveryBoyId } = req.body;
-    order.deliveryBoy = deliveryBoyId;
-    order.deliveryStatus = 'Pending';
-    order.deliveryAssignmentTime = Date.now();
+    const { deliveryBoyId, deliveryType } = req.body;
 
-    await order.save();
+    if (deliveryType === 'seller-managed') {
+      order.deliveryType = 'seller-managed';
+      order.deliveryBoy = undefined;
+      order.deliveryStatus = 'Accepted'; // Seller implicitly accepts
+      order.deliveryAssignmentTime = Date.now();
+      await order.save();
+      return res.status(200).json({ success: true, data: order });
+    } else if (deliveryType === 'shiprocket') {
+      order.deliveryType = 'shiprocket';
+      order.deliveryBoy = undefined;
+      order.deliveryStatus = 'Pending';
+      await order.save();
+      return res.status(200).json({ success: true, data: order });
+    } else {
+      // In-app delivery default
+      order.deliveryType = 'in-app';
+      if (!deliveryBoyId) {
+        return res.status(400).json({ success: false, message: 'Delivery boy ID is required for in-app delivery' });
+      }
+      order.deliveryBoy = deliveryBoyId;
+      order.deliveryStatus = 'Pending';
+      order.deliveryAssignmentTime = Date.now();
 
-    // Notify delivery boy
-    notifyDeliveryAssignment(deliveryBoyId, {
+      await order.save();
+
+      // Notify delivery boy
+      notifyDeliveryAssignment(deliveryBoyId, {
+        orderId: order._id,
+        totalPrice: order.totalPrice,
+        shippingAddress: order.shippingAddress,
+        customerName: req.user.fullName
+      });
+
+      res.status(200).json({ success: true, data: order });
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Update seller managed delivery status
+// @route   PUT /api/orders/:id/seller-delivery-status
+// @access  Private/Seller
+exports.updateSellerManagedDeliveryStatus = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+
+    if (req.user.role === 'seller' && order.seller.toString() !== req.user.id) {
+      return res.status(403).json({ success: false, error: 'Not authorized: You do not own this order.' });
+    }
+
+    if (order.deliveryType !== 'seller-managed') {
+      return res.status(400).json({ success: false, error: 'This order is not managed by seller.' });
+    }
+
+    const { status } = req.body;
+    
+    const permittedStates = ['Picked', 'Out for Delivery', 'Delivered'];
+    if (!permittedStates.includes(status)) {
+      return res.status(400).json({ success: false, error: 'Invalid status update for seller-managed delivery.' });
+    }
+
+    order.deliveryStatus = status;
+
+    if (status === 'Picked' || status === 'Out for Delivery') {
+      order.status = 'Shipped';
+      if (!order.shippedAt) order.shippedAt = Date.now();
+    } else if (status === 'Delivered') {
+      order.status = 'Delivered';
+      order.isDelivered = true;
+      order.deliveredAt = Date.now();
+      if (order.paymentMethod === 'COD') {
+        order.isPaid = true;
+        order.paidAt = Date.now();
+        order.paymentStatus = 'paid';
+      }
+    }
+
+    const updatedOrder = await order.save();
+
+    notifyUserOrderStatus(order.user, {
       orderId: order._id,
-      totalPrice: order.totalPrice,
-      shippingAddress: order.shippingAddress,
-      customerName: req.user.fullName
+      status: order.status,
+      deliveryStatus: order.deliveryStatus,
+      message: `Your order #${order._id.toString().slice(-8).toUpperCase()} is now ${order.deliveryStatus || order.status}.`
     });
 
-    res.status(200).json({ success: true, data: order });
+    res.status(200).json({ success: true, data: updatedOrder });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -1455,3 +1534,68 @@ exports.validateCoupon = async (req, res, next) => {
 exports.getCodEligibility = getCodEligibility;
 
 
+
+exports.regenerateInvoice = async (req, res, next) => {
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+    if (req.user.role === 'seller' && order.seller.toString() !== req.user.id) {
+       return res.status(403).json({ success: false, message: 'Not authorized' });
+    }
+    
+    // Clear any old/broken invoiceUrl first so a fresh one is always generated
+    order.invoiceUrl = undefined;
+    await order.save();
+    
+    const invoiceUrl = await processInvoiceAsync(order._id, order.user);
+    
+    if (!invoiceUrl) {
+      return res.status(500).json({ success: false, message: 'Invoice URL was not generated. Check server logs.' });
+    }
+
+    res.status(200).json({ success: true, message: 'Invoice generated successfully', invoiceUrl });
+  } catch (error) {
+    console.error('Invoice regeneration error:', error);
+    res.status(500).json({ success: false, message: `Failed to regenerate invoice: ${error.message}` });
+  }
+};
+
+// @desc    Download invoice PDF (generated on-demand, streamed directly)
+// @route   GET /api/orders/:id/download-invoice
+// @access  Private
+exports.downloadInvoice = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+    if (req.user.role === 'seller' && order.seller.toString() !== req.user.id) {
+      return res.status(403).json({ success: false, message: 'Not authorized' });
+    }
+
+    const { buildPdfBuffer } = require('../utils/pdfGenerator');
+    const User = require('../models/User');
+    
+    // Fetch user for invoice (optional — invoice still generates without it)
+    const user = order.user ? await User.findById(order.user).catch(() => null) : null;
+
+    console.log(`[DOWNLOAD_INVOICE] Generating PDF for order ${order._id}`);
+    
+    // Generate PDF buffer in-memory — no Cloudinary needed for download
+    const pdfBuffer = await buildPdfBuffer(order, user);
+
+    const filename = `invoice_${order._id.toString().slice(-8).toUpperCase()}.pdf`;
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Length', pdfBuffer.length);
+    res.setHeader('Cache-Control', 'no-cache');
+    res.send(pdfBuffer);
+
+    console.log(`[DOWNLOAD_INVOICE] Sent ${pdfBuffer.length} bytes for order ${order._id}`);
+  } catch (error) {
+    console.error('downloadInvoice error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};

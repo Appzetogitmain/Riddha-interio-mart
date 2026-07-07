@@ -134,17 +134,29 @@ const OrderSchema = new mongoose.Schema({
     enum: ['pending', 'paid', 'failed'],
     default: 'pending'
   },
+  invoiceUrl: {
+    type: String
+  },
   isDelivered: {
     type: Boolean,
     required: true,
     default: false
+  },
+  processingAt: {
+    type: Date
+  },
+  packedAt: {
+    type: Date
+  },
+  shippedAt: {
+    type: Date
   },
   deliveredAt: {
     type: Date
   },
   status: {
     type: String,
-    enum: ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'],
+    enum: ['Pending', 'Processing', 'Packed', 'Shipped', 'Delivered', 'Cancelled'],
     default: 'Pending'
   },
   deliveryBoy: {
@@ -155,6 +167,11 @@ const OrderSchema = new mongoose.Schema({
     type: String,
     enum: ['None', 'Pending', 'Accepted', 'Picked', 'Out for Delivery', 'Delivered', 'Rejected'],
     default: 'None'
+  },
+  deliveryType: {
+    type: String,
+    enum: ['in-app', 'seller-managed', 'shiprocket'],
+    default: 'in-app'
   },
   deliveryAssignmentTime: {
     type: Date
@@ -209,6 +226,7 @@ OrderSchema.post('save', function() {
   try {
     const cacheService = require('../services/cacheService');
     cacheService.del('analytics:admin:dashboard');
+    cacheService.delPattern('analytics:seller:*');
   } catch (e) {}
 });
 
@@ -216,6 +234,7 @@ OrderSchema.post('findOneAndUpdate', function() {
   try {
     const cacheService = require('../services/cacheService');
     cacheService.del('analytics:admin:dashboard');
+    cacheService.delPattern('analytics:seller:*');
   } catch (e) {}
 });
 
@@ -223,6 +242,7 @@ OrderSchema.post('updateMany', function() {
   try {
     const cacheService = require('../services/cacheService');
     cacheService.del('analytics:admin:dashboard');
+    cacheService.delPattern('analytics:seller:*');
   } catch (e) {}
 });
 

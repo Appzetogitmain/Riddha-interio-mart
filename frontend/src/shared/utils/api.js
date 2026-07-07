@@ -163,6 +163,9 @@ api.interceptors.response.use(
                 localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(updatedAuth));
                 
                 processQueue(null, token);
+                if (token) {
+                  config.headers.Authorization = `Bearer ${token}`;
+                }
                 resolve(api(config));
               } else {
                 throw new Error("Token refresh response success is false");

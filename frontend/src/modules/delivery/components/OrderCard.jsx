@@ -159,14 +159,26 @@ const OrderCard = ({ order, onAccept, onReject, onUpdateStatus, onVerifyOtp, onR
                  </div>
                  Call Customer
                </a>
-               {order.status !== 'Delivered' && (
-                 <button 
-                   onClick={() => navigate('/delivery/route-management')}
-                   className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-[#189D91] bg-teal-50 hover:bg-[#189D91] hover:text-white rounded-lg transition-all"
-                 >
-                   <LuMapPin size={14} /> Track
-                 </button>
-               )}
+               <div className="flex items-center gap-2">
+                 {order.invoiceUrl && (
+                   <a 
+                     href={order.invoiceUrl}
+                     target="_blank"
+                     rel="noreferrer"
+                     className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 hover:text-slate-900 rounded-lg transition-all"
+                   >
+                     <LuExternalLink size={14} /> Invoice
+                   </a>
+                 )}
+                 {order.status !== 'Delivered' && (
+                   <button 
+                     onClick={() => navigate('/delivery/route-management')}
+                     className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-[#189D91] bg-teal-50 hover:bg-[#189D91] hover:text-white rounded-lg transition-all"
+                   >
+                     <LuMapPin size={14} /> Track
+                   </button>
+                 )}
+               </div>
             </div>
             
             {order.status === 'Accepted' && (

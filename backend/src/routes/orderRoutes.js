@@ -14,7 +14,10 @@ const {
   verifyDeliveryOtp,
   resendDeliveryOtp,
   handleRazorpayWebhook,
-  validateCoupon
+  validateCoupon,
+  updateSellerManagedDeliveryStatus,
+  regenerateInvoice,
+  downloadInvoice
 } = require('../controllers/orderController');
 const { protect, authorize } = require('../middleware/auth');
 const { check } = require('express-validator');
@@ -50,6 +53,9 @@ router.route('/:id/status')
 router.route('/:id/assign-delivery')
   .put(authorize('admin', 'seller'), assignOrderToDeliveryBoy);
 
+router.route('/:id/seller-delivery-status')
+  .put(authorize('seller'), updateSellerManagedDeliveryStatus);
+
 router.route('/:id/delivery-response')
   .put(authorize('delivery'), respondToDeliveryAssignment);
 
@@ -60,5 +66,11 @@ router.route('/:id/resend-otp')
   .post(authorize('delivery'), resendDeliveryOtp);
 
 router.route('/:id').get(getOrderById);
+
+router.route('/:id/regenerate-invoice')
+  .post(authorize('seller', 'admin'), regenerateInvoice);
+
+router.route('/:id/download-invoice')
+  .get(authorize('seller', 'admin', 'delivery'), downloadInvoice);
 
 module.exports = router;

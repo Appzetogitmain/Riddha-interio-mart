@@ -381,9 +381,8 @@ const ProductDetailsPage = () => {
         </div>
 
         {/* ── Trust strip ── */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6 pt-5 border-t border-gray-100">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-6 pt-5 border-t border-gray-100">
           {[
-            { icon: FiTruck,    title: 'Free Delivery',   desc: 'Pan India' },
             { icon: FiShield,   title: 'Secure Payment',  desc: '100% Protected' },
             { icon: FiRotateCcw,title: 'Easy Returns',    desc: '7-Day Returns' },
             { icon: FiStar,     title: 'Expert Support',  desc: '24/7 Available' },

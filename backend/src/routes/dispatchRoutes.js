@@ -5,7 +5,11 @@ const {
   clockOutShift, 
   getLiveOffers, 
   acceptOffer, 
-  rejectOffer 
+  rejectOffer,
+  getLiveReturnOffers,
+  acceptReturnOffer,
+  rejectReturnOffer,
+  updateReturnDeliveryStatus
 } = require('../controllers/dispatchController');
 
 const router = express.Router();
@@ -15,5 +19,11 @@ router.put('/clock-out', protect, clockOutShift);
 router.get('/offers', protect, getLiveOffers);
 router.post('/offers/:eventId/accept', protect, acceptOffer);
 router.post('/offers/:eventId/reject', protect, rejectOffer);
+
+// Return Offers
+router.get('/returns/offers', protect, getLiveReturnOffers);
+router.post('/returns/offers/:eventId/accept', protect, acceptReturnOffer);
+router.post('/returns/offers/:eventId/reject', protect, rejectReturnOffer);
+router.put('/returns/:returnId/status', protect, updateReturnDeliveryStatus);
 
 module.exports = router;

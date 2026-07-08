@@ -34,13 +34,13 @@ const ReturnRequestModal = ({ isOpen, onClose, order, orderItem, onSuccess }) =>
     
     for (const file of files) {
       const formData = new FormData();
-      formData.append('images', file);
+      formData.append('image', file);
       try {
         const res = await api.post('/upload', formData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
         if (res.data.success) {
-          newImages.push(res.data.data[0].url);
+          newImages.push(res.data.url);
         }
       } catch (err) {
         console.error('Upload error', err);

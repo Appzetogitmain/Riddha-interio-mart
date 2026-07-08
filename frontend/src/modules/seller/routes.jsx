@@ -28,6 +28,8 @@ const Marketing = React.lazy(() => import('./pages/Marketing'));
 const HelpCenter = React.lazy(() => import('./pages/HelpCenter'));
 const SellerTerms = React.lazy(() => import('./pages/SellerTerms'));
 const SellerBulkOrders = React.lazy(() => import('./pages/SellerBulkOrders'));
+const AdvertisementPlans = React.lazy(() => import('./pages/AdvertisementPlans'));
+const MyAdvertisements = React.lazy(() => import('./pages/MyAdvertisements'));
 
 const SellerRoutes = () => {
   return (
@@ -44,11 +46,12 @@ const SellerRoutes = () => {
         <Route path="/orders/track" element={<OrderTracking />} />
         <Route path="/assign-delivery" element={<AssignDeliveryBoy />} />
         <Route path="/orders/:id" element={<OrderDetail />} />
-        <Route path="/product/add" element={<AddProduct />} />
-        <Route path="/add-product" element={<AddProduct />} />
-        <Route path="/product/list" element={<MyProducts />} />
-        <Route path="/my-products" element={<MyProducts />} />
-        <Route path="/product/taxes" element={<Taxes />} />
+        <Route path="product/add" element={<AddProduct />} />
+        <Route path="add-product" element={<AddProduct />} />
+        <Route path="edit-product/:id" element={<AddProduct />} />
+        <Route path="product/list" element={<MyProducts />} />
+        <Route path="my-products" element={<MyProducts />} />
+        <Route path="product/taxes" element={<Taxes />} />
         <Route path="/product/stock" element={<StockManagement />} />
         <Route path="/stock-management" element={<StockManagement />} />
         <Route path="/wallet" element={<Wallet />} />
@@ -64,6 +67,8 @@ const SellerRoutes = () => {
         <Route path="/marketing" element={<Marketing />} />
         <Route path="/help" element={<HelpCenter />} />
         <Route path="/bulk-orders" element={<SellerBulkOrders />} />
+        <Route path="/advertisement-plans" element={<AdvertisementPlans />} />
+        <Route path="/my-advertisements" element={<MyAdvertisements />} />
       </Route>
     </Routes>
   );

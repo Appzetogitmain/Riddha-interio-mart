@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import PageWrapper from '../components/PageWrapper';
+import ProofUploadModal from '../components/ProofUploadModal';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import {
@@ -45,6 +46,10 @@ const OrderDetail = () => {
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
+  
+  const [isProofModalOpen, setIsProofModalOpen] = useState(false);
+  const [proofTargetStatus, setProofTargetStatus] = useState(null);
+  const [isPickupProof, setIsPickupProof] = useState(true);
 
   const fetchOrderDetail = async () => {
     try {
@@ -73,6 +78,19 @@ const OrderDetail = () => {
   };
 
   const handleDeliveryStatusUpdate = async (nextStatus) => {
+    if (nextStatus === 'Picked') {
+      setProofTargetStatus(nextStatus);
+      setIsPickupProof(true);
+      setIsProofModalOpen(true);
+      return;
+    }
+    if (nextStatus === 'Delivered') {
+      setProofTargetStatus(nextStatus);
+      setIsPickupProof(false);
+      setIsProofModalOpen(true);
+      return;
+    }
+    
     setUpdating(true);
     try {
       await api.put(`/orders/${id}/seller-delivery-status`, { status: nextStatus });
@@ -80,6 +98,29 @@ const OrderDetail = () => {
       toast.success(`Delivery marked as ${nextStatus}`);
     } catch (err) {
       toast.error(err?.response?.data?.message || 'Failed to update delivery status');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const submitProof = async ({ images, video }) => {
+    setIsProofModalOpen(false);
+    setUpdating(true);
+    try {
+      const payload = { status: proofTargetStatus };
+      if (proofTargetStatus === 'Picked') {
+        payload.pickupProofImages = images;
+        payload.pickupProofVideo = video;
+      }
+      if (proofTargetStatus === 'Delivered') {
+        payload.deliveryProofImages = images;
+      }
+      
+      await api.put(`/orders/${id}/seller-delivery-status`, payload);
+      await fetchOrderDetail();
+      toast.success(`Delivery marked as ${proofTargetStatus}`);
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Failed to submit proof');
     } finally {
       setUpdating(false);
     }
@@ -468,6 +509,13 @@ const OrderDetail = () => {
           </div>
         </div>
       </div>
+      
+      <ProofUploadModal
+        isOpen={isProofModalOpen}
+        onClose={() => setIsProofModalOpen(false)}
+        onSubmit={submitProof}
+        isPickup={isPickupProof}
+      />
     </PageWrapper>
   );
 };

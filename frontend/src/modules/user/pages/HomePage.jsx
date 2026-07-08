@@ -37,8 +37,7 @@ const SectionGrid = ({ products, loading, containerVariants }) => {
       <Motion.div
         variants={containerVariants}
         initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true }}
+        animate="visible"
         className="flex flex-row gap-3 md:gap-4 overflow-x-auto pb-2 scrollbar-hide"
         style={{ scrollSnapType: 'x mandatory' }}
       >
@@ -145,6 +144,7 @@ const SectionGrid = ({ products, loading, containerVariants }) => {
 
 const HomePage = () => {
   const [products, setProducts] = useState([]);
+  const [advertisedProducts, setAdvertisedProducts] = useState([]);
   const [banners, setBanners] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -170,8 +170,20 @@ const HomePage = () => {
       }
     };
 
+    const fetchAdvertisements = async () => {
+      try {
+        const res = await api.get('/advertisements/public');
+        if (res.data.success) {
+          setAdvertisedProducts(res.data.data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch advertisements:', err);
+      }
+    };
+
     fetchProducts();
     fetchBanners();
+    fetchAdvertisements();
   }, []);
 
   const newArrivals = products.slice(0, 10);
@@ -196,6 +208,24 @@ const HomePage = () => {
 
       {/* Quick Access Categories */}
       <CategoryQuickAccess />
+
+      {/* Featured Advertisements */}
+      {(advertisedProducts.length > 0) && (
+        <section className="px-4 md:px-8 py-4">
+          <div className="flex justify-between items-end mb-4">
+            <div>
+              <h2 className="text-xl md:text-2xl font-black text-gray-900 tracking-tight">
+                Sponsored Products
+              </h2>
+              <p className="text-xs md:text-sm text-gray-500 font-medium">Top picks for you</p>
+            </div>
+            <Link to="/products" className="text-sm font-bold text-[#189D91] hover:text-[#137c72] flex items-center gap-1 group">
+              See All <LuChevronRight className="group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </div>
+          <SectionGrid products={advertisedProducts} loading={loading} containerVariants={containerVariants} />
+        </section>
+      )}
 
       {/* Promo Section (Benefits for Contractors, Designers, etc.) */}
       <PromoGrid />

@@ -1,4 +1,6 @@
 const Order = require('../models/Order');
+const SellerAdvertisement = require('../models/SellerAdvertisement');
+const Product = require('../models/Product');
 const walletService = require('./walletService');
 
 class CronService {
@@ -11,10 +13,12 @@ class CronService {
     console.log('[CRON] Starting background services...');
     this.intervalId = setInterval(async () => {
       await this.clearExpiredEscrows();
+      await this.clearExpiredAdvertisements();
     }, 60 * 60 * 1000);
     
     // Run once immediately on start
     this.clearExpiredEscrows();
+    this.clearExpiredAdvertisements();
   }
 
   stop() {
@@ -53,6 +57,42 @@ class CronService {
       }
     } catch (error) {
       console.error('[CRON] Error in clearExpiredEscrows task:', error.message);
+    }
+  }
+
+  async clearExpiredAdvertisements() {
+    try {
+      console.log('[CRON] Checking for expired advertisements...');
+      const now = new Date();
+      
+      const expiredAds = await SellerAdvertisement.find({
+        status: 'Active',
+        endDate: { $lte: now }
+      });
+
+      if (expiredAds.length === 0) return;
+
+      let expiredCount = 0;
+      for (const ad of expiredAds) {
+        try {
+          ad.status = 'Expired';
+          await ad.save();
+          
+          if (ad.products && ad.products.length > 0) {
+            await Product.updateMany(
+              { _id: { $in: ad.products } },
+              { isAdvertised: false, advertisementEndDate: null }
+            );
+          }
+          expiredCount++;
+        } catch (err) {
+          console.error(`[CRON] Failed to clear advertisement ${ad._id}:`, err.message);
+        }
+      }
+
+      console.log(`[CRON] Successfully cleared ${expiredCount} expired advertisements.`);
+    } catch (error) {
+      console.error('[CRON] Error in clearExpiredAdvertisements task:', error.message);
     }
   }
 }

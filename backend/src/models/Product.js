@@ -41,14 +41,15 @@ const ProductSchema = new mongoose.Schema({
     type: Number
   },
   category: {
-    type: String,
-    required: [true, 'Please add a category']
+    type: mongoose.Schema.ObjectId,
+    ref: 'Category',
+    required: [true, 'Please select a category']
   },
   subcategory: {
-    type: String
+    type: mongoose.Schema.ObjectId
   },
   subsubcategory: {
-    type: String
+    type: mongoose.Schema.ObjectId
   },
   brand: {
     type: mongoose.Schema.ObjectId,
@@ -163,6 +164,14 @@ const ProductSchema = new mongoose.Schema({
   createdAt: {
     type: Date,
     default: Date.now
+  },
+  isAdvertised: {
+    type: Boolean,
+    default: false
+  },
+  advertisementEndDate: {
+    type: Date,
+    default: null
   }
 }, {
   timestamps: true
@@ -170,7 +179,7 @@ const ProductSchema = new mongoose.Schema({
 
 ProductSchema.index({ seller: 1, countInStock: 1 });
 ProductSchema.index({ seller: 1, createdAt: -1 });
-ProductSchema.index({ name: 'text', description: 'text', category: 'text' });
+ProductSchema.index({ name: 'text', description: 'text' });
 ProductSchema.index({ category: 1, isApproved: 1, isActive: 1 });
 ProductSchema.index({ subcategory: 1, isApproved: 1, isActive: 1 });
 ProductSchema.index({ brand: 1, isApproved: 1, isActive: 1 });

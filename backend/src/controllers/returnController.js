@@ -106,6 +106,29 @@ exports.getSellerReturns = async (req, res, next) => {
   }
 };
 
+// @desc    Get delivery boy's assigned returns
+// @route   GET /api/returns/delivery
+// @access  Private (Delivery)
+exports.getDeliveryReturns = async (req, res, next) => {
+  try {
+    const populateOptions = [
+      { path: 'product', select: 'name images' },
+      { path: 'user', select: 'fullName email phone' },
+      { path: 'seller', select: 'shopName fullName email phone shopAddress' },
+      { path: 'order', select: 'shippingAddress createdAt' }
+    ];
+    
+    const result = await paginate(Return, { deliveryBoy: req.user.id }, req, populateOptions);
+
+    res.status(200).json({
+      success: true,
+      ...result
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 // @desc    Get all returns
 // @route   GET /api/returns
 // @access  Private (Admin)
@@ -113,8 +136,9 @@ exports.getAllReturns = async (req, res, next) => {
   try {
     const populateOptions = [
       { path: 'product', select: 'name images' },
-      { path: 'user', select: 'fullName email' },
-      { path: 'seller', select: 'shopName fullName' }
+      { path: 'user', select: 'fullName email phone mobileNumber' },
+      { path: 'seller', select: 'shopName fullName email phone' },
+      { path: 'deliveryBoy', select: 'fullName phone email' }
     ];
     
     const result = await paginate(Return, {}, req, populateOptions);
@@ -133,7 +157,7 @@ exports.getAllReturns = async (req, res, next) => {
 // @access  Private (Seller/Admin)
 exports.updateReturnStatus = async (req, res, next) => {
   try {
-    const { status, comment } = req.body;
+    const { status, comment, dropoffProofImages } = req.body;
     
     const returnReq = await Return.findById(req.params.id);
     if (!returnReq) {
@@ -152,6 +176,10 @@ exports.updateReturnStatus = async (req, res, next) => {
     }
 
     returnReq.status = status;
+    
+    if (status === 'Completed' && dropoffProofImages) {
+      returnReq.dropoffProofImages = dropoffProofImages;
+    }
 
     // Retrieve original order
     const order = await Order.findById(returnReq.order);
@@ -162,8 +190,8 @@ exports.updateReturnStatus = async (req, res, next) => {
       await order.save();
     }
 
-    // Process Refund & Stock Restore if Approved / Completed
-    if (status === 'Approved' || status === 'Completed') {
+    // Process Refund & Stock Restore ONLY when Received or Completed
+    if (status === 'Received' || status === 'Completed') {
       // 1. Process Refund
       if (returnReq.refundStatus === 'Pending') {
         if (order.paymentMethod === 'COD' || order.paymentMethod === 'Wallet' || !order.paymentResult?.id) {
@@ -221,8 +249,18 @@ exports.updateReturnStatus = async (req, res, next) => {
 
     await returnReq.save();
 
+    // Trigger reverse logistics dispatch when Approved
+    if (status === 'Approved' && returnReq.deliveryStatus === 'None') {
+      try {
+        const { broadcastNewReturn } = require('./dispatchController');
+        await broadcastNewReturn(returnReq._id);
+      } catch (dispatchErr) {
+        console.error('Failed to dispatch return:', dispatchErr.message);
+      }
+    }
+
     // Queue Refund Confirmation Email
-    if (status === 'Approved' || status === 'Completed') {
+    if (status === 'Received' || status === 'Completed') {
       try {
         const User = require('../models/User');
         const customer = await User.findById(returnReq.user);
@@ -242,6 +280,33 @@ exports.updateReturnStatus = async (req, res, next) => {
       success: true,
       data: returnReq
     });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// @desc    Trigger auto-assignment for a return
+// @route   POST /api/returns/:id/auto-assign
+// @access  Private (Admin)
+exports.autoAssignReturn = async (req, res, next) => {
+  try {
+    const returnReq = await Return.findById(req.params.id);
+    if (!returnReq) {
+      return res.status(404).json({ success: false, error: 'Return request not found' });
+    }
+
+    if (returnReq.deliveryBoy) {
+      return res.status(400).json({ success: false, error: 'A delivery partner is already assigned to this return.' });
+    }
+
+    if (returnReq.status !== 'Approved') {
+      return res.status(400).json({ success: false, error: 'Return must be approved before assigning a delivery partner.' });
+    }
+
+    const { broadcastNewReturn } = require('./dispatchController');
+    await broadcastNewReturn(returnReq._id);
+
+    res.status(200).json({ success: true, message: 'Auto-assignment triggered successfully. Searching for nearby partners...' });
   } catch (err) {
     next(err);
   }

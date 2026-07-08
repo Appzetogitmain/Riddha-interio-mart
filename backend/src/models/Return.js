@@ -65,7 +65,38 @@ const returnSchema = new mongoose.Schema({
   },
   sellerComment: {
     type: String
-  }
+  },
+  deliveryBoy: {
+    type: mongoose.Schema.ObjectId,
+    ref: 'Delivery'
+  },
+  deliveryStatus: {
+    type: String,
+    enum: ['None', 'Pending', 'Accepted', 'Picked', 'Out for Return Delivery', 'Returned', 'Rejected'],
+    default: 'None'
+  },
+  pickupProofImages: {
+    type: [String],
+    default: []
+  },
+  pickupProofVideo: {
+    type: String,
+    default: null
+  },
+  dropoffProofImages: {
+    type: [String],
+    default: []
+  },
+  rejectedBy: [{
+    deliveryBoy: {
+      type: mongoose.Schema.ObjectId,
+      ref: 'Delivery'
+    },
+    rejectedAt: {
+      type: Date,
+      default: Date.now
+    }
+  }]
 }, {
   timestamps: true
 });

@@ -179,6 +179,18 @@ const OrderSchema = new mongoose.Schema({
   deliveryOtp: {
     type: String
   },
+  pickupProofImages: {
+    type: [String],
+    default: []
+  },
+  pickupProofVideo: {
+    type: String,
+    default: null
+  },
+  deliveryProofImages: {
+    type: [String],
+    default: []
+  },
   businessDetails: {
     shopName: String,
     gstNumber: String,

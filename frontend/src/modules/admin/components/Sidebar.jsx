@@ -122,6 +122,7 @@ const menuGroups = [
             label: "Pending Orders",
           },
           { path: "/admin/bulk-orders", icon: FiLayers, label: "Bulk Orders" },
+          { path: "/admin/returns", icon: FiPackage, label: "Return Requests", showBadge: true, badgeType: "return" },
         ],
       },
       {
@@ -248,6 +249,7 @@ const menuGroups = [
           },
         ],
       },
+      { path: "/admin/manage-advertisements", icon: FiStar, label: "Advertisement Plans" },
       {
         label: "Featured Highlights",
         icon: FiStar,
@@ -322,6 +324,7 @@ const NavItem = ({
   deliveryCount,
   productCount,
   batchCount,
+  returnCount,
 }) => {
   const { hasPermission, role } = useRBAC();
   const location = useLocation();
@@ -342,6 +345,7 @@ const NavItem = ({
     ? (item.badgeType === 'batch' ? batchCount
       : item.badgeType === 'delivery' ? deliveryCount
       : item.badgeType === 'product' ? productCount
+      : item.badgeType === 'return' ? returnCount
       : sellersCount)
     : 0;
 
@@ -428,7 +432,8 @@ const NavItem = ({
                 if (child.badgeType === "batch") count = batchCount;
                 else if (child.badgeType === "delivery") count = deliveryCount;
                 else if (child.badgeType === "product") count = productCount;
-                else count = sellersCount;
+                else if (child.badgeType === "seller") count = sellersCount;
+                else if (child.badgeType === "return") count = returnCount;
 
                 const isChildActive = location.pathname === child.path;
 
@@ -496,17 +501,19 @@ const Sidebar = ({ isOpen, onClose }) => {
   const [deliveryCount, setDeliveryCount] = useState(0);
   const [productCount, setProductCount] = useState(0);
   const [batchCount, setBatchCount] = useState(0);
+  const [returnCount, setReturnCount] = useState(0);
 
   useEffect(() => {
     const fetchPendingCounts = async () => {
       try {
-        const [sellersRes, deliveryRes, productRes, batchRes] = await Promise.all([
+        const [sellersRes, deliveryRes, productRes, batchRes, returnsRes] = await Promise.all([
           api.get("/auth/admin/sellers/pending"),
           api.get("/delivery"),
           api.get("/products", {
             params: { isApproved: "pending", isActive: "all" },
           }),
           api.get("/product-batches", { params: { status: "pending_review" } }),
+          api.get("/returns"),
         ]);
         setSellersCount(sellersRes.data.data.length);
         const pendingPartners = deliveryRes.data.data.filter(
@@ -515,6 +522,8 @@ const Sidebar = ({ isOpen, onClose }) => {
         setDeliveryCount(pendingPartners.length);
         setProductCount(productRes.data.data.length);
         setBatchCount(batchRes.data.data.length);
+        const pendingReturns = returnsRes.data.data.filter(r => r.status === "Pending");
+        setReturnCount(pendingReturns.length);
       } catch (err) {
         console.error("Failed to fetch counts for sidebar:", err);
       }
@@ -595,6 +604,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                     deliveryCount={deliveryCount}
                     productCount={productCount}
                     batchCount={batchCount}
+                    returnCount={returnCount}
                   />
                 ))}
               </div>

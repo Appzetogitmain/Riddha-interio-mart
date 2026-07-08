@@ -5,7 +5,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import api from '../../../shared/utils/api';
 import ReviewFeedbackModal from '../components/ReviewFeedbackModal';
 import ExistingReviewCard from '../components/ExistingReviewCard';
-import { FiMessageCircle } from 'react-icons/fi';
+import ReturnRequestModal from '../components/ReturnRequestModal';
+import { FiMessageCircle, FiRefreshCw } from 'react-icons/fi';
 
 const Orders = () => {
   const [orders, setOrders] = useState([]);
@@ -18,6 +19,17 @@ const Orders = () => {
   const [activeOrder, setActiveOrder] = useState(null);
   const [activeProduct, setActiveProduct] = useState(null);
   const [modalInitialData, setModalInitialData] = useState(null);
+
+  // Return Modal State
+  const [isReturnModalOpen, setIsReturnModalOpen] = useState(false);
+  const [returnOrder, setReturnOrder] = useState(null);
+  const [returnItem, setReturnItem] = useState(null);
+
+  const openReturnModal = (order, item) => {
+    setReturnOrder(order);
+    setReturnItem(item);
+    setIsReturnModalOpen(true);
+  };
 
   const fetchReviews = async () => {
     try {
@@ -177,6 +189,20 @@ const Orders = () => {
                                        Feedback
                                      </button>
                                    )}
+                                   {order.status === 'Delivered' && item.returnStatus === 'None' && (
+                                     <button
+                                       onClick={() => openReturnModal(order, item)}
+                                       className="flex items-center justify-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 text-orange-600 rounded-lg hover:bg-orange-50 hover:border-orange-200 transition-all text-[10px] font-black uppercase tracking-widest shadow-sm active:scale-95"
+                                     >
+                                       <FiRefreshCw size={12} />
+                                       Return
+                                     </button>
+                                   )}
+                                   {item.returnStatus !== 'None' && (
+                                      <span className="text-[10px] font-bold text-orange-600 bg-orange-50 px-2 py-1 rounded-md text-center border border-orange-100">
+                                        Return {item.returnStatus}
+                                      </span>
+                                   )}
                                  </div>
                               </div>
 
@@ -234,6 +260,16 @@ const Orders = () => {
         initialData={modalInitialData}
         onStatusChange={fetchReviews}
       />
+
+      {returnOrder && returnItem && (
+        <ReturnRequestModal
+          isOpen={isReturnModalOpen}
+          onClose={() => setIsReturnModalOpen(false)}
+          order={returnOrder}
+          orderItem={returnItem}
+          onSuccess={fetchMyOrders}
+        />
+      )}
 
     </motion.div>
   );

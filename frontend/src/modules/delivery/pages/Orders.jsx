@@ -21,7 +21,12 @@ const Orders = () => {
   const filterParam = searchParams.get('filter');
   const [activeTab, setActiveTab] = React.useState(filterParam === 'pickups' ? 'pickups' : 'my');
   const [orders, setOrders] = React.useState([]);
+  const [returnTasks, setReturnTasks] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
+  const [isProofModalOpen, setIsProofModalOpen] = React.useState(false);
+  const [proofTargetOrder, setProofTargetOrder] = React.useState(null);
+  const [proofTargetStatus, setProofTargetStatus] = React.useState(null);
+  const [isPickupProof, setIsPickupProof] = React.useState(false);
   const { user } = useUser();
 
   // Keep tab state synchronized with sidebar navigation changes
@@ -38,9 +43,17 @@ const Orders = () => {
   const fetchOrders = async (isBackground = false) => {
     if (!isBackground) setLoading(true);
     try {
-      const { data } = await api.get('/orders');
-      if (data.success) {
-        setOrders(data.data || []);
+      const [ordersRes, returnsRes] = await Promise.all([
+        api.get('/orders'),
+        api.get('/returns/delivery')
+      ]);
+      
+      if (ordersRes.data.success) {
+        setOrders(ordersRes.data.data || []);
+      }
+      
+      if (returnsRes.data.success) {
+        setReturnTasks(returnsRes.data.data || []);
       }
     } catch (err) {
       console.error('Failed to fetch orders:', err);
@@ -60,7 +73,43 @@ const Orders = () => {
     return () => window.removeEventListener('delivery:assigned', handleNewAssignment);
   }, []);
 
+  const submitProof = async ({ images, video }) => {
+    setIsProofModalOpen(false);
+    const loadingToast = toast.loading(`Updating Mission State: ${proofTargetStatus}`);
+    try {
+      const payload = { status: proofTargetStatus };
+      if (proofTargetStatus === 'Picked' || proofTargetStatus === 'Returned') {
+        if (proofTargetStatus === 'Picked') {
+          payload.pickupProofImages = images;
+          if (video) payload.pickupProofVideo = video;
+        } else {
+          payload.dropoffProofImages = images;
+        }
+      }
+      
+      const isReturn = returnTasks.some(rt => rt._id === proofTargetOrder);
+      const endpoint = isReturn ? `/returns/${proofTargetOrder}/status` : `/orders/${proofTargetOrder}/status`;
+      
+      const { data } = await api.put(endpoint, payload);
+      
+      if (data.success) {
+        toast.success(`Mission State: ${proofTargetStatus} Validated`, { id: loadingToast });
+        fetchOrders(true);
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Validation Failure', { id: loadingToast });
+    }
+  };
+
   const handleUpdateStatus = async (orderId, newStatus) => {
+    if (newStatus === 'Picked' || newStatus === 'Returned') {
+      setProofTargetOrder(orderId);
+      setProofTargetStatus(newStatus);
+      setIsPickupProof(newStatus === 'Picked');
+      setIsProofModalOpen(true);
+      return;
+    }
+    
     const loadingToast = toast.loading(`Updating Mission State: ${newStatus}`);
     try {
       const { data } = await api.put(`/orders/${orderId}/status`, { status: newStatus });
@@ -124,9 +173,12 @@ const Orders = () => {
   // Filter for pending pickups (assigned to courier but not yet picked up from merchant)
   const pendingPickups = myOrders.filter(o => o.deliveryStatus === 'Accepted');
   
+  const activeReturnTasks = returnTasks.filter(r => r.deliveryStatus !== 'Returned' && r.deliveryStatus !== 'Rejected' && r.deliveryStatus !== 'None');
+
   const displayedOrders = 
     activeTab === 'available' ? availableOrders : 
     activeTab === 'pickups' ? pendingPickups : 
+    activeTab === 'returns' ? activeReturnTasks :
     myOrders;
 
   return (
@@ -198,6 +250,20 @@ const Orders = () => {
                    {myOrders.length}
                 </span>
               </button>
+
+              <button
+                onClick={() => setActiveTab('returns')}
+                className={`px-4 sm:px-6 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2 ${
+                  activeTab === 'returns' 
+                    ? 'bg-blue-600 text-white shadow-md' 
+                    : 'text-slate-500 hover:text-blue-600'
+                }`}
+              >
+                Return Tasks
+                <span className={`px-2 py-0.5 rounded-md text-xs ${activeTab === 'returns' ? 'bg-white/20' : 'bg-slate-205'}`}>
+                   {activeReturnTasks.length}
+                </span>
+              </button>
             </div>
           </div>
         </div>
@@ -210,35 +276,44 @@ const Orders = () => {
                 <div key={i} className="bg-slate-50 rounded-[2.5rem] h-[400px] animate-pulse border border-slate-100"></div>
               ))
             ) : displayedOrders.length > 0 ? (
-              displayedOrders.map(order => (
-                <div key={order._id}>
-                  <OrderCard 
-                    order={{
-                      id: order._id,
-                      customerName: order.shippingAddress.fullName,
-                      status: order.deliveryStatus || 'None',
-                      dateTime: new Date(order.createdAt).toLocaleString(),
-                      address: `${order.shippingAddress.fullAddress}, ${order.shippingAddress.city}`,
-                      phone: order.shippingAddress.mobileNumber,
-                      sellerLocation: "Operations Hub - 1",
-                      items: order.orderItems.map(item => ({
-                         name: item.name,
-                         quantity: item.quantity,
-                         price: item.price
-                      })),
-                      totalBill: order.totalPrice,
-                      paymentMode: order.paymentMethod,
-                      otp: order.deliveryOtp,
-                      invoiceUrl: order.invoiceUrl
-                    }} 
-                    onAccept={(id) => handleDeliveryResponse(id, 'Accepted')}
-                    onReject={(id) => handleDeliveryResponse(id, 'Rejected')}
-                    onUpdateStatus={(id, status) => handleUpdateStatus(id, status)} 
-                    onVerifyOtp={(id, otp) => handleVerifyOtp(id, otp)}
-                    onResendOtp={handleResendOtp}
-                  />
-                </div>
-              ))
+              displayedOrders.map(order => {
+                const isReturnTask = order.hasOwnProperty('reason');
+                
+                return (
+                  <div key={order._id}>
+                    <OrderCard 
+                      order={{
+                        id: order._id,
+                        customerName: isReturnTask ? order.user?.fullName : order.shippingAddress?.fullName,
+                        status: order.deliveryStatus || 'None',
+                        dateTime: new Date(order.createdAt).toLocaleString(),
+                        address: isReturnTask ? order.order?.shippingAddress?.fullAddress : `${order.shippingAddress?.fullAddress}, ${order.shippingAddress?.city}`,
+                        phone: isReturnTask ? order.user?.phone : order.shippingAddress?.mobileNumber,
+                        sellerLocation: isReturnTask ? order.seller?.shopName : "Operations Hub - 1",
+                        items: isReturnTask ? [{
+                           name: order.product?.name,
+                           quantity: 1,
+                           price: order.refundAmount
+                        }] : (order.orderItems || []).map(item => ({
+                           name: item.name,
+                           quantity: item.quantity,
+                           price: item.price
+                        })),
+                        totalBill: isReturnTask ? order.refundAmount : order.totalPrice,
+                        paymentMode: isReturnTask ? 'REFUND' : order.paymentMethod,
+                        otp: order.deliveryOtp,
+                        invoiceUrl: order.invoiceUrl,
+                        isReturn: isReturnTask
+                      }} 
+                      onAccept={(id) => handleDeliveryResponse(id, 'Accepted')}
+                      onReject={(id) => handleDeliveryResponse(id, 'Rejected')}
+                      onUpdateStatus={(id, status) => handleUpdateStatus(id, status)} 
+                      onVerifyOtp={(id, otp) => handleVerifyOtp(id, otp)}
+                      onResendOtp={handleResendOtp}
+                    />
+                  </div>
+                );
+              })
             ) : (
               <motion.div 
                 initial={{ opacity: 0, scale: 0.9 }}
@@ -265,6 +340,13 @@ const Orders = () => {
           </AnimatePresence>
         </div>
       </div>
+
+      <ProofUploadModal
+        isOpen={isProofModalOpen}
+        onClose={() => setIsProofModalOpen(false)}
+        onSubmit={submitProof}
+        isPickup={isPickupProof}
+      />
     </PageWrapper>
   );
 };

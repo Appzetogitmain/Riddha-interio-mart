@@ -115,16 +115,39 @@ const CategoryDetailPage = () => {
                 </div>
                 <div className="flex flex-row lg:flex-col gap-1.5 overflow-x-auto no-scrollbar pb-2 lg:pb-0">
                   {allCategories.map(cat => (
-                    <Link
-                      key={cat._id}
-                      to={`/category/${cat.name.toLowerCase().replace(/\s+/g, '-')}`}
-                      className={`group flex items-center justify-between py-2 lg:py-2.5 px-3 lg:px-4 rounded-lg lg:rounded-xl transition-all duration-300 shrink-0 lg:shrink ${cat._id === category._id ? 'bg-deep-espresso text-white shadow-md lg:shadow-lg shadow-black/10' : 'text-deep-espresso/70 bg-soft-oatmeal/5 lg:bg-transparent border border-soft-oatmeal/10 lg:border-none hover:bg-soft-oatmeal/10 hover:text-deep-espresso'}`}
-                    >
-                      <span className={`text-[11px] lg:text-[13px] font-semibold whitespace-nowrap ${cat._id === category._id ? 'translate-x-0 lg:translate-x-1' : 'group-hover:translate-x-1'} transition-transform`}>
-                        {cat.name}
-                      </span>
-                      {cat._id === category._id && <div className="hidden lg:block w-1.5 h-1.5 rounded-full bg-warm-sand shadow-[0_0_8px_rgba(182,143,101,0.5)]" />}
-                    </Link>
+                    <div key={cat._id} className="flex flex-col">
+                      <Link
+                        to={`/category/${cat.name.toLowerCase().replace(/\s+/g, '-')}`}
+                        className={`group flex items-center justify-between py-2 lg:py-2.5 px-3 lg:px-4 rounded-lg lg:rounded-xl transition-all duration-300 shrink-0 lg:shrink ${cat._id === category._id ? 'bg-deep-espresso text-white shadow-md lg:shadow-lg shadow-black/10' : 'text-deep-espresso/70 bg-soft-oatmeal/5 lg:bg-transparent border border-soft-oatmeal/10 lg:border-none hover:bg-soft-oatmeal/10 hover:text-deep-espresso'}`}
+                      >
+                        <span className={`text-[11px] lg:text-[13px] font-semibold whitespace-nowrap ${cat._id === category._id ? 'translate-x-0 lg:translate-x-1' : 'group-hover:translate-x-1'} transition-transform`}>
+                          {cat.name}
+                        </span>
+                        {cat._id === category._id && <div className="hidden lg:block w-1.5 h-1.5 rounded-full bg-[#189D91] shadow-[0_0_8px_rgba(24,157,145,0.5)]" />}
+                      </Link>
+                      
+                      {/* Subcategories Accordion */}
+                      {cat._id === category._id && cat.subcategories && cat.subcategories.length > 0 && (
+                        <div className="flex flex-col gap-2 mt-2 ml-4 border-l-2 border-soft-oatmeal/20 pl-3 mb-2 animate-in slide-in-from-top-2 duration-300">
+                           {/* Add an "All" option to clear subcategory filter */}
+                           <Link
+                             to={`/category/${slug}`}
+                             className={`text-[12px] font-medium transition-colors ${!subFilter ? 'text-deep-espresso font-bold' : 'text-deep-espresso/60 hover:text-deep-espresso'}`}
+                           >
+                             All {cat.name}
+                           </Link>
+                           {cat.subcategories.map(sub => (
+                             <Link
+                               key={sub._id}
+                               to={`/category/${slug}?sub=${sub.name.toLowerCase()}`}
+                               className={`text-[12px] font-medium transition-colors ${subFilter?.toLowerCase() === sub.name.toLowerCase() ? 'text-deep-espresso font-bold' : 'text-deep-espresso/60 hover:text-deep-espresso'}`}
+                             >
+                               {sub.name}
+                             </Link>
+                           ))}
+                        </div>
+                      )}
+                    </div>
                   ))}
                 </div>
               </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Link, useNavigate, useLocation, useParams } from "react-router-dom";
 import PageWrapper from "../components/PageWrapper";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -37,10 +37,11 @@ const AddProduct = () => {
   const queryParams = new URLSearchParams(location.search);
   const catalogId = queryParams.get("catalogId");
   const fromBulkUpload = queryParams.get("from") === "bulk-upload";
+  const { id } = useParams();
 
-  // Auto-skip selection screen when opened from Bulk Upload (or via catalog link)
+  // Auto-skip selection screen when opened from Bulk Upload, catalog link, or edit mode
   const [selection, setSelection] = useState(
-    queryParams.get("mode") === "new" ? "new" : null
+    queryParams.get("mode") === "new" || id ? "new" : null
   );
   const [videoFile, setVideoFile] = useState(null);
   const [categories, setCategories] = useState([]);
@@ -94,8 +95,46 @@ const AddProduct = () => {
     fetchInitialData();
     if (catalogId) {
       fetchCatalogItem();
+    } else if (id) {
+      fetchProductForEdit();
     }
-  }, [catalogId]);
+  }, [catalogId, id]);
+
+  const fetchProductForEdit = async () => {
+    try {
+      setLoading(true);
+      const { data } = await api.get(`/products/${id}`);
+      const item = data.data;
+
+      setFormData({
+        name: item.name || "",
+        sku: item.sku || "",
+        hsnCode: item.hsnCode || "",
+        description: item.description || "",
+        price: item.price || item.sellerPrice || "",
+        discountPrice: item.discountPrice || "",
+        category: typeof item.category === 'object' ? item.category?.name || "" : item.category || "",
+        subcategory: typeof item.subcategory === 'object' ? item.subcategory?.name || "" : item.subcategory || "",
+        subsubcategory: typeof item.subsubcategory === 'object' ? item.subsubcategory?.name || "" : item.subsubcategory || "",
+        brand: typeof item.brand === "object" ? item.brand?._id || "" : item.brand || "",
+        material: item.material || "",
+        dimensions: item.dimensions || "",
+        thickness: item.thickness || "",
+        color: item.color || "",
+        unit: item.unit || "piece",
+        unitValue: item.unitValue || "1",
+        countInStock: item.countInStock || "",
+        images: item.images || (item.image ? [item.image] : []), 
+        videoUrl: item.videoUrl || "",
+        gstRate: item.gstRate || "",
+      });
+    } catch (err) {
+      console.error("Failed to load product for edit:", err);
+      setError("Failed to load product for editing");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchCatalogItem = async () => {
     try {
@@ -290,24 +329,13 @@ const AddProduct = () => {
       const brandId = brands.length > 0 ? brands[0]._id : "";
       const catName = categories.length > 0 ? categories[0].name : "Furniture";
 
-      for (let i = 1; i <= 5; i++) {
-        await api.post("/products", {
-          name: `Sheetal Premium Item ${i}`,
-          sku: `SH-ITM-00${i}`,
-          hsnCode: "9403",
-          description: `details sheetal - Premium luxury edition ${i}`,
-          price: 1500 + i * 100,
-          category: catName,
-          brand: brandId,
-          countInStock: 20 + i,
-          images: [
-            "https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?w=800&q=80",
-          ],
-          unit: "piece",
-          unitValue: "1",
-          source: "new",
-        });
+      // Try normal API if specific image upload endpoints fail or are missing
+      if (id) {
+        await api.put(`/products/${id}`, payload);
+      } else {
+        await api.post("/products", payload);
       }
+
       setSuccess(true);
       setTimeout(() => {
         setSuccess(false);
@@ -374,7 +402,7 @@ const AddProduct = () => {
       );
       uploadedUrls = [...existingUrls, ...uploadedUrls];
 
-      const res = await api.post("/products", {
+      const payload = {
         ...formData,
         price: Number(formData.price),
         discountPrice: formData.discountPrice
@@ -385,7 +413,15 @@ const AddProduct = () => {
         videoUrl: finalVideoUrl,
         gstRate: formData.gstRate !== "" ? Number(formData.gstRate) : undefined,
         source: selection,
-      });
+      };
+
+      let res;
+      if (id) {
+        res = await api.put(`/products/${id}`, payload);
+      } else {
+        res = await api.post("/products", payload);
+      }
+
       if (res.data.success) {
         setSuccess(true);
         setTimeout(() => {
@@ -402,7 +438,7 @@ const AddProduct = () => {
     }
   };
 
-  if (loading && catalogId) {
+  if (loading && (catalogId || id)) {
     return (
       <PageWrapper>
         <div className="py-24 text-center space-y-4">
@@ -507,7 +543,7 @@ const AddProduct = () => {
                     </button>
                   </div>
                   <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
-                    {selection === "new" ? "New Listing" : "Sync Catalog Item"}
+                    {id ? "Edit Product" : selection === "new" ? "New Listing" : "Sync Catalog Item"}
                   </h1>
                   <div className="flex items-center gap-4">
                     <span className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
@@ -524,7 +560,7 @@ const AddProduct = () => {
                 </div>
               </div>
 
-              {selection === "new" && (
+              {selection === "new" && !id && (
                 <div className="bg-amber-50 border border-amber-100 rounded-3xl p-6 flex items-start gap-4 text-amber-800 shadow-sm">
                   <Info className="shrink-0 mt-0.5 text-amber-600" size={18} />
                   <div className="text-xs font-semibold leading-relaxed uppercase tracking-wider">

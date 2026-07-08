@@ -92,11 +92,23 @@ const DispatchCenter = () => {
         setUser(prev => ({ ...prev, ...profile.data }));
       }
 
-      // Fetch outstanding unexpired dispatches
-      const { data: liveOffers } = await api.get('/dispatch/offers');
-      if (liveOffers.success && liveOffers.data.length > 0) {
-        setOffers(liveOffers.data);
-        setupActiveOffer(liveOffers.data[0]);
+      // Fetch outstanding unexpired dispatches (orders & returns)
+      const [{ data: liveOffers }, { data: liveReturnOffers }] = await Promise.all([
+        api.get('/dispatch/offers'),
+        api.get('/dispatch/returns/offers')
+      ]);
+
+      let allOffers = [];
+      if (liveOffers.success) {
+        allOffers = [...allOffers, ...liveOffers.data.map(o => ({ ...o, isReturn: false }))];
+      }
+      if (liveReturnOffers && liveReturnOffers.success) {
+        allOffers = [...allOffers, ...liveReturnOffers.data.map(o => ({ ...o, isReturn: true }))];
+      }
+
+      if (allOffers.length > 0) {
+        setOffers(allOffers);
+        setupActiveOffer(allOffers[0]);
       }
     } catch (err) {
       console.error('Failed to sync dispatcher status:', err);
@@ -171,10 +183,11 @@ const DispatchCenter = () => {
   };
 
   // Accept Dispatch Offer
-  const handleAcceptOffer = async (eventId) => {
+  const handleAcceptOffer = async (eventId, isReturn) => {
     if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
     try {
-      const { data } = await api.post(`/dispatch/offers/${eventId}/accept`);
+      const endpoint = isReturn ? `/dispatch/returns/offers/${eventId}/accept` : `/dispatch/offers/${eventId}/accept`;
+      const { data } = await api.post(endpoint);
       if (data.success) {
         toast.success('Assignment Accepted! View in Orders section.', {
           icon: '🚀',
@@ -191,10 +204,11 @@ const DispatchCenter = () => {
   };
 
   // Reject Dispatch Offer
-  const handleRejectOffer = async (eventId) => {
+  const handleRejectOffer = async (eventId, isReturn) => {
     if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
     try {
-      const { data } = await api.post(`/dispatch/offers/${eventId}/reject`, {
+      const endpoint = isReturn ? `/dispatch/returns/offers/${eventId}/reject` : `/dispatch/offers/${eventId}/reject`;
+      const { data } = await api.post(endpoint, {
         rejectionReason: 'Courier declined offer'
       });
       if (data.success) {
@@ -243,11 +257,42 @@ const DispatchCenter = () => {
         });
         setupActiveOffer(localEvent);
       });
+
+      socket.on('dispatch:return_offer', (payload) => {
+        const localEvent = {
+          _id: payload.eventId,
+          isReturn: true,
+          returnRequest: {
+             _id: payload.returnId,
+          },
+          order: {
+            _id: payload.orderId,
+            totalPrice: payload.totalBill || 0,
+            shippingAddress: {
+              fullAddress: payload.pickupAddress.split(',')[0],
+              city: payload.pickupAddress.split(',')[1] || 'Mumbai'
+            }
+          },
+          expiresAt: new Date(Date.now() + payload.expiresInSeconds * 1000).toISOString(),
+          broadcastStatus: 'Offered',
+          shopName: payload.shopName,
+          weight: payload.weight || 'Return Item'
+        };
+
+        toast.success(`[Dispatch] New Return Pickup Assignment!`, {
+          icon: '🔄',
+          style: { background: '#0F172A', color: '#60A5FA', border: '1px solid #1E293B' }
+        });
+        setupActiveOffer(localEvent);
+      });
     }
 
     return () => {
       if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
-      if (socket) socket.off('dispatch:offer');
+      if (socket) {
+        socket.off('dispatch:offer');
+        socket.off('dispatch:return_offer');
+      }
     };
   }, []);
 
@@ -500,65 +545,65 @@ const DispatchCenter = () => {
                     initial={{ opacity: 0, scale: 0.95, y: 10 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                    className="bg-teal-50/50 border border-teal-100 rounded-2xl p-5 relative overflow-hidden"
+                    className="bg-slate-900 border border-slate-700 rounded-2xl p-5 relative overflow-hidden"
                   >
                     <div className="absolute top-0 inset-x-0 h-[2px] bg-gradient-to-r from-[#189D91] via-emerald-400 to-[#2A458A] rounded-t-2xl" />
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                      <div className="md:col-span-2 space-y-3">
-                        <div className="flex items-center gap-2">
-                          <span className="bg-[#189D91]/10 text-[#189D91] border border-[#189D91]/20 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-                            Auto-Assign Offer
-                          </span>
-                          <span className="text-slate-400 font-mono text-xs">#{activeOffer._id.slice(-8).toUpperCase()}</span>
-                        </div>
-                        <div className="flex items-baseline gap-2">
-                          <span className="text-slate-500 text-xs font-semibold">Total payout:</span>
-                          <span className="text-3xl font-black text-slate-900">₹{activeOffer.order.totalPrice}</span>
-                        </div>
-                        <div className="space-y-2 pt-1">
-                          <div className="flex items-start gap-2 text-xs">
-                            <LuStore className="text-[#2A458A] shrink-0 mt-0.5" size={14} />
-                            <div>
-                              <p className="font-bold text-slate-800">Pickup Store Hub</p>
-                              <p className="text-slate-500 mt-0.5">{activeOffer.shopName || 'Operations Hub'}</p>
-                            </div>
+                    
+                    <div className="flex items-center justify-between mb-6">
+                        <h3 className="text-xl font-bold text-slate-100 flex items-center gap-3">
+                          {activeOffer.isReturn ? <LuZap className="text-blue-400" /> : <LuZap className="text-amber-400" />}
+                          {activeOffer.isReturn ? 'Return Pickup Request' : 'New Delivery Request'}
+                        </h3>
+                        <span className="text-slate-500 font-mono text-xs">#{activeOffer._id.slice(-8).toUpperCase()}</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                          <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700/50">
+                            <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Pick Up</p>
+                            <p className="font-bold text-slate-200 mt-1 flex items-center gap-2">
+                              {activeOffer.shopName}
+                              {activeOffer.isReturn && <span className="px-1.5 py-0.5 bg-blue-500/20 text-blue-400 rounded text-[9px] uppercase">Customer</span>}
+                            </p>
+                            <p className="text-sm text-slate-400">{activeOffer.isReturn ? activeOffer.order.shippingAddress?.fullAddress : 'Seller Warehouse'}</p>
                           </div>
-                          <div className="flex items-start gap-2 text-xs">
-                            <LuMapPin className="text-[#189D91] shrink-0 mt-0.5" size={14} />
-                            <div>
-                              <p className="font-bold text-slate-800">Customer Address</p>
-                              <p className="text-slate-500 mt-0.5">{activeOffer.order.shippingAddress.fullAddress}, {activeOffer.order.shippingAddress.city}</p>
-                            </div>
+                          
+                          <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700/50">
+                            <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Drop Off</p>
+                            <p className="font-bold text-slate-200 mt-1 flex items-center gap-2">
+                              {activeOffer.isReturn ? 'Seller Warehouse' : 'Customer Address'}
+                              {!activeOffer.isReturn && <span className="px-1.5 py-0.5 bg-[#189D91]/20 text-[#189D91] rounded text-[9px] uppercase">Customer</span>}
+                            </p>
+                            <p className="text-sm text-slate-400 truncate">{!activeOffer.isReturn ? activeOffer.order.shippingAddress?.fullAddress : activeOffer.shopName}</p>
                           </div>
+                    </div>
+
+                    <div className="flex items-center justify-between border-t border-slate-700 pt-6">
+                        <div className="flex items-center gap-6">
+                            <div className="text-center">
+                                <p className="text-[10px] text-slate-500 uppercase font-bold">Payout</p>
+                                <p className="text-xl font-black text-emerald-400">₹{activeOffer.order.totalPrice}</p>
+                            </div>
+                            <div className="text-center">
+                                <p className="text-[10px] text-slate-500 uppercase font-bold">Time Limit</p>
+                                <p className="text-xl font-black text-slate-200 font-mono">{countdown}s</p>
+                            </div>
                         </div>
-                        <div className="flex items-center gap-4 text-xs font-semibold border-t border-slate-200 pt-3 text-slate-500">
-                          <span className="flex items-center gap-1"><LuScale size={13} className="text-[#189D91]" /> {activeOffer.weight || 1.5} kg</span>
-                          <span className="flex items-center gap-1"><LuClock size={13} className="text-[#2A458A]" /> 60s limit</span>
+
+                        <div className="flex gap-3">
+                            <button 
+                              onClick={() => handleRejectOffer(activeOffer._id, activeOffer.isReturn)}
+                              className="px-6 py-4 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-xl transition-colors border border-slate-700"
+                            >
+                              DECLINE
+                            </button>
+                            <button 
+                              onClick={() => handleAcceptOffer(activeOffer._id, activeOffer.isReturn)}
+                              className="px-8 py-4 bg-gradient-to-r from-[#189D91] to-[#127a71] hover:opacity-90 text-white font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2"
+                            >
+                              <LuCheck size={20} />
+                              ACCEPT & START
+                            </button>
                         </div>
-                      </div>
-                      <div className="flex flex-col items-center justify-between border-t md:border-t-0 md:border-l border-slate-200 md:pl-5 pt-4 md:pt-0">
-                        <div className="relative w-24 h-24 flex items-center justify-center">
-                          <svg className="absolute inset-0 w-full h-full -rotate-90">
-                            <circle cx="48" cy="48" r="40" className="stroke-slate-200 fill-none" strokeWidth="6" />
-                            <motion.circle cx="48" cy="48" r="40" className="stroke-[#189D91] fill-none" strokeWidth="6"
-                              strokeDasharray="251.2"
-                              animate={{ strokeDashoffset: 251.2 - (251.2 * countdown) / 60 }}
-                              transition={{ duration: 1, ease: "linear" }}
-                            />
-                          </svg>
-                          <span className="text-2xl font-black font-mono text-slate-900 relative z-10">{countdown}s</span>
-                        </div>
-                        <div className="flex gap-2 w-full mt-4">
-                          <button onClick={() => handleRejectOffer(activeOffer._id)}
-                            className="flex-1 py-2.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 font-bold text-xs rounded-xl transition-all active:scale-[0.98]">
-                            Decline
-                          </button>
-                          <button onClick={() => handleAcceptOffer(activeOffer._id)}
-                            className="flex-1 py-2.5 bg-[#189D91] hover:bg-[#147d73] text-white font-black text-xs rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-1.5 shadow-sm">
-                            <LuCheck size={13} /> Accept
-                          </button>
-                        </div>
-                      </div>
                     </div>
                   </motion.div>
                 ) : (

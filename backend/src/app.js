@@ -44,6 +44,7 @@ const dispatchRoutes = require('./routes/dispatchRoutes');
 const b2bLeadRoutes = require('./routes/b2bLeadRoutes');
 const settingsRoutes = require('./routes/settingsRoutes');
 const termsRoutes = require('./routes/termsRoutes');
+const advertisementRoutes = require('./routes/advertisementRoutes');
 const errorHandler = require('./middleware/errorMiddleware');
 const authRoutes = require('./routes/authRoutes');
 const { initSocket } = require('./socket');
@@ -171,6 +172,7 @@ app.use('/api/dispatch', dispatchRoutes);
 app.use('/api/b2b-leads', b2bLeadRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/terms', termsRoutes);
+app.use('/api/advertisements', advertisementRoutes);
 
 app.get('/', (req, res) => {
   res.json({ message: 'Welcome to Riddha Mart API' });

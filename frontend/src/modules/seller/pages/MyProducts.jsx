@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import PageWrapper from '../components/PageWrapper';
+import { Link, useNavigate } from 'react-router-dom';
 import { 
   Filter, 
   CheckCircle2, 
@@ -22,6 +23,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-hot-toast';
 
 const MyProducts = () => {
+  const navigate = useNavigate();
   const [filter, setFilter] = useState('All');
   const [view, setView] = useState('list'); // Defaulting to list for enterprise feel
   const [showEditModal, setShowEditModal] = useState(false);
@@ -69,14 +71,7 @@ const MyProducts = () => {
   };
 
   const handleEditOpen = (product) => {
-    setEditingProduct(product);
-    setEditFormData({ 
-      name: product.name, 
-      category: product.category, 
-      price: product.sellerPrice || product.price,
-      countInStock: product.countInStock || 0
-    });
-    setShowEditModal(true);
+    navigate(`/seller/edit-product/${product._id || product.id}`);
   };
 
   const handleUpdate = async (e) => {
@@ -391,98 +386,7 @@ const MyProducts = () => {
           </div>
         )}
 
-        {/* Edit Modal */}
-        <AnimatePresence>
-          {showEditModal && (
-            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-              <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="absolute inset-0 bg-slate-950/60 backdrop-blur-md"
-                onClick={() => setShowEditModal(false)}
-              />
-              <motion.div 
-                initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                className="bg-white rounded-[2.5rem] p-10 max-w-md w-full shadow-2xl relative z-10 border border-slate-100"
-              >
-                <div className="flex items-center justify-between mb-8">
-                  <div className="space-y-1">
-                    <h3 className="text-2xl font-bold text-slate-900">Quick Edit</h3>
-                    <p className="text-sm text-slate-500">Update your product essentials</p>
-                  </div>
-                  <button onClick={() => setShowEditModal(false)} className="p-2 hover:bg-slate-100 rounded-xl transition-colors">
-                    <X size={24} className="text-slate-400" />
-                  </button>
-                </div>
-
-                <form onSubmit={handleUpdate} className="space-y-6">
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <label className="text-xs font-bold text-slate-700 uppercase tracking-wider ml-1">Product Name</label>
-                      {editingProduct?.source === 'catalog' && (
-                        <div className="flex items-center gap-1.5 px-2 py-0.5 bg-slate-100 text-slate-500 rounded-full text-[10px] font-bold border border-slate-200">
-                           <AlertCircle size={10} /> Catalog Locked
-                        </div>
-                      )}
-                    </div>
-                    <input 
-                      type="text" required 
-                      value={editFormData.name}
-                      onChange={(e) => setEditFormData({...editFormData, name: e.target.value})}
-                      readOnly={editingProduct?.source === 'catalog'}
-                      className={`w-full bg-slate-50 border-none rounded-2xl px-5 py-4 text-sm font-semibold focus:ring-2 focus:ring-seller-primary/20 transition-all ${editingProduct?.source === 'catalog' ? 'opacity-60 cursor-not-allowed' : ''}`}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider ml-1">Selling Price (₹)</label>
-                    <div className="relative">
-                       <div className="absolute left-5 top-1/2 -translate-y-1/2 font-bold text-slate-400">₹</div>
-                       <input 
-                        type="number" required 
-                        value={editFormData.price}
-                        onChange={(e) => setEditFormData({...editFormData, price: e.target.value})}
-                        className="w-full bg-slate-50 border-none rounded-2xl pl-10 pr-5 py-4 text-sm font-bold focus:ring-2 focus:ring-seller-primary/20 transition-all"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider ml-1">Available Stock</label>
-                    <div className="relative">
-                       <input 
-                        type="number" required 
-                        min="0"
-                        value={editFormData.countInStock}
-                        onChange={(e) => setEditFormData({...editFormData, countInStock: e.target.value})}
-                        className="w-full bg-slate-50 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-seller-primary/20 transition-all"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex gap-4 pt-4">
-                    <button 
-                      type="button"
-                      onClick={() => setShowEditModal(false)}
-                      className="flex-1 px-6 py-4 rounded-2xl font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-all"
-                    >
-                      Cancel
-                    </button>
-                    <button 
-                      type="submit"
-                      className="flex-1 px-6 py-4 rounded-2xl font-bold text-white bg-seller-primary hover:bg-seller-dark transition-all shadow-lg shadow-seller-primary/20"
-                    >
-                      Save Changes
-                    </button>
-                  </div>
-                </form>
-              </motion.div>
-            </div>
-          )}
-        </AnimatePresence>
+        {/* Edit Modal (Removed, moved to full page EditProduct) */}
       </div>
     </PageWrapper>
   );

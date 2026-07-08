@@ -653,6 +653,27 @@ exports.updateOrderStatus = async (req, res) => {
       if (order.status === 'Delivered' && newStatus === 'Cancelled') {
         return res.status(400).json({ success: false, error: 'Delivered orders cannot be cancelled.' });
       }
+
+      // Handle Proofs
+      if (newStatus === 'Picked') {
+        if (req.body.pickupProofImages) {
+          order.pickupProofImages = req.body.pickupProofImages;
+        }
+        if (req.body.pickupProofVideo) {
+          order.pickupProofVideo = req.body.pickupProofVideo;
+        }
+        if (order.deliveryType === 'in-app' && (!order.pickupProofImages || order.pickupProofImages.length === 0)) {
+          return res.status(400).json({ success: false, error: 'Pickup proof images are required.' });
+        }
+      }
+
+      if (newStatus === 'Delivered') {
+        if (req.body.deliveryProofImages) {
+          order.deliveryProofImages = req.body.deliveryProofImages;
+        }
+        // In verify-otp route is usually where Delivered is set for in-app delivery.
+        // We will also update verifyDeliveryOtp separately.
+      }
       
       // Define valid overall statuses for the Order model
       const validOverallStatuses = ['Pending', 'Processing', 'Packed', 'Shipped', 'Delivered', 'Cancelled'];
@@ -841,11 +862,24 @@ exports.updateSellerManagedDeliveryStatus = async (req, res) => {
       return res.status(400).json({ success: false, error: 'This order is not managed by seller.' });
     }
 
-    const { status } = req.body;
+    const { status, pickupProofImages, pickupProofVideo, deliveryProofImages } = req.body;
     
     const permittedStates = ['Picked', 'Out for Delivery', 'Delivered'];
     if (!permittedStates.includes(status)) {
       return res.status(400).json({ success: false, error: 'Invalid status update for seller-managed delivery.' });
+    }
+
+    if (status === 'Picked') {
+      if (pickupProofImages) order.pickupProofImages = pickupProofImages;
+      if (pickupProofVideo) order.pickupProofVideo = pickupProofVideo;
+      if (!order.pickupProofImages || order.pickupProofImages.length === 0) {
+        return res.status(400).json({ success: false, error: 'Pickup proof images are required.' });
+      }
+    }
+
+    if (status === 'Delivered') {
+      if (deliveryProofImages) order.deliveryProofImages = deliveryProofImages;
+      // Depending on rules, seller might not necessarily have to prove it via app, but let's assume they should if requested.
     }
 
     order.deliveryStatus = status;

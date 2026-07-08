@@ -192,14 +192,14 @@ const OrderCard = ({ order, onAccept, onReject, onUpdateStatus, onVerifyOtp, onR
             
             {order.status === 'Picked' && (
               <button 
-                onClick={() => onUpdateStatus(order.id, 'Out for Delivery')}
+                onClick={() => onUpdateStatus(order.id, order.isReturn ? 'Out for Return Delivery' : 'Out for Delivery')}
                 className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[#189D91] text-white text-xs font-bold hover:bg-[#137A71] transition-all shadow-sm"
               >
-                <LuNavigation size={16} className="animate-pulse" /> Start Delivery
+                <LuNavigation size={16} className="animate-pulse" /> {order.isReturn ? 'Start Return Journey' : 'Start Delivery'}
               </button>
             )}
 
-            {order.status === 'Out for Delivery' && (
+            {order.status === 'Out for Delivery' && !order.isReturn && (
               <div className="space-y-3 border-t border-slate-200 pt-3">
                 <div className="bg-amber-50 p-3 rounded-xl border border-amber-100 flex flex-col gap-2">
                   <label className="text-xs font-bold text-amber-800 uppercase tracking-widest text-center">Verify Delivery OTP</label>
@@ -246,6 +246,15 @@ const OrderCard = ({ order, onAccept, onReject, onUpdateStatus, onVerifyOtp, onR
                   {order.paymentMode === 'COD' ? `Deliver & Collect Cash (₹${order.totalBill.toLocaleString()})` : 'Verify OTP & Complete Delivery'}
                 </button>
               </div>
+            )}
+            
+            {order.status === 'Out for Return Delivery' && order.isReturn && (
+              <button 
+                onClick={() => onUpdateStatus(order.id, 'Returned')}
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition-all shadow-sm mt-3"
+              >
+                <LuCheck size={16} /> Complete Return Drop-off
+              </button>
             )}
 
             {order.status === 'Delivered' && (

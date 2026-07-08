@@ -2,383 +2,361 @@
   {
     "_id": "6a0e9b1c8cf557a669106024",
     "name": "Carrara Marble Slab",
-    "category": "Flooring",
-    "subcategory": "Carrara Marble"
+    "category": "6a0d97bf804fbfd108773a6f",
+    "subcategory": null
   },
   {
     "_id": "6a1005c8a399239b828b5441",
     "name": "Test Terracotta Vase",
-    "category": "Flooring",
-    "subcategory": "Terracotta Tiles"
+    "category": "6a0d97bf804fbfd108773a6f",
+    "subcategory": null
   },
   {
     "_id": "6a115739107b7b663108dd7c",
     "name": "Test ModularKitchen Product 1",
-    "category": "ModularKitchen"
+    "category": "6a0daaed047bdee23fc767b7"
   },
   {
     "_id": "6a13f5725ccf49b0baf34346",
     "name": "Fintech Test Table",
-    "category": "Test Category"
+    "category": "6a1544acd45bbef0c578fa3e"
   },
   {
     "_id": "6a157979815311dd3743db2e",
     "name": "test name",
-    "category": "Test Category",
-    "subcategory": "",
-    "subsubcategory": ""
+    "category": "6a1544acd45bbef0c578fa3e"
   },
   {
     "_id": "6a229b6b4f777143d2932aeb",
     "name": "Granite",
-    "category": "Flooring",
-    "subcategory": "Granite Flooring",
-    "subsubcategory": "Black Galaxy"
+    "category": "6a0d97bf804fbfd108773a6f",
+    "subcategory": null
   },
   {
     "_id": "6a22b399614854ee3ba47e3b",
     "name": "stone",
-    "category": "OutDoor",
-    "subcategory": "",
-    "subsubcategory": ""
+    "category": "6a0daa6c047bdee23fc76678"
   },
   {
     "_id": "6a22b8c2614854ee3ba47f40",
     "name": "shine",
-    "category": "Lighting",
-    "subcategory": "Designer Lighting",
-    "subsubcategory": ""
+    "category": "6a0daa34047bdee23fc765da",
+    "subcategory": null
   },
   {
     "_id": "6a22b965614854ee3ba47f67",
     "name": "Swan Neck Golden",
-    "category": " Marble",
-    "subcategory": "",
-    "subsubcategory": ""
+    "category": "69e1cc1d60884ec078193fe9"
   },
   {
     "_id": "6a23ace7614854ee3ba48311",
     "name": "Graphite ton",
-    "category": "Wall Solutions",
-    "subcategory": "",
-    "subsubcategory": ""
+    "category": "6a0daa53047bdee23fc76629"
   },
   {
     "_id": "6a23aed4614854ee3ba48327",
     "name": "Swan Neck Golden Faucet",
-    "category": "Bath",
-    "subcategory": "",
-    "subsubcategory": ""
+    "category": "69e1cc1d60884ec078193fe9"
   },
   {
     "_id": "6a23c5e5614854ee3ba484d6",
     "name": "Smart Recessed LED Panel",
-    "category": "Lighting",
-    "subcategory": "",
-    "subsubcategory": ""
+    "category": "6a0daa34047bdee23fc765da"
   },
   {
     "_id": "6a23d0e5614854ee3ba48527",
     "name": "stoness",
-    "category": " Marble"
+    "category": "69e1cc1d60884ec078193fe9"
   },
   {
     "_id": "6a23d12e614854ee3ba48529",
     "name": "fcxf",
-    "category": "Furniture"
+    "category": "6a0d954f804fbfd1087737f1"
   },
   {
     "_id": "6a23ee5b614854ee3ba485c7",
     "name": "red fort",
-    "category": "Flooring",
-    "subcategory": "Terracotta Tiles",
-    "subsubcategory": ""
+    "category": "6a0d97bf804fbfd108773a6f",
+    "subcategory": null
   },
   {
     "_id": "6a26b59d8ed1bca80e591e9c",
     "name": "Swan Neck Golden Faucet",
-    "category": "Bath",
-    "subcategory": "",
-    "subsubcategory": ""
+    "category": "69e1cc1d60884ec078193fe9"
   },
   {
     "_id": "6a280eeecc75d9dddcce3077",
     "name": "Sheetal Premium Item 1",
-    "category": " Marble"
+    "category": "69e1cc1d60884ec078193fe9"
   },
   {
     "_id": "6a280eefcc75d9dddcce3078",
     "name": "Sheetal Premium Item 2",
-    "category": " Marble"
+    "category": "69e1cc1d60884ec078193fe9"
   },
   {
     "_id": "6a280eefcc75d9dddcce3079",
     "name": "Sheetal Premium Item 3",
-    "category": " Marble"
+    "category": "69e1cc1d60884ec078193fe9"
   },
   {
     "_id": "6a280eefcc75d9dddcce307a",
     "name": "Sheetal Premium Item 4",
-    "category": " Marble"
+    "category": "69e1cc1d60884ec078193fe9"
   },
   {
     "_id": "6a280eefcc75d9dddcce307b",
     "name": "Sheetal Premium Item 5",
-    "category": " Marble"
+    "category": "69e1cc1d60884ec078193fe9"
   },
   {
     "_id": "6a28153ccc75d9dddcce3186",
     "name": "Sheetal Premium Item 2",
-    "category": " Marble"
+    "category": "69e1cc1d60884ec078193fe9"
   },
   {
     "_id": "6a28153dcc75d9dddcce3187",
     "name": "Sheetal Premium Item 3",
-    "category": " Marble"
+    "category": "69e1cc1d60884ec078193fe9"
   },
   {
     "_id": "6a28153dcc75d9dddcce3189",
     "name": "Sheetal Premium Item 5",
-    "category": " Marble"
+    "category": "69e1cc1d60884ec078193fe9"
   },
   {
     "_id": "6a28153fcc75d9dddcce318a",
     "name": "Sheetal Premium Item 1",
-    "category": " Marble"
+    "category": "69e1cc1d60884ec078193fe9"
   },
   {
     "_id": "6a28153fcc75d9dddcce318b",
     "name": "Sheetal Premium Item 2",
-    "category": " Marble"
+    "category": "69e1cc1d60884ec078193fe9"
   },
   {
     "_id": "6a28153fcc75d9dddcce318c",
     "name": "Sheetal Premium Item 3",
-    "category": " Marble"
+    "category": "69e1cc1d60884ec078193fe9"
   },
   {
     "_id": "6a28153fcc75d9dddcce318d",
     "name": "Sheetal Premium Item 4",
-    "category": " Marble"
+    "category": "69e1cc1d60884ec078193fe9"
   },
   {
     "_id": "6a2be13474e4adc0617a9e8b",
     "name": "Seller tile",
-    "category": "Furniture",
-    "subcategory": "Sofa",
-    "subsubcategory": ""
+    "category": "6a0d954f804fbfd1087737f1",
+    "subcategory": null
   },
   {
     "_id": "6a2d0ba874e4adc0617aa2cd",
     "name": "Sheetal Premium Item 1",
-    "category": " Marble"
+    "category": "69e1cc1d60884ec078193fe9"
   },
   {
     "_id": "6a2d0ba874e4adc0617aa2ce",
     "name": "Sheetal Premium Item 2",
-    "category": " Marble"
+    "category": "69e1cc1d60884ec078193fe9"
   },
   {
     "_id": "6a2d0ba974e4adc0617aa2cf",
     "name": "Sheetal Premium Item 3",
-    "category": " Marble"
+    "category": "69e1cc1d60884ec078193fe9"
   },
   {
     "_id": "6a2d0ba974e4adc0617aa2d0",
     "name": "Sheetal Premium Item 4",
-    "category": " Marble"
+    "category": "69e1cc1d60884ec078193fe9"
   },
   {
     "_id": "6a2d0ba974e4adc0617aa2d1",
     "name": "Sheetal Premium Item 5",
-    "category": " Marble"
+    "category": "69e1cc1d60884ec078193fe9"
   },
   {
     "_id": "6a2d0ba974e4adc0617aa2d2",
     "name": "Sheetal Premium Item 1",
-    "category": " Marble"
+    "category": "69e1cc1d60884ec078193fe9"
   },
   {
     "_id": "6a2d0ba974e4adc0617aa2d3",
     "name": "Sheetal Premium Item 2",
-    "category": " Marble"
+    "category": "69e1cc1d60884ec078193fe9"
   },
   {
     "_id": "6a2d0ba974e4adc0617aa2d4",
     "name": "Sheetal Premium Item 3",
-    "category": " Marble"
+    "category": "69e1cc1d60884ec078193fe9"
   },
   {
     "_id": "6a2d0ba974e4adc0617aa2d5",
     "name": "Sheetal Premium Item 4",
-    "category": " Marble"
+    "category": "69e1cc1d60884ec078193fe9"
   },
   {
     "_id": "6a2d0ba974e4adc0617aa2d6",
     "name": "Sheetal Premium Item 5",
-    "category": " Marble"
+    "category": "69e1cc1d60884ec078193fe9"
   },
   {
     "_id": "6a3ce1131a6984f64390c773",
     "name": "Baris Square 52 LED",
-    "category": "Architectural Lighting"
+    "category": "6a3ce1121a6984f64390c771"
   },
   {
     "_id": "6a3ce1151a6984f64390c774",
     "name": "Baris Square 40 LED",
-    "category": "Architectural Lighting"
+    "category": "6a3ce1121a6984f64390c771"
   },
   {
     "_id": "6a3ce1161a6984f64390c775",
     "name": "Baris 52 LED",
-    "category": "Architectural Lighting"
+    "category": "6a3ce1121a6984f64390c771"
   },
   {
     "_id": "6a3ce1181a6984f64390c776",
     "name": "Baris 40 LED",
-    "category": "Architectural Lighting"
+    "category": "6a3ce1121a6984f64390c771"
   },
   {
     "_id": "6a3ce11a1a6984f64390c777",
     "name": "Terra 2 LED Long Asymmetric",
-    "category": "Architectural Lighting"
+    "category": "6a3ce1121a6984f64390c771"
   },
   {
     "_id": "6a3ce11b1a6984f64390c778",
     "name": "Tripact LED",
-    "category": "Architectural Lighting"
+    "category": "6a3ce1121a6984f64390c771"
   },
   {
     "_id": "6a3ce11d1a6984f64390c779",
     "name": "Compact LED Hygienic",
-    "category": "Architectural Lighting"
+    "category": "6a3ce1121a6984f64390c771"
   },
   {
     "_id": "6a3ce11f1a6984f64390c77a",
     "name": "Compact LED Evo IP65",
-    "category": "Architectural Lighting"
+    "category": "6a3ce1121a6984f64390c771"
   },
   {
     "_id": "6a3ce1211a6984f64390c77b",
     "name": "Baris 52 LED Wall lamp",
-    "category": "Architectural Lighting"
+    "category": "6a3ce1121a6984f64390c771"
   },
   {
     "_id": "6a3ce1221a6984f64390c77c",
     "name": "Baris 40 LED Wall lamp",
-    "category": "Architectural Lighting"
+    "category": "6a3ce1121a6984f64390c771"
   },
   {
     "_id": "6a3ce1241a6984f64390c77d",
     "name": "Terra 2 LED Long",
-    "category": "Architectural Lighting"
+    "category": "6a3ce1121a6984f64390c771"
   },
   {
     "_id": "6a3cf1bb3c72ab885b351edc",
     "name": "Baris Square 52 LED",
-    "category": "Architectural Lighting"
+    "category": "6a3ce1121a6984f64390c771"
   },
   {
     "_id": "6a3cf1bd3c72ab885b351edd",
     "name": "Baris Square 40 LED",
-    "category": "Architectural Lighting"
+    "category": "6a3ce1121a6984f64390c771"
   },
   {
     "_id": "6a3cf1be3c72ab885b351ede",
     "name": "Baris 52 LED",
-    "category": "Architectural Lighting"
+    "category": "6a3ce1121a6984f64390c771"
   },
   {
     "_id": "6a3cf1c03c72ab885b351edf",
     "name": "Baris 40 LED",
-    "category": "Architectural Lighting"
+    "category": "6a3ce1121a6984f64390c771"
   },
   {
     "_id": "6a3cf1c13c72ab885b351ee0",
     "name": "Terra 2 LED Long Asymmetric",
-    "category": "Architectural Lighting"
+    "category": "6a3ce1121a6984f64390c771"
   },
   {
     "_id": "6a3cf1c33c72ab885b351ee1",
     "name": "Tripact LED",
-    "category": "Architectural Lighting"
+    "category": "6a3ce1121a6984f64390c771"
   },
   {
     "_id": "6a3cf1c43c72ab885b351ee2",
     "name": "Compact LED Hygienic",
-    "category": "Architectural Lighting"
+    "category": "6a3ce1121a6984f64390c771"
   },
   {
     "_id": "6a3cf1c63c72ab885b351ee3",
     "name": "Compact LED Evo IP65",
-    "category": "Architectural Lighting"
+    "category": "6a3ce1121a6984f64390c771"
   },
   {
     "_id": "6a3cf1c73c72ab885b351ee4",
     "name": "Baris 52 LED Wall lamp",
-    "category": "Architectural Lighting"
+    "category": "6a3ce1121a6984f64390c771"
   },
   {
     "_id": "6a3cf1c83c72ab885b351ee5",
     "name": "Baris 40 LED Wall lamp",
-    "category": "Architectural Lighting"
+    "category": "6a3ce1121a6984f64390c771"
   },
   {
     "_id": "6a3cf1ca3c72ab885b351ee6",
     "name": "Terra 2 LED Long",
-    "category": "Architectural Lighting"
+    "category": "6a3ce1121a6984f64390c771"
   },
   {
     "_id": "6a40ff178830e3fa4fc3a779",
     "name": "Sheetal Premium Item 1",
-    "category": " Marble"
+    "category": "69e1cc1d60884ec078193fe9"
   },
   {
     "_id": "6a40ff178830e3fa4fc3a77a",
     "name": "Sheetal Premium Item 2",
-    "category": " Marble"
+    "category": "69e1cc1d60884ec078193fe9"
   },
   {
     "_id": "6a40ff178830e3fa4fc3a77b",
     "name": "Sheetal Premium Item 3",
-    "category": " Marble"
+    "category": "69e1cc1d60884ec078193fe9"
   },
   {
     "_id": "6a40ff178830e3fa4fc3a77c",
     "name": "Sheetal Premium Item 4",
-    "category": " Marble"
+    "category": "69e1cc1d60884ec078193fe9"
   },
   {
     "_id": "6a40ff188830e3fa4fc3a77d",
     "name": "Sheetal Premium Item 5",
-    "category": " Marble"
+    "category": "69e1cc1d60884ec078193fe9"
   },
   {
     "_id": "6a436c626e92a38dc1208f8b",
     "name": "abc",
-    "category": " Marble",
-    "subcategory": "Polished",
-    "subsubcategory": ""
+    "category": "69e1cc1d60884ec078193fe9",
+    "subcategory": null
   },
   {
     "_id": "6a48edd76331e95a259cda0a",
     "name": "test sheetal",
-    "category": "Flooring",
-    "subcategory": "Vitrified Tiles",
-    "subsubcategory": "Nano Polished"
+    "category": "6a0d97bf804fbfd108773a6f",
+    "subcategory": null
   },
   {
     "_id": "6a4ca14153791a875158732d",
     "name": "Baris 40 LED Wall lamp",
-    "category": "Furniture",
-    "subcategory": "Modern Decor",
-    "subsubcategory": ""
+    "category": "6a0d954f804fbfd1087737f1",
+    "subcategory": null
   },
   {
     "_id": "6a4ca1ff53791a8751587337",
     "name": "testing product again",
-    "category": "Flooring",
-    "subcategory": "Travertine Tiles",
-    "subsubcategory": ""
+    "category": "6a0d97bf804fbfd108773a6f",
+    "subcategory": "6a4d4f65a06cf368b84a7146"
   }
 ]

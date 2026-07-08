@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-07-07T09:57:32.151Z",
+  "timestamp": "2026-07-08T09:50:10.278Z",
   "query": {},
   "builtFilter": {
     "isApproved": true,
@@ -16,60 +16,90 @@
     {
       "_id": "6a4ca1ff53791a8751587337",
       "name": "testing product again",
-      "category": "Flooring",
-      "subcategory": "Travertine Tiles",
+      "category": {
+        "_id": "6a0d97bf804fbfd108773a6f",
+        "name": "Flooring"
+      },
+      "subcategory": "6a4d4f65a06cf368b84a7146",
       "subsubcategory": ""
     },
     {
       "_id": "6a4ca14153791a875158732d",
       "name": "Baris 40 LED Wall lamp",
-      "category": "Furniture",
-      "subcategory": "Modern Decor",
+      "category": {
+        "_id": "6a0d954f804fbfd1087737f1",
+        "name": "Furniture"
+      },
+      "subcategory": null,
       "subsubcategory": ""
     },
     {
       "_id": "6a48edd76331e95a259cda0a",
       "name": "test sheetal",
-      "category": "Flooring",
-      "subcategory": "Vitrified Tiles",
+      "category": {
+        "_id": "6a0d97bf804fbfd108773a6f",
+        "name": "Flooring"
+      },
+      "subcategory": null,
       "subsubcategory": "Nano Polished"
     },
     {
       "_id": "6a436c626e92a38dc1208f8b",
       "name": "abc",
-      "category": " Marble",
-      "subcategory": "Polished",
+      "category": {
+        "_id": "69e1cc1d60884ec078193fe9",
+        "name": "Marble"
+      },
+      "subcategory": null,
       "subsubcategory": ""
     },
     {
       "_id": "6a40ff188830e3fa4fc3a77d",
       "name": "Sheetal Premium Item 5",
-      "category": " Marble"
+      "category": {
+        "_id": "69e1cc1d60884ec078193fe9",
+        "name": "Marble"
+      }
     },
     {
       "_id": "6a40ff178830e3fa4fc3a77c",
       "name": "Sheetal Premium Item 4",
-      "category": " Marble"
+      "category": {
+        "_id": "69e1cc1d60884ec078193fe9",
+        "name": "Marble"
+      }
     },
     {
       "_id": "6a40ff178830e3fa4fc3a77b",
       "name": "Sheetal Premium Item 3",
-      "category": " Marble"
+      "category": {
+        "_id": "69e1cc1d60884ec078193fe9",
+        "name": "Marble"
+      }
     },
     {
       "_id": "6a40ff178830e3fa4fc3a77a",
       "name": "Sheetal Premium Item 2",
-      "category": " Marble"
+      "category": {
+        "_id": "69e1cc1d60884ec078193fe9",
+        "name": "Marble"
+      }
     },
     {
       "_id": "6a40ff178830e3fa4fc3a779",
       "name": "Sheetal Premium Item 1",
-      "category": " Marble"
+      "category": {
+        "_id": "69e1cc1d60884ec078193fe9",
+        "name": "Marble"
+      }
     },
     {
       "_id": "6a3cf1ca3c72ab885b351ee6",
       "name": "Terra 2 LED Long",
-      "category": "Architectural Lighting"
+      "category": {
+        "_id": "6a3ce1121a6984f64390c771",
+        "name": "False Ceiling"
+      }
     }
   ]
 }

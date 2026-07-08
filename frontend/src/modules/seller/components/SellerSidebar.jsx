@@ -54,7 +54,16 @@ const menuItems = [
   { path: "/seller/reports/sales", icon: BarChart3, label: "Analytics" },
   { path: "/seller/wallet", icon: Wallet, label: "Wallet" },
   { path: "/seller/reviews", icon: Star, label: "Reviews" },
-  { path: "/seller/marketing", icon: Megaphone, label: "Marketing" },
+  { 
+    label: "Marketing", 
+    icon: Megaphone, 
+    path: "/seller/marketing",
+    children: [
+      { path: "/seller/marketing", label: "Marketing Overview" },
+      { path: "/seller/advertisement-plans", label: "Advertisement Plans" },
+      { path: "/seller/my-advertisements", label: "My Advertisements" },
+    ]
+  },
   { path: "/seller/notifications", icon: Bell, label: "Notifications" },
   { path: "/seller/profile", icon: Settings, label: "Settings" },
   { path: "/seller/help", icon: HelpCircle, label: "Help & Support" },

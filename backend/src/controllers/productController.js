@@ -32,16 +32,68 @@ exports.getProducts = async (req, res, next) => {
     const filter = {};
 
     // 2. Apply Category, Brand, and Admin protections
+    const mongoose = require('mongoose');
+    const Category = require('../models/Category');
+
     if (req.query.category && req.query.category !== 'all') {
-      filter.category = req.query.category;
-    }
-
-    if (req.query.subcategory && req.query.subcategory !== 'all') {
-      filter.subcategory = { $regex: new RegExp(`^${req.query.subcategory.trim()}$`, 'i') };
-    }
-
-    if (req.query.subsubcategory && req.query.subsubcategory !== 'all') {
-      filter.subsubcategory = { $regex: new RegExp(`^${req.query.subsubcategory.trim()}$`, 'i') };
+      if (mongoose.Types.ObjectId.isValid(req.query.category)) {
+        filter.category = req.query.category;
+      } else {
+        const foundCat = await Category.findOne({ name: { $regex: new RegExp(`^${req.query.category.trim()}$`, 'i') } });
+        if (foundCat) {
+          filter.category = foundCat._id;
+          
+          if (req.query.subcategory && req.query.subcategory !== 'all') {
+            let subcatId = null;
+            if (mongoose.Types.ObjectId.isValid(req.query.subcategory)) {
+               subcatId = req.query.subcategory;
+            } else {
+               const subRegex = new RegExp(`^${req.query.subcategory.trim()}$`, 'i');
+               const subObj = foundCat.subcategories.find(s => subRegex.test(s.name));
+               if (subObj) subcatId = subObj._id;
+            }
+            if (subcatId) {
+               filter.subcategory = subcatId;
+               
+               if (req.query.subsubcategory && req.query.subsubcategory !== 'all') {
+                 let subsubId = null;
+                 if (mongoose.Types.ObjectId.isValid(req.query.subsubcategory)) {
+                    subsubId = req.query.subsubcategory;
+                 } else {
+                    const subsubRegex = new RegExp(`^${req.query.subsubcategory.trim()}$`, 'i');
+                    const targetSub = foundCat.subcategories.find(s => s._id.toString() === subcatId.toString());
+                    if (targetSub && targetSub.subsubcategories) {
+                       const subsubObj = targetSub.subsubcategories.find(ss => subsubRegex.test(ss.name));
+                       if (subsubObj) subsubId = subsubObj._id;
+                    }
+                 }
+                 if (subsubId) filter.subsubcategory = subsubId;
+                 else filter.subsubcategory = new mongoose.Types.ObjectId();
+               }
+            } else {
+               filter.subcategory = new mongoose.Types.ObjectId();
+            }
+          }
+        } else {
+          filter.category = new mongoose.Types.ObjectId();
+        }
+      }
+    } else if (req.query.subcategory && req.query.subcategory !== 'all') {
+      // Fallback if category not provided but subcategory is
+      if (mongoose.Types.ObjectId.isValid(req.query.subcategory)) {
+         filter.subcategory = req.query.subcategory;
+      } else {
+         const subRegex = new RegExp(`^${req.query.subcategory.trim()}$`, 'i');
+         const cats = await Category.find({ "subcategories.name": subRegex });
+         const subIds = [];
+         cats.forEach(c => {
+           c.subcategories.forEach(s => {
+             if (subRegex.test(s.name)) subIds.push(s._id);
+           });
+         });
+         if (subIds.length > 0) filter.subcategory = { $in: subIds };
+         else filter.subcategory = new mongoose.Types.ObjectId();
+      }
     }
     
     if (req.query.brand && req.query.brand !== 'all') {
@@ -142,7 +194,8 @@ exports.getProducts = async (req, res, next) => {
     // 7. Paginate results
     const populateOptions = [
       { path: 'seller', select: 'fullName shopName' },
-      { path: 'brand', select: 'name logo' }
+      { path: 'brand', select: 'name logo' },
+      { path: 'category', select: 'name' }
     ];
 
     console.log("FILTER BUILT FOR PRODUCTS QUERY:", JSON.stringify(filter, null, 2));
@@ -158,14 +211,24 @@ exports.getProducts = async (req, res, next) => {
       });
     }
 
+    // Map populated category back to string for frontend compatibility, and provide categoryId
+    const formattedData = result.data.map(p => {
+      const pObj = p.toObject ? p.toObject() : { ...p };
+      if (pObj.category && typeof pObj.category === 'object') {
+        pObj.categoryId = pObj.category._id;
+        pObj.category = pObj.category.name;
+      }
+      return pObj;
+    });
+
     const outputPayload = {
-      count: result.data.length,
+      count: formattedData.length,
       totalResults: result.totalResults,
       totalPages: result.totalPages,
       page: result.page,
       limit: result.limit,
       fuzzyFallback: isFuzzyFallbackUsed,
-      data: result.data
+      data: formattedData
     };
 
     // Store in-memory cache
@@ -266,6 +329,44 @@ exports.createProduct = async (req, res, next) => {
     // Set initial sellerPrice from the provided price
     if (req.body.price) {
       req.body.sellerPrice = req.body.price;
+    }
+
+    // Resolve Category, Subcategory, Subsubcategory from Strings to ObjectIds
+    if (req.body.category && typeof req.body.category === 'string') {
+      const mongoose = require('mongoose');
+      const Category = require('../models/Category');
+      if (!mongoose.Types.ObjectId.isValid(req.body.category)) {
+        const foundCat = await Category.findOne({ name: { $regex: new RegExp(`^${req.body.category.trim()}$`, 'i') } });
+        if (foundCat) {
+          req.body.category = foundCat._id;
+          
+          if (req.body.subcategory && typeof req.body.subcategory === 'string') {
+            if (!mongoose.Types.ObjectId.isValid(req.body.subcategory)) {
+              const subRegex = new RegExp(`^${req.body.subcategory.trim()}$`, 'i');
+              const subObj = foundCat.subcategories.find(s => subRegex.test(s.name));
+              if (subObj) {
+                req.body.subcategory = subObj._id;
+                
+                if (req.body.subsubcategory && typeof req.body.subsubcategory === 'string') {
+                  if (!mongoose.Types.ObjectId.isValid(req.body.subsubcategory)) {
+                    const subsubRegex = new RegExp(`^${req.body.subsubcategory.trim()}$`, 'i');
+                    if (subObj.subsubcategories) {
+                      const subsubObj = subObj.subsubcategories.find(ss => subsubRegex.test(ss.name));
+                      if (subsubObj) {
+                        req.body.subsubcategory = subsubObj._id;
+                      } else delete req.body.subsubcategory;
+                    } else delete req.body.subsubcategory;
+                  }
+                }
+              } else delete req.body.subcategory;
+            }
+          }
+        } else {
+          // If category not found, we can't save it because it's required to be an ObjectId
+          // Or we create a new one? For now, if not found, we delete it to trigger validation error
+          delete req.body.category;
+        }
+      }
     }
 
     // 2. Create the product
@@ -376,6 +477,7 @@ exports.getProduct = async (req, res, next) => {
       product = await Product.findById(req.params.id)
         .populate('seller', 'fullName shopName isVerified')
         .populate('brand', 'name logo')
+        .populate('category', 'name')
         .lean();
       
       if (!product) {
@@ -387,7 +489,7 @@ exports.getProduct = async (req, res, next) => {
 
     // Logic: Admin can see everything, others only see verified/approved products
     const isAdmin = req.user && req.user.role === 'admin';
-    const isOwner = req.user && product.seller?._id?.toString() === req.user?.id;
+    const isOwner = req.user && product.seller && (product.seller._id?.toString() === req.user._id?.toString());
     
     // Check Seller Verification (Skip if seller is Admin)
     const isSellerAdmin = product.sellerType === 'Admin';
@@ -398,6 +500,12 @@ exports.getProduct = async (req, res, next) => {
     // Check Product Approval
     if (!isAdmin && !isOwner && !product.isApproved) {
       return res.status(401).json({ success: false, error: 'This product is currently under review.' });
+    }
+
+    // Format category for frontend
+    if (product.category && typeof product.category === 'object') {
+      product.categoryId = product.category._id;
+      product.category = product.category.name;
     }
 
     res.status(200).json({ success: true, cached, data: product });
@@ -483,15 +591,17 @@ exports.updateProduct = async (req, res, next) => {
       return res.status(404).json({ success: false, error: 'Product not found' });
     }
 
-    // Make sure user is product owner or admin
-    if (product.seller.toString() !== req.user.id && req.user.role !== 'admin') {
+    // Make sure user is product owner or admin (support both .id and ._id)
+    const userId = req.user._id?.toString() || req.user.id?.toString();
+    if (product.seller.toString() !== userId && req.user.role !== 'admin') {
       return res.status(401).json({ success: false, error: 'User not authorized to update this product' });
     }
 
-    // Clean up empty string brand to avoid BSON Error
-    if (req.body.brand === '') {
-      delete req.body.brand;
-    }
+    // Clean up empty string ObjectId fields to avoid BSON cast errors
+    if (req.body.brand === '') delete req.body.brand;
+    if (req.body.subcategory === '') delete req.body.subcategory;
+    if (req.body.subsubcategory === '') delete req.body.subsubcategory;
+    if (req.body.category === '') delete req.body.category;
 
     // If admin is updating, handle commission logic
     if (req.user.role === 'admin') {
@@ -514,6 +624,42 @@ exports.updateProduct = async (req, res, next) => {
       }
       // Sellers shouldn't touch commission
       delete req.body.adminCommission;
+    }
+
+    // Resolve Category, Subcategory, Subsubcategory from Strings to ObjectIds
+    if (req.body.category && typeof req.body.category === 'string') {
+      const mongoose = require('mongoose');
+      const Category = require('../models/Category');
+      if (!mongoose.Types.ObjectId.isValid(req.body.category)) {
+        const foundCat = await Category.findOne({ name: { $regex: new RegExp(`^${req.body.category.trim()}$`, 'i') } });
+        if (foundCat) {
+          req.body.category = foundCat._id;
+          
+          if (req.body.subcategory && typeof req.body.subcategory === 'string') {
+            if (!mongoose.Types.ObjectId.isValid(req.body.subcategory)) {
+              const subRegex = new RegExp(`^${req.body.subcategory.trim()}$`, 'i');
+              const subObj = foundCat.subcategories.find(s => subRegex.test(s.name));
+              if (subObj) {
+                req.body.subcategory = subObj._id;
+                
+                if (req.body.subsubcategory && typeof req.body.subsubcategory === 'string') {
+                  if (!mongoose.Types.ObjectId.isValid(req.body.subsubcategory)) {
+                    const subsubRegex = new RegExp(`^${req.body.subsubcategory.trim()}$`, 'i');
+                    if (subObj.subsubcategories) {
+                      const subsubObj = subObj.subsubcategories.find(ss => subsubRegex.test(ss.name));
+                      if (subsubObj) {
+                        req.body.subsubcategory = subsubObj._id;
+                      } else delete req.body.subsubcategory;
+                    } else delete req.body.subsubcategory;
+                  }
+                }
+              } else delete req.body.subcategory;
+            }
+          }
+        } else {
+          delete req.body.category;
+        }
+      }
     }
 
     product = await Product.findByIdAndUpdate(req.params.id, req.body, {
@@ -568,8 +714,46 @@ exports.createBulkProducts = async (req, res, next) => {
         brandId = defaultBrand._id;
       }
 
+      let catId = p.category;
+      let subcatId = p.subcategory;
+      let subsubId = p.subsubcategory;
+
+      if (p.category && typeof p.category === 'string') {
+        const mongoose = require('mongoose');
+        const Category = require('../models/Category');
+        if (!mongoose.Types.ObjectId.isValid(p.category)) {
+          const foundCat = await Category.findOne({ name: { $regex: new RegExp(`^${p.category.trim()}$`, 'i') } });
+          if (foundCat) {
+            catId = foundCat._id;
+            if (p.subcategory && typeof p.subcategory === 'string' && !mongoose.Types.ObjectId.isValid(p.subcategory)) {
+              const subRegex = new RegExp(`^${p.subcategory.trim()}$`, 'i');
+              const subObj = foundCat.subcategories.find(s => subRegex.test(s.name));
+              if (subObj) {
+                subcatId = subObj._id;
+                if (p.subsubcategory && typeof p.subsubcategory === 'string' && !mongoose.Types.ObjectId.isValid(p.subsubcategory)) {
+                  const subsubRegex = new RegExp(`^${p.subsubcategory.trim()}$`, 'i');
+                  if (subObj.subsubcategories) {
+                    const subsubObj = subObj.subsubcategories.find(ss => subsubRegex.test(ss.name));
+                    if (subsubObj) subsubId = subsubObj._id;
+                    else subsubId = undefined;
+                  } else subsubId = undefined;
+                }
+              } else {
+                subcatId = undefined;
+                subsubId = undefined;
+              }
+            }
+          } else {
+            catId = undefined;
+          }
+        }
+      }
+
       return {
         ...p,
+        category: catId,
+        subcategory: subcatId,
+        subsubcategory: subsubId,
         brand: brandId,
         seller,
         sellerType,

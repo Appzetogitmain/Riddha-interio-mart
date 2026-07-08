@@ -5,11 +5,14 @@ import toast from 'react-hot-toast';
 import api from '../../../shared/utils/api';
 import TableSkeleton from '../../../shared/components/skeletons/TableSkeleton';
 import PageWrapper from '../components/PageWrapper';
+import ProofUploadModal from '../components/ProofUploadModal';
 
 const ReturnOrders = () => {
   const [returns, setReturns] = useState([]);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState(null);
+  const [isProofModalOpen, setIsProofModalOpen] = useState(false);
+  const [proofTargetOrder, setProofTargetOrder] = useState(null);
 
   const fetchReturns = async () => {
     try {
@@ -29,6 +32,15 @@ const ReturnOrders = () => {
   }, []);
 
   const handleUpdateStatus = async (id, status) => {
+    if (status === 'Completed') {
+      const returnData = returns.find(r => r._id === id);
+      if (returnData?.deliveryStatus === 'None') {
+        setProofTargetOrder(id);
+        setIsProofModalOpen(true);
+        return;
+      }
+    }
+    
     setProcessingId(id);
     try {
       const res = await api.put(`/returns/${id}/status`, { status });
@@ -38,6 +50,28 @@ const ReturnOrders = () => {
       }
     } catch (err) {
       toast.error('Failed to update status');
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const submitProof = async ({ images, video }) => {
+    setIsProofModalOpen(false);
+    setProcessingId(proofTargetOrder);
+    try {
+      const payload = { 
+        status: 'Completed',
+        dropoffProofImages: images
+      };
+      
+      const res = await api.put(`/returns/${proofTargetOrder}/status`, payload);
+      
+      if (res.data.success) {
+        toast.success(`Return marked as Completed`);
+        fetchReturns();
+      }
+    } catch (err) {
+      toast.error('Failed to submit proof');
     } finally {
       setProcessingId(null);
     }
@@ -145,6 +179,13 @@ const ReturnOrders = () => {
           </div>
         </div>
       </div>
+
+      <ProofUploadModal
+        isOpen={isProofModalOpen}
+        onClose={() => setIsProofModalOpen(false)}
+        onSubmit={submitProof}
+        isPickup={false}
+      />
     </PageWrapper>
   );
 };

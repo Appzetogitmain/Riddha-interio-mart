@@ -1,48 +1,73 @@
 {
-  "timestamp": "2026-07-09T07:10:00.095Z",
+  "timestamp": "2026-07-09T09:27:58.368Z",
   "query": {
     "isApproved": "pending",
     "isActive": "all"
   },
   "builtFilter": {
-    "isApproved": false
+    "isApproved": true,
+    "isActive": true,
+    "seller": {
+      "$nin": [
+        "6a100b07a3cc06ac3f65be01",
+        "6a10057431fa10db6ebdaaff"
+      ]
+    }
   },
   "resultCount": 10,
   "results": [
     {
-      "_id": "6a2d0ba974e4adc0617aa2d5",
-      "name": "Sheetal Premium Item 4",
+      "_id": "6a4f584ec25e41b935a865eb",
+      "name": "EXTENDED WALL MOUNTED TOILETS",
+      "category": {
+        "_id": "6a2bd98474e4adc0617a9df9",
+        "name": "Bath Fitting"
+      },
+      "subcategory": "6a4e05c2a06cf368b84a9983",
+      "subsubcategory": "6a4e05c2a06cf368b84a998d"
+    },
+    {
+      "_id": "6a4ca1ff53791a8751587337",
+      "name": "testing product again",
+      "category": {
+        "_id": "6a0d97bf804fbfd108773a6f",
+        "name": "Flooring"
+      },
+      "subcategory": "6a4d4f65a06cf368b84a7146",
+      "subsubcategory": ""
+    },
+    {
+      "_id": "6a4ca14153791a875158732d",
+      "name": "Baris 40 LED Wall lamp",
+      "category": {
+        "_id": "6a0d954f804fbfd1087737f1",
+        "name": "Furniture"
+      },
+      "subcategory": null,
+      "subsubcategory": ""
+    },
+    {
+      "_id": "6a48edd76331e95a259cda0a",
+      "name": "test sheetal",
+      "category": {
+        "_id": "6a0d97bf804fbfd108773a6f",
+        "name": "Flooring"
+      },
+      "subcategory": null,
+      "subsubcategory": "Nano Polished"
+    },
+    {
+      "_id": "6a436c626e92a38dc1208f8b",
+      "name": "abc",
       "category": {
         "_id": "69e1cc1d60884ec078193fe9",
         "name": "Marble"
-      }
+      },
+      "subcategory": null,
+      "subsubcategory": ""
     },
     {
-      "_id": "6a2d0ba974e4adc0617aa2d4",
-      "name": "Sheetal Premium Item 3",
-      "category": {
-        "_id": "69e1cc1d60884ec078193fe9",
-        "name": "Marble"
-      }
-    },
-    {
-      "_id": "6a2d0ba974e4adc0617aa2d3",
-      "name": "Sheetal Premium Item 2",
-      "category": {
-        "_id": "69e1cc1d60884ec078193fe9",
-        "name": "Marble"
-      }
-    },
-    {
-      "_id": "6a2d0ba974e4adc0617aa2d2",
-      "name": "Sheetal Premium Item 1",
-      "category": {
-        "_id": "69e1cc1d60884ec078193fe9",
-        "name": "Marble"
-      }
-    },
-    {
-      "_id": "6a2d0ba974e4adc0617aa2d1",
+      "_id": "6a40ff188830e3fa4fc3a77d",
       "name": "Sheetal Premium Item 5",
       "category": {
         "_id": "69e1cc1d60884ec078193fe9",
@@ -50,7 +75,7 @@
       }
     },
     {
-      "_id": "6a2d0ba974e4adc0617aa2d0",
+      "_id": "6a40ff178830e3fa4fc3a77c",
       "name": "Sheetal Premium Item 4",
       "category": {
         "_id": "69e1cc1d60884ec078193fe9",
@@ -58,7 +83,7 @@
       }
     },
     {
-      "_id": "6a2d0ba974e4adc0617aa2cf",
+      "_id": "6a40ff178830e3fa4fc3a77b",
       "name": "Sheetal Premium Item 3",
       "category": {
         "_id": "69e1cc1d60884ec078193fe9",
@@ -66,7 +91,7 @@
       }
     },
     {
-      "_id": "6a2d0ba874e4adc0617aa2ce",
+      "_id": "6a40ff178830e3fa4fc3a77a",
       "name": "Sheetal Premium Item 2",
       "category": {
         "_id": "69e1cc1d60884ec078193fe9",
@@ -74,16 +99,8 @@
       }
     },
     {
-      "_id": "6a2d0ba874e4adc0617aa2cd",
+      "_id": "6a40ff178830e3fa4fc3a779",
       "name": "Sheetal Premium Item 1",
-      "category": {
-        "_id": "69e1cc1d60884ec078193fe9",
-        "name": "Marble"
-      }
-    },
-    {
-      "_id": "6a28153fcc75d9dddcce318d",
-      "name": "Sheetal Premium Item 4",
       "category": {
         "_id": "69e1cc1d60884ec078193fe9",
         "name": "Marble"

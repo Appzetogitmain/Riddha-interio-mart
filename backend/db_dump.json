@@ -358,5 +358,12 @@
     "name": "testing product again",
     "category": "6a0d97bf804fbfd108773a6f",
     "subcategory": "6a4d4f65a06cf368b84a7146"
+  },
+  {
+    "_id": "6a4f584ec25e41b935a865eb",
+    "name": "EXTENDED WALL MOUNTED TOILETS",
+    "category": "6a2bd98474e4adc0617a9df9",
+    "subcategory": "6a4e05c2a06cf368b84a9983",
+    "subsubcategory": "6a4e05c2a06cf368b84a998d"
   }
 ]

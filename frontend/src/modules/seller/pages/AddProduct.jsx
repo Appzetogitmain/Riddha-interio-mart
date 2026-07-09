@@ -30,6 +30,7 @@ import {
   Layers as LayersIcon,
 } from "lucide-react";
 import api from "../../../shared/utils/api";
+import ProductVariantsEditor from "../components/ProductVariantsEditor";
 
 const AddProduct = () => {
   const navigate = useNavigate();
@@ -61,6 +62,7 @@ const AddProduct = () => {
   const [catSearch, setCatSearch] = useState("");
   const [subSearch, setSubSearch] = useState("");
   const [subSubSearch, setSubSubSearch] = useState("");
+  const [customBrandName, setCustomBrandName] = useState("");
 
   const fileInputRef = useRef(null);
   const [showPreview, setShowPreview] = useState(false);
@@ -402,8 +404,19 @@ const AddProduct = () => {
       );
       uploadedUrls = [...existingUrls, ...uploadedUrls];
 
+      let finalBrand = formData.brand;
+      if (formData.brand === 'other' && customBrandName) {
+        try {
+          const brandRes = await api.post('/brands', { name: customBrandName });
+          finalBrand = brandRes.data?.data?._id || brandRes.data?._id;
+        } catch (e) {
+          throw new Error("Failed to create the new brand. You might not have permission, or it already exists. Please select an existing brand.");
+        }
+      }
+
       const payload = {
         ...formData,
+        brand: finalBrand,
         price: Number(formData.price),
         discountPrice: formData.discountPrice
           ? Number(formData.discountPrice)
@@ -681,7 +694,17 @@ const AddProduct = () => {
                               {brand.name}
                             </option>
                           ))}
+                          <option value="other">Other (Add New Brand)</option>
                         </select>
+                        {formData.brand === 'other' && (
+                          <input
+                            type="text"
+                            placeholder="Type new brand name..."
+                            value={customBrandName}
+                            onChange={(e) => setCustomBrandName(e.target.value)}
+                            className="w-full mt-2 px-6 py-4 rounded-2xl border-none font-semibold text-sm bg-slate-50 focus:ring-2 focus:ring-seller-primary/10 transition-all text-slate-900"
+                          />
+                        )}
                         {fieldErr('brand')}
                       </div>
 
@@ -881,74 +904,7 @@ const AddProduct = () => {
                         </div>
                       </div>
 
-                      <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-600 uppercase tracking-wider ml-1">
-                          Material Composition
-                        </label>
-                        <input
-                          type="text"
-                          placeholder="Pure Ceramic"
-                          value={formData.material}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              material: e.target.value,
-                            })
-                          }
-                          className="w-full px-6 py-4 rounded-2xl border-none font-semibold text-sm focus:ring-2 focus:ring-seller-primary/10 transition-all bg-slate-50 text-slate-900"
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-600 uppercase tracking-wider ml-1">
-                          Dimensions
-                        </label>
-                        <input
-                          type="text"
-                          placeholder="600x600mm"
-                          value={formData.dimensions}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              dimensions: e.target.value,
-                            })
-                          }
-                          className="w-full px-6 py-4 rounded-2xl border-none font-semibold text-sm focus:ring-2 focus:ring-seller-primary/10 transition-all bg-slate-50 text-slate-900"
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-600 uppercase tracking-wider ml-1">
-                          Thickness
-                        </label>
-                        <input
-                          type="text"
-                          placeholder="10mm"
-                          value={formData.thickness}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              thickness: e.target.value,
-                            })
-                          }
-                          className="w-full px-6 py-4 rounded-2xl border-none font-semibold text-sm focus:ring-2 focus:ring-seller-primary/10 transition-all bg-slate-50 text-slate-900"
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-600 uppercase tracking-wider ml-1">
-                          Visual Finish
-                        </label>
-                        <input
-                          type="text"
-                          placeholder="High Gloss"
-                          value={formData.color}
-                          onChange={(e) =>
-                            setFormData({ ...formData, color: e.target.value })
-                          }
-                          className="w-full px-6 py-4 rounded-2xl border-none font-semibold text-sm focus:ring-2 focus:ring-seller-primary/10 transition-all bg-slate-50 text-slate-900"
-                        />
-                      </div>
+                      {/* Removed hardcoded specs, managed by ProductVariantsEditor now */}
                     </div>
                   </div>
                 </div>
@@ -1080,6 +1036,9 @@ const AddProduct = () => {
                       </div>
                     </div>
                   </div>
+
+                  {/* Dynamic Specifications & Variants */}
+                  <ProductVariantsEditor formData={formData} setFormData={setFormData} categories={categories} />
 
                   {/* Media Manager */}
                   <div className="bg-white rounded-[2.5rem] border border-slate-200 p-8 shadow-sm space-y-8 sticky top-24">

@@ -55,6 +55,12 @@ const CategorySchema = new mongoose.Schema({
     type: Number,
     default: 18
   },
+  attributes: [{
+    name: { type: String, required: true },
+    type: { type: String, default: 'select', enum: ['select', 'text', 'number'] },
+    options: [String],
+    isVariant: { type: Boolean, default: true }
+  }],
   createdAt: {
     type: Date,
     default: Date.now

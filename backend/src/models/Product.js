@@ -106,6 +106,26 @@ const ProductSchema = new mongoose.Schema({
     min: 0,
     index: true
   },
+  dynamicAttributes: {
+    type: Map,
+    of: mongoose.Schema.Types.Mixed,
+    default: {}
+  },
+  variants: [{
+    sku: String,
+    price: Number,
+    sellerPrice: Number,
+    discountPrice: Number,
+    attributes: {
+      type: Map,
+      of: String
+    },
+    countInStock: {
+      type: Number,
+      default: 0
+    },
+    image: String
+  }],
   seller: {
     type: mongoose.Schema.ObjectId,
     required: true,

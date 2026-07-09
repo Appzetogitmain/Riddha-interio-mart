@@ -29,6 +29,8 @@ const ProductDetailsPage = () => {
   const [openSection, setOpenSection] = useState('specs');
   const [showShareModal, setShowShareModal] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [selectedVariantOptions, setSelectedVariantOptions] = useState({});
+  const [currentVariant, setCurrentVariant] = useState(null);
 
   const allMedia = product ? [
     ...(product.images || []),
@@ -63,6 +65,13 @@ const ProductDetailsPage = () => {
         }
         setProduct(found);
         
+        // Initialize variants if they exist
+        if (found.variants && found.variants.length > 0) {
+          const initialVariant = found.variants[0];
+          setSelectedVariantOptions(initialVariant.attributes || {});
+          setCurrentVariant(initialVariant);
+        }
+
         // Add to recently viewed products
         try {
           const recentKey = 'recently_viewed_products';
@@ -137,6 +146,36 @@ const ProductDetailsPage = () => {
   const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(`Check out ${product?.name || 'this product'} on Riddha Interior Mart:`)}&url=${encodeURIComponent(productUrl)}`;
 
   const toggleSection = (key) => setOpenSection(prev => prev === key ? null : key);
+
+  const handleVariantSelect = (attrName, value) => {
+    const newOptions = { ...selectedVariantOptions, [attrName]: value };
+    setSelectedVariantOptions(newOptions);
+    
+    // Find matching variant
+    if (product?.variants) {
+      const match = product.variants.find(v => {
+        return Object.keys(newOptions).every(key => v.attributes?.[key] === newOptions[key]);
+      });
+      if (match) setCurrentVariant(match);
+    }
+  };
+
+  const variantAttributesMap = {};
+  if (product?.variants?.length > 0) {
+    product.variants.forEach(v => {
+      if (v.attributes) {
+        Object.entries(v.attributes).forEach(([key, val]) => {
+          if (!variantAttributesMap[key]) variantAttributesMap[key] = new Set();
+          if (val) variantAttributesMap[key].add(val);
+        });
+      }
+    });
+  }
+
+  const displayPrice = currentVariant ? (currentVariant.discountPrice || currentVariant.price) : (product?._displayPrice ?? product?.price);
+  const displayBasePrice = currentVariant ? currentVariant.price : product?.price;
+  const hasDiscount = currentVariant ? !!currentVariant.discountPrice : product?._hasDiscount;
+  const displaySku = currentVariant ? currentVariant.sku : product?.sku;
 
   return (
     <div className="max-w-[1200px] mx-auto px-0 md:px-4 lg:px-6 pb-28 md:pb-10 bg-white md:bg-transparent">
@@ -284,20 +323,51 @@ const ProductDetailsPage = () => {
             {/* Price */}
             <div className="flex items-baseline gap-2.5 mt-3">
               <span className="text-2xl font-black text-gray-900">
-                ₹{(product._displayPrice ?? product.price)?.toLocaleString('en-IN')}
+                ₹{(displayPrice || 0).toLocaleString('en-IN')}
               </span>
               <span className="text-xs text-gray-400">/{product.unit || 'sq.ft.'}</span>
-              {product._hasDiscount && (
+              {hasDiscount && (
                 <>
                   <span className="text-sm text-gray-300 line-through">
-                    ₹{product.price?.toLocaleString('en-IN')}
+                    ₹{displayBasePrice?.toLocaleString('en-IN')}
                   </span>
                   <span className="text-[11px] font-black bg-pink-50 border border-pink-100 text-pink-600 px-2 py-0.5">
-                    {Math.round((1 - product._displayPrice / product.price) * 100)}% OFF
+                    {Math.round((1 - displayPrice / displayBasePrice) * 100)}% OFF
                   </span>
                 </>
               )}
             </div>
+            {displaySku && (
+              <div className="text-[10px] text-gray-400 font-medium uppercase tracking-widest mt-1">
+                SKU: {displaySku}
+              </div>
+            )}
+
+            {/* Variants */}
+            {product.variants?.length > 0 && Object.keys(variantAttributesMap).length > 0 && (
+              <div className="mt-6 space-y-4 border-t border-gray-100 pt-5">
+                {Object.keys(variantAttributesMap).map(attrName => (
+                  <div key={attrName}>
+                    <h4 className="text-[10px] font-bold text-gray-700 uppercase tracking-widest mb-2">{attrName}</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {Array.from(variantAttributesMap[attrName]).map(val => (
+                        <button
+                          key={val}
+                          onClick={() => handleVariantSelect(attrName, val)}
+                          className={`px-4 py-2 text-xs font-semibold rounded-lg border transition-all ${
+                            selectedVariantOptions[attrName] === val
+                              ? 'border-[#189D91] bg-[#189D91]/10 text-[#189D91]'
+                              : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                          }`}
+                        >
+                          {val}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
 
             {/* Description */}
             <p className="text-[13px] text-gray-500 leading-relaxed mt-3 md:mt-2">

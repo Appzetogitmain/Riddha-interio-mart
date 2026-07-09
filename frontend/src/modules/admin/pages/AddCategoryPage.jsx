@@ -36,9 +36,24 @@ const AddCategoryPage = () => {
   const [customIconPreview, setCustomIconPreview] = useState('');
 
   const [subcategories, setSubcategories] = useState([{ name: '', image: '', subsubcategories: [] }]);
+  const [attributes, setAttributes] = useState([]);
   const [isSaving, setIsSaving] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [saveError, setSaveError] = useState('');
+
+  const handleAddAttribute = () => {
+    setAttributes([...attributes, { name: '', type: 'text', options: '', isVariant: false }]);
+  };
+
+  const handleRemoveAttribute = (index) => {
+    setAttributes(attributes.filter((_, i) => i !== index));
+  };
+
+  const handleAttributeChange = (index, field, value) => {
+    const newAttrs = [...attributes];
+    newAttrs[index][field] = value;
+    setAttributes(newAttrs);
+  };
 
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
@@ -126,12 +141,18 @@ const AddCategoryPage = () => {
         })
       );
 
+      const formattedAttributes = attributes.map(attr => ({
+        ...attr,
+        options: attr.type === 'select' ? attr.options.split(',').map(o => o.trim()).filter(o => o) : []
+      })).filter(attr => attr.name.trim() !== '');
+
       const categoryData = {
         name: category.name,
         description: category.description,
         image: mainImageUrl,
         icon: finalIcon,
         subcategories: updatedSubcategories.filter(s => s !== null),
+        attributes: formattedAttributes,
         defaultGstRate: Number(category.defaultGstRate) || 18
       };
 
@@ -468,6 +489,98 @@ const AddCategoryPage = () => {
                     </motion.div>
                   ))}
                 </AnimatePresence>
+              </div>
+            </div>
+
+            {/* Attributes */}
+            <div className="bg-white p-6 md:p-10 rounded-3xl md:rounded-[40px] border border-soft-oatmeal shadow-sm space-y-6 md:space-y-8 mt-8">
+              <div className="flex items-center justify-between border-b border-soft-oatmeal pb-4">
+                <div>
+                  <h3 className="text-base md:text-lg font-black text-deep-espresso uppercase tracking-[0.1em]">Category Attributes</h3>
+                  <p className="text-[10px] md:text-xs text-warm-sand font-medium mt-1">Define fields (like Size, Color, Dimensions) that sellers must fill for this category.</p>
+                </div>
+                <button 
+                  type="button"
+                  onClick={handleAddAttribute}
+                  className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-dusty-cocoa hover:text-deep-espresso transition-colors px-4 py-2 border border-soft-oatmeal rounded-full hover:bg-white shadow-sm"
+                >
+                  <FiPlus /> Add new
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <AnimatePresence initial={false}>
+                  {attributes.map((attr, index) => (
+                    <motion.div 
+                      key={index}
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      className="flex flex-col gap-4 p-4 md:p-6 bg-soft-oatmeal/5 rounded-2xl md:rounded-[24px] border border-soft-oatmeal/50 relative group hover:bg-white hover:shadow-xl hover:shadow-soft-oatmeal/20 transition-all duration-300"
+                    >
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                        <div className="space-y-1.5 md:col-span-1">
+                           <label className="text-[8px] font-black text-warm-sand uppercase tracking-widest pl-1">Attribute Name</label>
+                           <input 
+                              type="text" 
+                              placeholder="e.g. Dimensions"
+                              value={attr.name}
+                              onChange={(e) => handleAttributeChange(index, 'name', e.target.value)}
+                              className="w-full bg-white border border-soft-oatmeal rounded-xl px-4 py-3 text-xs focus:outline-none focus:ring-2 focus:ring-warm-sand/20 transition-all font-semibold"
+                           />
+                        </div>
+                        <div className="space-y-1.5 md:col-span-1">
+                           <label className="text-[8px] font-black text-warm-sand uppercase tracking-widest pl-1">Field Type</label>
+                           <select 
+                              value={attr.type}
+                              onChange={(e) => handleAttributeChange(index, 'type', e.target.value)}
+                              className="w-full bg-white border border-soft-oatmeal rounded-xl px-4 py-3 text-xs focus:outline-none focus:ring-2 focus:ring-warm-sand/20 transition-all font-semibold"
+                           >
+                             <option value="text">Text / String</option>
+                             <option value="number">Number</option>
+                             <option value="select">Dropdown (Select)</option>
+                           </select>
+                        </div>
+                        <div className="space-y-1.5 md:col-span-1">
+                           <label className="flex items-center gap-2 mt-[28px] cursor-pointer pl-1">
+                             <input 
+                               type="checkbox"
+                               checked={attr.isVariant}
+                               onChange={(e) => handleAttributeChange(index, 'isVariant', e.target.checked)}
+                               className="rounded border-soft-oatmeal text-deep-espresso focus:ring-deep-espresso"
+                             />
+                             <span className="text-[10px] font-black text-warm-sand uppercase tracking-widest">Is Variant?</span>
+                           </label>
+                        </div>
+                        <div className="flex justify-end items-center md:col-span-1">
+                           <button 
+                             type="button"
+                             onClick={() => handleRemoveAttribute(index)}
+                             className="p-3 text-red-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                           >
+                              <FiTrash2 size={16} />
+                           </button>
+                        </div>
+                      </div>
+                      
+                      {attr.type === 'select' && (
+                        <div className="space-y-1.5 pt-2 border-t border-soft-oatmeal/40 mt-2">
+                           <label className="text-[8px] font-black text-warm-sand uppercase tracking-widest pl-1">Dropdown Options (Comma-Separated)</label>
+                           <input 
+                              type="text" 
+                              placeholder="e.g. Red, Blue, Green"
+                              value={attr.options}
+                              onChange={(e) => handleAttributeChange(index, 'options', e.target.value)}
+                              className="w-full bg-white border border-soft-oatmeal rounded-xl px-4 py-3 text-xs focus:outline-none focus:ring-2 focus:ring-warm-sand/20 transition-all font-semibold"
+                           />
+                        </div>
+                      )}
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+                {attributes.length === 0 && (
+                  <p className="text-[10px] font-medium text-warm-sand italic pl-1 text-center py-6 border border-dashed border-soft-oatmeal rounded-2xl">No custom attributes defined.</p>
+                )}
               </div>
             </div>
           </div>

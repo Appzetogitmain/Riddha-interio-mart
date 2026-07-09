@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiPackage, FiShoppingBag, FiChevronRight, FiClock, FiCheckCircle, FiTruck } from 'react-icons/fi';
+import { FiPackage, FiShoppingBag, FiChevronRight, FiClock, FiCheckCircle, FiTruck, FiArrowLeft } from 'react-icons/fi';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../../../shared/utils/api';
 import ReviewFeedbackModal from '../components/ReviewFeedbackModal';
@@ -84,6 +84,14 @@ const Orders = () => {
     >
       <div className="max-w-4xl mx-auto px-4 sm:px-6">
         {/* Header */}
+        <div className="mb-6">
+          <button 
+            onClick={() => navigate(-1)} 
+            className="flex items-center gap-2 text-gray-500 hover:text-teal-600 transition-colors"
+          >
+            <FiArrowLeft size={16} /> <span className="text-sm font-semibold">Back</span>
+          </button>
+        </div>
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}

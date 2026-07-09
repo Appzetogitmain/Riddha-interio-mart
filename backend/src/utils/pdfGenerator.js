@@ -7,7 +7,9 @@ const path = require("path");
  * Builds PDF content onto a PDFDocument.
  * Call doc.end() after this to finalize.
  */
-const buildPdfContent = (doc, order, user) => {
+const buildPdfContent = (doc, order, user, settings) => {
+  const invSet = settings.invoiceSettings;
+
   const logoPath = path.join(__dirname, '../../../frontend/src/assets/transparent_logo.png');
   const LOGO_W = 130;
   const LOGO_H = 60;
@@ -17,10 +19,10 @@ const buildPdfContent = (doc, order, user) => {
       if (fs.existsSync(logoPath)) {
         doc.image(logoPath, LOGO_X, LOGO_Y, { width: LOGO_W, height: LOGO_H, fit: [LOGO_W, LOGO_H] });
       } else {
-        doc.fontSize(22).font("Helvetica-Bold").fillColor("#189D91").text("Riddha.", LOGO_X, LOGO_Y);
+        doc.fontSize(22).font("Helvetica-Bold").fillColor("#189D91").text(invSet.adminName.split(' ')[0], LOGO_X, LOGO_Y);
       }
 
-      // Invoice title on right — positioned at same Y as logo, will NOT overlap
+      // Invoice title on right
       doc
         .fontSize(15)
         .font("Helvetica-Bold")
@@ -45,69 +47,111 @@ const buildPdfContent = (doc, order, user) => {
       const infoY = lineY + 12;
 
       // Sold By
-      doc
-        .fontSize(7)
-        .font("Helvetica-Bold")
-        .fillColor("#888888")
-        .text("SOLD BY", 50, infoY, { letterSpacing: 1 });
-      doc
-        .fontSize(11)
-        .font("Helvetica-Bold")
-        .fillColor("#000000")
-        .text("Riddha Interior Mart Pvt. Ltd.", 50, infoY + 12);
-      doc
-        .fontSize(9)
-        .font("Helvetica")
-        .fillColor("#444444")
-        .text("123 Luxury Avenue, Design District", 50, infoY + 26);
-      doc.text("Indore, MP - 452001", 50, infoY + 38);
-      doc
-        .font("Helvetica-Bold")
-        .fillColor("#000000")
-        .text("GSTIN: 23AAAAA0000A1Z5", 50, infoY + 50);
-
-      // Billing To
-      doc
-        .fontSize(7)
-        .font("Helvetica-Bold")
-        .fillColor("#888888")
-        .text("BILLING TO", 310, infoY, { letterSpacing: 1 });
-
-      let customerName = order.shippingAddress?.fullName || (user ? (user.fullName || user.name) : "Customer");
-      if (order.businessDetails?.shopName) {
-        customerName = order.businessDetails.shopName;
-      }
-
-      doc
-        .fontSize(11)
-        .font("Helvetica-Bold")
-        .fillColor("#000000")
-        .text(customerName, 310, infoY + 12);
-
-      let currentY = infoY + 26;
-      if (order.businessDetails?.gstNumber) {
+      if ((order.seller && invSet.showSellerDetails) || (!order.seller && invSet.showAdminDetails)) {
+        const sellerShopName = order.seller?.shopName || invSet.adminName;
+        const sellerAddress = order.seller?.shopAddress || invSet.adminAddress;
+        const sellerGst = order.seller?.gstNumber || invSet.adminGST;
+        
+        doc
+          .fontSize(7)
+          .font("Helvetica-Bold")
+          .fillColor("#888888")
+          .text("SOLD BY", 50, infoY, { letterSpacing: 1 });
+        doc
+          .fontSize(11)
+          .font("Helvetica-Bold")
+          .fillColor("#000000")
+          .text(sellerShopName, 50, infoY + 12);
         doc
           .fontSize(9)
-          .font("Helvetica-Bold")
-          .text(`GSTIN: ${order.businessDetails.gstNumber}`, 310, currentY);
-        currentY += 13;
+          .font("Helvetica")
+          .fillColor("#444444")
+          .text(sellerAddress, 50, infoY + 26, { width: 150 });
+        
+        if ((order.seller && sellerGst) || (!order.seller && invSet.showAdminGST)) {
+          doc
+            .font("Helvetica-Bold")
+            .fillColor("#000000")
+            .text(`GSTIN: ${sellerGst}`, 50, infoY + 50);
+        }
       }
 
-      doc
-        .fontSize(9)
-        .font("Helvetica")
-        .fillColor("#444444")
-        .text(
-          `${order.shippingAddress?.fullAddress || ""}, ${order.shippingAddress?.city || ""} - ${order.shippingAddress?.pincode || ""}`,
-          310,
-          currentY,
-          { width: 230 }
+      // Bill To
+      if (invSet.showBillingDetails) {
+        doc
+          .fontSize(7)
+          .font("Helvetica-Bold")
+          .fillColor("#888888")
+          .text("BILL TO", 220, infoY, { letterSpacing: 1 });
+
+        let customerName = order.shippingAddress?.fullName || (user ? (user.fullName || user.name) : "Customer");
+        if (order.businessDetails?.shopName) {
+          customerName = order.businessDetails.shopName;
+        }
+
+        doc
+          .fontSize(11)
+          .font("Helvetica-Bold")
+          .fillColor("#000000")
+          .text(customerName, 220, infoY + 12);
+
+        let currentBillY = infoY + 26;
+        if (order.businessDetails?.gstNumber && invSet.showGSTBreakdown) {
+          doc
+            .fontSize(9)
+            .font("Helvetica-Bold")
+            .text(`GSTIN: ${order.businessDetails.gstNumber}`, 220, currentBillY);
+          currentBillY += 13;
+        }
+
+        doc
+          .fontSize(9)
+          .font("Helvetica")
+          .fillColor("#444444")
+          .text(
+            `${order.shippingAddress?.fullAddress || ""}, ${order.shippingAddress?.city || ""} - ${order.shippingAddress?.pincode || ""}`,
+            220,
+            currentBillY,
+            { width: 150 }
+          );
+        doc.text(
+          `Phone: ${order.shippingAddress?.mobileNumber || ""}`,
+          220,
+          currentBillY + 25,
         );
-      doc.text(
-        `Phone: ${order.shippingAddress?.mobileNumber || ""}`,
-        310,
-        currentY + 15,
-      );
+      }
+
+      // Ship To
+      if (invSet.showShippingDetails) {
+        doc
+          .fontSize(7)
+          .font("Helvetica-Bold")
+          .fillColor("#888888")
+          .text("SHIP TO", 390, infoY, { letterSpacing: 1 });
+
+        doc
+          .fontSize(11)
+          .font("Helvetica-Bold")
+          .fillColor("#000000")
+          .text(order.shippingAddress?.fullName || "Customer", 390, infoY + 12);
+
+        let currentShipY = infoY + 26;
+        doc
+          .fontSize(9)
+          .font("Helvetica")
+          .fillColor("#444444")
+          .text(
+            `${order.shippingAddress?.fullAddress || ""}, ${order.shippingAddress?.city || ""} - ${order.shippingAddress?.pincode || ""}`,
+            390,
+            currentShipY,
+            { width: 150 }
+          );
+        doc.text(
+          `Phone: ${order.shippingAddress?.mobileNumber || ""}`,
+          390,
+          currentShipY + 25,
+        );
+      }
 
       // Order Meta
       const metaBaseY = infoY + 82;
@@ -204,8 +248,14 @@ const buildPdfContent = (doc, order, user) => {
           453, summaryY, { width: 92, align: "right" },
         );
 
+      let gstPercentage = 0;
+      if (subExclTax > 0 && taxAmt > 0) {
+        gstPercentage = Math.round((taxAmt / subExclTax) * 100);
+      }
+      const gstText = gstPercentage > 0 ? `Inclusive GST (${gstPercentage}%)` : "Inclusive GST";
+
       doc.fontSize(10).font("Helvetica").fillColor("#888888");
-      doc.text("Inclusive GST", 340, summaryY + 20);
+      doc.text(gstText, 340, summaryY + 20);
       doc
         .font("Helvetica-Bold")
         .fillColor("#000000")
@@ -258,7 +308,7 @@ const buildPdfContent = (doc, order, user) => {
         .fontSize(7)
         .font("Helvetica")
         .fillColor("#888888")
-        .text("We declare that this invoice shows the actual price of the goods described and that all particulars are true and correct. The goods sold are intended for end user consumption and not for resale.", 50, 680, { width: 500 });
+        .text(invSet.invoiceFooterText, 50, 680, { width: 500 });
 
       doc
         .fontSize(8)
@@ -276,11 +326,17 @@ const buildPdfContent = (doc, order, user) => {
         });
 };
 
+const SystemSettings = require('../models/SystemSettings');
+
 /**
  * Generates a PDF Invoice Buffer (in-memory, no Cloudinary upload).
  * Use this for on-demand streaming.
  */
-const buildPdfBuffer = (order, user) => {
+const buildPdfBuffer = async (order, user) => {
+  let settings = await SystemSettings.findOne();
+  if (!settings || !settings.invoiceSettings) {
+    settings = { invoiceSettings: { showAdminDetails: true, showAdminGST: true, showSellerDetails: true, showShippingDetails: true, showBillingDetails: true, showGSTBreakdown: true, adminName: 'Riddha Interior Mart Pvt. Ltd.', adminAddress: '123 Luxury Avenue, Design District, Indore, MP - 452001', adminGST: '23AAAAA0000A1Z5', invoiceFooterText: 'This is a computer-generated invoice.' } };
+  }
   return new Promise((resolve, reject) => {
     try {
       const doc = new PDFDocument({ margin: 50, size: 'A4' });
@@ -288,7 +344,7 @@ const buildPdfBuffer = (order, user) => {
       doc.on('data', buffers.push.bind(buffers));
       doc.on('end', () => resolve(Buffer.concat(buffers)));
       doc.on('error', reject);
-      buildPdfContent(doc, order, user);
+      buildPdfContent(doc, order, user, settings);
       doc.end();
     } catch (err) {
       reject(err);
@@ -302,7 +358,11 @@ const buildPdfBuffer = (order, user) => {
  * @param {Object} user - The populated User object
  * @returns {Promise<String>} - The secure URL of the uploaded PDF invoice
  */
-const generateInvoicePDF = (order, user) => {
+const generateInvoicePDF = async (order, user) => {
+  let settings = await SystemSettings.findOne();
+  if (!settings || !settings.invoiceSettings) {
+    settings = { invoiceSettings: { showAdminDetails: true, showAdminGST: true, showSellerDetails: true, showShippingDetails: true, showBillingDetails: true, showGSTBreakdown: true, adminName: 'Riddha Interior Mart Pvt. Ltd.', adminAddress: '123 Luxury Avenue, Design District, Indore, MP - 452001', adminGST: '23AAAAA0000A1Z5', invoiceFooterText: 'This is a computer-generated invoice.' } };
+  }
   return new Promise((resolve, reject) => {
     try {
       const doc = new PDFDocument({ margin: 50, size: 'A4' });
@@ -326,7 +386,7 @@ const generateInvoicePDF = (order, user) => {
         );
         uploadStream.end(pdfData);
       });
-      buildPdfContent(doc, order, user);
+      buildPdfContent(doc, order, user, settings);
       doc.end();
     } catch (err) {
       console.error('PDF Generation Error:', err);

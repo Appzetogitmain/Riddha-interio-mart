@@ -19,6 +19,7 @@ import {
   LuCheck,
   LuX,
   LuRefreshCw,
+  LuShare2,
 } from 'react-icons/lu';
 import { FiCheckCircle, FiBox } from 'react-icons/fi';
 import api from '../../../shared/utils/api';
@@ -169,6 +170,53 @@ const OrderDetail = () => {
     }
   };
 
+  const handleShareInvoice = async () => {
+    if (!order?.invoiceUrl) {
+      toast.error('Invoice not generated yet');
+      return;
+    }
+    try {
+      toast.loading('Preparing file for sharing...', { id: 'share' });
+      
+      const authData = JSON.parse(localStorage.getItem('riddha_user') || '{}');
+      const token = authData?.token || authData?.user?.token || '';
+      const API_BASE = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000/api`;
+      const downloadUrl = `${API_BASE}/orders/${id}/download-invoice`;
+      
+      const response = await fetch(downloadUrl, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (!response.ok) throw new Error('Failed to fetch invoice');
+      
+      const blob = await response.blob();
+      const file = new File([blob], `invoice_${order._id.slice(-8).toUpperCase()}.pdf`, { type: 'application/pdf' });
+      
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        toast.dismiss('share');
+        await navigator.share({
+          files: [file],
+          title: `Invoice #${order._id.slice(-8).toUpperCase()}`,
+        });
+      } else if (navigator.share) {
+        toast.dismiss('share');
+        await navigator.share({
+          title: `Invoice #${order._id.slice(-8).toUpperCase()}`,
+          url: order.invoiceUrl,
+        });
+      } else {
+        await navigator.clipboard.writeText(order.invoiceUrl);
+        toast.success('Invoice link copied to clipboard!', { id: 'share' });
+      }
+    } catch (err) {
+      if (err.name !== 'AbortError') {
+        toast.error('Failed to share invoice', { id: 'share' });
+      } else {
+        toast.dismiss('share');
+      }
+    }
+  };
+
   const handleDownloadLabel = () => {
     if (!order) return;
     const addr = order.shippingAddress || {};
@@ -268,8 +316,16 @@ const OrderDetail = () => {
               disabled={updating}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all disabled:opacity-50"
             >
-              <LuPrinter size={13} /> {order?.invoiceUrl ? 'Print Invoice' : 'Generate Invoice'}
+              <LuDownload size={13} /> {order?.invoiceUrl ? 'Download Invoice' : 'Generate Invoice'}
             </button>
+            {order?.invoiceUrl && (
+              <button
+                onClick={handleShareInvoice}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#189D91] border border-[#189D91] text-xs font-bold text-white hover:bg-[#137A71] transition-all"
+              >
+                <LuShare2 size={13} /> Share Invoice
+              </button>
+            )}
             <button
               onClick={handleDownloadLabel}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all"

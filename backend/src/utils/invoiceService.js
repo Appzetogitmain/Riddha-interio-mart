@@ -17,7 +17,7 @@ const processInvoiceAsync = async (orderId, userId) => {
     );
 
     // Fetch full order and user data needed for PDF and Email
-    const order = await Order.findById(orderId);
+    const order = await Order.findById(orderId).populate('seller');
     const user = await User.findById(userId);
 
     if (!order) {

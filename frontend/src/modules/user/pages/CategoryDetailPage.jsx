@@ -103,7 +103,7 @@ const CategoryDetailPage = () => {
       </div>
 
       <div className="max-w-[1440px] mx-auto px-4 md:px-8 py-4 md:py-8">
-        <div className="flex flex-col lg:flex-row gap-8 md:gap-10 relative">
+        <div className="flex flex-col lg:flex-row gap-3 md:gap-10 relative">
 
           {/* Professional Sidebar - Categories Navigation */}
           <aside className="w-full lg:w-64 shrink-0">
@@ -113,7 +113,7 @@ const CategoryDetailPage = () => {
                   <h3 className="text-[10px] font-semibold uppercase tracking-wider text-deep-espresso/50">Collections</h3>
                   <FiFilter className="text-warm-sand h-3.5 w-3.5" />
                 </div>
-                <div className="flex flex-row lg:flex-col gap-1.5 overflow-x-auto no-scrollbar pb-2 lg:pb-0">
+                <div className="flex flex-row lg:flex-col gap-1.5 overflow-x-auto no-scrollbar pb-1 lg:pb-0">
                   {allCategories.map(cat => (
                     <div key={cat._id} className="flex flex-col">
                       <Link
@@ -126,9 +126,9 @@ const CategoryDetailPage = () => {
                         {cat._id === category._id && <div className="hidden lg:block w-1.5 h-1.5 rounded-full bg-[#189D91] shadow-[0_0_8px_rgba(24,157,145,0.5)]" />}
                       </Link>
                       
-                      {/* Subcategories Accordion */}
+                      {/* Desktop Subcategories Accordion */}
                       {cat._id === category._id && cat.subcategories && cat.subcategories.length > 0 && (
-                        <div className="flex flex-col gap-2 mt-2 ml-4 border-l-2 border-soft-oatmeal/20 pl-3 mb-2 animate-in slide-in-from-top-2 duration-300">
+                        <div className="hidden lg:flex flex-col gap-2 mt-2 ml-4 border-l-2 border-soft-oatmeal/20 pl-3 mb-2 animate-in slide-in-from-top-2 duration-300">
                            {/* Add an "All" option to clear subcategory filter */}
                            <Link
                              to={`/category/${slug}`}
@@ -150,6 +150,27 @@ const CategoryDetailPage = () => {
                     </div>
                   ))}
                 </div>
+
+                {/* Mobile Subcategories Pills */}
+                {category.subcategories && category.subcategories.length > 0 && (
+                  <div className="lg:hidden mt-1 flex flex-row gap-2 overflow-x-auto no-scrollbar pb-1">
+                    <Link
+                      to={`/category/${slug}`}
+                      className={`px-4 py-1.5 rounded-full whitespace-nowrap text-[11px] font-semibold border transition-colors shrink-0 ${!subFilter ? 'bg-deep-espresso text-white border-deep-espresso' : 'bg-soft-oatmeal/10 text-deep-espresso/70 border-soft-oatmeal/20'}`}
+                    >
+                      All {category.name}
+                    </Link>
+                    {category.subcategories.map(sub => (
+                      <Link
+                        key={sub._id}
+                        to={`/category/${slug}?sub=${sub.name.toLowerCase()}`}
+                        className={`px-4 py-1.5 rounded-full whitespace-nowrap text-[11px] font-semibold border transition-colors shrink-0 ${subFilter?.toLowerCase() === sub.name.toLowerCase() ? 'bg-deep-espresso text-white border-deep-espresso' : 'bg-soft-oatmeal/10 text-deep-espresso/70 border-soft-oatmeal/20'}`}
+                      >
+                        {sub.name}
+                      </Link>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Sub-collections Visual Links - Hidden on Mobile to save space */}

@@ -62,6 +62,17 @@ const ProductDetailsPage = () => {
           };
         }
         setProduct(found);
+        
+        // Add to recently viewed products
+        try {
+          const recentKey = 'recently_viewed_products';
+          const recent = JSON.parse(localStorage.getItem(recentKey) || '[]');
+          const updatedRecent = [found, ...recent.filter(p => p._id !== found._id && p.id !== found.id)].slice(0, 10);
+          localStorage.setItem(recentKey, JSON.stringify(updatedRecent));
+        } catch (e) {
+          console.error("Could not save recently viewed", e);
+        }
+
         const allRes = await api.get('/products');
         setRelatedProducts(allRes.data.data.filter(p => p.category === found.category && (p._id || p.id) !== id).slice(0, 4));
       } catch (err) {

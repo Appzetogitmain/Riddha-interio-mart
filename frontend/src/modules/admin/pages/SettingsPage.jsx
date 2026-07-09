@@ -35,6 +35,18 @@ const SettingsPage = () => {
   const [systemSettings, setSystemSettings] = useState({
     deliveryCommissionRate: 50.0,
     salesCommissionRate: 10.0,
+    invoiceSettings: {
+      showAdminDetails: true,
+      adminName: "Riddha Interior Mart Pvt. Ltd.",
+      adminAddress: "123 Luxury Avenue, Design District, Indore, MP - 452001",
+      showAdminGST: true,
+      adminGST: "23AAAAA0000A1Z5",
+      showSellerDetails: true,
+      showShippingDetails: true,
+      showBillingDetails: true,
+      showGSTBreakdown: true,
+      invoiceFooterText: "This is a computer-generated invoice."
+    }
   });
 
   // Fetch Admin Profile and Settings on mount
@@ -58,6 +70,18 @@ const SettingsPage = () => {
               settingsRes.data.data.deliveryCommissionRate ?? 50.0,
             salesCommissionRate:
               settingsRes.data.data.salesCommissionRate ?? 10.0,
+            invoiceSettings: settingsRes.data.data.invoiceSettings || {
+              showAdminDetails: true,
+              adminName: "Riddha Interior Mart Pvt. Ltd.",
+              adminAddress: "123 Luxury Avenue, Design District, Indore, MP - 452001",
+              showAdminGST: true,
+              adminGST: "23AAAAA0000A1Z5",
+              showSellerDetails: true,
+              showShippingDetails: true,
+              showBillingDetails: true,
+              showGSTBreakdown: true,
+              invoiceFooterText: "This is a computer-generated invoice."
+            }
           });
         }
       } catch (err) {
@@ -171,7 +195,7 @@ const SettingsPage = () => {
     if (activeTab === "Profile") handleSaveProfile();
     else if (activeTab === "Security") handleSavePassword();
     else if (activeTab === "Notifications") handleSaveNotifications();
-    else if (activeTab === "System") handleSaveSystemSettings();
+    else if (activeTab === "System" || activeTab === "Invoice") handleSaveSystemSettings();
   };
 
   if (isLoading) {
@@ -197,7 +221,7 @@ const SettingsPage = () => {
         <div className="bg-white rounded-2xl md:rounded-[32px] shadow-xl border border-soft-oatmeal overflow-hidden">
           {/* Tabs header */}
           <div className="flex border-b border-soft-oatmeal px-4 md:px-8 bg-soft-oatmeal/5 overflow-x-auto no-scrollbar">
-            {["Profile", "Notifications", "Security", "System"].map((tab) => (
+            {["Profile", "Notifications", "Security", "System", "Invoice"].map((tab) => (
               <button
                 key={tab}
                 onClick={() => {
@@ -434,6 +458,83 @@ const SettingsPage = () => {
                       Percentage deducted from seller earnings on each sale.
                     </p>
                   </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === "Invoice" && (
+              <div className="space-y-6 max-w-xl animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <h3 className="text-xl font-display font-bold text-deep-espresso flex items-center gap-3">
+                  <FiSave className="text-warm-sand" /> Invoice Formatting
+                </h3>
+                
+                <div className="space-y-4">
+                  {/* Admin Name */}
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest pl-1">Platform Name (Sold By)</label>
+                    <input 
+                      type="text" 
+                      value={systemSettings.invoiceSettings?.adminName || ''}
+                      onChange={e => setSystemSettings({...systemSettings, invoiceSettings: {...systemSettings.invoiceSettings, adminName: e.target.value}})}
+                      className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-2xl px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-warm-sand/20 focus:bg-white transition-all font-medium" 
+                    />
+                  </div>
+
+                  {/* Admin Address */}
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest pl-1">Platform Address</label>
+                    <input 
+                      type="text" 
+                      value={systemSettings.invoiceSettings?.adminAddress || ''}
+                      onChange={e => setSystemSettings({...systemSettings, invoiceSettings: {...systemSettings.invoiceSettings, adminAddress: e.target.value}})}
+                      className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-2xl px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-warm-sand/20 focus:bg-white transition-all font-medium" 
+                    />
+                  </div>
+                  
+                  {/* Admin GST */}
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest pl-1">Platform GST Number</label>
+                    <input 
+                      type="text" 
+                      value={systemSettings.invoiceSettings?.adminGST || ''}
+                      onChange={e => setSystemSettings({...systemSettings, invoiceSettings: {...systemSettings.invoiceSettings, adminGST: e.target.value}})}
+                      className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-2xl px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-warm-sand/20 focus:bg-white transition-all font-medium" 
+                    />
+                  </div>
+                  
+                  {/* Footer Text */}
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest pl-1">Footer / Declaration</label>
+                    <textarea 
+                      value={systemSettings.invoiceSettings?.invoiceFooterText || ''}
+                      onChange={e => setSystemSettings({...systemSettings, invoiceSettings: {...systemSettings.invoiceSettings, invoiceFooterText: e.target.value}})}
+                      rows={2}
+                      className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-2xl px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-warm-sand/20 focus:bg-white transition-all font-medium resize-none" 
+                    />
+                  </div>
+
+                  {/* Toggles */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
+                    {[
+                      { key: 'showAdminDetails', label: 'Show Platform Details' },
+                      { key: 'showAdminGST', label: 'Show Platform GST' },
+                      { key: 'showSellerDetails', label: 'Show Seller Details' },
+                      { key: 'showShippingDetails', label: 'Show Ship To' },
+                      { key: 'showBillingDetails', label: 'Show Bill To' },
+                      { key: 'showGSTBreakdown', label: 'Show GST Breakdown' },
+                    ].map(toggle => (
+                      <div key={toggle.key} className="flex items-center justify-between p-4 border border-soft-oatmeal rounded-2xl bg-white shadow-sm">
+                        <span className="text-xs font-bold text-deep-espresso">{toggle.label}</span>
+                        <div 
+                          onClick={() => setSystemSettings({...systemSettings, invoiceSettings: {...systemSettings.invoiceSettings, [toggle.key]: !systemSettings.invoiceSettings?.[toggle.key]}})}
+                          className={`w-10 h-6 rounded-full relative cursor-pointer transition-all duration-300 ${systemSettings.invoiceSettings?.[toggle.key] ? 'bg-emerald-500' : 'bg-soft-oatmeal'}`}
+                        >
+                          <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow-md transition-all duration-300 ${systemSettings.invoiceSettings?.[toggle.key] ? 'right-1' : 'left-1'}`}></div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
                 </div>
               </div>
             )}

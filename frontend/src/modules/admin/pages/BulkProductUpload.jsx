@@ -214,11 +214,7 @@ const BulkProductUpload = () => {
             const formData = new FormData();
             formData.append('image', product.imageFile);
             
-            const uploadRes = await api.post('/upload', formData, {
-              headers: { 
-                'Content-Type': 'multipart/form-data' 
-              }
-            });
+            const uploadRes = await api.post('/upload', formData);
             imageUrl = uploadRes.data.url;
           } catch (uploadErr) {
             console.error('Upload error:', uploadErr);

@@ -15,6 +15,7 @@ import { useUser } from '../../user/data/UserContext';
 import api from '../../../shared/utils/api';
 import { toast } from 'react-hot-toast';
 import { useSearchParams } from 'react-router-dom';
+import ProofUploadModal from '../components/ProofUploadModal';
 
 const Orders = () => {
   const [searchParams] = useSearchParams();

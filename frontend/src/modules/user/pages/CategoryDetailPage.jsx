@@ -237,7 +237,7 @@ const CategoryDetailPage = () => {
                           <img
                             src={sub.image && !sub.image.startsWith('C:') ? sub.image : 'https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?w=400&q=80'}
                             alt={sub.name}
-                            className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-300"
+                            className="w-full h-full object-cover transition-all duration-300"
                           />
                         </div>
                         <span className={`text-[10px] md:text-[11px] font-bold text-center uppercase tracking-wider transition-colors ${isSubActive ? 'text-deep-espresso' : 'text-deep-espresso/60 group-hover:text-deep-espresso'}`}>{sub.name}</span>

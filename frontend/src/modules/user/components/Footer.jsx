@@ -35,7 +35,7 @@ const Footer = () => {
   };
 
   return (
-    <footer className="hidden md:block bg-white text-gray-600 pt-16 pb-12 border-t border-gray-100/80">
+    <footer className="block bg-white text-gray-600 pt-16 pb-28 md:pb-12 border-t border-gray-100/80">
       <div className="max-w-[1700px] mx-auto px-6 md:px-12">
         <motion.div
           variants={containerVariants}

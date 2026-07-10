@@ -1,9 +1,26 @@
 {
-  "timestamp": "2026-07-10T13:57:24.040Z",
+  "timestamp": "2026-07-10T16:13:00.795Z",
   "query": {},
-  "builtFilter": {},
+  "builtFilter": {
+    "isApproved": true,
+    "isActive": true,
+    "seller": {
+      "$nin": [
+        "6a100b07a3cc06ac3f65be01",
+        "6a10057431fa10db6ebdaaff"
+      ]
+    }
+  },
   "resultCount": 10,
   "results": [
+    {
+      "_id": "6a5114b9c41671564fc2cbc6",
+      "name": "fsdfg",
+      "category": {
+        "_id": "6a4cf715a06cf368b84a62e3",
+        "name": "Paint"
+      }
+    },
     {
       "_id": "6a4f584ec25e41b935a865eb",
       "name": "EXTENDED WALL MOUNTED TOILETS",
@@ -81,14 +98,6 @@
     {
       "_id": "6a40ff178830e3fa4fc3a77a",
       "name": "Sheetal Premium Item 2",
-      "category": {
-        "_id": "69e1cc1d60884ec078193fe9",
-        "name": "Marble"
-      }
-    },
-    {
-      "_id": "6a40ff178830e3fa4fc3a779",
-      "name": "Sheetal Premium Item 1",
       "category": {
         "_id": "69e1cc1d60884ec078193fe9",
         "name": "Marble"

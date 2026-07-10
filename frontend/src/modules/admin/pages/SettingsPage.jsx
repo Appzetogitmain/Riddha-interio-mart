@@ -33,8 +33,11 @@ const SettingsPage = () => {
   const [notifications, setNotifications] = useState(true);
 
   const [systemSettings, setSystemSettings] = useState({
+    whatsappNumber: "9111661100",
     deliveryCommissionRate: 50.0,
     salesCommissionRate: 10.0,
+    b2bCommissionRate: 5.0,
+    b2bMinOrderQty: 10,
     invoiceSettings: {
       showAdminDetails: true,
       adminName: "Riddha Interior Mart Pvt. Ltd.",
@@ -66,10 +69,15 @@ const SettingsPage = () => {
         const settingsRes = await api.get("/settings");
         if (settingsRes.data?.success && settingsRes.data?.data) {
           setSystemSettings({
+            whatsappNumber: settingsRes.data.data.whatsappNumber || "9111661100",
             deliveryCommissionRate:
               settingsRes.data.data.deliveryCommissionRate ?? 50.0,
             salesCommissionRate:
               settingsRes.data.data.salesCommissionRate ?? 10.0,
+            b2bCommissionRate:
+              settingsRes.data.data.b2bCommissionRate ?? 5.0,
+            b2bMinOrderQty:
+              settingsRes.data.data.b2bMinOrderQty ?? 10,
             invoiceSettings: settingsRes.data.data.invoiceSettings || {
               showAdminDetails: true,
               adminName: "Riddha Interior Mart Pvt. Ltd.",
@@ -432,7 +440,7 @@ const SettingsPage = () => {
 
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest pl-1">
-                      Seller Commission Rate (%)
+                      B2C Commission Rate (%)
                     </label>
                     <div className="relative">
                       <span className="absolute left-5 top-1/2 -translate-y-1/2 text-warm-sand font-bold">
@@ -455,7 +463,79 @@ const SettingsPage = () => {
                       />
                     </div>
                     <p className="text-xs text-warm-sand/70 pl-1">
-                      Percentage deducted from seller earnings on each sale.
+                      Percentage deducted from seller earnings on regular (B2C) sales.
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest pl-1">
+                      B2B Commission Rate (%)
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-5 top-1/2 -translate-y-1/2 text-warm-sand font-bold">
+                        %
+                      </span>
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.01"
+                        value={systemSettings.b2bCommissionRate}
+                        onChange={(e) =>
+                          setSystemSettings({
+                            ...systemSettings,
+                            b2bCommissionRate:
+                              parseFloat(e.target.value) || 0,
+                          })
+                        }
+                        className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-2xl pl-10 px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-warm-sand/20 focus:bg-white transition-all font-medium"
+                      />
+                    </div>
+                    <p className="text-xs text-warm-sand/70 pl-1">
+                      Percentage deducted from seller earnings on bulk (B2B) sales.
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest pl-1">
+                      B2B Min Order Quantity (Global)
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      step="1"
+                      value={systemSettings.b2bMinOrderQty}
+                      onChange={(e) =>
+                        setSystemSettings({
+                          ...systemSettings,
+                          b2bMinOrderQty: parseInt(e.target.value) || 1,
+                        })
+                      }
+                      className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-2xl px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-warm-sand/20 focus:bg-white transition-all font-medium"
+                    />
+                    <p className="text-xs text-warm-sand/70 pl-1">
+                      Default minimum quantity an order must have to qualify for B2B pricing and commission.
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest pl-1">
+                      WhatsApp Number
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. 9111661100"
+                      value={systemSettings.whatsappNumber}
+                      onChange={(e) =>
+                        setSystemSettings({
+                          ...systemSettings,
+                          whatsappNumber: e.target.value,
+                        })
+                      }
+                      className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-2xl px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-warm-sand/20 focus:bg-white transition-all font-medium"
+                    />
+                    <p className="text-xs text-warm-sand/70 pl-1">
+                      This number is used for the floating WhatsApp button on the storefront.
                     </p>
                   </div>
                 </div>

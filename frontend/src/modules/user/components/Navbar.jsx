@@ -393,50 +393,7 @@ const Navbar = () => {
 
         {/* Mega Menu Dropdown - DISABLED AS REQUESTED */}
         {/* <AnimatePresence>
-          {activeCategory && (
-            <motion.div
-              initial={{ opacity: 0, y: -5 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -5 }}
-              transition={{ duration: 0.2 }}
-              className="absolute top-full left-0 w-full bg-white border-b border-gray-200 shadow-xl overflow-hidden"
-              onMouseEnter={() => {
-                if (dropdownTimeoutRef.current) clearTimeout(dropdownTimeoutRef.current);
-              }}
-            >
-              <div className="max-w-[1440px] mx-auto px-12 py-10">
-                {categories.find(c => c._id === activeCategory) && (
-                  <div className="grid grid-cols-4 lg:grid-cols-5 gap-12">
-                    <div className="flex flex-col gap-6">
-                      <h3 className="text-[#189D91] font-bold text-sm uppercase tracking-wide border-b border-gray-100 pb-2">
-                        {toTitleCase(categories.find(c => c._id === activeCategory).name)} Types
-                      </h3>
-                      <div className="flex flex-col gap-3">
-                        {categories.find(c => c._id === activeCategory).subcategories?.map((sub, idx) => (
-                          <Link
-                            key={idx}
-                            to={`/category/${categories.find(c => c._id === activeCategory).name.toLowerCase().replace(/\s+/g, '-')}/${sub.name.toLowerCase().replace(/\s+/g, '-')}`}
-                            className="text-gray-600 hover:text-[#189D91] text-sm font-medium transition-colors"
-                          >
-                            {toTitleCase(sub.name)}
-                          </Link>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col gap-6 opacity-40">
-                      <h3 className="text-gray-400 font-bold text-sm uppercase tracking-wide border-b border-gray-100 pb-2">Popular Brands</h3>
-                      <div className="flex flex-col gap-3">
-                        <span className="text-gray-400 text-sm">Premium Series</span>
-                        <span className="text-gray-400 text-sm">Designer Collection</span>
-                        <span className="text-gray-400 text-sm">Eco Friendly</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          )}
+          ...
         </AnimatePresence> */}
       </div>
 

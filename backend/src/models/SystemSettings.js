@@ -5,9 +5,24 @@ const SystemSettingsSchema = new mongoose.Schema({
     type: Number,
     default: 50.00
   },
+  // B2C (Regular) seller commission rate
   salesCommissionRate: {
     type: Number,
     default: 10.00
+  },
+  // B2B (Bulk Order) seller commission rate — lower than B2C
+  b2bCommissionRate: {
+    type: Number,
+    default: 5.00
+  },
+  // Minimum order quantity to qualify as a B2B order
+  b2bMinOrderQty: {
+    type: Number,
+    default: 10
+  },
+  whatsappNumber: {
+    type: String,
+    default: "9111661100"
   },
   invoiceSettings: {
     showAdminDetails: { type: Boolean, default: true },

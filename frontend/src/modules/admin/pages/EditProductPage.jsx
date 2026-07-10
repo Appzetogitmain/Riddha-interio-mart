@@ -25,6 +25,8 @@ const EditProductPage = () => {
     category: '',
     brand: '',
     price: '',
+    b2bPrice: '',
+    b2bMinQty: '',
     description: '',
     material: '',
     dimensions: '',
@@ -61,6 +63,8 @@ const EditProductPage = () => {
           category: product.category || '',
           brand: product.brand || '',
           price: product.price || '',
+          b2bPrice: product.b2bPrice || '',
+          b2bMinQty: product.b2bMinQty || '',
           description: product.description || '',
           material: product.material || '',
           dimensions: product.dimensions || '',
@@ -131,6 +135,8 @@ const EditProductPage = () => {
       const payload = {
         ...formData,
         price: Number(formData.price),
+        b2bPrice: formData.b2bPrice !== '' ? Number(formData.b2bPrice) : undefined,
+        b2bMinQty: formData.b2bMinQty !== '' ? Number(formData.b2bMinQty) : undefined,
         stock: Number(formData.stock),
         images: formData.images,
         videoUrl: finalVideoUrl,
@@ -419,6 +425,32 @@ const EditProductPage = () => {
                            type="number" required
                            value={formData.stock}
                            onChange={(e) => setFormData({...formData, stock: e.target.value})}
+                           className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-warm-sand transition-all font-medium"
+                         />
+                       </div>
+                    </div>
+                    
+                    {/* B2B Pricing Section */}
+                    <div className="grid grid-cols-2 gap-4">
+                       <div className="space-y-2">
+                         <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest flex items-center gap-2 text-deep-espresso">
+                            <FiDollarSign size={12} /> B2B Price (₹)
+                         </label>
+                         <input 
+                           type="number" placeholder="Optional"
+                           value={formData.b2bPrice}
+                           onChange={(e) => setFormData({...formData, b2bPrice: e.target.value})}
+                           className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-warm-sand transition-all font-medium"
+                         />
+                       </div>
+                       <div className="space-y-2">
+                         <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest flex items-center gap-2 text-deep-espresso">
+                            <FiPackage size={12} /> B2B Min Qty
+                         </label>
+                         <input 
+                           type="number" placeholder="Default from Settings"
+                           value={formData.b2bMinQty}
+                           onChange={(e) => setFormData({...formData, b2bMinQty: e.target.value})}
                            className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-warm-sand transition-all font-medium"
                          />
                        </div>

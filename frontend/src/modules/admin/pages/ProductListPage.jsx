@@ -218,6 +218,7 @@ const ProductListPage = ({ status }) => {
                     <th className="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider text-center">Status</th>
                     <th className="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider text-right">Seller Price</th>
                     <th className="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider text-center">Comm.</th>
+                    <th className="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider text-right">B2B Price</th>
                     <th className="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider text-right">Final Price</th>
                     <th className="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider text-right">Actions</th>
                   </tr>
@@ -279,6 +280,15 @@ const ProductListPage = ({ status }) => {
                       {/* Commission */}
                       <td className="px-4 py-3 text-center">
                         <span className="text-sm font-semibold text-gray-600">{product.adminCommission || 0}%</span>
+                      </td>
+
+                      {/* B2B Price */}
+                      <td className="px-4 py-3 text-right">
+                        {product.b2bPrice ? (
+                          <p className="text-sm font-semibold text-[#240046]">₹{product.b2bPrice?.toLocaleString()}</p>
+                        ) : (
+                          <p className="text-xs text-gray-400">—</p>
+                        )}
                       </td>
 
                       {/* Final Price */}

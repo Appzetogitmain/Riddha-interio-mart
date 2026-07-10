@@ -75,21 +75,18 @@ function App() {
       )}
 
       {!shouldHideHeader && (
-        <div className="print:hidden">
+        <>
           {isProductPage ? (
-            <>
-              <div className="sticky top-0 z-50 shadow-sm">
-                <Navbar />
-              </div>
-              <DeliveryBar />
-            </>
+            <div className="sticky top-0 z-50 shadow-sm print:hidden">
+              <Navbar />
+            </div>
           ) : (
-            <div className="sticky top-0 z-50 shadow-sm">
+            <div className="sticky top-0 z-50 shadow-sm print:hidden">
               <Navbar />
               <DeliveryBar />
             </div>
           )}
-        </div>
+        </>
       )}
 
       <main className="flex-grow">

@@ -40,6 +40,16 @@ const ProductSchema = new mongoose.Schema({
   discountPrice: {
     type: Number
   },
+  // B2B pricing — shown when order qualifies as a bulk/B2B order
+  b2bPrice: {
+    type: Number,
+    default: null
+  },
+  // Minimum quantity for B2B price on this product (overrides global setting if set)
+  b2bMinQty: {
+    type: Number,
+    default: null
+  },
   category: {
     type: mongoose.Schema.ObjectId,
     ref: 'Category',

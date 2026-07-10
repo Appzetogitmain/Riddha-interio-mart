@@ -66,6 +66,7 @@ const UserRoutes = () => {
       <Route path="/referral" element={<ReferralRewardsPage />} />
       <Route path="/products" element={<ProductListingPage />} />
       <Route path="/products/:id" element={<ProductDetailsPage />} />
+      <Route path="/product/:id" element={<ProductDetailsPage />} />
       <Route path="/categories" element={<CategoriesPage />} />
       <Route path="/category/:slug" element={<CategoryDetailPage />} />
       <Route path="/cart" element={<CartPage />} />

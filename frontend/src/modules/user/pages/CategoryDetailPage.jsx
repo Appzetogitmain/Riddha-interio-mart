@@ -10,6 +10,7 @@ const CategoryDetailPage = () => {
   const { slug } = useParams();
   const [searchParams] = useSearchParams();
   const subFilter = searchParams.get('sub');
+  const subSubFilter = searchParams.get('subsub');
   
   const [category, setCategory] = useState(null);
   const [allCategories, setAllCategories] = useState([]);
@@ -29,6 +30,9 @@ const CategoryDetailPage = () => {
         let productUrl = `/products?category=${encodeURIComponent(currentCategory.name)}`;
         if (subFilter) {
           productUrl += `&subcategory=${encodeURIComponent(subFilter)}`;
+        }
+        if (subSubFilter) {
+          productUrl += `&subsubcategory=${encodeURIComponent(subSubFilter)}`;
         }
         console.log("[CategoryDetailPage] Fetching products from URL:", productUrl);
         const productRes = await api.get(productUrl);
@@ -103,106 +107,55 @@ const CategoryDetailPage = () => {
       </div>
 
       <div className="max-w-[1440px] mx-auto px-4 md:px-8 py-4 md:py-8">
-        <div className="flex flex-col lg:flex-row gap-3 md:gap-10 relative">
+        <div className="relative flex flex-col lg:flex-row gap-6 lg:gap-10">
 
-          {/* Professional Sidebar - Categories Navigation */}
-          <aside className="w-full lg:w-64 shrink-0">
-            <div className="lg:sticky lg:top-24 space-y-6 lg:space-y-8">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between border-b border-soft-oatmeal pb-3">
-                  <h3 className="text-[10px] font-semibold uppercase tracking-wider text-deep-espresso/50">Collections</h3>
-                  <FiFilter className="text-warm-sand h-3.5 w-3.5" />
-                </div>
-                <div className="flex flex-row lg:flex-col gap-1.5 overflow-x-auto no-scrollbar pb-1 lg:pb-0">
-                  {allCategories.map(cat => (
-                    <div key={cat._id} className="flex flex-col">
+          {/* Main Content Area */}
+          <main className="flex-1 w-full order-2">
+            
+            {/* Horizontal Sub-subcategories (Small Circular Images) at Top */}
+            {subFilter && (() => {
+              const activeSub = category.subcategories?.find(s => s.name.toLowerCase() === subFilter.toLowerCase());
+              if (activeSub && activeSub.subsubcategories && activeSub.subsubcategories.length > 0) {
+                return (
+                  <div className="mb-6 md:mb-8">
+                    <div className="flex overflow-x-auto no-scrollbar gap-5 md:gap-8 pb-3">
                       <Link
-                        to={`/category/${cat.name.toLowerCase().replace(/\s+/g, '-')}`}
-                        className={`group flex items-center justify-between py-2 lg:py-2.5 px-3 lg:px-4 rounded-lg lg:rounded-xl transition-all duration-300 shrink-0 lg:shrink ${cat._id === category._id ? 'bg-deep-espresso text-white shadow-md lg:shadow-lg shadow-black/10' : 'text-deep-espresso/70 bg-soft-oatmeal/5 lg:bg-transparent border border-soft-oatmeal/10 lg:border-none hover:bg-soft-oatmeal/10 hover:text-deep-espresso'}`}
+                        to={`/category/${slug}?sub=${encodeURIComponent(activeSub.name)}`}
+                        className="group flex flex-col items-center min-w-[64px] md:min-w-[76px]"
                       >
-                        <span className={`text-[11px] lg:text-[13px] font-semibold whitespace-nowrap ${cat._id === category._id ? 'translate-x-0 lg:translate-x-1' : 'group-hover:translate-x-1'} transition-transform`}>
-                          {cat.name}
-                        </span>
-                        {cat._id === category._id && <div className="hidden lg:block w-1.5 h-1.5 rounded-full bg-[#189D91] shadow-[0_0_8px_rgba(24,157,145,0.5)]" />}
+                        <div className={`w-14 h-14 md:w-16 md:h-16 rounded-full overflow-hidden mb-2.5 border-2 transition-all flex items-center justify-center bg-soft-oatmeal/10 ${!subSubFilter ? 'border-[#0D5C55] shadow-md scale-105' : 'border-transparent group-hover:border-[#0D5C55]/30'}`}>
+                          <span className={`text-[10px] md:text-[11px] font-bold ${!subSubFilter ? 'text-[#0D5C55]' : 'text-deep-espresso/50'}`}>ALL</span>
+                        </div>
+                        <span className={`text-[9.5px] md:text-[11px] font-bold text-center uppercase tracking-wider transition-colors leading-tight ${!subSubFilter ? 'text-[#0D5C55]' : 'text-deep-espresso/50 group-hover:text-[#0D5C55]'}`}>All {activeSub.name}</span>
                       </Link>
                       
-                      {/* Desktop Subcategories Accordion */}
-                      {cat._id === category._id && cat.subcategories && cat.subcategories.length > 0 && (
-                        <div className="hidden lg:flex flex-col gap-2 mt-2 ml-4 border-l-2 border-soft-oatmeal/20 pl-3 mb-2 animate-in slide-in-from-top-2 duration-300">
-                           {/* Add an "All" option to clear subcategory filter */}
-                           <Link
-                             to={`/category/${slug}`}
-                             className={`text-[12px] font-medium transition-colors ${!subFilter ? 'text-deep-espresso font-bold' : 'text-deep-espresso/60 hover:text-deep-espresso'}`}
-                           >
-                             All {cat.name}
-                           </Link>
-                           {cat.subcategories.map(sub => (
-                             <Link
-                               key={sub._id}
-                               to={`/category/${slug}?sub=${sub.name.toLowerCase()}`}
-                               className={`text-[12px] font-medium transition-colors ${subFilter?.toLowerCase() === sub.name.toLowerCase() ? 'text-deep-espresso font-bold' : 'text-deep-espresso/60 hover:text-deep-espresso'}`}
-                             >
-                               {sub.name}
-                             </Link>
-                           ))}
-                        </div>
-                      )}
+                      {activeSub.subsubcategories.map(ss => {
+                        const isSubSubActive = subSubFilter && ss.name.toLowerCase() === subSubFilter.toLowerCase();
+                        return (
+                          <Link
+                            key={ss._id}
+                            to={`/category/${slug}?sub=${encodeURIComponent(activeSub.name)}&subsub=${encodeURIComponent(ss.name)}`}
+                            className="group flex flex-col items-center min-w-[64px] md:min-w-[76px]"
+                          >
+                            <div className={`w-14 h-14 md:w-16 md:h-16 rounded-full overflow-hidden mb-2.5 border-2 transition-all p-[2px] ${isSubSubActive ? 'border-[#0D5C55] shadow-md scale-105' : 'border-transparent group-hover:border-[#0D5C55]/30'}`}>
+                              <img
+                                src={ss.image && !ss.image.startsWith('C:') ? ss.image : 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=400&q=80'}
+                                alt={ss.name}
+                                className="w-full h-full object-cover rounded-full"
+                              />
+                            </div>
+                            <span className={`text-[9.5px] md:text-[11px] font-bold text-center uppercase tracking-wider transition-colors leading-tight ${isSubSubActive ? 'text-[#0D5C55]' : 'text-deep-espresso/50 group-hover:text-[#0D5C55]'}`}>{ss.name}</span>
+                          </Link>
+                        );
+                      })}
                     </div>
-                  ))}
-                </div>
-
-                {/* Mobile Subcategories Pills */}
-                {category.subcategories && category.subcategories.length > 0 && (
-                  <div className="lg:hidden mt-1 flex flex-row gap-2 overflow-x-auto no-scrollbar pb-1">
-                    <Link
-                      to={`/category/${slug}`}
-                      className={`px-4 py-1.5 rounded-full whitespace-nowrap text-[11px] font-semibold border transition-colors shrink-0 ${!subFilter ? 'bg-deep-espresso text-white border-deep-espresso' : 'bg-soft-oatmeal/10 text-deep-espresso/70 border-soft-oatmeal/20'}`}
-                    >
-                      All {category.name}
-                    </Link>
-                    {category.subcategories.map(sub => (
-                      <Link
-                        key={sub._id}
-                        to={`/category/${slug}?sub=${sub.name.toLowerCase()}`}
-                        className={`px-4 py-1.5 rounded-full whitespace-nowrap text-[11px] font-semibold border transition-colors shrink-0 ${subFilter?.toLowerCase() === sub.name.toLowerCase() ? 'bg-deep-espresso text-white border-deep-espresso' : 'bg-soft-oatmeal/10 text-deep-espresso/70 border-soft-oatmeal/20'}`}
-                      >
-                        {sub.name}
-                      </Link>
-                    ))}
                   </div>
-                )}
-              </div>
+                );
+              }
+              return null;
+            })()}
 
-              {/* Sub-collections Visual Links - Hidden on Mobile to save space */}
-              {category.subcategories && category.subcategories.length > 0 && (
-                <div className="hidden lg:block space-y-8 animate-in slide-in-from-bottom-5 duration-700">
-                  <h3 className="text-[11px] font-semibold uppercase tracking-wider text-deep-espresso/30 border-b border-soft-oatmeal pb-4">Refine Search</h3>
-                  <div className="grid grid-cols-1 gap-4">
-                    {category.subcategories.map(sub => (
-                      <Link
-                        key={sub._id}
-                        to={`/category/${slug}?sub=${sub.name.toLowerCase()}`}
-                        className="relative h-20 rounded-2xl overflow-hidden group border border-soft-oatmeal/20"
-                      >
-                        <img
-                          src={sub.image && !sub.image.startsWith('C:') ? sub.image : 'https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?w=400&q=80'}
-                          alt="" className="absolute inset-0 w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-110 transition-all duration-700"
-                        />
-                        <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors" />
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <span className="text-white text-[11px] font-semibold uppercase tracking-wider">{sub.name}</span>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </aside>
-
-          {/* Main Visual Grid Area */}
-          <main className="flex-1">
-            <div className="flex flex-col md:flex-row items-baseline justify-between mb-4 md:mb-8 gap-4">
+            <div className="flex flex-col md:flex-row items-baseline justify-between mb-4 md:mb-6 gap-4 border-b border-soft-oatmeal/20 pb-4">
               <div>
                 <h2 className="text-2xl md:text-3xl font-display font-semibold text-deep-espresso mb-1.5 leading-tight">Superior {category.name}</h2>
                 <div className="flex items-center gap-2.5">
@@ -219,6 +172,8 @@ const CategoryDetailPage = () => {
                 </select>
               </div>
             </div>
+
+
 
             {/* Products Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
@@ -239,9 +194,9 @@ const CategoryDetailPage = () => {
                     key="empty"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="col-span-full py-32 text-center"
+                    className="col-span-full py-12 text-center"
                   >
-                    <p className="text-2xl font-display font-medium text-deep-espresso/20 italic mb-6">These pieces are currently being curated...</p>
+                    <p className="text-xl font-display font-medium text-deep-espresso/40 italic mb-6">These pieces are currently being curated...</p>
                     <Link to="/products" className="text-warm-sand font-semibold uppercase tracking-wider text-[11px] border-b-2 border-warm-sand pb-1 hover:text-deep-espresso hover:border-deep-espresso transition-all">Explore Full Collection</Link>
                   </motion.div>
                 )}
@@ -250,7 +205,7 @@ const CategoryDetailPage = () => {
 
             {/* Footer call to action in center */}
             {products.length > 0 && (
-              <div className="mt-16 py-12 border-t border-soft-oatmeal/20 text-center space-y-4">
+              <div className="mt-8 py-6 border-t border-soft-oatmeal/20 text-center space-y-4">
                 <h3 className="text-xl md:text-2xl font-display font-semibold text-deep-espresso underline decoration-warm-sand/20 decoration-4 underline-offset-[8px]">Request a Custom Selection?</h3>
                 <p className="text-deep-espresso/50 max-w-lg mx-auto text-xs md:text-sm font-light italic">
                   Can't find the exact piece for your vision? Our designers can source exclusive materials tailored to your specific architectural requirements.
@@ -263,10 +218,40 @@ const CategoryDetailPage = () => {
               </div>
             )}
           </main>
+
+          {/* Left Sidebar - Subcategories (Small Squares Vertical) */}
+          {category.subcategories && category.subcategories.length > 0 && (
+            <aside className="w-full lg:w-32 xl:w-40 shrink-0 order-1 mb-6 lg:mb-0">
+              <div className="lg:sticky lg:top-24">
+                <h3 className="text-[11px] font-semibold uppercase tracking-wider text-deep-espresso/50 mb-4 border-b border-soft-oatmeal pb-2">Collections</h3>
+                <div className="flex flex-row lg:flex-col overflow-x-auto lg:overflow-visible no-scrollbar gap-4 lg:gap-6 pb-2 lg:pb-0">
+                  {category.subcategories.map(sub => {
+                    const isSubActive = subFilter && sub.name.toLowerCase() === subFilter.toLowerCase();
+                    return (
+                      <Link
+                        key={sub._id}
+                        to={`/category/${slug}?sub=${encodeURIComponent(sub.name)}`}
+                        className="group flex flex-col items-center min-w-[70px] lg:min-w-0"
+                      >
+                        <div className={`w-16 h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 rounded-2xl overflow-hidden mb-2 border-2 transition-all ${isSubActive ? 'border-deep-espresso shadow-md scale-105' : 'border-transparent group-hover:border-soft-oatmeal/50'}`}>
+                          <img
+                            src={sub.image && !sub.image.startsWith('C:') ? sub.image : 'https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?w=400&q=80'}
+                            alt={sub.name}
+                            className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-300"
+                          />
+                        </div>
+                        <span className={`text-[10px] md:text-[11px] font-bold text-center uppercase tracking-wider transition-colors ${isSubActive ? 'text-deep-espresso' : 'text-deep-espresso/60 group-hover:text-deep-espresso'}`}>{sub.name}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            </aside>
+          )}
         </div>
       </div>
 
-      <div className="border-t border-soft-oatmeal/10 py-12 md:py-24 bg-white/30 backdrop-blur-xl">
+      <div className="border-t border-soft-oatmeal/10 pt-6 pb-12 md:pt-10 md:pb-20 bg-white/30 backdrop-blur-xl">
         <BrandScroll title="Premium Brands" />
       </div>
     </div>

@@ -147,6 +147,7 @@ const HomePage = () => {
   const [advertisedProducts, setAdvertisedProducts] = useState([]);
   const [banners, setBanners] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [whatsappNumber, setWhatsappNumber] = useState("9111661100");
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -181,9 +182,21 @@ const HomePage = () => {
       }
     };
 
+    const fetchSettings = async () => {
+      try {
+        const res = await api.get('/settings');
+        if (res.data?.success && res.data?.data?.whatsappNumber) {
+          setWhatsappNumber(res.data.data.whatsappNumber);
+        }
+      } catch (err) {
+        console.error('Failed to fetch settings:', err);
+      }
+    };
+
     fetchProducts();
     fetchBanners();
     fetchAdvertisements();
+    fetchSettings();
   }, []);
 
   const newArrivals = products.slice(0, 10);
@@ -272,7 +285,7 @@ const HomePage = () => {
       <TopBrands />
 
       {/* WhatsApp Floating Button */}
-      <WhatsAppFloat />
+      <WhatsAppFloat number={whatsappNumber} />
 
     </div>
   );

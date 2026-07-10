@@ -1,19 +1,7 @@
 {
-  "timestamp": "2026-07-09T09:27:58.368Z",
-  "query": {
-    "isApproved": "pending",
-    "isActive": "all"
-  },
-  "builtFilter": {
-    "isApproved": true,
-    "isActive": true,
-    "seller": {
-      "$nin": [
-        "6a100b07a3cc06ac3f65be01",
-        "6a10057431fa10db6ebdaaff"
-      ]
-    }
-  },
+  "timestamp": "2026-07-10T13:57:24.040Z",
+  "query": {},
+  "builtFilter": {},
   "resultCount": 10,
   "results": [
     {

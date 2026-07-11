@@ -12,7 +12,7 @@ const ProductListPage = ({ status }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [deleteId, setDeleteId] = useState(null);
-  const [commissionModal, setCommissionModal] = useState({ open: false, product: null, commission: 2 });
+  const [commissionModal, setCommissionModal] = useState({ open: false, product: null, commission: 2, b2bCommission: 2 });
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [approvalFilter, setApprovalFilter] = useState('all');
   const [sellerFilter, setSellerFilter] = useState('all');
@@ -32,13 +32,14 @@ const ProductListPage = ({ status }) => {
     }
   };
 
-  const handleApprove = async (id, status, commission = 0) => {
+  const handleApprove = async (id, status, commission = 0, b2bCommission = 0) => {
     try {
       await api.put(`/products/${id}/approval`, { 
         approvalStatus: status,
-        adminCommission: commission
+        adminCommission: commission,
+        b2bAdminCommission: b2bCommission
       });
-      setCommissionModal({ open: false, product: null, commission: 2 });
+      setCommissionModal({ open: false, product: null, commission: 2, b2bCommission: 2 });
       fetchProducts(); // Refresh list
     } catch (err) {
       console.error('Approval error:', err);
@@ -302,7 +303,7 @@ const ProductListPage = ({ status }) => {
                           {product.approvalStatus === 'pending' && (
                             <>
                               <button
-                                onClick={() => setCommissionModal({ open: true, product, commission: 2 })}
+                                onClick={() => setCommissionModal({ open: true, product, commission: 2, b2bCommission: 2 })}
                                 className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold rounded-lg transition-colors"
                               >
                                 Approve
@@ -355,18 +356,18 @@ const ProductListPage = ({ status }) => {
               <div className="grid grid-cols-2 gap-4">
                  <div className="bg-soft-oatmeal/20 p-4 rounded-2xl">
                     <p className="text-[10px] font-black text-warm-sand uppercase tracking-widest mb-1">Seller Price</p>
-                    <p className="text-xl font-display font-bold text-deep-espresso">₹{commissionModal.product.price?.toLocaleString()}</p>
+                    <p className="text-xl font-display font-bold text-deep-espresso">₹{(commissionModal.product.sellerPrice || commissionModal.product.price)?.toLocaleString()}</p>
                  </div>
                  <div className="bg-emerald-50/50 p-4 rounded-2xl border border-emerald-100">
                     <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">Final Price</p>
                     <p className="text-xl font-display font-bold text-[#240046]">
-                       ₹{Math.round(commissionModal.product.price * (1 + commissionModal.commission / 100)).toLocaleString()}
+                       ₹{Math.round((commissionModal.product.sellerPrice || commissionModal.product.price) * (1 + commissionModal.commission / 100)).toLocaleString()}
                     </p>
                  </div>
               </div>
 
               <div className="space-y-3">
-                <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest ml-1">Commission Percentage (%)</label>
+                <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest ml-1">Normal Commission (%)</label>
                 <div className="relative">
                   <input 
                     type="number"
@@ -378,15 +379,46 @@ const ProductListPage = ({ status }) => {
                 </div>
               </div>
 
+              {(commissionModal.product.sellerB2bPrice || commissionModal.product.b2bPrice) && (
+                <>
+                  <hr className="border-soft-oatmeal" />
+                  <div className="grid grid-cols-2 gap-4">
+                     <div className="bg-soft-oatmeal/20 p-4 rounded-2xl">
+                        <p className="text-[10px] font-black text-warm-sand uppercase tracking-widest mb-1">Seller B2B Price</p>
+                        <p className="text-xl font-display font-bold text-deep-espresso">₹{(commissionModal.product.sellerB2bPrice || commissionModal.product.b2bPrice)?.toLocaleString()}</p>
+                     </div>
+                     <div className="bg-emerald-50/50 p-4 rounded-2xl border border-emerald-100">
+                        <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">Final B2B Price</p>
+                        <p className="text-xl font-display font-bold text-[#240046]">
+                           ₹{Math.round((commissionModal.product.sellerB2bPrice || commissionModal.product.b2bPrice) * (1 + commissionModal.b2bCommission / 100)).toLocaleString()}
+                        </p>
+                     </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest ml-1">Enterprise Commission (%)</label>
+                    <div className="relative">
+                      <input 
+                        type="number"
+                        value={commissionModal.b2bCommission}
+                        onChange={(e) => setCommissionModal({...commissionModal, b2bCommission: Number(e.target.value)})}
+                        className="w-full bg-soft-oatmeal/30 border-2 border-transparent focus:border-emerald-500 rounded-2xl px-6 py-4 text-lg font-bold text-deep-espresso outline-none transition-all"
+                      />
+                      <span className="absolute right-6 top-1/2 -translate-y-1/2 text-emerald-600 font-bold">%</span>
+                    </div>
+                  </div>
+                </>
+              )}
+
               <div className="flex gap-4 pt-4">
                 <button 
-                  onClick={() => setCommissionModal({ open: false, product: null, commission: 2 })}
+                  onClick={() => setCommissionModal({ open: false, product: null, commission: 2, b2bCommission: 2 })}
                   className="flex-1 px-6 py-4 rounded-2xl font-bold text-xs uppercase tracking-widest text-deep-espresso bg-soft-oatmeal/50 hover:bg-soft-oatmeal/70 transition-all"
                 >
                   Cancel
                 </button>
                 <button 
-                  onClick={() => handleApprove(commissionModal.product._id, 'approved', commissionModal.commission)}
+                  onClick={() => handleApprove(commissionModal.product._id, 'approved', commissionModal.commission, commissionModal.b2bCommission)}
                   className="flex-1 px-6 py-4 rounded-2xl font-black text-xs uppercase tracking-[0.2em] text-white bg-emerald-600 hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-900/20 active:scale-95"
                 >
                   Confirm & Approve

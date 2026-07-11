@@ -168,7 +168,25 @@ class WalletService {
 
       // Dynamically load commission rate from SystemSettings
       let settings = await SystemSettings.findOne().session(session);
-      const commissionRate = (settings && settings.salesCommissionRate !== undefined) ? settings.salesCommissionRate / 100 : 0.10;
+      
+      // Determine if order was placed by an enterpriser
+      let userType = 'customer';
+      if (order.user) {
+        const User = require('../models/User');
+        const userObj = await User.findById(order.user).select('userType').session(session);
+        if (userObj && userObj.userType) {
+          userType = userObj.userType;
+        }
+      }
+
+      let commissionRate = 0.10;
+      if (settings) {
+        if (userType === 'enterpriser') {
+          commissionRate = (settings.b2bCommissionRate !== undefined) ? settings.b2bCommissionRate / 100 : 0.05;
+        } else {
+          commissionRate = (settings.salesCommissionRate !== undefined) ? settings.salesCommissionRate / 100 : 0.10;
+        }
+      }
 
       const subtotal = order.totalPrice;
       const commission = Number((subtotal * commissionRate).toFixed(2));

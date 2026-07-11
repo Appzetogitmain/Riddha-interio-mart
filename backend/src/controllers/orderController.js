@@ -89,7 +89,7 @@ exports.addOrderItems = async (req, res) => {
     }
 
     // 3. Secure backend calculation of all items
-    const checkoutPricing = await pricingService.calculateCartPricing(orderItems);
+    const checkoutPricing = await pricingService.calculateCartPricing(orderItems, req.user.userType);
 
     // 4. Group items by Seller
     const groupedItems = {};
@@ -125,7 +125,8 @@ exports.addOrderItems = async (req, res) => {
       
       // Calculate exact pricing details for this seller order group
       const groupPricing = await pricingService.calculateCartPricing(
-        group.items.map(i => ({ product: i.product, quantity: i.quantity }))
+        group.items.map(i => ({ product: i.product, quantity: i.quantity })),
+        req.user.userType
       );
 
       // Perform secure inter-state vs intra-state tax breakdown

@@ -191,7 +191,8 @@ export const CartProvider = ({ children }) => {
           orderItems: validItems.map(item => ({
             product: item._id || item.id,
             quantity: item.quantity
-          }))
+          })),
+          userType: user?.userType
         };
         const response = await api.post('/orders/calculate-pricing', payload);
         if (response.data.success) {

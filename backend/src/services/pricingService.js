@@ -5,9 +5,10 @@ const Product = require('../models/Product');
  * Prevents price tampering by completely ignoring frontend-supplied prices.
  *
  * @param {Array} items - Cart items to calculate [{ product: 'productId', quantity: 2 }]
+ * @param {String} userType - The role/type of the user (e.g. 'customer', 'enterpriser')
  * @returns {Promise<Object>} Pricing breakdown containing subtotal, taxAmount, shippingPrice, discountAmount, totalPrice, and enrichedItems
  */
-exports.calculateCartPricing = async (items) => {
+exports.calculateCartPricing = async (items, userType = 'customer') => {
   let subtotal = 0; // sum of original price * quantity
   let discountAmount = 0; // sum of (original - display) * quantity
   let taxAmount = 0; // sum of inclusive GST based on product.gstRate
@@ -40,10 +41,21 @@ exports.calculateCartPricing = async (items) => {
     const discountPrice = Number(product.discountPrice) || 0;
     const gstRate = Number(product.gstRate) || 18; // Default to 18% if not configured
 
-    // Selling price: discount price if valid/available, else original price
-    const displayPrice = (discountPrice > 0 && discountPrice < originalPrice)
-      ? discountPrice
-      : originalPrice;
+    // Selling price logic
+    let displayPrice = originalPrice;
+    
+    // Check if eligible for B2B pricing
+    const b2bMinQty = product.b2bMinQty || 1;
+    const isB2bEligible = userType === 'enterpriser' && 
+                          product.b2bPrice && 
+                          product.b2bPrice > 0 && 
+                          qty >= b2bMinQty;
+
+    if (isB2bEligible) {
+      displayPrice = Number(product.b2bPrice);
+    } else if (discountPrice > 0 && discountPrice < originalPrice) {
+      displayPrice = discountPrice;
+    }
 
     const lineOriginal = originalPrice * qty;
     const lineDiscount = (originalPrice - displayPrice) * qty;

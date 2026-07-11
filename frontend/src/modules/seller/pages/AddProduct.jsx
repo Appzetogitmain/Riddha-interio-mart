@@ -91,6 +91,8 @@ const AddProduct = () => {
     images: [], // Array of base64
     videoUrl: "",
     gstRate: "",
+    b2bPrice: "",
+    b2bMinQty: "",
   });
 
   useEffect(() => {
@@ -129,6 +131,8 @@ const AddProduct = () => {
         images: item.images || (item.image ? [item.image] : []), 
         videoUrl: item.videoUrl || "",
         gstRate: item.gstRate || "",
+        b2bPrice: item.b2bPrice || "",
+        b2bMinQty: item.b2bMinQty || "",
       });
     } catch (err) {
       console.error("Failed to load product for edit:", err);
@@ -164,6 +168,8 @@ const AddProduct = () => {
         thickness: item.thickness || "",
         color: item.color || "",
         images: item.images || [],
+        b2bPrice: item.b2bPrice || "",
+        b2bMinQty: item.b2bMinQty || "",
       }));
       setSelection("catalog");
     } catch (err) {
@@ -242,6 +248,14 @@ const AddProduct = () => {
         return '';
       case 'sku':
         if (value && !/^[A-Za-z0-9\-_\/\.]+$/.test(value)) return 'Only letters, numbers, and - _ / . allowed';
+        return '';
+      case 'b2bPrice':
+        if (value === '' || value === undefined || value === null) return 'Enterprise price is required';
+        if (isNaN(Number(value)) || Number(value) <= 0) return 'Must be greater than ₹0';
+        return '';
+      case 'b2bMinQty':
+        if (value === '' || value === undefined || value === null) return 'Enterprise Min Qty is required';
+        if (!Number.isInteger(Number(value)) || Number(value) <= 0) return 'Must be a whole number > 0';
         return '';
       default:
         return '';
@@ -361,7 +375,7 @@ const AddProduct = () => {
     setError("");
 
     // Validate all fields upfront
-    const fieldsToCheck = ['name', 'hsnCode', 'brand', 'description', 'category', 'price', 'countInStock', 'sku', 'discountPrice'];
+    const fieldsToCheck = ['name', 'hsnCode', 'brand', 'description', 'category', 'price', 'countInStock', 'sku', 'discountPrice', 'b2bPrice', 'b2bMinQty'];
     const newTouched = {};
     const newErrors = {};
     fieldsToCheck.forEach(f => {
@@ -421,6 +435,8 @@ const AddProduct = () => {
         discountPrice: formData.discountPrice
           ? Number(formData.discountPrice)
           : undefined,
+        b2bPrice: formData.b2bPrice ? Number(formData.b2bPrice) : undefined,
+        b2bMinQty: formData.b2bMinQty ? Number(formData.b2bMinQty) : undefined,
         countInStock: Number(formData.countInStock),
         images: uploadedUrls,
         videoUrl: finalVideoUrl,
@@ -975,6 +991,40 @@ const AddProduct = () => {
                             Must be between <span className="font-black text-slate-500">₹{Math.ceil(Number(formData.price) * 0.5)}</span> and <span className="font-black text-slate-500">₹{Number(formData.price) - 1}</span>
                           </p>
                         )}
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                            Enterprise Price (₹) <span className="text-red-400">*</span>
+                          </label>
+                          <input
+                            required
+                            type="number"
+                            min="1"
+                            placeholder="0.00"
+                            value={formData.b2bPrice}
+                            onChange={(e) => handleFieldChange('b2bPrice', e.target.value)}
+                            onBlur={() => handleBlur('b2bPrice')}
+                            className={`w-full px-6 py-4 rounded-2xl border-none font-bold text-slate-900 transition-all ${fc('b2bPrice')}`}
+                          />
+                          {fieldErr('b2bPrice')}
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                            Enterprise Min Qty <span className="text-red-400">*</span>
+                          </label>
+                          <input
+                            required
+                            type="number"
+                            min="1"
+                            placeholder="0"
+                            value={formData.b2bMinQty}
+                            onChange={(e) => handleFieldChange('b2bMinQty', e.target.value)}
+                            onBlur={() => handleBlur('b2bMinQty')}
+                            className={`w-full px-6 py-4 rounded-2xl border-none font-bold text-slate-900 transition-all ${fc('b2bMinQty')}`}
+                          />
+                          {fieldErr('b2bMinQty')}
+                        </div>
                       </div>
                       <div className="space-y-2">
                         <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">

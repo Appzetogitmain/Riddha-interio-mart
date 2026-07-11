@@ -330,6 +330,9 @@ exports.createProduct = async (req, res, next) => {
     if (req.body.price) {
       req.body.sellerPrice = req.body.price;
     }
+    if (req.body.b2bPrice) {
+      req.body.sellerB2bPrice = req.body.b2bPrice;
+    }
 
     // Resolve Category, Subcategory, Subsubcategory from Strings to ObjectIds
     if (req.body.category && typeof req.body.category === 'string') {
@@ -406,6 +409,11 @@ exports.updateApprovalStatus = async (req, res, next) => {
     if (adminCommission !== undefined) {
       updateData.adminCommission = adminCommission;
     }
+    
+    const { b2bAdminCommission } = req.body;
+    if (b2bAdminCommission !== undefined) {
+      updateData.b2bAdminCommission = b2bAdminCommission;
+    }
 
     // Recalculate price if approved
     const existingProduct = await Product.findById(id);
@@ -419,6 +427,13 @@ exports.updateApprovalStatus = async (req, res, next) => {
       updateData.price = Math.round(sPrice * (1 + commission / 100));
       updateData.sellerPrice = sPrice;
       updateData.discountPrice = 0; // Clear stale discount — seller price may have changed after commission
+
+      const b2bComm = b2bAdminCommission !== undefined ? b2bAdminCommission : (existingProduct.b2bAdminCommission || 0);
+      const sB2bPrice = existingProduct.sellerB2bPrice || existingProduct.b2bPrice;
+      if (sB2bPrice) {
+         updateData.b2bPrice = Math.round(sB2bPrice * (1 + b2bComm / 100));
+         updateData.sellerB2bPrice = sB2bPrice;
+      }
     }
 
     const product = await Product.findByIdAndUpdate(id, updateData, { new: true });
@@ -605,7 +620,7 @@ exports.updateProduct = async (req, res, next) => {
 
     // If admin is updating, handle commission logic
     if (req.user.role === 'admin') {
-      const { adminCommission, price: newPrice, sellerPrice: newSPrice } = req.body;
+      const { adminCommission, b2bAdminCommission, price: newPrice, sellerPrice: newSPrice, b2bPrice: newB2b, sellerB2bPrice: newSB2b } = req.body;
       
       const sPrice = newSPrice || product.sellerPrice || product.price;
       const commission = adminCommission !== undefined ? adminCommission : product.adminCommission;
@@ -615,6 +630,15 @@ exports.updateProduct = async (req, res, next) => {
         req.body.price = Math.round(sPrice * (1 + commission / 100));
         req.body.sellerPrice = sPrice;
       }
+
+      const sbPrice = newSB2b || product.sellerB2bPrice || product.b2bPrice;
+      const bComm = b2bAdminCommission !== undefined ? b2bAdminCommission : (product.b2bAdminCommission || 0);
+      
+      // If b2bAdminCommission was updated, recalculate b2bPrice
+      if (b2bAdminCommission !== undefined && sbPrice) {
+         req.body.b2bPrice = Math.round(sbPrice * (1 + bComm / 100));
+         req.body.sellerB2bPrice = sbPrice;
+      }
     } else {
       // If seller is updating, update sellerPrice instead of final price if they try to change price
       if (req.body.price) {
@@ -622,8 +646,13 @@ exports.updateProduct = async (req, res, next) => {
         // Keep final price synced but wait for admin to re-approve or just keep commission the same
         req.body.price = Math.round(req.body.price * (1 + product.adminCommission / 100));
       }
+      if (req.body.b2bPrice) {
+        req.body.sellerB2bPrice = req.body.b2bPrice;
+        req.body.b2bPrice = Math.round(req.body.b2bPrice * (1 + (product.b2bAdminCommission || 0) / 100));
+      }
       // Sellers shouldn't touch commission
       delete req.body.adminCommission;
+      delete req.body.b2bAdminCommission;
     }
 
     // Resolve Category, Subcategory, Subsubcategory from Strings to ObjectIds
@@ -760,6 +789,7 @@ exports.createBulkProducts = async (req, res, next) => {
         isApproved,
         approvalStatus,
         sellerPrice: p.price,
+        sellerB2bPrice: p.b2bPrice,
         description: p.description || `${p.name} - Quality product from Riddha Mart.`
       };
     }));

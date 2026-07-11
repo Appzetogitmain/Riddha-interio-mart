@@ -13,6 +13,7 @@ import toast from 'react-hot-toast';
 import ProductCard from '../components/ProductCard';
 import ReviewSection from '../components/ReviewSection';
 import { useWishlist } from '../data/WishlistContext';
+import { useUser } from '../data/UserContext';
 import api from '../../../shared/utils/api';
 import { getDeliveryEstimate } from '../../../shared/utils/delivery';
 
@@ -21,6 +22,7 @@ const ProductDetailsPage = () => {
   const navigate = useNavigate();
   const { addToCart, updateQuantity, getItemQuantity } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
+  const { user } = useUser();
   const [product, setProduct] = useState(null);
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -172,9 +174,11 @@ const ProductDetailsPage = () => {
     });
   }
 
-  const displayPrice = currentVariant ? (currentVariant.discountPrice || currentVariant.price) : (product?._displayPrice ?? product?.price);
+  const isB2bEligible = user?.userType === 'enterpriser' && product?.b2bPrice && Number(product.b2bPrice) > 0;
+  
+  const displayPrice = currentVariant ? (currentVariant.discountPrice || currentVariant.price) : (isB2bEligible ? product.b2bPrice : (product?._displayPrice ?? product?.price));
   const displayBasePrice = currentVariant ? currentVariant.price : product?.price;
-  const hasDiscount = currentVariant ? !!currentVariant.discountPrice : product?._hasDiscount;
+  const hasDiscount = currentVariant ? !!currentVariant.discountPrice : (isB2bEligible ? true : product?._hasDiscount);
   const displaySku = currentVariant ? currentVariant.sku : product?.sku;
 
   return (

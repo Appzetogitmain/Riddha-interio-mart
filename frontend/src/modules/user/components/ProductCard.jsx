@@ -4,6 +4,7 @@ import { FiShoppingCart, FiMinus, FiPlus, FiHeart } from 'react-icons/fi';
 import { motion } from 'framer-motion';
 import { useCart } from '../data/CartContext';
 import { useWishlist } from '../data/WishlistContext';
+import { useUser } from '../data/UserContext';
 import OptimizedImage from '../../../shared/components/OptimizedImage';
 import Button from '../../../shared/components/Button';
 
@@ -67,6 +68,7 @@ const StockIndicator = ({ stock }) => {
 
 const ProductCard = ({ product, index = 0, variant = 'grid' }) => {
   const { addToCart, getItemQuantity, updateQuantity } = useCart();
+  const { user } = useUser();
   const productId = product.id || product._id;
   const quantity = getItemQuantity(productId);
   const isList = variant === 'list';
@@ -77,7 +79,17 @@ const ProductCard = ({ product, index = 0, variant = 'grid' }) => {
   // discountPrice is valid only if > 0, less than full price, and at least 50% of it
   const parsedDiscount = Number(product.discountPrice || 0);
   const validDiscount = parsedDiscount > 0 && parsedDiscount < originalPrice && parsedDiscount >= originalPrice * 0.5;
+  
   let displayPrice = validDiscount ? parsedDiscount : originalPrice;
+  
+  // Apply B2B pricing logic
+  const isB2bEligible = user?.userType === 'enterpriser' && 
+                        product.b2bPrice && 
+                        Number(product.b2bPrice) > 0;
+  
+  if (isB2bEligible) {
+    displayPrice = Number(product.b2bPrice);
+  }
 
   const displayPriceString = displayPrice != null ? Number(displayPrice).toLocaleString() : '0';
   const originalPriceString = originalPrice != null ? Number(originalPrice).toLocaleString() : '0';

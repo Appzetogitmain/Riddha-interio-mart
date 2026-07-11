@@ -33,6 +33,10 @@ const ProductSchema = new mongoose.Schema({
     type: Number,
     default: 0 // Percentage
   },
+  b2bAdminCommission: {
+    type: Number,
+    default: 0
+  },
   gstRate: {
     type: Number,
     default: 18
@@ -42,6 +46,10 @@ const ProductSchema = new mongoose.Schema({
   },
   // B2B pricing — shown when order qualifies as a bulk/B2B order
   b2bPrice: {
+    type: Number,
+    default: null
+  },
+  sellerB2bPrice: {
     type: Number,
     default: null
   },

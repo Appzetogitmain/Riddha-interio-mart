@@ -35,6 +35,21 @@ const SystemSettingsSchema = new mongoose.Schema({
     showBillingDetails: { type: Boolean, default: true },
     showGSTBreakdown: { type: Boolean, default: true },
     invoiceFooterText: { type: String, default: 'This is a computer-generated invoice.' }
+  },
+  trustBarItems: {
+    type: [{
+      iconName: String,
+      title: String,
+      subtitle: String
+    }],
+    default: [
+      { iconName: 'LuAward', title: '500+', subtitle: 'Top Brands' },
+      { iconName: 'LuUsers', title: '1L+', subtitle: 'Happy Customers' },
+      { iconName: 'LuStar', title: '4.7 ★', subtitle: 'Average Rating' },
+      { iconName: 'LuTruck', title: '4 Hours', subtitle: 'Express Delivery' },
+      { iconName: 'LuRotateCcw', title: '10 Days', subtitle: 'Easy Returns' },
+      { iconName: 'LuFileText', title: 'GST Invoice', subtitle: 'For All Orders' }
+    ]
   }
 });
 

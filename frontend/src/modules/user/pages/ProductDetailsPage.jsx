@@ -469,7 +469,7 @@ const ProductDetailsPage = () => {
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-6 pt-5 border-t border-gray-100">
           {[
             { icon: FiShield,   title: 'Secure Payment',  desc: '100% Protected' },
-            { icon: FiRotateCcw,title: 'Easy Returns',    desc: '7-Day Returns' },
+            { icon: FiRotateCcw,title: 'Easy return on manufacturing defect',    desc: '7-Day Returns' },
             { icon: FiStar,     title: 'Expert Support',  desc: '24/7 Available' },
           ].map((item, i) => (
             <div key={i} className="flex items-center gap-3 bg-gray-50 border border-gray-100 p-3">

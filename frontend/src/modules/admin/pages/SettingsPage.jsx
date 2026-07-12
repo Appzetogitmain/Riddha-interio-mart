@@ -8,6 +8,9 @@ import {
   FiSave,
   FiCheck,
   FiRefreshCw,
+  FiPlus,
+  FiTrash2,
+  FiLayout,
 } from "react-icons/fi";
 import api from "../../../shared/utils/api";
 import { toast } from "react-hot-toast";
@@ -49,7 +52,8 @@ const SettingsPage = () => {
       showBillingDetails: true,
       showGSTBreakdown: true,
       invoiceFooterText: "This is a computer-generated invoice."
-    }
+    },
+    trustBarItems: []
   });
 
   // Fetch Admin Profile and Settings on mount
@@ -89,7 +93,8 @@ const SettingsPage = () => {
               showBillingDetails: true,
               showGSTBreakdown: true,
               invoiceFooterText: "This is a computer-generated invoice."
-            }
+            },
+            trustBarItems: settingsRes.data.data.trustBarItems || []
           });
         }
       } catch (err) {
@@ -203,7 +208,7 @@ const SettingsPage = () => {
     if (activeTab === "Profile") handleSaveProfile();
     else if (activeTab === "Security") handleSavePassword();
     else if (activeTab === "Notifications") handleSaveNotifications();
-    else if (activeTab === "System" || activeTab === "Invoice") handleSaveSystemSettings();
+    else if (activeTab === "System" || activeTab === "Invoice" || activeTab === "Homepage") handleSaveSystemSettings();
   };
 
   if (isLoading) {
@@ -229,7 +234,7 @@ const SettingsPage = () => {
         <div className="bg-white rounded-2xl md:rounded-[32px] shadow-xl border border-soft-oatmeal overflow-hidden">
           {/* Tabs header */}
           <div className="flex border-b border-soft-oatmeal px-4 md:px-8 bg-soft-oatmeal/5 overflow-x-auto no-scrollbar">
-            {["Profile", "Notifications", "Security", "System", "Invoice"].map((tab) => (
+            {["Profile", "Notifications", "Security", "System", "Invoice", "Homepage"].map((tab) => (
               <button
                 key={tab}
                 onClick={() => {
@@ -615,6 +620,101 @@ const SettingsPage = () => {
                     ))}
                   </div>
 
+                </div>
+              </div>
+            )}
+
+            {activeTab === "Homepage" && (
+              <div className="space-y-6 max-w-2xl animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xl font-display font-bold text-deep-espresso flex items-center gap-3">
+                    <FiLayout className="text-warm-sand" /> Trust Bar Stats
+                  </h3>
+                  <button 
+                    onClick={() => {
+                      setSystemSettings({
+                        ...systemSettings,
+                        trustBarItems: [...(systemSettings.trustBarItems || []), { iconName: 'LuAward', title: 'New Stat', subtitle: 'Description' }]
+                      });
+                    }}
+                    className="flex items-center gap-2 bg-emerald-50 text-emerald-600 px-4 py-2 rounded-xl text-xs font-bold hover:bg-emerald-100 transition-colors"
+                  >
+                    <FiPlus /> Add Item
+                  </button>
+                </div>
+                
+                <p className="text-xs text-warm-sand mb-4">Manage the statistics and trust badges displayed just below the hero banners on the homepage.</p>
+                
+                <div className="space-y-4">
+                  {(systemSettings.trustBarItems || []).map((item, idx) => (
+                    <div key={idx} className="flex flex-col sm:flex-row items-center gap-4 bg-soft-oatmeal/10 border border-soft-oatmeal p-4 rounded-2xl relative group">
+                      <div className="w-full sm:w-1/3 space-y-2">
+                        <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest pl-1">Icon Type</label>
+                        <select
+                          value={item.iconName}
+                          onChange={(e) => {
+                            const newItems = [...systemSettings.trustBarItems];
+                            newItems[idx].iconName = e.target.value;
+                            setSystemSettings({...systemSettings, trustBarItems: newItems});
+                          }}
+                          className="w-full bg-white border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 font-medium"
+                        >
+                          <option value="LuAward">Award</option>
+                          <option value="LuUsers">Users</option>
+                          <option value="LuStar">Star</option>
+                          <option value="LuTruck">Truck</option>
+                          <option value="LuRotateCcw">Rotate / Returns</option>
+                          <option value="LuFileText">File / Invoice</option>
+                          <option value="LuHeadphones">Headphones / Support</option>
+                          <option value="LuShield">Shield / Secure</option>
+                          <option value="LuCheck">Checkmark</option>
+                        </select>
+                      </div>
+                      
+                      <div className="w-full sm:w-1/3 space-y-2">
+                        <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest pl-1">Highlight Value (e.g. 500+)</label>
+                        <input
+                          type="text"
+                          value={item.title}
+                          onChange={(e) => {
+                            const newItems = [...systemSettings.trustBarItems];
+                            newItems[idx].title = e.target.value;
+                            setSystemSettings({...systemSettings, trustBarItems: newItems});
+                          }}
+                          className="w-full bg-white border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 font-medium"
+                        />
+                      </div>
+                      
+                      <div className="w-full sm:w-1/3 space-y-2">
+                        <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest pl-1">Label (e.g. Top Brands)</label>
+                        <input
+                          type="text"
+                          value={item.subtitle}
+                          onChange={(e) => {
+                            const newItems = [...systemSettings.trustBarItems];
+                            newItems[idx].subtitle = e.target.value;
+                            setSystemSettings({...systemSettings, trustBarItems: newItems});
+                          }}
+                          className="w-full bg-white border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 font-medium"
+                        />
+                      </div>
+                      
+                      <button 
+                        onClick={() => {
+                          const newItems = systemSettings.trustBarItems.filter((_, i) => i !== idx);
+                          setSystemSettings({...systemSettings, trustBarItems: newItems});
+                        }}
+                        className="absolute -top-2 -right-2 sm:static sm:mt-6 bg-red-50 text-red-500 p-2 rounded-full hover:bg-red-100 transition-colors shadow-sm"
+                      >
+                        <FiTrash2 size={16} />
+                      </button>
+                    </div>
+                  ))}
+                  {(!systemSettings.trustBarItems || systemSettings.trustBarItems.length === 0) && (
+                    <div className="p-8 text-center text-warm-sand bg-soft-oatmeal/5 rounded-2xl border border-dashed border-soft-oatmeal">
+                      No Trust Bar items defined. Click "Add Item" to create one.
+                    </div>
+                  )}
                 </div>
               </div>
             )}

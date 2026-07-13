@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FiPlus, FiX, FiEdit3, FiTrash2, FiImage, FiSave, FiChevronDown, FiInfo } from 'react-icons/fi';
 import api from '../../../shared/utils/api';
 
-const SubcategoryModal = ({ category, subcategory, isOpen, onClose, onSave }) => {
+const SubcategoryModal = ({ category, subcategory, isOpen, onClose, onSave, isSaving }) => {
   const [sub, setSub] = useState({ name: '', image: '', description: '' });
   const fileInputRef = useRef(null);
 
@@ -26,8 +26,8 @@ const SubcategoryModal = ({ category, subcategory, isOpen, onClose, onSave }) =>
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
-      if (file.size > 1 * 1024 * 1024) { 
-        alert('Image too large (max 1MB).');
+      if (file.size > 5 * 1024 * 1024) { 
+        alert('Image too large (max 5MB).');
         return;
       }
       const reader = new FileReader();
@@ -62,7 +62,7 @@ const SubcategoryModal = ({ category, subcategory, isOpen, onClose, onSave }) =>
                 </p>
              </div>
            </div>
-           <button onClick={onClose} className="relative z-10 p-3 hover:bg-red-50 hover:text-red-500 rounded-2xl transition-all text-warm-sand/60">
+           <button onClick={onClose} disabled={isSaving} className="relative z-10 p-3 hover:bg-red-50 hover:text-red-500 rounded-2xl transition-all text-warm-sand/60 disabled:opacity-50">
              <FiX size={24} />
            </button>
         </div>
@@ -75,10 +75,11 @@ const SubcategoryModal = ({ category, subcategory, isOpen, onClose, onSave }) =>
                   type="file" accept="image/*" className="hidden"
                   ref={fileInputRef}
                   onChange={handleImageUpload}
+                  disabled={isSaving}
                 />
                 <div 
-                  onClick={() => fileInputRef.current.click()}
-                  className="aspect-square w-full rounded-2xl bg-soft-oatmeal/10 border-2 border-dashed border-soft-oatmeal/40 flex flex-col items-center justify-center cursor-pointer hover:bg-soft-oatmeal/20 transition-all overflow-hidden relative"
+                  onClick={() => !isSaving && fileInputRef.current.click()}
+                  className={`aspect-square w-full rounded-2xl bg-soft-oatmeal/10 border-2 border-dashed border-soft-oatmeal/40 flex flex-col items-center justify-center cursor-pointer hover:bg-soft-oatmeal/20 transition-all overflow-hidden relative ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   {sub.image ? (
                     <img src={sub.image} alt="Preview" className="w-full h-full object-cover" />
@@ -88,7 +89,7 @@ const SubcategoryModal = ({ category, subcategory, isOpen, onClose, onSave }) =>
                       <span className="text-[10px] font-black uppercase tracking-widest text-warm-sand/60">Upload Photo</span>
                     </div>
                   )}
-                  {sub.image && (
+                  {sub.image && !isSaving && (
                     <div className="absolute inset-0 bg-deep-espresso/20 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
                       <span className="text-[10px] font-black text-white uppercase tracking-widest">Change Image</span>
                     </div>
@@ -102,14 +103,16 @@ const SubcategoryModal = ({ category, subcategory, isOpen, onClose, onSave }) =>
                     <input 
                       type="text" value={sub.name} onChange={(e) => handleChange('name', e.target.value)}
                       placeholder="e.g. Chandeliers" 
-                      className="w-full bg-white border border-soft-oatmeal/40 rounded-xl px-4 py-4 text-sm focus:ring-2 focus:ring-warm-sand/20 outline-none transition-all font-medium"
+                      disabled={isSaving}
+                      className="w-full bg-white border border-soft-oatmeal/40 rounded-xl px-4 py-4 text-sm focus:ring-2 focus:ring-warm-sand/20 outline-none transition-all font-medium disabled:opacity-50"
                     />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-[9px] font-black text-warm-sand uppercase tracking-widest">Description</label>
                   <textarea 
                     rows="4" value={sub.description} onChange={(e) => handleChange('description', e.target.value)}
-                    className="w-full bg-white border border-soft-oatmeal/40 rounded-xl px-4 py-4 text-sm focus:ring-2 focus:ring-warm-sand/20 outline-none transition-all font-medium resize-none"
+                    disabled={isSaving}
+                    className="w-full bg-white border border-soft-oatmeal/40 rounded-xl px-4 py-4 text-sm focus:ring-2 focus:ring-warm-sand/20 outline-none transition-all font-medium resize-none disabled:opacity-50"
                   />
                 </div>
               </div>
@@ -118,13 +121,22 @@ const SubcategoryModal = ({ category, subcategory, isOpen, onClose, onSave }) =>
         </div>
 
         <div className="p-8 bg-white border-t border-soft-oatmeal flex gap-4">
-          <button onClick={onClose} className="flex-1 py-4 text-[10px] font-black uppercase tracking-[0.25em] text-warm-sand hover:text-red-500 transition-colors">Discard</button>
+          <button onClick={onClose} disabled={isSaving} className="flex-1 py-4 text-[10px] font-black uppercase tracking-[0.25em] text-warm-sand hover:text-red-500 transition-colors disabled:opacity-50">Discard</button>
           <button 
             onClick={() => onSave(sub)}
-            disabled={!sub.name.trim()}
-            className="px-16 bg-deep-espresso text-white py-4 rounded-[20px] font-black uppercase tracking-[0.2em] text-[10px] shadow-xl hover:bg-dusty-cocoa disabled:bg-soft-oatmeal/40 disabled:cursor-not-allowed transition-all flex items-center gap-3"
+            disabled={!sub.name.trim() || isSaving}
+            className="px-16 bg-deep-espresso text-white py-4 rounded-[20px] font-black uppercase tracking-[0.2em] text-[10px] shadow-xl hover:bg-dusty-cocoa disabled:bg-soft-oatmeal/40 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-3 min-w-[200px]"
           >
-            <FiSave size={18} /> {subcategory ? 'Save Changes' : 'Add Record'}
+            {isSaving ? (
+              <span className="flex items-center gap-2">
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                Saving...
+              </span>
+            ) : (
+              <>
+                <FiSave size={18} /> {subcategory ? 'Save Changes' : 'Add Record'}
+              </>
+            )}
           </button>
         </div>
       </motion.div>
@@ -237,6 +249,7 @@ const ManageCategories = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, categoryId: null, categoryName: null });
   const [errorModal, setErrorModal] = useState({ isOpen: false, title: '', message: '' });
+  const [isSavingSubcategory, setIsSavingSubcategory] = useState(false);
 
   useEffect(() => {
     fetchCategories();
@@ -288,6 +301,7 @@ const ManageCategories = () => {
   );
 
   const handleUpdateSubcategories = async (categoryId, updatedSubs) => {
+    setIsSavingSubcategory(true);
     try {
       const response = await api.put(`/categories/${categoryId}`, {
         subcategories: updatedSubs
@@ -297,7 +311,9 @@ const ManageCategories = () => {
         setEditingSubcategory({ category: null, sub: null, index: -1 });
       }
     } catch (err) {
-      alert('Failed to update subcategories');
+      alert(err.response?.data?.error || err.response?.data?.message || err.message || 'Failed to update subcategories');
+    } finally {
+      setIsSavingSubcategory(false);
     }
   };
 
@@ -408,6 +424,7 @@ const ManageCategories = () => {
             category={editingSubcategory.category}
             subcategory={editingSubcategory.sub}
             isOpen={!!editingSubcategory.category}
+            isSaving={isSavingSubcategory}
             onClose={() => setEditingSubcategory({ category: null, sub: null, index: -1 })}
             onSave={(updatedSub) => {
               const cat = editingSubcategory.category;

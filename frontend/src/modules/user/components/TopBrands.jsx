@@ -54,7 +54,7 @@ const TopBrands = ({ title }) => {
 
         <div className="relative z-10 px-4 sm:px-6 md:px-8 pb-6 md:pb-8 pt-5">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 lg:gap-5">
-            {brands.map((brand) => (
+            {brands.slice(0, 8).map((brand) => (
               <Link
                 key={brand._id}
                 to={`/brand/${brand.slug || brand.name.toLowerCase().replace(/\s+/g, '-')}`}

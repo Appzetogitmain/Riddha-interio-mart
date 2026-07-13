@@ -80,7 +80,7 @@ const CategoriesPage = () => {
                   <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#189D91] rounded-r-md"></div>
                 )}
                 
-                <div className={`w-12 h-12 md:w-16 md:h-16 rounded-full overflow-hidden bg-gray-50 mb-1.5 md:mb-2 shadow-sm ${isActive ? (cat.isSpecial ? 'ring-2 ring-blue-500' : 'ring-2 ring-[#189D91]') : 'ring-1 ring-gray-200'} ${cat.isSpecial ? 'bg-blue-50/50 p-2' : ''}`}>
+                <div className={`w-12 h-12 md:w-16 md:h-16 rounded-xl overflow-hidden bg-gray-50 mb-1.5 md:mb-2 shadow-sm ${isActive ? (cat.isSpecial ? 'ring-2 ring-blue-500' : 'ring-2 ring-[#189D91]') : 'ring-1 ring-gray-200'} ${cat.isSpecial ? 'bg-blue-50/50 p-2' : ''}`}>
                   <img
                     src={cat.image}
                     alt={cat.name}

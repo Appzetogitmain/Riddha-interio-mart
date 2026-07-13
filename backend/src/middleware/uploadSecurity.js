@@ -11,10 +11,10 @@ if (!fs.existsSync(TEMP_DIR)) {
   fs.mkdirSync(TEMP_DIR, { recursive: true });
 }
 
-// 1. Upload Rate Limiter: Max 60 requests per 15 minutes per IP
+// 1. Upload Rate Limiter: Max 500 requests per 15 minutes per IP
 const uploadRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 60, // limit each IP to 60 requests per windowMs (6 docs × retries per registration)
+  max: 500, // Increased limit to allow bulk subcategory uploads
   message: {
     success: false,
     error: 'Too many file upload requests from this IP. Please try again after 15 minutes.'
@@ -52,8 +52,8 @@ const ALLOWED_SIGNATURES = {
   '25504446': { mime: 'application/pdf', ext: ['.pdf'] }
 };
 
-const ALLOWED_HEIF_EXTENSIONS = ['.heic', '.heif'];
-const ALLOWED_HEIF_BRANDS = ['heic', 'heix', 'hevc', 'hevx', 'heim', 'heis', 'mif1', 'msf1'];
+const ALLOWED_HEIF_EXTENSIONS = ['.heic', '.heif', '.avif'];
+const ALLOWED_HEIF_BRANDS = ['heic', 'heix', 'hevc', 'hevx', 'heim', 'heis', 'mif1', 'msf1', 'avif', 'avis'];
 
 /**
  * Validates the binary header signature of a file.
@@ -105,11 +105,11 @@ const uploadParser = multer({
   },
   fileFilter: (req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();
-    const allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif', '.mp4', '.mov', '.avi', '.pdf'];
+    const allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif', '.avif', '.mp4', '.mov', '.avi', '.pdf'];
 
     // Extension validation
     if (!allowedExtensions.includes(ext)) {
-      return cb(new Error(`Extension not allowed: ${ext}. Supported types: Images (JPG, PNG, WEBP, HEIC, HEIF), Videos (MP4, MOV), and PDFs.`), false);
+      return cb(new Error(`Extension not allowed: ${ext}. Supported types: Images (JPG, PNG, WEBP, HEIC, HEIF, AVIF), Videos (MP4, MOV), and PDFs.`), false);
     }
     cb(null, true);
   }

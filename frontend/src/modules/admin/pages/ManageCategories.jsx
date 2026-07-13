@@ -4,6 +4,7 @@ import PageWrapper from '../components/PageWrapper';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiPlus, FiX, FiEdit3, FiTrash2, FiImage, FiSave, FiChevronDown, FiInfo } from 'react-icons/fi';
 import api from '../../../shared/utils/api';
+import { uploadImage } from '../../../shared/utils/upload';
 
 const SubcategoryModal = ({ category, subcategory, isOpen, onClose, onSave, isSaving }) => {
   const [sub, setSub] = useState({ name: '', image: '', description: '' });
@@ -303,8 +304,19 @@ const ManageCategories = () => {
   const handleUpdateSubcategories = async (categoryId, updatedSubs) => {
     setIsSavingSubcategory(true);
     try {
+      // Find and upload any base64 images before saving
+      const processedSubs = await Promise.all(
+        updatedSubs.map(async (sub) => {
+          if (sub.image && sub.image.startsWith('data:image')) {
+            const uploadedUrl = await uploadImage(sub.image);
+            return { ...sub, image: uploadedUrl };
+          }
+          return sub;
+        })
+      );
+
       const response = await api.put(`/categories/${categoryId}`, {
-        subcategories: updatedSubs
+        subcategories: processedSubs
       });
       if (response.data.success) {
         setCategories(categories.map(c => c._id === categoryId ? response.data.data : c));

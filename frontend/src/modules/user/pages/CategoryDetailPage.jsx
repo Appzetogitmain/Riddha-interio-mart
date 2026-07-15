@@ -123,7 +123,7 @@ const CategoryDetailPage = () => {
                         to={`/category/${slug}?sub=${encodeURIComponent(activeSub.name)}`}
                         className="group flex flex-col items-center min-w-[64px] md:min-w-[76px]"
                       >
-                        <div className={`w-14 h-14 md:w-16 md:h-16 rounded-full overflow-hidden mb-2.5 border-2 transition-all flex items-center justify-center bg-soft-oatmeal/10 ${!subSubFilter ? 'border-[#0D5C55] shadow-md scale-105' : 'border-transparent group-hover:border-[#0D5C55]/30'}`}>
+                        <div className={`w-14 h-14 md:w-16 md:h-16 rounded-full overflow-hidden mb-2.5 border transition-all flex items-center justify-center bg-soft-oatmeal/10 ${!subSubFilter ? 'border-[#0D5C55] shadow-md scale-105' : 'border-[#0D5C55]/30 group-hover:border-[#0D5C55]/50'}`}>
                           <span className={`text-[10px] md:text-[11px] font-bold ${!subSubFilter ? 'text-[#0D5C55]' : 'text-deep-espresso/50'}`}>ALL</span>
                         </div>
                         <span className={`text-[9.5px] md:text-[11px] font-bold text-center uppercase tracking-wider transition-colors leading-tight ${!subSubFilter ? 'text-[#0D5C55]' : 'text-deep-espresso/50 group-hover:text-[#0D5C55]'}`}>All {activeSub.name}</span>
@@ -137,7 +137,7 @@ const CategoryDetailPage = () => {
                             to={`/category/${slug}?sub=${encodeURIComponent(activeSub.name)}&subsub=${encodeURIComponent(ss.name)}`}
                             className="group flex flex-col items-center min-w-[64px] md:min-w-[76px]"
                           >
-                            <div className={`w-14 h-14 md:w-16 md:h-16 rounded-full overflow-hidden mb-2.5 border-2 transition-all p-[2px] ${isSubSubActive ? 'border-[#0D5C55] shadow-md scale-105' : 'border-transparent group-hover:border-[#0D5C55]/30'}`}>
+                            <div className={`w-14 h-14 md:w-16 md:h-16 rounded-full overflow-hidden mb-2.5 border transition-all p-[2px] ${isSubSubActive ? 'border-[#0D5C55] shadow-md scale-105' : 'border-deep-espresso/30 group-hover:border-deep-espresso/50'}`}>
                               <img
                                 src={ss.image && !ss.image.startsWith('C:') ? ss.image : 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=400&q=80'}
                                 alt={ss.name}
@@ -233,7 +233,7 @@ const CategoryDetailPage = () => {
                         to={`/category/${slug}?sub=${encodeURIComponent(sub.name)}`}
                         className="group flex flex-col items-center min-w-[70px] lg:min-w-0"
                       >
-                        <div className={`w-16 h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 rounded-2xl overflow-hidden mb-2 border-2 transition-all ${isSubActive ? 'border-deep-espresso shadow-md scale-105' : 'border-transparent group-hover:border-soft-oatmeal/50'}`}>
+                        <div className={`w-16 h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 rounded-2xl overflow-hidden mb-2 border transition-all p-0.5 ${isSubActive ? 'border-deep-espresso shadow-md scale-105' : 'border-deep-espresso/30 group-hover:border-deep-espresso/50'}`}>
                           <img
                             src={sub.image && !sub.image.startsWith('C:') ? sub.image : 'https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?w=400&q=80'}
                             alt={sub.name}

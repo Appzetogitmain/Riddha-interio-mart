@@ -19,6 +19,12 @@ import api from '../../../shared/utils/api';
 import { toast } from 'react-hot-toast';
 
 const ManageUserPage = ({ type }) => {
+  const [currentTab, setCurrentTab] = useState(type || 'customer');
+  
+  useEffect(() => {
+    setCurrentTab(type || 'customer');
+  }, [type]);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -39,7 +45,7 @@ const ManageUserPage = ({ type }) => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const res = await api.get(`/auth/admin/users`, { params: { userType: type } });
+      const res = await api.get(`/auth/admin/users`, { params: { userType: currentTab } });
       setUsers(res.data.data);
     } catch (err) {
       console.error('Failed to fetch users:', err);
@@ -55,7 +61,7 @@ const ManageUserPage = ({ type }) => {
     setSelectedUserDetail(null);
     setStatusFilter('all');
     setOrderFilter('all');
-  }, [type]);
+  }, [currentTab]);
 
   // Load real-time order history for selected customer/enterpriser
   useEffect(() => {
@@ -141,10 +147,10 @@ const ManageUserPage = ({ type }) => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
             <h1 className="text-2xl md:text-3xl lg:text-4xl font-display font-bold text-deep-espresso capitalize">
-              {type === 'customer' ? 'Individual Customers' : 'Enterprisers'}
+              Customer Management
             </h1>
             <p className="text-warm-sand text-sm md:text-base">
-              Manage your registered {type === 'customer' ? 'retail customers' : 'business partners'}.
+              Manage your registered retail customers and business partners.
             </p>
           </div>
           <div className="flex gap-4">
@@ -157,6 +163,22 @@ const ManageUserPage = ({ type }) => {
               <span className="text-lg font-bold text-red-600">{users.filter(u => u.isBlocked).length}</span>
             </div>
           </div>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex border-b border-soft-oatmeal">
+          <button
+            onClick={() => setCurrentTab('customer')}
+            className={`px-6 py-3 font-bold uppercase tracking-widest text-xs border-b-2 transition-all ${currentTab === 'customer' ? 'border-deep-espresso text-deep-espresso' : 'border-transparent text-warm-sand hover:text-deep-espresso'}`}
+          >
+            Individual Customers
+          </button>
+          <button
+            onClick={() => setCurrentTab('enterpriser')}
+            className={`px-6 py-3 font-bold uppercase tracking-widest text-xs border-b-2 transition-all ${currentTab === 'enterpriser' ? 'border-deep-espresso text-deep-espresso' : 'border-transparent text-warm-sand hover:text-deep-espresso'}`}
+          >
+            Enterprise Users
+          </button>
         </div>
 
         {/* Toolbar */}
@@ -237,7 +259,7 @@ const ManageUserPage = ({ type }) => {
               <div className="w-16 h-16 bg-soft-oatmeal/30 rounded-3xl flex items-center justify-center text-warm-sand mb-4">
                 <LuUser size={32} />
               </div>
-              <h3 className="text-xl font-bold text-deep-espresso">No {type === 'customer' ? 'Customers' : 'Enterprisers'} Found</h3>
+              <h3 className="text-xl font-bold text-deep-espresso">No {currentTab === 'customer' ? 'Customers' : 'Enterprise Users'} Found</h3>
               <p className="text-warm-sand text-sm mt-1">Try adjusting search criteria or toggling filters.</p>
             </div>
           ) : (
@@ -246,7 +268,7 @@ const ManageUserPage = ({ type }) => {
                 <thead className="bg-soft-oatmeal/20 border-b border-soft-oatmeal">
                   <tr>
                     <th className="px-6 py-5 text-[10px] font-black text-warm-sand uppercase tracking-widest">Account Details</th>
-                    {type === 'enterpriser' && (
+                    {currentTab === 'enterpriser' && (
                       <th className="px-6 py-5 text-[10px] font-black text-warm-sand uppercase tracking-widest">Business Info</th>
                     )}
                     <th className="px-6 py-5 text-[10px] font-black text-warm-sand uppercase tracking-widest">Contact</th>
@@ -262,7 +284,7 @@ const ManageUserPage = ({ type }) => {
                         <div className="flex items-center gap-4">
                           <button 
                             onClick={() => setSelectedUserDetail(user)}
-                            className={`w-12 h-12 rounded-2xl ${user.isBlocked ? 'bg-red-100 text-red-750' : type === 'enterpriser' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'} flex items-center justify-center font-bold text-lg hover:scale-105 transition-transform active:scale-95`}
+                            className={`w-12 h-12 rounded-2xl ${user.isBlocked ? 'bg-red-100 text-red-750' : currentTab === 'enterpriser' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'} flex items-center justify-center font-bold text-lg hover:scale-105 transition-transform active:scale-95`}
                           >
                             {user.fullName[0].toUpperCase()}
                           </button>
@@ -274,15 +296,15 @@ const ManageUserPage = ({ type }) => {
                               {user.fullName}
                             </p>
                             <div className="flex items-center gap-1.5 mt-1">
-                               <span className={`text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-md ${type === 'enterpriser' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
-                                  {type === 'customer' ? 'Individual' : 'Enterpriser'}
+                               <span className={`text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-md ${currentTab === 'enterpriser' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                                  {currentTab === 'customer' ? 'Individual' : 'Enterprise'}
                                </span>
                                <span className="text-[9px] text-warm-sand font-medium">#{user._id.slice(-6).toUpperCase()}</span>
                             </div>
                           </div>
                         </div>
                       </td>
-                      {type === 'enterpriser' && (
+                      {currentTab === 'enterpriser' && (
                         <td className="px-6 py-5">
                           <div className="space-y-1.5">
                             <div className="flex items-center gap-2 text-sm font-bold text-deep-espresso">
@@ -385,13 +407,29 @@ const ManageUserPage = ({ type }) => {
       {/* 📱 MOBILE VIEW: Customer Directory */}
       <div className="block lg:hidden w-full max-w-2xl mx-auto bg-[#FAFAFA] min-h-[85vh] md:rounded-3xl md:border md:border-soft-oatmeal md:shadow-md overflow-hidden flex flex-col font-sans">
         {/* Mobile Header */}
-        <div className="bg-white text-deep-espresso px-5 pt-6 pb-6 rounded-b-[24px] border-b border-soft-oatmeal flex items-center justify-between shrink-0 shadow-sm">
+        <div className="bg-white text-deep-espresso px-5 pt-6 pb-4 border-b border-soft-oatmeal flex items-center justify-between shrink-0 shadow-sm">
           <div className="flex items-center gap-2">
             <h1 className="text-sm font-black uppercase tracking-wider text-deep-espresso">
-              {type === 'customer' ? 'Individual Customers' : 'Enterprisers'}
+              Customer Management
             </h1>
           </div>
           <span className="text-[9px] font-black uppercase tracking-widest bg-soft-oatmeal text-warm-sand px-2.5 py-1 rounded-lg border border-soft-oatmeal/50">Admin</span>
+        </div>
+        
+        {/* Mobile Tabs */}
+        <div className="flex bg-white border-b border-soft-oatmeal rounded-b-[24px]">
+          <button
+            onClick={() => setCurrentTab('customer')}
+            className={`flex-1 py-3 font-bold uppercase tracking-widest text-[10px] border-b-2 transition-all ${currentTab === 'customer' ? 'border-deep-espresso text-deep-espresso' : 'border-transparent text-warm-sand'}`}
+          >
+            Individual
+          </button>
+          <button
+            onClick={() => setCurrentTab('enterpriser')}
+            className={`flex-1 py-3 font-bold uppercase tracking-widest text-[10px] border-b-2 transition-all ${currentTab === 'enterpriser' ? 'border-deep-espresso text-deep-espresso' : 'border-transparent text-warm-sand'}`}
+          >
+            Enterprise
+          </button>
         </div>
 
         {/* Toolbar & Search */}
@@ -483,7 +521,7 @@ const ManageUserPage = ({ type }) => {
                   <div className="flex items-center gap-3">
                     <button 
                       onClick={() => setSelectedUserDetail(user)}
-                      className={`w-11 h-11 rounded-xl ${user.isBlocked ? 'bg-red-100 text-red-750' : type === 'enterpriser' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'} flex items-center justify-center font-bold text-sm shrink-0`}
+                      className={`w-11 h-11 rounded-xl ${user.isBlocked ? 'bg-red-100 text-red-750' : currentTab === 'enterpriser' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'} flex items-center justify-center font-bold text-sm shrink-0`}
                     >
                       {user.fullName[0].toUpperCase()}
                     </button>
@@ -544,7 +582,7 @@ const ManageUserPage = ({ type }) => {
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
               {/* Profile Card Summary */}
               <div className="flex items-center gap-4 bg-soft-oatmeal/10 p-4 rounded-2xl border border-soft-oatmeal/50">
-                <div className={`w-14 h-14 rounded-2xl ${selectedUserDetail.isBlocked ? 'bg-red-100 text-red-750' : type === 'enterpriser' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'} flex items-center justify-center font-bold text-xl`}>
+                <div className={`w-14 h-14 rounded-2xl ${selectedUserDetail.isBlocked ? 'bg-red-100 text-red-750' : currentTab === 'enterpriser' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'} flex items-center justify-center font-bold text-xl`}>
                   {selectedUserDetail.fullName[0].toUpperCase()}
                 </div>
                 <div>
@@ -558,7 +596,7 @@ const ManageUserPage = ({ type }) => {
                       {selectedUserDetail.isBlocked ? 'Blocked' : 'Active'}
                     </span>
                     <span className="text-[8px] font-black uppercase tracking-widest bg-slate-100 text-slate-600 px-2 py-0.5 rounded border border-slate-200">
-                      {type === 'customer' ? 'Customer' : 'Enterpriser'}
+                      {currentTab === 'customer' ? 'Customer' : 'Enterprise'}
                     </span>
                   </div>
                 </div>
@@ -582,7 +620,7 @@ const ManageUserPage = ({ type }) => {
                       {new Date(selectedUserDetail.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                     </span>
                   </div>
-                  {type === 'enterpriser' && (
+                  {currentTab === 'enterpriser' && (
                     <>
                       <div className="flex justify-between text-xs font-bold">
                         <span className="text-warm-sand uppercase tracking-wider text-[9px]">Store Name</span>

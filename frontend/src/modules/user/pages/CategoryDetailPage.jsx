@@ -118,15 +118,12 @@ const CategoryDetailPage = () => {
               if (activeSub && activeSub.subsubcategories && activeSub.subsubcategories.length > 0) {
                 return (
                   <div className="mb-6 md:mb-8">
-                    <div className="flex overflow-x-auto no-scrollbar gap-5 md:gap-8 pb-3">
+                    <div className="flex overflow-x-auto no-scrollbar gap-3 md:gap-4 pb-3 items-center">
                       <Link
                         to={`/category/${slug}?sub=${encodeURIComponent(activeSub.name)}`}
-                        className="group flex flex-col items-center min-w-[64px] md:min-w-[76px]"
+                        className={`px-5 py-2 md:px-6 md:py-2.5 rounded-full text-[10px] md:text-[11px] font-bold uppercase tracking-wider whitespace-nowrap transition-all border ${!subSubFilter ? 'bg-[#0D5C55] text-white border-[#0D5C55] shadow-md' : 'bg-soft-oatmeal/10 text-deep-espresso/70 border-gray-200 hover:border-[#0D5C55]/30 hover:text-[#0D5C55]'}`}
                       >
-                        <div className={`w-14 h-14 md:w-16 md:h-16 rounded-full overflow-hidden mb-2.5 border transition-all flex items-center justify-center bg-soft-oatmeal/10 ${!subSubFilter ? 'border-[#0D5C55] shadow-md scale-105' : 'border-[#0D5C55]/30 group-hover:border-[#0D5C55]/50'}`}>
-                          <span className={`text-[10px] md:text-[11px] font-bold ${!subSubFilter ? 'text-[#0D5C55]' : 'text-deep-espresso/50'}`}>ALL</span>
-                        </div>
-                        <span className={`text-[9.5px] md:text-[11px] font-bold text-center uppercase tracking-wider transition-colors leading-tight ${!subSubFilter ? 'text-[#0D5C55]' : 'text-deep-espresso/50 group-hover:text-[#0D5C55]'}`}>All {activeSub.name}</span>
+                        All {activeSub.name}
                       </Link>
                       
                       {activeSub.subsubcategories.map(ss => {
@@ -135,16 +132,9 @@ const CategoryDetailPage = () => {
                           <Link
                             key={ss._id}
                             to={`/category/${slug}?sub=${encodeURIComponent(activeSub.name)}&subsub=${encodeURIComponent(ss.name)}`}
-                            className="group flex flex-col items-center min-w-[64px] md:min-w-[76px]"
+                            className={`px-5 py-2 md:px-6 md:py-2.5 rounded-full text-[10px] md:text-[11px] font-bold uppercase tracking-wider whitespace-nowrap transition-all border ${isSubSubActive ? 'bg-[#0D5C55] text-white border-[#0D5C55] shadow-md' : 'bg-soft-oatmeal/10 text-deep-espresso/70 border-gray-200 hover:border-[#0D5C55]/30 hover:text-[#0D5C55]'}`}
                           >
-                            <div className={`w-14 h-14 md:w-16 md:h-16 rounded-full overflow-hidden mb-2.5 border transition-all p-[2px] ${isSubSubActive ? 'border-[#0D5C55] shadow-md scale-105' : 'border-deep-espresso/30 group-hover:border-deep-espresso/50'}`}>
-                              <img
-                                src={ss.image && !ss.image.startsWith('C:') ? ss.image : 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=400&q=80'}
-                                alt={ss.name}
-                                className="w-full h-full object-cover rounded-full"
-                              />
-                            </div>
-                            <span className={`text-[9.5px] md:text-[11px] font-bold text-center uppercase tracking-wider transition-colors leading-tight ${isSubSubActive ? 'text-[#0D5C55]' : 'text-deep-espresso/50 group-hover:text-[#0D5C55]'}`}>{ss.name}</span>
+                            {ss.name}
                           </Link>
                         );
                       })}

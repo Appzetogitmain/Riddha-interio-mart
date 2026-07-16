@@ -452,6 +452,15 @@ const AddProduct = () => {
       }
 
       if (res.data.success) {
+        // Auto-submit the product to admin for approval if it's a new product
+        if (!id) {
+          try {
+            await api.post("/product-batches");
+          } catch (batchErr) {
+            console.error("Auto-submit to admin failed:", batchErr);
+          }
+        }
+
         setSuccess(true);
         setTimeout(() => {
           setSuccess(false);
@@ -539,8 +548,8 @@ const AddProduct = () => {
                       Select From Catalog
                     </h3>
                     <p className="text-slate-500 text-sm font-medium mt-3 leading-relaxed">
-                      Map your stock to an existing master catalog item. Instant
-                      approval and listing.
+                      Map your stock to an existing master catalog item.
+                      Requires moderator review for commission setup.
                     </p>
                   </div>
                   <div className="pt-4 flex items-center gap-2 text-xs font-bold text-seller-primary uppercase tracking-widest">
@@ -579,7 +588,7 @@ const AddProduct = () => {
                       <Info size={12} />{" "}
                       {selection === "new"
                         ? "Pending Approval"
-                        : "Auto-Approved"}
+                        : "Pending Approval"}
                     </span>
                     <div className="w-1 h-1 rounded-full bg-slate-300"></div>
                     <span className="text-[10px] font-bold text-seller-primary uppercase tracking-widest">
@@ -940,8 +949,9 @@ const AddProduct = () => {
 
                     <div className="space-y-6">
                       <div className="space-y-2">
-                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest relative group">
                           Base Rate (₹) <span className="text-red-400">*</span>
+                          <span className="invisible group-hover:visible absolute left-0 -top-8 w-max bg-slate-800 text-white text-[10px] rounded px-2 py-1 shadow-lg normal-case tracking-normal z-10">Platform commission will be automatically applied to your base price</span>
                         </label>
                         <input
                           required
@@ -994,8 +1004,9 @@ const AddProduct = () => {
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest relative group">
                             Enterprise Price (₹) <span className="text-red-400">*</span>
+                            <span className="invisible group-hover:visible absolute left-0 -top-8 w-max bg-slate-800 text-white text-[10px] rounded px-2 py-1 shadow-lg normal-case tracking-normal z-10">Platform commission will be automatically applied to your base price</span>
                           </label>
                           <input
                             required

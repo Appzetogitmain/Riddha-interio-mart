@@ -311,14 +311,15 @@ exports.createProduct = async (req, res, next) => {
     // Automatically set seller and sellerType based on role if not provided
     if (!req.body.seller) {
       req.body.seller = req.user.id;
-      req.body.sellerType = req.user.role === 'admin' ? 'Admin' : 'Seller';
+      if (!req.body.sellerType) {
+        req.body.sellerType = req.user.role === 'admin' ? 'Admin' : 'Seller';
+      }
     }
 
     // Handle Auto-approval logic
-    // 1. Admin added products are auto-approved
-    // 2. Catalog products are auto-approved
-    // 3. New products from sellers need approval
-    if (req.user.role === 'admin' || source === 'catalog') {
+    // 1. Admin added products via Admin Panel (sends isApproved: true) are auto-approved
+    // 2. Products added via Seller Panel (no isApproved flag) need approval, even if added by Admin
+    if (req.user.role === 'admin' && req.body.isApproved === true) {
       req.body.isApproved = true;
       req.body.approvalStatus = 'approved';
     } else {
@@ -361,15 +362,33 @@ exports.createProduct = async (req, res, next) => {
                     } else delete req.body.subsubcategory;
                   }
                 }
-              } else delete req.body.subcategory;
+              } else {
+                delete req.body.subcategory;
+                delete req.body.subsubcategory;
+              }
             }
+          } else {
+            // If there's no subcategory, we can't have a subsubcategory
+            delete req.body.subsubcategory;
           }
         } else {
           // If category not found, we can't save it because it's required to be an ObjectId
           // Or we create a new one? For now, if not found, we delete it to trigger validation error
           delete req.body.category;
+          delete req.body.subcategory;
+          delete req.body.subsubcategory;
         }
       }
+    }
+
+    // Safety net: ensure any remaining subcategory/subsubcategory are valid ObjectIds
+    // to prevent Cast to ObjectId errors
+    const mongoose = require('mongoose');
+    if (req.body.subcategory && !mongoose.Types.ObjectId.isValid(req.body.subcategory)) {
+      delete req.body.subcategory;
+    }
+    if (req.body.subsubcategory && !mongoose.Types.ObjectId.isValid(req.body.subsubcategory)) {
+      delete req.body.subsubcategory;
     }
 
     // 2. Create the product
@@ -422,8 +441,10 @@ exports.updateApprovalStatus = async (req, res, next) => {
     }
 
     if (approvalStatus === 'approved') {
-      const commission = adminCommission !== undefined ? adminCommission : existingProduct.adminCommission;
+      // Admin must specify commission or it defaults to existing (or 0 if never set)
+      const commission = adminCommission !== undefined ? adminCommission : (existingProduct.adminCommission || 0);
       const sPrice = existingProduct.sellerPrice || existingProduct.price;
+      updateData.adminCommission = commission;
       updateData.price = Math.round(sPrice * (1 + commission / 100));
       updateData.sellerPrice = sPrice;
       updateData.discountPrice = 0; // Clear stale discount — seller price may have changed after commission
@@ -431,6 +452,7 @@ exports.updateApprovalStatus = async (req, res, next) => {
       const b2bComm = b2bAdminCommission !== undefined ? b2bAdminCommission : (existingProduct.b2bAdminCommission || 0);
       const sB2bPrice = existingProduct.sellerB2bPrice || existingProduct.b2bPrice;
       if (sB2bPrice) {
+         updateData.b2bAdminCommission = b2bComm;
          updateData.b2bPrice = Math.round(sB2bPrice * (1 + b2bComm / 100));
          updateData.sellerB2bPrice = sB2bPrice;
       }
@@ -618,7 +640,7 @@ exports.updateProduct = async (req, res, next) => {
     if (req.body.subsubcategory === '') delete req.body.subsubcategory;
     if (req.body.category === '') delete req.body.category;
 
-    // If admin is updating, handle commission logic
+      // If admin is updating, handle commission logic
     if (req.user.role === 'admin') {
       const { adminCommission, b2bAdminCommission, price: newPrice, sellerPrice: newSPrice, b2bPrice: newB2b, sellerB2bPrice: newSB2b } = req.body;
       
@@ -626,8 +648,8 @@ exports.updateProduct = async (req, res, next) => {
       const commission = adminCommission !== undefined ? adminCommission : product.adminCommission;
       
       // If adminCommission was updated, recalculate price
-      if (adminCommission !== undefined) {
-        req.body.price = Math.round(sPrice * (1 + commission / 100));
+      if (adminCommission !== undefined || newSPrice || newPrice) {
+        req.body.price = Math.round(sPrice * (1 + (commission || 0) / 100));
         req.body.sellerPrice = sPrice;
       }
 
@@ -635,16 +657,17 @@ exports.updateProduct = async (req, res, next) => {
       const bComm = b2bAdminCommission !== undefined ? b2bAdminCommission : (product.b2bAdminCommission || 0);
       
       // If b2bAdminCommission was updated, recalculate b2bPrice
-      if (b2bAdminCommission !== undefined && sbPrice) {
-         req.body.b2bPrice = Math.round(sbPrice * (1 + bComm / 100));
+      if ((b2bAdminCommission !== undefined || newSB2b || newB2b) && sbPrice) {
+         req.body.b2bPrice = Math.round(sbPrice * (1 + (bComm || 0) / 100));
          req.body.sellerB2bPrice = sbPrice;
       }
     } else {
       // If seller is updating, update sellerPrice instead of final price if they try to change price
       if (req.body.price) {
         req.body.sellerPrice = req.body.price;
-        // Keep final price synced but wait for admin to re-approve or just keep commission the same
-        req.body.price = Math.round(req.body.price * (1 + product.adminCommission / 100));
+        // Automatically apply the product's existing commission rate.
+        // No additional approval is required for commission recalculation.
+        req.body.price = Math.round(req.body.price * (1 + (product.adminCommission || 0) / 100));
       }
       if (req.body.b2bPrice) {
         req.body.sellerB2bPrice = req.body.b2bPrice;
@@ -653,6 +676,10 @@ exports.updateProduct = async (req, res, next) => {
       // Sellers shouldn't touch commission
       delete req.body.adminCommission;
       delete req.body.b2bAdminCommission;
+      
+      // Ensure product stays approved if it was already approved
+      delete req.body.approvalStatus;
+      delete req.body.isApproved;
     }
 
     // Resolve Category, Subcategory, Subsubcategory from Strings to ObjectIds

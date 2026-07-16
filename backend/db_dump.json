@@ -377,5 +377,38 @@
     "category": "6a0d97bf804fbfd108773a6f",
     "subcategory": "6a4d4f65a06cf368b84a714b",
     "subsubcategory": "6a4d4f65a06cf368b84a714e"
+  },
+  {
+    "_id": "6a576bd2762fb55b92f7f10b",
+    "name": "Makrana White Marble",
+    "category": "69e1cc1d60884ec078193fe9",
+    "subcategory": "6a4d111fa06cf368b84a67f1",
+    "subsubcategory": "6a4d111fa06cf368b84a67f2"
+  },
+  {
+    "_id": "6a587c46b9fb911c920446aa",
+    "name": "product listing",
+    "category": "6a0d97bf804fbfd108773a6f",
+    "subcategory": "6a4d4f65a06cf368b84a7146",
+    "subsubcategory": "6a4d4f65a06cf368b84a7149"
+  },
+  {
+    "_id": "6a587cc1b9fb911c920446de",
+    "name": "Makrana White Marble",
+    "category": "69e1cc1d60884ec078193fe9",
+    "subcategory": "6a4d111fa06cf368b84a67f1",
+    "subsubcategory": "6a4d111fa06cf368b84a67f2"
+  },
+  {
+    "_id": "6a589992b9fb911c92044c81",
+    "name": "Makrana White",
+    "category": "69e1cc1d60884ec078193fe9",
+    "subcategory": "6a4d111fa06cf368b84a67f1",
+    "subsubcategory": "6a4d111fa06cf368b84a67f2"
+  },
+  {
+    "_id": "6a58a3d35403001112c2cdf8",
+    "name": "italian white marble",
+    "category": "69e1cc1d60884ec078193fe9"
   }
 ]

@@ -1,21 +1,93 @@
 {
-  "timestamp": "2026-07-15T09:30:08.429Z",
+  "timestamp": "2026-07-16T09:33:52.383Z",
   "query": {
-    "category": "Lighting",
-    "subcategory": "Indoor Lighting"
+    "isApproved": "pending",
+    "isActive": "all"
   },
   "builtFilter": {
-    "category": "6a0daa34047bdee23fc765da",
-    "subcategory": "6a4d5daea06cf368b84a71eb",
-    "isApproved": true,
-    "isActive": true,
-    "seller": {
-      "$nin": [
-        "6a100b07a3cc06ac3f65be01",
-        "6a10057431fa10db6ebdaaff"
-      ]
-    }
+    "isApproved": false
   },
-  "resultCount": 0,
-  "results": []
+  "resultCount": 10,
+  "results": [
+    {
+      "_id": "6a2d0ba974e4adc0617aa2d5",
+      "name": "Sheetal Premium Item 4",
+      "category": {
+        "_id": "69e1cc1d60884ec078193fe9",
+        "name": "Marble"
+      }
+    },
+    {
+      "_id": "6a2d0ba974e4adc0617aa2d4",
+      "name": "Sheetal Premium Item 3",
+      "category": {
+        "_id": "69e1cc1d60884ec078193fe9",
+        "name": "Marble"
+      }
+    },
+    {
+      "_id": "6a2d0ba974e4adc0617aa2d3",
+      "name": "Sheetal Premium Item 2",
+      "category": {
+        "_id": "69e1cc1d60884ec078193fe9",
+        "name": "Marble"
+      }
+    },
+    {
+      "_id": "6a2d0ba974e4adc0617aa2d2",
+      "name": "Sheetal Premium Item 1",
+      "category": {
+        "_id": "69e1cc1d60884ec078193fe9",
+        "name": "Marble"
+      }
+    },
+    {
+      "_id": "6a2d0ba974e4adc0617aa2d1",
+      "name": "Sheetal Premium Item 5",
+      "category": {
+        "_id": "69e1cc1d60884ec078193fe9",
+        "name": "Marble"
+      }
+    },
+    {
+      "_id": "6a2d0ba974e4adc0617aa2d0",
+      "name": "Sheetal Premium Item 4",
+      "category": {
+        "_id": "69e1cc1d60884ec078193fe9",
+        "name": "Marble"
+      }
+    },
+    {
+      "_id": "6a2d0ba974e4adc0617aa2cf",
+      "name": "Sheetal Premium Item 3",
+      "category": {
+        "_id": "69e1cc1d60884ec078193fe9",
+        "name": "Marble"
+      }
+    },
+    {
+      "_id": "6a2d0ba874e4adc0617aa2ce",
+      "name": "Sheetal Premium Item 2",
+      "category": {
+        "_id": "69e1cc1d60884ec078193fe9",
+        "name": "Marble"
+      }
+    },
+    {
+      "_id": "6a2d0ba874e4adc0617aa2cd",
+      "name": "Sheetal Premium Item 1",
+      "category": {
+        "_id": "69e1cc1d60884ec078193fe9",
+        "name": "Marble"
+      }
+    },
+    {
+      "_id": "6a28153fcc75d9dddcce318d",
+      "name": "Sheetal Premium Item 4",
+      "category": {
+        "_id": "69e1cc1d60884ec078193fe9",
+        "name": "Marble"
+      }
+    }
+  ]
 }

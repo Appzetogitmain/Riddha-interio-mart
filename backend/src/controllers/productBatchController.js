@@ -118,7 +118,7 @@ exports.getBatchDetail = async (req, res, next) => {
 exports.reviewBatchProduct = async (req, res, next) => {
   try {
     const { batchId, productId } = req.params;
-    const { action, rejectionReason = '' } = req.body;
+    const { action, rejectionReason = '', adminCommission = 0, b2bAdminCommission = 0 } = req.body;
 
     if (!['approved', 'rejected'].includes(action)) {
       return res.status(400).json({ success: false, error: 'Action must be "approved" or "rejected"' });
@@ -164,10 +164,19 @@ exports.reviewBatchProduct = async (req, res, next) => {
       };
 
       if (action === 'approved') {
-        const commission = existingProduct.adminCommission || 0;
+        const commission = Number(adminCommission) || 0;
         const sPrice = existingProduct.sellerPrice || existingProduct.price;
+        updateData.adminCommission = commission;
         updateData.price = Math.round(sPrice * (1 + commission / 100));
         updateData.sellerPrice = sPrice;
+        
+        const b2bComm = Number(b2bAdminCommission) || 0;
+        const sB2bPrice = existingProduct.sellerB2bPrice || existingProduct.b2bPrice;
+        if (sB2bPrice) {
+           updateData.b2bAdminCommission = b2bComm;
+           updateData.b2bPrice = Math.round(sB2bPrice * (1 + b2bComm / 100));
+           updateData.sellerB2bPrice = sB2bPrice;
+        }
       }
 
       await Product.findByIdAndUpdate(productId, updateData);

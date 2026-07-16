@@ -55,7 +55,10 @@ const ProductThumb = ({ images, name }) => {
 const ProductReviewItem = ({ item, batchId, onReviewed }) => {
   const p = item.product || {};
   const [showReject, setShowReject] = useState(false);
+  const [showApprove, setShowApprove] = useState(false);
   const [reason, setReason] = useState('');
+  const [b2cCommission, setB2cCommission] = useState('');
+  const [b2bCommission, setB2bCommission] = useState('');
   const [loading, setLoading] = useState(null);
   const s = statusColors[item.status] || statusColors.pending;
 
@@ -70,14 +73,23 @@ const ProductReviewItem = ({ item, batchId, onReviewed }) => {
     }
     setLoading(action);
     try {
-      await api.patch(`/product-batches/${batchId}/products/${p._id}`, {
+      const payload = {
         action,
         rejectionReason: action === 'rejected' ? reason.trim() : ''
-      });
+      };
+      if (action === 'approved') {
+        payload.adminCommission = Number(b2cCommission) || 0;
+        payload.b2bAdminCommission = Number(b2bCommission) || 0;
+      }
+      
+      await api.patch(`/product-batches/${batchId}/products/${p._id}`, payload);
       toast.success(action === 'approved' ? `"${p.name}" approved!` : `"${p.name}" rejected`);
       onReviewed(p._id, action, reason);
       setShowReject(false);
+      setShowApprove(false);
       setReason('');
+      setB2cCommission('');
+      setB2bCommission('');
     } catch (err) {
       toast.error(err?.response?.data?.error || 'Action failed');
     } finally {
@@ -135,17 +147,19 @@ const ProductReviewItem = ({ item, batchId, onReviewed }) => {
         ) : (
           <div className="flex items-center gap-1.5 shrink-0">
             <button
-              onClick={() => submit('approved')}
+              onClick={() => { setShowApprove(v => !v); setShowReject(false); }}
               disabled={!!loading}
-              className="flex items-center gap-1 px-2.5 py-1.5 bg-emerald-500 text-white rounded-lg font-bold text-xs hover:bg-emerald-600 transition-all disabled:opacity-50"
+              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg font-bold text-xs transition-all disabled:opacity-50 ${
+                showApprove
+                  ? 'bg-emerald-600 text-white'
+                  : 'bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-100'
+              }`}
             >
-              {loading === 'approved'
-                ? <div className="w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                : <Check size={12} />}
+              <Check size={12} />
               Approve
             </button>
             <button
-              onClick={() => setShowReject(v => !v)}
+              onClick={() => { setShowReject(v => !v); setShowApprove(false); }}
               disabled={!!loading}
               className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg font-bold text-xs transition-all disabled:opacity-50 ${
                 showReject
@@ -199,6 +213,64 @@ const ProductReviewItem = ({ item, batchId, onReviewed }) => {
                 </button>
                 <button
                   onClick={() => { setShowReject(false); setReason(''); }}
+                  className="px-3 py-1.5 border border-slate-200 text-slate-600 rounded-lg font-bold text-xs hover:bg-slate-50 transition-all"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+        
+        {showApprove && item.status === 'pending' && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.16 }}
+            className="overflow-hidden border-t border-slate-100"
+          >
+            <div className="p-3 space-y-3">
+              <div className="flex gap-3">
+                <div className="flex-1">
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                    B2C Commission (%)
+                  </label>
+                  <input
+                    type="number"
+                    value={b2cCommission}
+                    onChange={e => setB2cCommission(e.target.value)}
+                    placeholder="e.g. 10"
+                    className="w-full text-xs border border-slate-200 rounded-lg px-2.5 py-2 outline-none focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400 bg-slate-50"
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                    B2B Commission (%)
+                  </label>
+                  <input
+                    type="number"
+                    value={b2bCommission}
+                    onChange={e => setB2bCommission(e.target.value)}
+                    placeholder="e.g. 5"
+                    className="w-full text-xs border border-slate-200 rounded-lg px-2.5 py-2 outline-none focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400 bg-slate-50"
+                  />
+                </div>
+              </div>
+              
+              <div className="flex gap-2">
+                <button
+                  onClick={() => submit('approved')}
+                  disabled={!!loading}
+                  className="flex items-center gap-1 px-3 py-1.5 bg-emerald-600 text-white rounded-lg font-bold text-xs hover:bg-emerald-700 transition-all disabled:opacity-50"
+                >
+                  {loading === 'approved'
+                    ? <div className="w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                    : <Check size={12} />}
+                  Confirm Approve
+                </button>
+                <button
+                  onClick={() => { setShowApprove(false); setB2cCommission(''); setB2bCommission(''); }}
                   className="px-3 py-1.5 border border-slate-200 text-slate-600 rounded-lg font-bold text-xs hover:bg-slate-50 transition-all"
                 >
                   Cancel

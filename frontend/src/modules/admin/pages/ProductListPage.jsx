@@ -218,8 +218,7 @@ const ProductListPage = ({ status }) => {
                     <th className="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Category</th>
                     <th className="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider text-center">Status</th>
                     <th className="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider text-right">Seller Price</th>
-                    <th className="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider text-center">Comm.</th>
-                    <th className="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider text-right">B2B Price</th>
+                    <th className="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider text-center">Commission</th>
                     <th className="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider text-right">Final Price</th>
                     <th className="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider text-right">Actions</th>
                   </tr>
@@ -275,26 +274,50 @@ const ProductListPage = ({ status }) => {
 
                       {/* Seller Price */}
                       <td className="px-4 py-3 text-right">
-                        <p className="text-sm font-semibold text-gray-700">₹{(product.sellerPrice || product.price)?.toLocaleString()}</p>
+                        <div className="flex flex-col items-end gap-1">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[9px] font-bold text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded uppercase tracking-wider">B2C</span>
+                            <span className="text-sm font-semibold text-gray-800">₹{(product.sellerPrice || product.price)?.toLocaleString()}</span>
+                          </div>
+                          {product.sellerB2bPrice && (
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[9px] font-bold text-indigo-400 bg-indigo-50 px-1.5 py-0.5 rounded uppercase tracking-wider">B2B</span>
+                              <span className="text-sm font-semibold text-indigo-700">₹{product.sellerB2bPrice?.toLocaleString()}</span>
+                            </div>
+                          )}
+                        </div>
                       </td>
 
                       {/* Commission */}
                       <td className="px-4 py-3 text-center">
-                        <span className="text-sm font-semibold text-gray-600">{product.adminCommission || 0}%</span>
-                      </td>
-
-                      {/* B2B Price */}
-                      <td className="px-4 py-3 text-right">
-                        {product.b2bPrice ? (
-                          <p className="text-sm font-semibold text-[#240046]">₹{product.b2bPrice?.toLocaleString()}</p>
-                        ) : (
-                          <p className="text-xs text-gray-400">—</p>
-                        )}
+                        <div className="flex flex-col items-center gap-1">
+                          <div className="flex items-center gap-1">
+                            <span className="text-[9px] font-bold text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded uppercase tracking-wider">B2C</span>
+                            <span className="text-sm font-semibold text-gray-700">{product.adminCommission || 0}%</span>
+                          </div>
+                          {product.sellerB2bPrice && (
+                            <div className="flex items-center gap-1">
+                              <span className="text-[9px] font-bold text-indigo-400 bg-indigo-50 px-1.5 py-0.5 rounded uppercase tracking-wider">B2B</span>
+                              <span className="text-sm font-semibold text-indigo-700">{product.b2bAdminCommission || 0}%</span>
+                            </div>
+                          )}
+                        </div>
                       </td>
 
                       {/* Final Price */}
                       <td className="px-4 py-3 text-right">
-                        <p className="text-sm font-semibold text-gray-800">₹{product.price?.toLocaleString()}</p>
+                        <div className="flex flex-col items-end gap-1">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[9px] font-bold text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded uppercase tracking-wider">B2C</span>
+                            <span className="text-sm font-bold text-gray-900">₹{product.price?.toLocaleString()}</span>
+                          </div>
+                          {product.b2bPrice && (
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[9px] font-bold text-indigo-400 bg-indigo-50 px-1.5 py-0.5 rounded uppercase tracking-wider">B2B</span>
+                              <span className="text-sm font-bold text-indigo-700">₹{product.b2bPrice?.toLocaleString()}</span>
+                            </div>
+                          )}
+                        </div>
                       </td>
 
                       {/* Actions */}

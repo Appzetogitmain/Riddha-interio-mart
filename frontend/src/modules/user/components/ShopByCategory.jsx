@@ -56,7 +56,7 @@ const ShopByCategory = () => {
               to={`/category/${getCategorySlug(cat.name)}`}
               className="group flex flex-col items-center"
             >
-              <div className="relative w-full aspect-square rounded-xl md:rounded-2xl overflow-hidden mb-1.5 md:mb-3 shadow-sm border border-gray-100 transition-all duration-300 group-hover:shadow-md group-hover:-translate-y-1">
+              <div className="relative w-full aspect-square rounded-xl md:rounded-2xl overflow-hidden mb-1.5 md:mb-3 shadow-sm transition-all duration-300 group-hover:shadow-md group-hover:-translate-y-1">
                 <img 
                   src={cat.image || 'https://via.placeholder.com/400x400?text=No+Image'} 
                   alt={cat.name}

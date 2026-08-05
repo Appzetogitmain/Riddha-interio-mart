@@ -489,19 +489,31 @@ const ProductDetailsPage = () => {
       <div className="mt-4 space-y-1 hidden md:block">
 
         {/* Specifications */}
-        {product.specifications && (
+        {((product.specifications && Object.keys(product.specifications).length > 0) || 
+          (product.dynamicAttributes && Object.keys(product.dynamicAttributes).length > 0)) && (
           <AccordionSection
             label="Specifications"
             open={openSection === 'specs'}
             onToggle={() => toggleSection('specs')}
           >
             <div className="divide-y divide-gray-50">
-              {Object.entries(product.specifications).map(([k, v], i) => (
-                <div key={k} className={`flex py-2.5 px-5 text-[13px] ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50/60'}`}>
+              {/* Render legacy specs */}
+              {product.specifications && Object.entries(product.specifications).map(([k, v], i) => (
+                <div key={`spec-${k}`} className={`flex py-2.5 px-5 text-[13px] ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50/60'}`}>
                   <span className="w-36 text-gray-400 font-medium uppercase text-[11px] tracking-wider shrink-0">{k}</span>
                   <span className="text-gray-800 font-semibold">{typeof v === 'object' ? (v.name || JSON.stringify(v)) : v}</span>
                 </div>
               ))}
+              {/* Render dynamic attributes */}
+              {product.dynamicAttributes && Object.entries(product.dynamicAttributes).map(([k, v], i) => {
+                const globalIndex = (product.specifications ? Object.keys(product.specifications).length : 0) + i;
+                return (
+                  <div key={`dyn-${k}`} className={`flex py-2.5 px-5 text-[13px] ${globalIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50/60'}`}>
+                    <span className="w-36 text-gray-400 font-medium uppercase text-[11px] tracking-wider shrink-0">{k}</span>
+                    <span className="text-gray-800 font-semibold">{typeof v === 'object' ? (v.name || JSON.stringify(v)) : v}</span>
+                  </div>
+                );
+              })}
             </div>
           </AccordionSection>
         )}

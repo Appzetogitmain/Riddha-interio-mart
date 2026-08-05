@@ -6,6 +6,7 @@ import api from '../../../shared/utils/api';
 import { toast } from 'react-hot-toast';
 import BulkUploadModal from '../components/BulkUploadModal';
 import { FiUploadCloud } from 'react-icons/fi';
+import AIContentPanel from '../../../shared/components/AIContentPanel';
 
 const AddProductPage = () => {
   const navigate = useNavigate();
@@ -41,7 +42,8 @@ const AddProductPage = () => {
     images: [],
     videoUrl: '',
     targetCustomer: 'both',
-    gstRate: ''
+    gstRate: '',
+    seoKeywords: []
   });
 
   // SKU availability tracking state for master catalog
@@ -100,6 +102,34 @@ const AddProductPage = () => {
 
     return () => clearTimeout(delayDebounce);
   }, [formData.sku]);
+
+  const [isGeneratingHSN, setIsGeneratingHSN] = useState(false);
+
+  const handleGenerateHSN = async () => {
+    if (!formData.category || !formData.name) {
+      toast.error('Please select a category and enter a product name first.');
+      return;
+    }
+    try {
+      setIsGeneratingHSN(true);
+      const res = await api.post('/products/generate-hsn', {
+        category: formData.category,
+        subcategory: formData.subcategory,
+        subsubcategory: formData.subsubcategory,
+        name: formData.name,
+        description: formData.description
+      });
+      if (res.data.success && res.data.hsnCode) {
+        setFormData(prev => ({ ...prev, hsnCode: res.data.hsnCode }));
+        toast.success('HSN Code generated successfully!');
+      }
+    } catch (err) {
+      console.error('Failed to generate HSN:', err);
+      toast.error(err.response?.data?.error || 'Failed to generate HSN code');
+    } finally {
+      setIsGeneratingHSN(false);
+    }
+  };
   
   const filteredCategories = categories.filter(cat => 
     cat.name.toLowerCase().includes(catSearch.toLowerCase())
@@ -267,9 +297,9 @@ const AddProductPage = () => {
 
         <form onSubmit={handleSubmit} noValidate className="space-y-6 md:space-y-8 pb-12">
           {/* Main Form Card */}
-          <div className="bg-white rounded-3xl md:rounded-[32px] border border-soft-oatmeal shadow-xl grid grid-cols-1 lg:grid-cols-3 relative">
+          <div className="bg-white rounded-3xl md:rounded-[32px] border border-soft-oatmeal shadow-xl grid grid-cols-1 xl:grid-cols-3 relative">
              {/* Left: Image Preview Area */}
-             <div className="p-6 md:p-8 bg-soft-oatmeal/10 border-b lg:border-r lg:border-b-0 border-soft-oatmeal space-y-6">
+             <div className="p-6 md:p-8 bg-soft-oatmeal/10 border-b xl:border-r xl:border-b-0 border-soft-oatmeal space-y-6">
                 <input 
                   type="file" 
                   multiple
@@ -333,10 +363,32 @@ const AddProductPage = () => {
                        )}
                     </div>
                  </div>
+                 
+                   <div className="pt-4 border-t border-soft-oatmeal/30">
+                     <AIContentPanel
+                       formData={formData}
+                       onApply={(data) => {
+                         console.log("Admin Catalog page applying AI content:", data);
+                         setFormData((prev) => ({
+                           ...prev,
+                           description: data.description,
+                           hsnCode: data.hsnCode,
+                           sku: data.sku,
+                           seoKeywords: data.seoKeywords,
+                           images: data.image ? [...prev.images, data.image] : prev.images,
+                           dynamicAttributes: {
+                             ...(prev.dynamicAttributes || {}),
+                             ...data.specifications
+                           }
+                         }));
+                       }}
+                       theme="admin"
+                     />
+                   </div>
              </div>
 
              {/* Right: Detailed Fields */}
-             <div className="lg:col-span-2 p-6 md:p-10 lg:p-12 space-y-8">
+             <div className="xl:col-span-2 p-6 md:p-10 lg:p-12 space-y-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                    <div className="space-y-2">
                       <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest flex items-center gap-2">
@@ -372,9 +424,19 @@ const AddProductPage = () => {
                        )}
                     </div>
                     <div className="space-y-2">
-                       <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest flex items-center gap-2">
-                          <FiTag size={12} /> HSN Code
-                       </label>
+                       <div className="flex items-center justify-between">
+                          <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest flex items-center gap-2">
+                             <FiTag size={12} /> HSN Code
+                          </label>
+                          <button
+                            type="button"
+                            onClick={handleGenerateHSN}
+                            disabled={isGeneratingHSN}
+                            className={`text-[9px] font-black uppercase tracking-widest flex items-center gap-1 ${isGeneratingHSN ? 'text-warm-sand' : 'text-red-800 hover:text-red-600 transition-colors'}`}
+                          >
+                             {isGeneratingHSN ? 'Generating...' : 'Auto Generate ✨'}
+                          </button>
+                       </div>
                        <input 
                          type="text" required placeholder="e.g. 6802"
                          value={formData.hsnCode}
@@ -638,6 +700,33 @@ const AddProductPage = () => {
                      className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-warm-sand transition-all resize-none font-medium"
                    ></textarea>
                 </div>
+
+                 {formData.seoKeywords && formData.seoKeywords.length > 0 && (
+                   <div className="space-y-2">
+                     <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest">
+                       Active SEO Keywords
+                     </label>
+                     <div className="flex flex-wrap gap-1.5 p-3 bg-soft-oatmeal/5 rounded-xl border border-soft-oatmeal">
+                       {formData.seoKeywords.map((kw, i) => (
+                         <span key={i} className="text-xs font-bold px-3 py-1 rounded-xl bg-blue-50 text-blue-700 border border-blue-100 flex items-center gap-1.5">
+                           {kw}
+                           <button
+                             type="button"
+                             onClick={() => {
+                               setFormData(prev => ({
+                                 ...prev,
+                                 seoKeywords: prev.seoKeywords.filter(k => k !== kw)
+                               }));
+                             }}
+                             className="hover:text-slate-900 cursor-pointer"
+                           >
+                             <FiX size={10} />
+                           </button>
+                         </span>
+                       ))}
+                     </div>
+                   </div>
+                 )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-soft-oatmeal/50">
                    <div className="space-y-2">

@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import api from "../../../shared/utils/api";
 import ProductVariantsEditor from "../components/ProductVariantsEditor";
+import AIContentPanel from "../../../shared/components/AIContentPanel";
 
 const AddProduct = () => {
   const navigate = useNavigate();
@@ -93,6 +94,7 @@ const AddProduct = () => {
     gstRate: "",
     b2bPrice: "",
     b2bMinQty: "",
+    seoKeywords: [],
   });
 
   useEffect(() => {
@@ -204,6 +206,33 @@ const AddProduct = () => {
       console.error("Failed to fetch initial data:", err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const [isGeneratingHSN, setIsGeneratingHSN] = useState(false);
+
+  const handleGenerateHSN = async () => {
+    if (!formData.category || !formData.name) {
+      alert("Please select a category and enter a product name first.");
+      return;
+    }
+    try {
+      setIsGeneratingHSN(true);
+      const res = await api.post("/products/generate-hsn", {
+        category: formData.category,
+        subcategory: formData.subcategory,
+        subsubcategory: formData.subsubcategory,
+        name: formData.name,
+        description: formData.description,
+      });
+      if (res.data.success && res.data.hsnCode) {
+        setFormData((prev) => ({ ...prev, hsnCode: res.data.hsnCode }));
+      }
+    } catch (err) {
+      console.error("Failed to generate HSN:", err);
+      alert(err.response?.data?.error || "Failed to generate HSN code");
+    } finally {
+      setIsGeneratingHSN(false);
     }
   };
 
@@ -618,10 +647,10 @@ const AddProduct = () => {
 
               <form
                 onSubmit={handleSubmit}
-                className="grid grid-cols-1 lg:grid-cols-3 gap-10"
+                className="grid grid-cols-1 xl:grid-cols-3 gap-10"
               >
                 {/* Main Form Fields */}
-                <div className="lg:col-span-2 space-y-10">
+                <div className="xl:col-span-2 space-y-10">
                   {/* Core Details */}
                   <div className="bg-white rounded-[2.5rem] border border-slate-200 p-10 shadow-sm space-y-10">
                     <div className="flex items-center gap-4 border-b border-slate-50 pb-6">
@@ -670,12 +699,22 @@ const AddProduct = () => {
                           <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">
                             HSN Code <span className="text-red-400">*</span>
                           </label>
-                          {formData.hsnCode.length > 0 && (() => {
-                            const valid = /^\d{4}$|^\d{6}$|^\d{8}$/.test(formData.hsnCode);
-                            return valid
-                              ? <span className="text-[9px] font-black text-emerald-600 uppercase tracking-wider flex items-center gap-1"><Check size={10} /> Valid</span>
-                              : <span className="text-[9px] font-black text-red-500 uppercase tracking-wider">4, 6, or 8 digits only</span>;
-                          })()}
+                          <div className="flex items-center gap-2">
+                            {formData.hsnCode.length > 0 && (() => {
+                              const valid = /^\d{4}$|^\d{6}$|^\d{8}$/.test(formData.hsnCode);
+                              return valid
+                                ? <span className="text-[9px] font-black text-emerald-600 uppercase tracking-wider flex items-center gap-1"><Check size={10} /> Valid</span>
+                                : <span className="text-[9px] font-black text-red-500 uppercase tracking-wider">4, 6, or 8 digits only</span>;
+                            })()}
+                            <button
+                              type="button"
+                              onClick={handleGenerateHSN}
+                              disabled={isGeneratingHSN}
+                              className={`text-[9px] font-black uppercase tracking-wider flex items-center gap-1 px-2 py-0.5 rounded-full ${isGeneratingHSN ? 'bg-slate-100 text-slate-400' : 'bg-seller-primary/10 text-seller-primary hover:bg-seller-primary hover:text-white transition-colors'}`}
+                            >
+                               {isGeneratingHSN ? 'Generating...' : 'Auto Generate ✨'}
+                            </button>
+                          </div>
                         </div>
                         <input
                           required
@@ -753,6 +792,33 @@ const AddProduct = () => {
                         />
                         {fieldErr('description')}
                       </div>
+
+                      {formData.seoKeywords && formData.seoKeywords.length > 0 && (
+                        <div className="space-y-2 md:col-span-2">
+                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">
+                            Active SEO Keywords
+                          </label>
+                          <div className="flex flex-wrap gap-1.5 p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                            {formData.seoKeywords.map((kw, i) => (
+                              <span key={i} className="text-xs font-bold px-3 py-1 rounded-xl bg-orange-50 text-orange-700 border border-orange-100 flex items-center gap-1.5">
+                                {kw}
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setFormData(prev => ({
+                                      ...prev,
+                                      seoKeywords: prev.seoKeywords.filter(k => k !== kw)
+                                    }));
+                                  }}
+                                  className="hover:text-slate-900 cursor-pointer"
+                                >
+                                  <X size={10} />
+                                </button>
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -932,10 +998,45 @@ const AddProduct = () => {
                       {/* Removed hardcoded specs, managed by ProductVariantsEditor now */}
                     </div>
                   </div>
+
+                  {/* Dynamic Specifications & Variants */}
+                  <ProductVariantsEditor formData={formData} setFormData={setFormData} categories={categories} />
                 </div>
 
                 {/* Side Column - Media & Financials */}
                 <div className="space-y-10">
+                  <AIContentPanel
+                    formData={formData}
+                    onApply={(data) => {
+                      console.log("Seller page applying AI content:", data);
+                      setFormData((prev) => ({
+                        ...prev,
+                        description: data.description,
+                        hsnCode: data.hsnCode,
+                        sku: data.sku,
+                        seoKeywords: data.seoKeywords,
+                        images: data.image ? [...prev.images, data.image] : prev.images,
+                        dynamicAttributes: {
+                          ...(prev.dynamicAttributes || {}),
+                          ...data.specifications
+                        }
+                      }));
+                      setTouched((prev) => ({
+                        ...prev,
+                        description: true,
+                        hsnCode: true,
+                        sku: true
+                      }));
+                      setFieldErrors((prev) => ({
+                        ...prev,
+                        description: "",
+                        hsnCode: "",
+                        sku: ""
+                      }));
+                    }}
+                    theme="seller"
+                  />
+
                   {/* Pricing & Stock */}
                   <div className="bg-white rounded-[2.5rem] border border-slate-200 p-8 shadow-sm space-y-8">
                     <div className="flex items-center gap-3 pb-4 border-b border-slate-50">
@@ -1097,9 +1198,6 @@ const AddProduct = () => {
                       </div>
                     </div>
                   </div>
-
-                  {/* Dynamic Specifications & Variants */}
-                  <ProductVariantsEditor formData={formData} setFormData={setFormData} categories={categories} />
 
                   {/* Media Manager */}
                   <div className="bg-white rounded-[2.5rem] border border-slate-200 p-8 shadow-sm space-y-8 sticky top-24">

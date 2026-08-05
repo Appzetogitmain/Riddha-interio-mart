@@ -9,7 +9,9 @@ const {
   updateApprovalStatus,
   updateBulkStock,
   getSearchSuggestions,
-  checkProductSku
+  checkProductSku,
+  generateHSNCodeHandler,
+  generateProductContentHandler
 } = require('../controllers/productController');
 const { protect, authorize, tryProtect } = require('../middleware/auth');
 const { check } = require('express-validator');
@@ -25,6 +27,8 @@ router.use('/:productId/reviews', reviewRouter);
 
 router.get('/check-sku/:sku', protect, authorize('seller', 'admin'), checkProductSku);
 
+router.post('/generate-hsn', protect, authorize('seller', 'admin'), generateHSNCodeHandler);
+router.post('/generate-content', protect, authorize('seller', 'admin'), generateProductContentHandler);
 
 
 router.route('/')

@@ -37,6 +37,7 @@ const EditInventoryPage = () => {
     adminCommission: 0,
     sellerPrice: 0,
     discountPrice: 0,
+    dynamicAttributes: {},
   });
 
   useEffect(() => {
@@ -71,6 +72,7 @@ const EditInventoryPage = () => {
           adminCommission: product.adminCommission || 0,
           sellerPrice: product.sellerPrice || product.price || 0,
           discountPrice: product.discountPrice || 0,
+          dynamicAttributes: product.dynamicAttributes || {},
         });
       } catch (err) {
         console.error('Failed to fetch data:', err);
@@ -397,6 +399,32 @@ const EditInventoryPage = () => {
                       />
                     </div>
                 </div>
+
+                {/* Dynamic Specifications */}
+                {formData.dynamicAttributes && Object.keys(formData.dynamicAttributes).length > 0 && (
+                  <div className="space-y-4 pt-4 border-t border-soft-oatmeal/30">
+                    <h3 className="text-xs font-black text-warm-sand uppercase tracking-widest">Specifications</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {Object.entries(formData.dynamicAttributes).map(([key, val]) => (
+                        <div key={key} className="space-y-2">
+                          <label className="text-[10px] font-bold text-warm-sand uppercase tracking-wider">{key}</label>
+                          <input 
+                            type="text" 
+                            value={val || ''} 
+                            onChange={(e) => setFormData(prev => ({
+                              ...prev,
+                              dynamicAttributes: {
+                                ...prev.dynamicAttributes,
+                                [key]: e.target.value
+                              }
+                            }))} 
+                            className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none" 
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest">Description</label>

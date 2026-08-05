@@ -210,6 +210,10 @@ const ProductSchema = new mongoose.Schema({
   advertisementEndDate: {
     type: Date,
     default: null
+  },
+  seoKeywords: {
+    type: [String],
+    default: []
   }
 }, {
   timestamps: true

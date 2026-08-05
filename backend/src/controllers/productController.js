@@ -897,3 +897,61 @@ exports.checkProductSku = async (req, res, next) => {
     next(error);
   }
 };
+
+// @desc    Generate HSN code using AI
+// @route   POST /api/products/generate-hsn
+// @access  Private/Admin or Seller
+exports.generateHSNCodeHandler = async (req, res, next) => {
+  try {
+    const { category, subcategory, subsubcategory, name, description } = req.body;
+    const aiService = require('../services/aiService');
+    const hsnCode = await aiService.generateHSNCode(
+      category, 
+      subcategory, 
+      subsubcategory, 
+      name, 
+      description
+    );
+
+    if (hsnCode) {
+      res.status(200).json({ success: true, hsnCode });
+    } else {
+      res.status(500).json({ success: false, error: 'Failed to generate HSN code' });
+    }
+  } catch (error) {
+    console.error('HSN Code Generation Error:', error);
+    res.status(500).json({ success: false, error: 'AI Service Error: ' + error.message });
+  }
+};
+
+// @desc    Generate Product description, sku, hsn, keywords using AI
+// @route   POST /api/products/generate-content
+// @access  Private/Admin or Seller
+exports.generateProductContentHandler = async (req, res, next) => {
+  try {
+    const { name, category, subcategory, brand, material, color, dimensions, thickness, generateImage } = req.body;
+    const generateImageBool = generateImage === true || generateImage === 'true';
+    console.log("POST /api/products/generate-content body:", req.body, "parsed generateImage:", generateImageBool);
+    const aiService = require('../services/aiService');
+    const content = await aiService.generateProductContent(
+      name,
+      category,
+      subcategory,
+      brand,
+      material,
+      color,
+      dimensions,
+      thickness,
+      generateImageBool
+    );
+
+    if (content) {
+      res.status(200).json({ success: true, ...content });
+    } else {
+      res.status(500).json({ success: false, error: 'Failed to generate product content' });
+    }
+  } catch (error) {
+    console.error('Product Content Generation Error:', error);
+    res.status(500).json({ success: false, error: 'AI Service Error: ' + error.message });
+  }
+};

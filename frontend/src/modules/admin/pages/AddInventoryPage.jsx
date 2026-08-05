@@ -4,6 +4,7 @@ import PageWrapper from '../components/PageWrapper';
 import { LuPlus, LuImage, LuBriefcase, LuTags, LuInfo, LuArrowLeft, LuPackage, LuCheck, LuGrid2X2, LuUpload, LuVideo, LuX } from 'react-icons/lu';
 import { FiPackage, FiEdit3, FiTrash2, FiPlus } from 'react-icons/fi';
 import api from '../../../shared/utils/api';
+import AIContentPanel from '../../../shared/components/AIContentPanel';
 
 const AddInventoryPage = () => {
   const navigate = useNavigate();
@@ -39,6 +40,7 @@ const AddInventoryPage = () => {
     countInStock: 50,
     unit: 'piece',
     unitValue: '1',
+    seoKeywords: []
   });
   
   // SKU availability tracking state
@@ -113,6 +115,34 @@ const AddInventoryPage = () => {
 
     return () => clearTimeout(delayDebounce);
   }, [formData.sku]);
+
+  const [isGeneratingHSN, setIsGeneratingHSN] = useState(false);
+
+  const handleGenerateHSN = async () => {
+    if (!formData.category || !formData.name) {
+      alert('Please select a category and enter a product name first.');
+      return;
+    }
+    try {
+      setIsGeneratingHSN(true);
+      const res = await api.post('/products/generate-hsn', {
+        category: formData.category,
+        subcategory: formData.subcategory,
+        subsubcategory: formData.subsubcategory,
+        name: formData.name,
+        description: formData.description
+      });
+      if (res.data.success && res.data.hsnCode) {
+        setFormData(prev => ({ ...prev, hsnCode: res.data.hsnCode }));
+      }
+    } catch (err) {
+      console.error('Failed to generate HSN:', err);
+      alert(err.response?.data?.error || 'Failed to generate HSN code');
+    } finally {
+      setIsGeneratingHSN(false);
+    }
+  };
+
 
   const filteredCategories = categories.filter(cat => 
     cat.name.toLowerCase().includes(catSearch.toLowerCase())
@@ -234,7 +264,7 @@ const AddInventoryPage = () => {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
             
             {/* Image Section */}
             <div className="lg:col-span-1 space-y-6">
@@ -299,11 +329,32 @@ const AddInventoryPage = () => {
                       )}
                    </div>
                 </div>
+                <div className="pt-4 border-t border-soft-oatmeal/30">
+                   <AIContentPanel
+                     formData={formData}
+                     onApply={(data) => {
+                       console.log("Admin Inventory page applying AI content:", data);
+                       setFormData((prev) => ({
+                         ...prev,
+                         description: data.description,
+                         hsnCode: data.hsnCode,
+                         sku: data.sku,
+                         seoKeywords: data.seoKeywords,
+                         images: data.image ? [...prev.images, data.image] : prev.images,
+                         dynamicAttributes: {
+                           ...(prev.dynamicAttributes || {}),
+                           ...data.specifications
+                         }
+                       }));
+                     }}
+                     theme="admin"
+                   />
+                </div>
               </div>
             </div>
 
             {/* Main Info Section */}
-            <div className="lg:col-span-2 space-y-6">
+            <div className="xl:col-span-2 space-y-6">
               <div className="bg-white rounded-3xl p-8 border border-soft-oatmeal shadow-sm space-y-6">
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -347,9 +398,19 @@ const AddInventoryPage = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest flex items-center gap-2">
-                       <LuPackage size={12} /> HSN Code
-                    </label>
+                    <div className="flex items-center justify-between">
+                       <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest flex items-center gap-2">
+                          <LuPackage size={12} /> HSN Code
+                       </label>
+                       <button
+                         type="button"
+                         onClick={handleGenerateHSN}
+                         disabled={isGeneratingHSN}
+                         className={`text-[9px] font-black uppercase tracking-widest flex items-center gap-1 ${isGeneratingHSN ? 'text-warm-sand' : 'text-red-800 hover:text-red-600 transition-colors'}`}
+                       >
+                          {isGeneratingHSN ? 'Generating...' : 'Auto Generate ✨'}
+                       </button>
+                    </div>
                     <input 
                       type="text" required
                       placeholder="e.g. 6802"
@@ -545,6 +606,33 @@ const AddInventoryPage = () => {
                     className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none resize-none"
                   />
                 </div>
+
+                {formData.seoKeywords && formData.seoKeywords.length > 0 && (
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest">
+                      Active SEO Keywords
+                    </label>
+                    <div className="flex flex-wrap gap-1.5 p-3 bg-soft-oatmeal/5 rounded-xl border border-soft-oatmeal">
+                      {formData.seoKeywords.map((kw, i) => (
+                        <span key={i} className="text-xs font-bold px-3 py-1 rounded-xl bg-blue-50 text-blue-700 border border-blue-100 flex items-center gap-1.5">
+                          {kw}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setFormData(prev => ({
+                                ...prev,
+                                seoKeywords: prev.seoKeywords.filter(k => k !== kw)
+                              }));
+                            }}
+                            className="hover:text-slate-900 cursor-pointer"
+                          >
+                            <LuX size={10} />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-soft-oatmeal/50">
                    <div className="space-y-2">

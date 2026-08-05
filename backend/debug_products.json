@@ -1,93 +1,113 @@
 {
-  "timestamp": "2026-07-16T09:33:52.383Z",
-  "query": {
-    "isApproved": "pending",
-    "isActive": "all"
-  },
+  "timestamp": "2026-08-05T07:48:16.446Z",
+  "query": {},
   "builtFilter": {
-    "isApproved": false
+    "isApproved": true,
+    "isActive": true,
+    "seller": {
+      "$nin": [
+        "6a100b07a3cc06ac3f65be01",
+        "6a10057431fa10db6ebdaaff"
+      ]
+    }
   },
   "resultCount": 10,
   "results": [
     {
-      "_id": "6a2d0ba974e4adc0617aa2d5",
-      "name": "Sheetal Premium Item 4",
+      "_id": "6a71fcd9dfb6131dc25f4c2f",
+      "name": "Commercial LED Panel Light CL-Panel-36W-6000K",
+      "category": {
+        "_id": "6a0daa34047bdee23fc765da",
+        "name": "Lighting"
+      },
+      "subcategory": "6a4d5daea06cf368b84a720b",
+      "subsubcategory": "6a4d5daea06cf368b84a720c"
+    },
+    {
+      "_id": "6a58a3d35403001112c2cdf8",
+      "name": "italian white marble",
       "category": {
         "_id": "69e1cc1d60884ec078193fe9",
         "name": "Marble"
       }
     },
     {
-      "_id": "6a2d0ba974e4adc0617aa2d4",
-      "name": "Sheetal Premium Item 3",
+      "_id": "6a589992b9fb911c92044c81",
+      "name": "Makrana White",
       "category": {
         "_id": "69e1cc1d60884ec078193fe9",
         "name": "Marble"
+      },
+      "subcategory": "6a4d111fa06cf368b84a67f1",
+      "subsubcategory": "6a4d111fa06cf368b84a67f2"
+    },
+    {
+      "_id": "6a587cc1b9fb911c920446de",
+      "name": "Makrana White Marble",
+      "category": {
+        "_id": "69e1cc1d60884ec078193fe9",
+        "name": "Marble"
+      },
+      "subcategory": "6a4d111fa06cf368b84a67f1",
+      "subsubcategory": "6a4d111fa06cf368b84a67f2"
+    },
+    {
+      "_id": "6a587c46b9fb911c920446aa",
+      "name": "product listing",
+      "category": {
+        "_id": "6a0d97bf804fbfd108773a6f",
+        "name": "Flooring"
+      },
+      "subcategory": "6a4d4f65a06cf368b84a7146",
+      "subsubcategory": "6a4d4f65a06cf368b84a7149"
+    },
+    {
+      "_id": "6a576bd2762fb55b92f7f10b",
+      "name": "Makrana White Marble",
+      "category": {
+        "_id": "69e1cc1d60884ec078193fe9",
+        "name": "Marble"
+      },
+      "subcategory": "6a4d111fa06cf368b84a67f1",
+      "subsubcategory": "6a4d111fa06cf368b84a67f2"
+    },
+    {
+      "_id": "6a52095068d5026f759c7c30",
+      "name": "test enterprise",
+      "category": {
+        "_id": "6a0d97bf804fbfd108773a6f",
+        "name": "Flooring"
+      },
+      "subcategory": "6a4d4f65a06cf368b84a714b",
+      "subsubcategory": "6a4d4f65a06cf368b84a714e"
+    },
+    {
+      "_id": "6a5114b9c41671564fc2cbc6",
+      "name": "fsdfg",
+      "category": {
+        "_id": "6a4cf715a06cf368b84a62e3",
+        "name": "Paint"
       }
     },
     {
-      "_id": "6a2d0ba974e4adc0617aa2d3",
-      "name": "Sheetal Premium Item 2",
+      "_id": "6a4f584ec25e41b935a865eb",
+      "name": "EXTENDED WALL MOUNTED TOILETS",
       "category": {
-        "_id": "69e1cc1d60884ec078193fe9",
-        "name": "Marble"
-      }
+        "_id": "6a2bd98474e4adc0617a9df9",
+        "name": "Bath Fitting"
+      },
+      "subcategory": "6a4e05c2a06cf368b84a9983",
+      "subsubcategory": "6a4e05c2a06cf368b84a998d"
     },
     {
-      "_id": "6a2d0ba974e4adc0617aa2d2",
-      "name": "Sheetal Premium Item 1",
+      "_id": "6a4ca1ff53791a8751587337",
+      "name": "testing product again",
       "category": {
-        "_id": "69e1cc1d60884ec078193fe9",
-        "name": "Marble"
-      }
-    },
-    {
-      "_id": "6a2d0ba974e4adc0617aa2d1",
-      "name": "Sheetal Premium Item 5",
-      "category": {
-        "_id": "69e1cc1d60884ec078193fe9",
-        "name": "Marble"
-      }
-    },
-    {
-      "_id": "6a2d0ba974e4adc0617aa2d0",
-      "name": "Sheetal Premium Item 4",
-      "category": {
-        "_id": "69e1cc1d60884ec078193fe9",
-        "name": "Marble"
-      }
-    },
-    {
-      "_id": "6a2d0ba974e4adc0617aa2cf",
-      "name": "Sheetal Premium Item 3",
-      "category": {
-        "_id": "69e1cc1d60884ec078193fe9",
-        "name": "Marble"
-      }
-    },
-    {
-      "_id": "6a2d0ba874e4adc0617aa2ce",
-      "name": "Sheetal Premium Item 2",
-      "category": {
-        "_id": "69e1cc1d60884ec078193fe9",
-        "name": "Marble"
-      }
-    },
-    {
-      "_id": "6a2d0ba874e4adc0617aa2cd",
-      "name": "Sheetal Premium Item 1",
-      "category": {
-        "_id": "69e1cc1d60884ec078193fe9",
-        "name": "Marble"
-      }
-    },
-    {
-      "_id": "6a28153fcc75d9dddcce318d",
-      "name": "Sheetal Premium Item 4",
-      "category": {
-        "_id": "69e1cc1d60884ec078193fe9",
-        "name": "Marble"
-      }
+        "_id": "6a0d97bf804fbfd108773a6f",
+        "name": "Flooring"
+      },
+      "subcategory": "6a4d4f65a06cf368b84a7146",
+      "subsubcategory": ""
     }
   ]
 }

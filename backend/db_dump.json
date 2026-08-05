@@ -410,5 +410,19 @@
     "_id": "6a58a3d35403001112c2cdf8",
     "name": "italian white marble",
     "category": "69e1cc1d60884ec078193fe9"
+  },
+  {
+    "_id": "6a71fae2d66ecd299c95aebf",
+    "name": "LED Ceiling Panel Light LP-Panel-24W-6500K",
+    "category": "6a0daa34047bdee23fc765da",
+    "subcategory": "6a4d5daea06cf368b84a71eb",
+    "subsubcategory": "6a4d5daea06cf368b84a71ec"
+  },
+  {
+    "_id": "6a71fcd9dfb6131dc25f4c2f",
+    "name": "Commercial LED Panel Light CL-Panel-36W-6000K",
+    "category": "6a0daa34047bdee23fc765da",
+    "subcategory": "6a4d5daea06cf368b84a720b",
+    "subsubcategory": "6a4d5daea06cf368b84a720c"
   }
 ]

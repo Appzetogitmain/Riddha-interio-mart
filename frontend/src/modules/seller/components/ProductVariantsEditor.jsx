@@ -75,7 +75,13 @@ const ProductVariantsEditor = ({ formData, setFormData, categories }) => {
   };
 
   const variantAttributes = attributes.filter(a => a.isVariant);
-  const generalAttributes = attributes.filter(a => !a.isVariant);
+  const generalAttributesBase = attributes.filter(a => !a.isVariant);
+  const dynamicKeys = formData.dynamicAttributes ? Object.keys(formData.dynamicAttributes) : [];
+  const existingAttrNames = attributes.map(a => a.name);
+  const extraAttrs = dynamicKeys
+    .filter(key => !existingAttrNames.includes(key))
+    .map(key => ({ name: key, type: 'text', isVariant: false }));
+  const generalAttributes = [...generalAttributesBase, ...extraAttrs];
 
   return (
     <div className="space-y-6 bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mt-6">

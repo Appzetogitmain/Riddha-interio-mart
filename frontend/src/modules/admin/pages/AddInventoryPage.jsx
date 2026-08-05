@@ -334,11 +334,27 @@ const AddInventoryPage = () => {
                      formData={formData}
                      onApply={(data) => {
                        console.log("Admin Inventory page applying AI content:", data);
+                       
+                       let matchedBrandId = "";
+                       if (data.brandName) {
+                         const matched = brands.find(
+                           (b) => b.name.toLowerCase() === data.brandName.toLowerCase()
+                         );
+                         if (matched) {
+                           matchedBrandId = matched._id;
+                         }
+                       }
+
                        setFormData((prev) => ({
                          ...prev,
                          description: data.description,
                          hsnCode: data.hsnCode,
                          sku: data.sku,
+                         brand: matchedBrandId || prev.brand,
+                         dimensions: data.dimensions?.height && data.dimensions?.width 
+                           ? `${data.dimensions.height} x ${data.dimensions.width} ${data.dimensions.unit || ''}`.trim()
+                           : prev.dimensions,
+                         thickness: data.dimensions?.thickness || prev.thickness,
                          seoKeywords: data.seoKeywords,
                          images: data.image ? [...prev.images, data.image] : prev.images,
                          dynamicAttributes: {

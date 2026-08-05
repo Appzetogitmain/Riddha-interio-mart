@@ -1,3 +1,68 @@
+// Utility: sleep for ms milliseconds
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// Simple in-memory image cache
+const imageCache = new Map();
+
+// Utility: Call Gemini API with auto-retry on 503 overload errors
+const callGeminiWithRetry = async (url, requestBody, maxRetries = 5) => {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const fetchResponse = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
+      });
+      if (fetchResponse.ok) return fetchResponse;
+      const errorText = await fetchResponse.text();
+      if (fetchResponse.status === 503 && attempt < maxRetries) {
+        const delay = Math.pow(2, attempt) * 2000; // 2s, 4s, 8s, 16s
+        console.warn(`[Gemini] 503 on attempt ${attempt}/${maxRetries}. Retrying in ${delay}ms...`);
+        await sleep(delay);
+        continue;
+      }
+      throw new Error(`Gemini API error: ${fetchResponse.status} - ${errorText}`);
+    } catch (err) {
+      if (attempt === maxRetries) throw err;
+      const delay = Math.pow(2, attempt) * 2000;
+      console.warn(`[Gemini] Error on attempt ${attempt}/${maxRetries}: ${err.message}. Retrying in ${delay}ms...`);
+      await sleep(delay);
+    }
+  }
+};
+
+// Utility: Fetch an image URL with a timeout, returns Response or null
+const fetchImage = async (url, timeoutMs) => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  const originalTlsReject = process.env.NODE_TLS_REJECT_UNAUTHORIZED;
+  try {
+    // Disable TLS unauthorized checks temporarily to avoid cert issues (e.g. self-signed or missing root certs)
+    process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+    const res = await fetch(url, { 
+      signal: controller.signal,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
+      }
+    });
+    clearTimeout(timeoutId);
+    return res;
+  } catch (err) {
+    clearTimeout(timeoutId);
+    console.warn(`[ImageFetch] Error: ${err.message}`);
+    return null;
+  } finally {
+    if (originalTlsReject !== undefined) {
+      process.env.NODE_TLS_REJECT_UNAUTHORIZED = originalTlsReject;
+    } else {
+      delete process.env.NODE_TLS_REJECT_UNAUTHORIZED;
+    }
+  }
+};
+
+// =============================================================================
+// Generate HSN Code via Gemini
+// =============================================================================
 const generateHSNCode = async (category, subcategory, productType, productName, description) => {
   try {
     if (!process.env.GEMINI_API_KEY) {
@@ -7,7 +72,6 @@ const generateHSNCode = async (category, subcategory, productType, productName, 
     const prompt = `You are an expert in GST classification and HSN code mapping.
 
 Your task is to generate the most accurate HSN (Harmonized System of Nomenclature) code for a product based on the given inputs.
-
 Follow strict classification rules based on Indian GST HSN standards.
 
 INPUT:
@@ -20,43 +84,26 @@ INPUT:
 INSTRUCTIONS:
 1. Identify the correct HSN Chapter (first 2 digits) based on the Category.
 2. Identify the correct Heading (next 2 digits) based on the Subcategory.
-3. Identify the most accurate Subheading (last 2 digits or more) based on Product Type and Product Name.
+3. Identify the most accurate Subheading (last 2 digits) based on Product Type and Product Name.
 4. If an exact match exists, return the full 6-digit HSN code.
-5. If an exact match is not found:
-   - Try to find the closest matching HSN based on similar products.
-   - Use industry-standard classification logic.
-6. Do NOT guess randomly. Always follow structured classification.
-7. Prefer commonly used GST HSN codes in India.
+5. If not found, use industry-standard classification logic for the closest match.
+6. Do NOT guess randomly. Prefer commonly used GST HSN codes in India.
 
 OUTPUT FORMAT (STRICT JSON):
 {
   "hsn_code": "XXXXXX"
 }`;
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${process.env.GEMINI_API_KEY}`;
 
+    // Use pinned stable model — avoids the congested gemini-flash-latest alias
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`;
     const requestBody = {
-      contents: [{
-        parts: [{ text: prompt }]
-      }],
-      generationConfig: {
-        responseMimeType: 'application/json'
-      }
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: { responseMimeType: 'application/json' },
     };
 
-    const fetchResponse = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(requestBody)
-    });
-
-    if (!fetchResponse.ok) {
-      const errorText = await fetchResponse.text();
-      throw new Error(`Gemini API error: ${fetchResponse.status} - ${errorText}`);
-    }
-
+    const fetchResponse = await callGeminiWithRetry(url, requestBody, 3);
     const data = await fetchResponse.json();
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
     if (text) {
       const parsed = JSON.parse(text);
       return parsed.hsn_code;
@@ -68,102 +115,156 @@ OUTPUT FORMAT (STRICT JSON):
   }
 };
 
-const generateProductContent = async (name, category, subcategory, brand, material, color, dimensions, thickness, generateImage = false) => {
+// =============================================================================
+// Generate Product Content (description, HSN, SKU, SEO, specs) + optional image
+// =============================================================================
+const generateProductContent = async (
+  name, category, subcategory, subsubcategory,
+  brand, material, color, dimensions, thickness,
+  sku, generateImage = false
+) => {
   try {
     if (!process.env.GEMINI_API_KEY) {
       throw new Error('GEMINI_API_KEY is missing in environment variables');
     }
 
-    const prompt = `You are a premium product copywriter and SEO specialist for Riddha Interior Mart (RIMX), an e-commerce platform specializing in home interiors, building materials, furniture, tiles, and fittings.
+    const prompt = `You are a premium product copywriter, database specialist, and SEO specialist for Riddha Interior Mart (RIMX), an e-commerce platform specializing in home interiors, building materials, furniture, tiles, and fittings.
+
+Your primary objective is to research the product using the provided Model Number / SKU and other inputs, and generate complete, highly accurate catalog details.
 
 INPUTS:
 - Product Name: ${name || 'N/A'}
+- SKU / Model Number: ${sku || 'N/A'}
 - Category: ${category || 'N/A'}
 - Subcategory: ${subcategory || 'N/A'}
-- Brand: ${brand || 'N/A'}
-- Material: ${material || 'N/A'}
-- Color: ${color || 'N/A'}
-- Dimensions: ${dimensions || 'N/A'}
-- Thickness: ${thickness || 'N/A'}
+- Sub-subcategory: ${subsubcategory || 'N/A'}
+- Brand (Current Selection): ${brand || 'N/A'}
+- Material (Current Selection): ${material || 'N/A'}
+- Color (Current Selection): ${color || 'N/A'}
+- Dimensions (Current Selection): ${dimensions || 'N/A'}
+- Thickness (Current Selection): ${thickness || 'N/A'}
 
 YOUR TASK:
-Generate outputs based on the input details:
-1. **Description**: A premium, search-optimized, professional e-commerce product description (approx. 50-80 words). Emphasize quality, material durability, aesthetic value, and usage scenarios.
-2. **HSN Code**: The most appropriate 6-digit HSN (Harmonized System of Nomenclature) code for this category under Indian GST rules.
-3. **SKU**: Generate a unique, professional SKU in uppercase. Format: [First 3 letters of Brand]-[First 3 letters of Category]-[First 3 letters of Subcategory or Material]-[3 random digits] (e.g. LUX-SOF-FAB-182).
-4. **SEO Keywords**: An array of 5 to 8 relevant, high-traffic search terms/keywords (e.g., "beige fabric sofa", "modern living room furniture").
-5. **Specifications**: A flat JSON object of 4 to 6 relevant technical attributes/specifications for this product type (e.g., {"Warranty": "2 Years", "Seating Capacity": "3 Seater", "Style": "Modern", "Finish": "Glossy"}). Make them specific to the product type.
-6. **Image Prompt**: A descriptive photo generation prompt (approx. 20-30 words) for a realistic studio product showcase of this item.
+1. **Description**: Premium, SEO-optimized product description (50-80 words). Highlight quality, durability, aesthetics, and usage scenarios.
+2. **HSN Code**: The most appropriate 6-digit HSN code under Indian GST rules for this product.
+3. **Brand Name**: Inferred brand/manufacturer name based on the SKU/Model Number, Product Name, and Category (e.g., Sleepwell, CenturyPly, Kajaria, Jaquar, Asian Paints, etc.). If you cannot infer it, return the Brand (Current Selection) or "other".
+4. **SEO Keywords**: Array of 5-8 high-traffic search terms.
+5. **Specifications**: Flat JSON of 4-6 technical attributes specific to this product type (e.g., {"Finish": "Glossy", "Material": "Ceramic", "Warranty": "5 Years"}).
+6. **Dimensions**: A flat JSON object containing "height", "width", "thickness", and "unit" if they can be determined/inferred from the SKU, product type, or name (e.g. {"height": "75", "width": "180", "thickness": "18", "unit": "cm"}). Return empty strings for any fields you cannot determine.
+7. **Image Prompt**: A highly descriptive, detailed, professional studio product photography prompt (25-35 words). Describe the product setup, specific material textures, color details, angles, professional studio lighting, and a clean minimalist backdrop to guide the image generator accurately.
 
-OUTPUT FORMAT (STRICT JSON):
+OUTPUT FORMAT (STRICT JSON). Ensure all double quotes inside string values are properly escaped (e.g. \"...) and no raw newlines are used inside the values:
 {
   "description": "...",
   "hsn_code": "XXXXXX",
-  "sku": "...",
-  "seo_keywords": ["keyword1", "keyword2", "keyword3"],
-  "specifications": {
-    "Attribute1": "Value1",
-    "Attribute2": "Value2"
+  "brand_name": "...",
+  "seo_keywords": ["keyword1", "keyword2"],
+  "specifications": { "Attribute1": "Value1" },
+  "dimensions": {
+    "height": "...",
+    "width": "...",
+    "thickness": "...",
+    "unit": "..."
   },
   "image_prompt": "..."
-}`;
+}
+`;
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${process.env.GEMINI_API_KEY}`;
-    
+    // Use pinned stable model with 503 auto-retry
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`;
     const requestBody = {
-      contents: [{
-        parts: [{ text: prompt }]
-      }],
-      generationConfig: {
-        responseMimeType: 'application/json'
-      }
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: { responseMimeType: 'application/json' },
     };
 
-    const fetchResponse = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(requestBody)
-    });
-
-    if (!fetchResponse.ok) {
-      const errorText = await fetchResponse.text();
-      throw new Error(`Gemini API error: ${fetchResponse.status} - ${errorText}`);
-    }
-
+    const fetchResponse = await callGeminiWithRetry(url, requestBody, 5);
     const data = await fetchResponse.json();
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!text) return null;
 
-    if (text) {
-      const parsed = JSON.parse(text);
-      let imageBase64 = null;
+    const parsed = JSON.parse(text);
+    let imageBase64 = null;
 
-      console.log(`Backend aiService: generateImage flag is:`, generateImage);
-      if (generateImage) {
-        const imagePrompt = parsed.image_prompt || parsed.imagePrompt || `Premium professional studio product photography of ${name || 'home interior product'}, category: ${category || 'decor'}, subcategory: ${subcategory || 'interior'}, clean studio background, high resolution, 8k`;
-        try {
-          console.log(`Generating AI product image via Pollinations AI for prompt: ${imagePrompt}`);
-          const imageRes = await fetch(
-            `https://image.pollinations.ai/prompt/${encodeURIComponent(imagePrompt)}?width=800&height=800&nologo=true`,
-            { signal: AbortSignal.timeout(25000) }
-          );
-          if (imageRes.ok) {
+    // ── Image Generation (only when vendor explicitly requests it) ─────────────
+    if (generateImage) {
+      const cacheKey = (sku || name || '').trim().toLowerCase();
+      if (cacheKey && imageCache.has(cacheKey)) {
+        console.log(`[ImageGen] Serving image from cache for key: ${cacheKey}`);
+        imageBase64 = imageCache.get(cacheKey);
+      } else {
+        console.log(`[ImageGen] Starting image generation for: "${name}"`);
+
+        // AI-generated prompt from Gemini (already short due to 15-word instruction)
+        // Falls back to a clean, concise prompt if missing
+        const aiPrompt = parsed.image_prompt ||
+          `${name || 'interior product'} studio photo, white background, professional lighting`;
+        const simplePrompt = `${name || 'interior product'} product photo, clean white background`;
+
+        // 4-attempt cascade with robust timeouts and 4-second gaps between attempts
+        const attempts = [
+          {
+            label: 'Attempt 1 (AI prompt, turbo model - FAST & STABLE)',
+            url: `https://image.pollinations.ai/prompt/${encodeURIComponent(aiPrompt)}?width=800&height=800&nologo=true&model=turbo`,
+            timeout: 20000,
+          },
+          {
+            label: 'Attempt 2 (AI prompt, default flux model)',
+            url: `https://image.pollinations.ai/prompt/${encodeURIComponent(aiPrompt)}?width=800&height=800&nologo=true`,
+            timeout: 25000,
+          },
+          {
+            label: 'Attempt 3 (simple prompt, turbo model)',
+            url: `https://image.pollinations.ai/prompt/${encodeURIComponent(simplePrompt)}?width=800&height=800&nologo=true&model=turbo`,
+            timeout: 20000,
+          },
+          {
+            label: 'Attempt 4 (dreamshaper model)',
+            url: `https://image.pollinations.ai/prompt/${encodeURIComponent(simplePrompt)}?model=dreamshaper`,
+            timeout: 20000,
+          },
+        ];
+
+        for (let i = 0; i < attempts.length; i++) {
+          const { label, url: imgUrl, timeout } = attempts[i];
+
+          // Wait 4 seconds before each retry to respect Pollinations rate limits
+          if (i > 0) {
+            console.log(`[ImageGen] Waiting 4s before ${label}...`);
+            await sleep(4000);
+          }
+
+          console.log(`[ImageGen] ${label}`);
+          const imageRes = await fetchImage(imgUrl, timeout);
+
+          if (imageRes && imageRes.ok) {
             const arrayBuffer = await imageRes.arrayBuffer();
             imageBase64 = `data:image/jpeg;base64,${Buffer.from(arrayBuffer).toString('base64')}`;
-            console.log("AI Image downloaded and converted to base64 successfully.");
-          } else {
-            console.error(`AI Image Generation failed with status: ${imageRes.status}`);
+            console.log(`[ImageGen] SUCCESS on ${label}. Size: ${imageBase64.length} chars`);
+            // Cache the successfully generated image
+            imageCache.set(cacheKey, imageBase64);
+            break;
           }
-        } catch (imgErr) {
-          console.error("AI Image Generation failed:", imgErr.message || imgErr);
+
+          let errorSnippet = '';
+          if (imageRes) {
+            try {
+              const text = await imageRes.text();
+              errorSnippet = ` - Body: ${text.slice(0, 150).replace(/\s+/g, ' ')}`;
+            } catch (e) {}
+          }
+          const status = imageRes ? `HTTP ${imageRes.status}${errorSnippet}` : 'timeout/network error';
+          const hasNext = i < attempts.length - 1;
+          console.warn(`[ImageGen] ${label} failed (${status}). ${hasNext ? 'Trying next...' : 'All attempts exhausted.'}`);
+        }
+
+        if (!imageBase64) {
+          console.error('[ImageGen] All 4 attempts failed. Returning content without image.');
         }
       }
-
-      return {
-        ...parsed,
-        image: imageBase64
-      };
     }
-    return null;
+
+    return { ...parsed, image: imageBase64 };
+
   } catch (error) {
     console.error('Error generating product content via Gemini:', error);
     throw new Error(`Failed to generate product content: ${error.message}`);
@@ -172,5 +273,5 @@ OUTPUT FORMAT (STRICT JSON):
 
 module.exports = {
   generateHSNCode,
-  generateProductContent
+  generateProductContent,
 };

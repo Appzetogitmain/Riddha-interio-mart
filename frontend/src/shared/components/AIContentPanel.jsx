@@ -20,8 +20,10 @@ const AIContentPanel = ({
     description: "",
     hsnCode: "",
     sku: "",
+    brandName: "",
     seoKeywords: [],
     specifications: {},
+    dimensions: {},
     image: null
   });
 
@@ -71,6 +73,10 @@ const AIContentPanel = ({
       alert("Please enter a Product Name first to help AI write the content.");
       return;
     }
+    if (!formData.sku) {
+      alert("Please enter a Model Number / SKU first to help AI identify the product.");
+      return;
+    }
     
     setStatus("generating");
     setErrorMessage("");
@@ -80,11 +86,13 @@ const AIContentPanel = ({
         name: formData.name,
         category: formData.category,
         subcategory: formData.subcategory,
+        subsubcategory: formData.subsubcategory,
         brand: formData.brand,
         material: formData.material,
         color: formData.color,
         dimensions: formData.dimensions,
         thickness: formData.thickness,
+        sku: formData.sku,
         generateImage: generateImage
       });
 
@@ -97,9 +105,11 @@ const AIContentPanel = ({
           const generated = {
             description: response.data.description || "",
             hsnCode: response.data.hsn_code || "",
-            sku: response.data.sku || "",
+            sku: response.data.sku || formData.sku || "",
+            brandName: response.data.brand_name || "",
             seoKeywords: response.data.seo_keywords || [],
             specifications: response.data.specifications || {},
+            dimensions: response.data.dimensions || {},
             image: response.data.image || null
           };
           setGeneratedData(generated);
@@ -164,9 +174,10 @@ const AIContentPanel = ({
           <p className="uppercase tracking-wider text-[10px] text-slate-400">Context provided to AI:</p>
           <div className="grid grid-cols-2 gap-2 text-slate-600">
             <div><span className="font-bold">Title:</span> {formData.name || "—"}</div>
+            <div><span className="font-bold">Model / SKU:</span> {formData.sku || "—"}</div>
             <div><span className="font-bold">Category:</span> {formData.category || "—"}</div>
-            <div><span className="font-bold">Brand:</span> {formData.brand || "—"}</div>
-            <div><span className="font-bold">Material:</span> {formData.material || "—"}</div>
+            <div><span className="font-bold">Subcategory:</span> {formData.subcategory || "—"}</div>
+            <div><span className="font-bold">Sub-subcategory:</span> {formData.subsubcategory || "—"}</div>
           </div>
         </div>
 

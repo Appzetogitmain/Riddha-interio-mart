@@ -41,10 +41,14 @@ exports.getBrand = async (req, res) => {
 
 // @desc    Create new brand
 // @route   POST /api/brands
-// @access  Private/Admin
+// @access  Private/Admin or Seller
 exports.createBrand = async (req, res) => {
   try {
-    const brand = await Brand.create(req.body);
+    const brandData = { ...req.body };
+    if (req.user && req.user.role === 'seller') {
+      brandData.isActive = false;
+    }
+    const brand = await Brand.create(brandData);
     res.status(201).json({ success: true, data: brand });
   } catch (error) {
     console.error('Create Brand Error:', error);

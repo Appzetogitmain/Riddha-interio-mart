@@ -12,7 +12,7 @@ const { protect, authorize } = require('../middleware/auth');
 
 router.route('/')
   .get(getBrands)
-  .post(protect, authorize('admin'), createBrand);
+  .post(protect, authorize('admin', 'seller'), createBrand);
 
 router.route('/admin')
   .get(protect, authorize('admin'), getAdminBrands);

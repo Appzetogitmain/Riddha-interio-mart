@@ -9,3 +9,7 @@ build
 
 # Firebase service account credentials (contains private key – never commit)
 src/config/*adminsdk*.json
+
+# Ignore local database dumps and debug files
+db_dump.json
+debug_products.json

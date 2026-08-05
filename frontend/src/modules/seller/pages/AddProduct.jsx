@@ -453,7 +453,30 @@ const AddProduct = () => {
           const brandRes = await api.post('/brands', { name: customBrandName });
           finalBrand = brandRes.data?.data?._id || brandRes.data?._id;
         } catch (e) {
-          throw new Error("Failed to create the new brand. You might not have permission, or it already exists. Please select an existing brand.");
+          const errorMsg = e.response?.data?.error || e.message || "";
+          if (errorMsg.toLowerCase().includes("already exists")) {
+            try {
+              // Try to fetch active brands or all admin brands to resolve the conflict
+              const { data: brandListRes } = await api.get('/brands');
+              const matched = (brandListRes.data || []).find(b => b.name.toLowerCase() === customBrandName.trim().toLowerCase());
+              if (matched) {
+                finalBrand = matched._id;
+              } else {
+                // If it exists but is inactive, check admin brands if possible
+                const { data: adminBrandRes } = await api.get('/brands/admin');
+                const matchedAdmin = (adminBrandRes.data || []).find(b => b.name.toLowerCase() === customBrandName.trim().toLowerCase());
+                if (matchedAdmin) {
+                  finalBrand = matchedAdmin._id;
+                } else {
+                  throw e;
+                }
+              }
+            } catch (err) {
+              throw new Error("This brand is already registered or pending approval. Please select it from the brand list.");
+            }
+          } else {
+            throw new Error("Failed to request new brand approval: " + errorMsg);
+          }
         }
       }
 
@@ -1009,11 +1032,30 @@ const AddProduct = () => {
                     formData={formData}
                     onApply={(data) => {
                       console.log("Seller page applying AI content:", data);
+                      
+                      let matchedBrandId = "";
+                      if (data.brandName) {
+                        const matched = brands.find(
+                          (b) => b.name.toLowerCase() === data.brandName.toLowerCase()
+                        );
+                        if (matched) {
+                          matchedBrandId = matched._id;
+                        } else {
+                          matchedBrandId = "other";
+                          setCustomBrandName(data.brandName);
+                        }
+                      }
+
                       setFormData((prev) => ({
                         ...prev,
                         description: data.description,
                         hsnCode: data.hsnCode,
                         sku: data.sku,
+                        brand: matchedBrandId || prev.brand,
+                        dimensions: data.dimensions?.height && data.dimensions?.width 
+                          ? `${data.dimensions.height} x ${data.dimensions.width} ${data.dimensions.unit || ''}`.trim()
+                          : prev.dimensions,
+                        thickness: data.dimensions?.thickness || prev.thickness,
                         seoKeywords: data.seoKeywords,
                         images: data.image ? [...prev.images, data.image] : prev.images,
                         dynamicAttributes: {
@@ -1025,13 +1067,19 @@ const AddProduct = () => {
                         ...prev,
                         description: true,
                         hsnCode: true,
-                        sku: true
+                        sku: true,
+                        brand: true,
+                        dimensions: true,
+                        thickness: true
                       }));
                       setFieldErrors((prev) => ({
                         ...prev,
                         description: "",
                         hsnCode: "",
-                        sku: ""
+                        sku: "",
+                        brand: "",
+                        dimensions: "",
+                        thickness: ""
                       }));
                     }}
                     theme="seller"

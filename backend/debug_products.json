@@ -1,6 +1,8 @@
 {
-  "timestamp": "2026-08-05T07:48:16.446Z",
-  "query": {},
+  "timestamp": "2026-08-05T09:20:40.657Z",
+  "query": {
+    "limit": "1"
+  },
   "builtFilter": {
     "isApproved": true,
     "isActive": true,
@@ -11,7 +13,7 @@
       ]
     }
   },
-  "resultCount": 10,
+  "resultCount": 1,
   "results": [
     {
       "_id": "6a71fcd9dfb6131dc25f4c2f",
@@ -22,92 +24,6 @@
       },
       "subcategory": "6a4d5daea06cf368b84a720b",
       "subsubcategory": "6a4d5daea06cf368b84a720c"
-    },
-    {
-      "_id": "6a58a3d35403001112c2cdf8",
-      "name": "italian white marble",
-      "category": {
-        "_id": "69e1cc1d60884ec078193fe9",
-        "name": "Marble"
-      }
-    },
-    {
-      "_id": "6a589992b9fb911c92044c81",
-      "name": "Makrana White",
-      "category": {
-        "_id": "69e1cc1d60884ec078193fe9",
-        "name": "Marble"
-      },
-      "subcategory": "6a4d111fa06cf368b84a67f1",
-      "subsubcategory": "6a4d111fa06cf368b84a67f2"
-    },
-    {
-      "_id": "6a587cc1b9fb911c920446de",
-      "name": "Makrana White Marble",
-      "category": {
-        "_id": "69e1cc1d60884ec078193fe9",
-        "name": "Marble"
-      },
-      "subcategory": "6a4d111fa06cf368b84a67f1",
-      "subsubcategory": "6a4d111fa06cf368b84a67f2"
-    },
-    {
-      "_id": "6a587c46b9fb911c920446aa",
-      "name": "product listing",
-      "category": {
-        "_id": "6a0d97bf804fbfd108773a6f",
-        "name": "Flooring"
-      },
-      "subcategory": "6a4d4f65a06cf368b84a7146",
-      "subsubcategory": "6a4d4f65a06cf368b84a7149"
-    },
-    {
-      "_id": "6a576bd2762fb55b92f7f10b",
-      "name": "Makrana White Marble",
-      "category": {
-        "_id": "69e1cc1d60884ec078193fe9",
-        "name": "Marble"
-      },
-      "subcategory": "6a4d111fa06cf368b84a67f1",
-      "subsubcategory": "6a4d111fa06cf368b84a67f2"
-    },
-    {
-      "_id": "6a52095068d5026f759c7c30",
-      "name": "test enterprise",
-      "category": {
-        "_id": "6a0d97bf804fbfd108773a6f",
-        "name": "Flooring"
-      },
-      "subcategory": "6a4d4f65a06cf368b84a714b",
-      "subsubcategory": "6a4d4f65a06cf368b84a714e"
-    },
-    {
-      "_id": "6a5114b9c41671564fc2cbc6",
-      "name": "fsdfg",
-      "category": {
-        "_id": "6a4cf715a06cf368b84a62e3",
-        "name": "Paint"
-      }
-    },
-    {
-      "_id": "6a4f584ec25e41b935a865eb",
-      "name": "EXTENDED WALL MOUNTED TOILETS",
-      "category": {
-        "_id": "6a2bd98474e4adc0617a9df9",
-        "name": "Bath Fitting"
-      },
-      "subcategory": "6a4e05c2a06cf368b84a9983",
-      "subsubcategory": "6a4e05c2a06cf368b84a998d"
-    },
-    {
-      "_id": "6a4ca1ff53791a8751587337",
-      "name": "testing product again",
-      "category": {
-        "_id": "6a0d97bf804fbfd108773a6f",
-        "name": "Flooring"
-      },
-      "subcategory": "6a4d4f65a06cf368b84a7146",
-      "subsubcategory": ""
     }
   ]
 }

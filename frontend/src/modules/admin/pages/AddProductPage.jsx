@@ -364,27 +364,43 @@ const AddProductPage = () => {
                     </div>
                  </div>
                  
-                   <div className="pt-4 border-t border-soft-oatmeal/30">
-                     <AIContentPanel
-                       formData={formData}
-                       onApply={(data) => {
-                         console.log("Admin Catalog page applying AI content:", data);
-                         setFormData((prev) => ({
-                           ...prev,
-                           description: data.description,
-                           hsnCode: data.hsnCode,
-                           sku: data.sku,
-                           seoKeywords: data.seoKeywords,
-                           images: data.image ? [...prev.images, data.image] : prev.images,
-                           dynamicAttributes: {
-                             ...(prev.dynamicAttributes || {}),
-                             ...data.specifications
-                           }
-                         }));
-                       }}
-                       theme="admin"
-                     />
-                   </div>
+                 <div className="pt-4 border-t border-soft-oatmeal/30">
+                   <AIContentPanel
+                     formData={formData}
+                     onApply={(data) => {
+                       console.log("Admin Catalog page applying AI content:", data);
+                       
+                       let matchedBrandId = "";
+                       if (data.brandName) {
+                         const matched = brands.find(
+                           (b) => b.name.toLowerCase() === data.brandName.toLowerCase()
+                         );
+                         if (matched) {
+                           matchedBrandId = matched._id;
+                         }
+                       }
+
+                       setFormData((prev) => ({
+                         ...prev,
+                         description: data.description,
+                         hsnCode: data.hsnCode,
+                         sku: data.sku,
+                         brand: matchedBrandId || prev.brand,
+                         dimensions: data.dimensions?.height && data.dimensions?.width 
+                           ? `${data.dimensions.height} x ${data.dimensions.width} ${data.dimensions.unit || ''}`.trim()
+                           : prev.dimensions,
+                         thickness: data.dimensions?.thickness || prev.thickness,
+                         seoKeywords: data.seoKeywords,
+                         images: data.image ? [...prev.images, data.image] : prev.images,
+                         dynamicAttributes: {
+                           ...(prev.dynamicAttributes || {}),
+                           ...data.specifications
+                         }
+                       }));
+                     }}
+                     theme="admin"
+                   />
+                 </div>
              </div>
 
              {/* Right: Detailed Fields */}

@@ -929,7 +929,7 @@ exports.generateHSNCodeHandler = async (req, res, next) => {
 // @access  Private/Admin or Seller
 exports.generateProductContentHandler = async (req, res, next) => {
   try {
-    const { name, category, subcategory, brand, material, color, dimensions, thickness, generateImage } = req.body;
+    const { name, category, subcategory, subsubcategory, brand, material, color, dimensions, thickness, sku, generateImage } = req.body;
     const generateImageBool = generateImage === true || generateImage === 'true';
     console.log("POST /api/products/generate-content body:", req.body, "parsed generateImage:", generateImageBool);
     const aiService = require('../services/aiService');
@@ -937,11 +937,13 @@ exports.generateProductContentHandler = async (req, res, next) => {
       name,
       category,
       subcategory,
+      subsubcategory,
       brand,
       material,
       color,
       dimensions,
       thickness,
+      sku,
       generateImageBool
     );
 

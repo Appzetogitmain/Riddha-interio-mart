@@ -48,6 +48,7 @@ const advertisementRoutes = require('./routes/advertisementRoutes');
 const recommendationRoutes = require('./routes/recommendationRoutes');
 const roomRoutes = require('./routes/roomRoutes');
 const bundleRoutes = require('./routes/bundleRoutes');
+const quizRoutes = require('./routes/quizRoutes');
 const errorHandler = require('./middleware/errorMiddleware');
 const authRoutes = require('./routes/authRoutes');
 const { initSocket } = require('./socket');
@@ -179,6 +180,7 @@ app.use('/api/advertisements', advertisementRoutes);
 app.use('/api/recommendations', recommendationRoutes);
 app.use('/api/rooms', roomRoutes);
 app.use('/api/bundles', bundleRoutes);
+app.use('/api/quiz', quizRoutes);
 
 app.get('/', (req, res) => {
   res.json({ message: 'Welcome to Riddha Mart API' });

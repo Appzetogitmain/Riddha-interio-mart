@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import {
   FiUser, FiPackage, FiMapPin, FiSettings, FiLogOut,
   FiChevronRight, FiGift, FiCopy, FiCheck, FiHeart,
-  FiShield, FiPhone, FiFileText, FiAlertCircle
+  FiShield, FiPhone, FiFileText, FiAlertCircle, FiCompass
 } from 'react-icons/fi';
 import { Link, useNavigate } from 'react-router-dom';
 import { useUser } from '../data/UserContext';
@@ -13,6 +13,7 @@ import { toast } from 'react-hot-toast';
 
 const menuItems = [
   { icon: FiUser,    title: 'My Profile',        subtitle: 'View and edit personal information',     link: '/profile/edit' },
+  { icon: FiCompass, title: 'My Design Profile',  subtitle: 'View your AI style blueprint & matches',  link: '/designer-quiz/results' },
   { icon: FiPackage, title: 'Orders',             subtitle: 'Track, manage and reorder',              link: '/orders' },
   { icon: FiHeart,   title: 'Wishlist',           subtitle: 'Saved items and collections',            scrollTarget: 'wishlist-section' },
   { icon: FiMapPin,  title: 'Addresses',          subtitle: 'Manage delivery addresses',              link: '/addresses' },

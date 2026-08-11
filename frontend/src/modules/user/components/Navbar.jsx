@@ -20,7 +20,8 @@ import {
   FiTruck,
   FiFileText,
   FiHeart,
-  FiZap
+  FiZap,
+  FiCompass
 } from "react-icons/fi";
 import { AiOutlineShop } from "react-icons/ai";
 import { motion, AnimatePresence } from "framer-motion";
@@ -252,6 +253,18 @@ const Navbar = () => {
                 </div>
               </button>
 
+              {/* Design Quiz */}
+              <Link
+                to="/designer-quiz"
+                className="flex items-center gap-2 group border-l border-gray-100 pl-4 lg:pl-6 text-left"
+              >
+                <FiCompass className="text-gray-500 w-5 h-5 group-hover:text-[#004D40] transition-colors" />
+                <div className="flex flex-col text-left">
+                  <span className="text-[11px] font-bold text-gray-700 leading-none group-hover:text-[#004D40] transition-colors font-sans">Design Quiz</span>
+                  <span className="text-[10px] font-bold text-[#004D40] mt-0.5 font-sans">AI Persona</span>
+                </div>
+              </Link>
+
               <div className="h-8 w-[1px] bg-gray-100"></div>
 
               {/* User Actions */}
@@ -471,6 +484,7 @@ const Navbar = () => {
                     <SidebarLink to="/" icon={FiHome} label="Home" onClick={closeMobile} />
                     <SidebarLink to="/products" icon={FiGrid} label="Shop Products" onClick={closeMobile} />
                     <SidebarLink to="/bundles" icon={FiZap} label="Smart Bundles" onClick={closeMobile} />
+                    <SidebarLink to="/designer-quiz" icon={FiCompass} label="Designer Quiz" onClick={closeMobile} />
                     <SidebarLink to="/referral-rewards" icon={LuWallet} label="Riddha Wallet" onClick={closeMobile} />
                     <SidebarLink to="/orders" icon={FiShoppingBag} label="My Orders" onClick={closeMobile} />
                     {user && <SidebarLink to="/wishlist" icon={FiHeart} label="My Wishlist" onClick={closeMobile} />}

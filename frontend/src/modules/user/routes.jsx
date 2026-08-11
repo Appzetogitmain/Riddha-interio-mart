@@ -42,6 +42,8 @@ const OnboardingPage = React.lazy(() => import('./pages/OnboardingPage'));;
 const SavedAddressesPage = React.lazy(() => import('./pages/SavedAddressesPage'));;
 const BundlesPage = React.lazy(() => import('./pages/BundlesPage'));;
 const BundleDetailPage = React.lazy(() => import('./pages/BundleDetailPage'));;
+const DesignerQuizPage = React.lazy(() => import('./pages/DesignerQuizPage'));
+const QuizResultsPage = React.lazy(() => import('./pages/QuizResultsPage'));
 
 import { Navigate } from 'react-router-dom';
 import { useUser } from './data/UserContext';
@@ -62,6 +64,8 @@ const UserRoutes = () => {
       <Route path="/onboarding" element={<OnboardingPage />} />
       <Route path="/" element={<RootRoute />} />
 
+      <Route path="/designer-quiz" element={<DesignerQuizPage />} />
+      <Route path="/designer-quiz/results" element={<QuizResultsPage />} />
       <Route path="/contractor-registration" element={<ContractorRegistration />} />
       <Route path="/designer-registration" element={<DesignerRegistration />} />
       <Route path="/builder-registration" element={<BuilderRegistration />} />

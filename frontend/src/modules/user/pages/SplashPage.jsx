@@ -15,7 +15,7 @@ const SplashPage = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       setLoadingComplete(true);
-      sessionStorage.setItem("splashCompleted", "true");
+      localStorage.setItem("splashCompleted", "true");
       if (user) {
         navigate("/");
       }
@@ -163,13 +163,19 @@ const SplashPage = () => {
             {/* Action Buttons */}
             <div className="w-full space-y-3 pb-4">
               <button 
-                onClick={() => navigate('/login')}
+                onClick={() => {
+                  localStorage.setItem("splashCompleted", "true");
+                  navigate('/login');
+                }}
                 className="w-full bg-[#EC008C] hover:bg-[#d8007e] text-white py-3.5 rounded-[18px] font-semibold text-[15px] transition-all active:scale-[0.98] shadow-md shadow-[#EC008C]/20"
               >
                 Login / Sign Up
               </button>
               <button 
-                onClick={() => navigate('/login')}
+                onClick={() => {
+                  localStorage.setItem("splashCompleted", "true");
+                  navigate('/login');
+                }}
                 className="w-full bg-white border border-[#EC008C]/30 text-[#EC008C] hover:bg-pink-50 py-3.5 rounded-[18px] font-semibold text-[15px] transition-all active:scale-[0.98] flex items-center justify-center gap-2"
               >
                 <FaPhoneAlt size={13} />

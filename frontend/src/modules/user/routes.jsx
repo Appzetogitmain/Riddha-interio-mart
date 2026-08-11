@@ -47,7 +47,7 @@ import { Navigate } from 'react-router-dom';
 import { useUser } from './data/UserContext';
 
 const RootRoute = () => {
-  const splashCompleted = sessionStorage.getItem('splashCompleted') === 'true';
+  const splashCompleted = localStorage.getItem('splashCompleted') === 'true';
 
   if (splashCompleted) {
     return <HomePage />;

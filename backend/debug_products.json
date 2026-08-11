@@ -1,9 +1,6 @@
 {
-  "timestamp": "2026-08-11T09:37:17.216Z",
-  "query": {
-    "search": "Modern Office Desk Set",
-    "limit": "6"
-  },
+  "timestamp": "2026-08-11T10:33:03.906Z",
+  "query": {},
   "builtFilter": {
     "isApproved": true,
     "isActive": true,
@@ -12,13 +9,18 @@
         "6a100b07a3cc06ac3f65be01",
         "6a10057431fa10db6ebdaaff"
       ]
-    },
-    "$text": {
-      "$search": "Modern Office Desk Set"
     }
   },
-  "resultCount": 6,
+  "resultCount": 10,
   "results": [
+    {
+      "_id": "6a7af6f8b2b48db3cc9d755b",
+      "name": "Bundle: bundle set test",
+      "category": {
+        "_id": "6a7aeb2e6d53872e0de9141a",
+        "name": "Bundles"
+      }
+    },
     {
       "_id": "6a7ab4eefbb213b03d0996ae",
       "name": "Polycab Wire",
@@ -38,6 +40,26 @@
       },
       "subcategory": "6a4d7e72a06cf368b84a7556",
       "subsubcategory": "6a4d7e72a06cf368b84a7560"
+    },
+    {
+      "_id": "6a758b81fbb213b03d094d25",
+      "name": "Havells Life Line Plus HRFR",
+      "category": {
+        "_id": "6a22be91614854ee3ba47f8c",
+        "name": "Electricals"
+      },
+      "subcategory": "6a4dfe86a06cf368b84a926a",
+      "subsubcategory": "6a4dfe86a06cf368b84a926e"
+    },
+    {
+      "_id": "6a733f41fbb213b03d08f824",
+      "name": "HIKVISION",
+      "category": {
+        "_id": "6a4cfde1a06cf368b84a64c6",
+        "name": "Security & Automation"
+      },
+      "subcategory": "6a50d299fb87c84071cbb938",
+      "subsubcategory": "6a50d299fb87c84071cbb93a"
     },
     {
       "_id": "6a733c79fbb213b03d08f2b7",
@@ -60,20 +82,32 @@
       "subsubcategory": "6a4d5daea06cf368b84a720c"
     },
     {
-      "_id": "6a3cf1bd3c72ab885b351edd",
-      "name": "Baris Square 40 LED",
+      "_id": "6a58a3d35403001112c2cdf8",
+      "name": "italian white marble",
       "category": {
-        "_id": "6a3ce1121a6984f64390c771",
-        "name": "False Ceiling"
+        "_id": "69e1cc1d60884ec078193fe9",
+        "name": "Marble"
       }
     },
     {
-      "_id": "6a3cf1bb3c72ab885b351edc",
-      "name": "Baris Square 52 LED",
+      "_id": "6a589992b9fb911c92044c81",
+      "name": "Makrana White",
       "category": {
-        "_id": "6a3ce1121a6984f64390c771",
-        "name": "False Ceiling"
-      }
+        "_id": "69e1cc1d60884ec078193fe9",
+        "name": "Marble"
+      },
+      "subcategory": "6a4d111fa06cf368b84a67f1",
+      "subsubcategory": "6a4d111fa06cf368b84a67f2"
+    },
+    {
+      "_id": "6a587cc1b9fb911c920446de",
+      "name": "Makrana White Marble",
+      "category": {
+        "_id": "69e1cc1d60884ec078193fe9",
+        "name": "Marble"
+      },
+      "subcategory": "6a4d111fa06cf368b84a67f1",
+      "subsubcategory": "6a4d111fa06cf368b84a67f2"
     }
   ]
 }

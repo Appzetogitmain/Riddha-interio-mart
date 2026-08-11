@@ -11,7 +11,10 @@ import { useWishlist } from '../data/WishlistContext';
 import ProductCard from '../components/ProductCard';
 import { toast } from 'react-hot-toast';
 
+import { LuSparkles } from 'react-icons/lu';
+
 const menuItems = [
+  { icon: LuSparkles, title: 'AI Room Visualizer', subtitle: 'Upload room & see AI redesigned transformations', link: '/ai-room-visualizer', badge: 'NEW AI' },
   { icon: FiUser,    title: 'My Profile',        subtitle: 'View and edit personal information',     link: '/profile/edit' },
   { icon: FiPackage, title: 'Orders',             subtitle: 'Track, manage and reorder',              link: '/orders' },
   { icon: FiHeart,   title: 'Wishlist',           subtitle: 'Saved items and collections',            scrollTarget: 'wishlist-section' },
@@ -114,7 +117,14 @@ const Profile = () => {
                   <Icon size={16} className="text-[#189D91]" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-slate-800 group-hover:text-[#189D91] transition-colors leading-none">{item.title}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-bold text-slate-800 group-hover:text-[#189D91] transition-colors leading-none">{item.title}</p>
+                    {item.badge && (
+                      <span className="px-2 py-0.5 bg-[#189D91] text-white text-[9px] font-black rounded-md uppercase tracking-wider">
+                        {item.badge}
+                      </span>
+                    )}
+                  </div>
                   <p className="text-[10px] text-gray-400 font-medium mt-0.5 leading-none">{item.subtitle}</p>
                 </div>
                 <FiChevronRight size={14} className="text-gray-300 group-hover:text-[#189D91] transition-colors shrink-0" />

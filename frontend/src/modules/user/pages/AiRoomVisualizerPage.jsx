@@ -67,9 +67,17 @@ const AiRoomVisualizerPage = () => {
       createdAt: new Date().toISOString()
     };
 
-    const updated = [historyItem, ...history.filter(h => h.id !== historyItem.id)].slice(0, 10);
+    const updated = [historyItem, ...history.filter(h => h.id !== historyItem.id)].slice(0, 5);
     setHistory(updated);
-    localStorage.setItem('riddha_ai_visualizer_history', JSON.stringify(updated));
+    try {
+      localStorage.setItem('riddha_ai_visualizer_history', JSON.stringify(updated));
+    } catch (storageErr) {
+      console.warn('[LocalStorage Exceeded] Truncating visualizer history:', storageErr.message);
+      const minimal = updated.slice(0, 2);
+      try {
+        localStorage.setItem('riddha_ai_visualizer_history', JSON.stringify(minimal));
+      } catch (e) {}
+    }
   };
 
   const handleImageSelect = (e) => {
@@ -234,15 +242,25 @@ const AiRoomVisualizerPage = () => {
           </div>
         </div>
 
-        {history.length > 0 && (
+        <div className="flex items-center gap-2">
           <button
-            onClick={() => setShowHistoryModal(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-white/15 hover:bg-white/25 rounded-xl text-xs font-bold transition-all border border-white/20"
+            onClick={() => navigate('/ai-mood-board')}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-400/20 hover:bg-amber-400/30 text-amber-200 rounded-full text-xs font-bold transition-all border border-amber-300/30"
+            title="Try AI Mood Board Generator"
           >
-            <FiClock size={14} />
-            <span>History ({history.length})</span>
+            <LuPalette size={14} />
+            <span className="hidden sm:inline">Mood Board</span>
           </button>
-        )}
+          {history.length > 0 && (
+            <button
+              onClick={() => setShowHistoryModal(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-white/15 hover:bg-white/25 rounded-full text-xs font-bold transition-all border border-white/20"
+            >
+              <FiClock size={14} />
+              <span>History ({history.length})</span>
+            </button>
+          )}
+        </div>
       </header>
 
       {/* Main Container */}

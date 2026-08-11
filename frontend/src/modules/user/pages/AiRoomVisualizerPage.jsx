@@ -4,7 +4,7 @@ import {
   FiArrowLeft, FiUploadCloud, FiRefreshCw, FiShare2,
   FiDownload, FiTrash2, FiClock, FiCheck, FiChevronRight, FiMaximize2, FiInfo
 } from 'react-icons/fi';
-import { LuSparkles, LuSofa, LuBed, LuUtensils, LuBath, LuCoffee, LuLaptop } from 'react-icons/lu';
+import { LuSparkles, LuSofa, LuBed, LuUtensils, LuBath, LuCoffee, LuLaptop, LuPalette } from 'react-icons/lu';
 import { useNavigate } from 'react-router-dom';
 import api from '../../../shared/utils/api';
 import { toast } from 'react-hot-toast';

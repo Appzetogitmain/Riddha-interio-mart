@@ -1,72 +1,126 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  FiArrowLeft, FiRefreshCw, FiShare2,
-  FiDownload, FiTrash2, FiClock, FiCheck, FiShoppingCart, FiChevronRight, FiCopy
+  FiArrowLeft, FiShare2, FiDownload, FiTrash2, FiClock,
+  FiCheck, FiShoppingCart, FiChevronRight, FiCopy, FiHeart, FiFileText, FiPlus, FiCheckCircle
 } from 'react-icons/fi';
-import { LuSparkles, LuSofa, LuBed, LuUtensils, LuBath, LuCoffee, LuLaptop, LuPalette } from 'react-icons/lu';
+import { LuSparkles, LuPalette } from 'react-icons/lu';
 import { useNavigate } from 'react-router-dom';
 import api from '../../../shared/utils/api';
 import { toast } from 'react-hot-toast';
 import { useCart } from '../data/CartContext';
 
-const roomTypes = [
-  { id: 'Living Room', label: 'Living Room', icon: LuSofa },
-  { id: 'Bedroom', label: 'Bedroom', icon: LuBed },
-  { id: 'Kitchen', label: 'Modular Kitchen', icon: LuUtensils },
-  { id: 'Bathroom', label: 'Bathroom', icon: LuBath },
-  { id: 'Dining Room', label: 'Dining Room', icon: LuCoffee },
-  { id: 'Home Office', label: 'Home Office', icon: LuLaptop }
+// Step 1: Style options with visual cards
+const styleCards = [
+  { id: 'Modern Luxury', label: 'Modern', image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=500&q=80' },
+  { id: 'Minimalist Japandi', label: 'Minimalist', image: 'https://images.unsplash.com/photo-1598928506311-c55ded91a20c?w=500&q=80' },
+  { id: 'Scandinavian', label: 'Scandinavian', image: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=500&q=80' },
+  { id: 'Industrial Loft', label: 'Industrial', image: 'https://images.unsplash.com/photo-1567016432779-094069958ea5?w=500&q=80' },
+  { id: 'Indian Heritage', label: 'Boho Chic', image: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=500&q=80' }
 ];
 
-const designStyles = [
-  { id: 'Modern Luxury', label: 'Modern Luxury', desc: 'Sleek marble, warm LED lighting & rich tones' },
-  { id: 'Scandinavian', label: 'Scandinavian', desc: 'Minimalist wood, light palette & cozy fabrics' },
-  { id: 'Minimalist Japandi', label: 'Minimalist Japandi', desc: 'Zen balance of Japanese & Nordic aesthetics' },
-  { id: 'Industrial Loft', label: 'Industrial Loft', desc: 'Exposed brick, metallic accents & raw wood' },
-  { id: 'Indian Heritage', label: 'Indian Heritage', desc: 'Carved woods, vibrant accents & royal brass' }
+// Step 2 Options
+const colorOptions = [
+  { name: 'Cream', hex: '#F5F2E9' },
+  { name: 'Beige', hex: '#E2D4C3' },
+  { name: 'Warm Taupe', hex: '#B8A692' },
+  { name: 'Sage Green', hex: '#7A8B7B' },
+  { name: 'Charcoal', hex: '#383D3B' },
+  { name: 'Dark Oak', hex: '#241E1A' }
 ];
+
+const roomTypeOptions = [
+  { id: 'Living Room', label: 'Living Room' },
+  { id: 'Bedroom', label: 'Bedroom' },
+  { id: 'Dining Room', label: 'Dining Room' },
+  { id: 'Kitchen', label: 'Kitchen' },
+  { id: 'Home Office', label: 'Office' },
+  { id: 'Bathroom', label: 'Bathroom' }
+];
+
+const budgetOptions = ['₹ 1 - 2 Lakhs', '₹ 2 - 5 Lakhs', '₹ 5 - 10 Lakhs', '₹ 10+ Lakhs'];
+const roomSizeOptions = ['500 - 800 sq.ft', '800 - 1200 sq.ft', '1200 - 1800 sq.ft', '1800+ sq.ft'];
 
 const MoodBoardGeneratorPage = () => {
   const navigate = useNavigate();
   const { addToCart } = useCart();
-  const boardCanvasRef = useRef(null);
 
-  const [selectedRoom, setSelectedRoom] = useState('Living Room');
+  // Wizard state: Step 1 (Style), Step 2 (Preferences), Step 3 (AI Generating Loading), Step 4 (Mood Board Display), Step 5 (Saved Success)
+  const [currentStep, setCurrentStep] = useState(1);
+
+  // Form selections
   const [selectedStyle, setSelectedStyle] = useState('Modern Luxury');
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [selectedColors, setSelectedColors] = useState(['Sage Green']);
+  const [selectedRoom, setSelectedRoom] = useState('Living Room');
+  const [selectedBudget, setSelectedBudget] = useState('₹ 2 - 5 Lakhs');
+  const [selectedSize, setSelectedSize] = useState('1200 - 1800 sq.ft');
+
+  // Loading animation items check list
+  const [loadingCheckIndex, setLoadingCheckIndex] = useState(0);
+
+  // Output
   const [moodBoard, setMoodBoard] = useState(null);
   const [history, setHistory] = useState([]);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
 
-  // Load history from localStorage
   useEffect(() => {
     try {
       const saved = localStorage.getItem('riddha_ai_moodboard_history');
-      if (saved) {
-        setHistory(JSON.parse(saved));
-      }
-    } catch (e) {
-      console.warn('Failed to load history:', e);
-    }
+      if (saved) setHistory(JSON.parse(saved));
+    } catch (e) {}
   }, []);
 
-  // Do not auto-generate on page mount; wait for user to click button
+  // Loading animation step timer
+  useEffect(() => {
+    if (currentStep === 3) {
+      setLoadingCheckIndex(0);
+      const timer1 = setTimeout(() => setLoadingCheckIndex(1), 1000);
+      const timer2 = setTimeout(() => setLoadingCheckIndex(2), 2200);
+      const timer3 = setTimeout(() => setLoadingCheckIndex(3), 3500);
 
-  const handleGenerateBoard = async () => {
+      return () => {
+        clearTimeout(timer1);
+        clearTimeout(timer2);
+        clearTimeout(timer3);
+      };
+    }
+  }, [currentStep]);
+
+  const toggleColor = (colorName) => {
+    if (selectedColors.includes(colorName)) {
+      setSelectedColors(selectedColors.filter(c => c !== colorName));
+    } else {
+      if (selectedColors.length < 5) {
+        setSelectedColors([...selectedColors, colorName]);
+      } else {
+        toast.error('You can select up to 5 colors');
+      }
+    }
+  };
+
+  const handleStartGeneration = async () => {
+    setCurrentStep(3); // Show loading step
+
     try {
-      setIsGenerating(true);
       const res = await api.post('/products/ai-mood-board', {
         roomType: selectedRoom,
-        style: selectedStyle
+        style: selectedStyle,
+        budget: selectedBudget,
+        roomSize: selectedSize,
+        preferredColors: selectedColors
       });
 
       if (res.data && res.data.moodBoard) {
         const board = res.data.moodBoard;
         setMoodBoard(board);
-        toast.success(`Generated ${selectedStyle} ${selectedRoom} Mood Board!`);
 
-        // Save compact lightweight item to history to prevent QuotaExceededError
+        // Ensure minimum 4s smooth loading transition
+        setTimeout(() => {
+          setCurrentStep(4); // Show mood board
+          toast.success(`Your AI Mood Board is Ready!`);
+        }, 4000);
+
+        // Save to history
         const compactBoard = {
           id: board.id,
           title: board.title,
@@ -74,6 +128,7 @@ const MoodBoardGeneratorPage = () => {
           style: board.style,
           description: board.description,
           bgImage: board.bgImage,
+          secondaryImages: board.secondaryImages,
           palette: board.palette,
           createdAt: board.createdAt,
           products: (board.products || []).map(p => ({
@@ -88,36 +143,18 @@ const MoodBoardGeneratorPage = () => {
         setHistory(updatedHistory);
         try {
           localStorage.setItem('riddha_ai_moodboard_history', JSON.stringify(updatedHistory));
-        } catch (storageErr) {
-          console.warn('[LocalStorage Exceeded] Truncating history array:', storageErr.message);
-          const minimalHistory = updatedHistory.slice(0, 3);
-          localStorage.setItem('riddha_ai_moodboard_history', JSON.stringify(minimalHistory));
-        }
+        } catch (e) {}
       }
     } catch (err) {
-      console.error('Mood board error:', err);
-      toast.error('Failed to generate mood board. Please retry.');
-    } finally {
-      setIsGenerating(false);
+      console.error('Mood board generation error:', err);
+      toast.error('Failed to generate mood board. Retrying...');
+      setCurrentStep(2);
     }
   };
 
-  const handleCopyHex = (hex) => {
-    navigator.clipboard.writeText(hex);
-    toast.success(`Copied color code ${hex}!`);
-  };
-
-  const handleShare = () => {
-    if (navigator.share) {
-      navigator.share({
-        title: moodBoard?.title || 'AI Mood Board - Riddha',
-        text: `Check out this ${selectedStyle} ${selectedRoom} Mood Board created on Riddha Interior Mart!`,
-        url: window.location.href
-      }).catch(() => {});
-    } else {
-      navigator.clipboard.writeText(window.location.href);
-      toast.success('Board link copied to clipboard!');
-    }
+  const handleSaveBoard = () => {
+    setCurrentStep(5); // Show Saved Success step
+    toast.success('Mood Board saved successfully!');
   };
 
   const handleAddAllToCart = () => {
@@ -131,347 +168,451 @@ const MoodBoardGeneratorPage = () => {
     navigate('/cart');
   };
 
-  const handleDeleteHistoryItem = (id, e) => {
-    e.stopPropagation();
-    const updated = history.filter(item => item.id !== id);
-    setHistory(updated);
-    localStorage.setItem('riddha_ai_moodboard_history', JSON.stringify(updated));
-    toast.success('Removed board from history');
+  const handleCopyHex = (hex) => {
+    navigator.clipboard.writeText(hex);
+    toast.success(`Copied color code ${hex}!`);
+  };
+
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: moodBoard?.title || 'AI Mood Board - Riddha',
+        text: `Check out my ${selectedStyle} ${selectedRoom} Mood Board created on Riddha Interior Mart!`,
+        url: window.location.href
+      }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+      toast.success('Mood Board link copied!');
+    }
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 pb-20">
-      
-      {/* Top Sticky Header */}
-      <header className="sticky top-0 z-40 bg-[#127F75] text-white px-4 py-3 shadow-md flex items-center justify-between">
+    <div className="min-h-screen bg-slate-50 text-slate-800 pb-24 font-sans">
+
+      {/* Top Header */}
+      <header className="sticky top-0 z-40 bg-white border-b border-slate-100 px-4 py-3 shadow-sm flex items-center justify-between">
         <div className="flex items-center gap-3">
           <button
-            onClick={() => navigate('/profile')}
-            className="p-1.5 hover:bg-white/10 rounded-full transition-colors"
+            onClick={() => {
+              if (currentStep > 1 && currentStep !== 3) setCurrentStep(currentStep - 1);
+              else navigate('/profile');
+            }}
+            className="p-1.5 hover:bg-slate-100 rounded-full transition-colors"
           >
-            <FiArrowLeft size={20} />
+            <FiArrowLeft size={20} className="text-slate-700" />
           </button>
           <div>
-            <h1 className="text-base font-black tracking-tight flex items-center gap-2">
-              <LuPalette className="text-amber-300 animate-pulse" size={18} />
+            <h1 className="text-sm font-black tracking-tight text-slate-900 flex items-center gap-1.5">
+              <LuPalette className="text-orange-500" size={18} />
               AI Mood Board Generator
             </h1>
-            <p className="text-[10px] text-teal-100 font-semibold">Style Collages & Product Groupings</p>
           </div>
         </div>
 
-        {history.length > 0 && (
-          <button
-            onClick={() => setShowHistoryModal(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-white/15 hover:bg-white/25 rounded-full text-xs font-bold transition-all border border-white/20"
-          >
-            <FiClock size={14} />
-            <span>Saved ({history.length})</span>
-          </button>
-        )}
+        {/* Wizard Progress Indicator */}
+        <div className="flex items-center gap-1.5">
+          {[1, 2, 3, 4, 5].map((stepNum) => (
+            <div
+              key={stepNum}
+              className={`h-2 rounded-full transition-all ${
+                currentStep === stepNum
+                  ? 'w-6 bg-orange-500'
+                  : currentStep > stepNum
+                  ? 'w-2 bg-orange-300'
+                  : 'w-2 bg-slate-200'
+              }`}
+            />
+          ))}
+        </div>
       </header>
 
-      {/* Main Container */}
-      <main className="max-w-4xl mx-auto px-4 py-5 space-y-6">
+      {/* Main Flow Container - Fully Responsive for Mobile & Desktop */}
+      <main className="max-w-xl md:max-w-2xl mx-auto px-4 py-6 md:py-10">
 
-        {/* Customization Options */}
-        <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm space-y-5">
-          {/* Select Room Type */}
-          <div className="space-y-3">
-            <span className="text-[11px] font-black uppercase tracking-[0.2em] text-[#127F75]">
-              Step 1: Select Room Type
-            </span>
-            <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
-              {roomTypes.map((rt) => {
-                const IconComp = rt.icon;
+        {/* STEP 1: What Style Do You Love? */}
+        {currentStep === 1 && (
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            className="space-y-6 bg-white md:p-8 md:rounded-3xl md:border md:border-slate-100 md:shadow-xl"
+          >
+            <div>
+              <h2 className="text-xl md:text-2xl font-black text-slate-900">What style do you love?</h2>
+              <p className="text-xs md:text-sm font-medium text-slate-400 mt-1">Select a style for your custom mood board</p>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
+              {styleCards.map((card, idx) => {
+                const isSelected = selectedStyle === card.id;
                 return (
-                  <button
-                    key={rt.id}
-                    onClick={() => setSelectedRoom(rt.id)}
-                    className={`p-2.5 rounded-2xl text-center transition-all border flex flex-col items-center gap-1.5 ${
-                      selectedRoom === rt.id
-                        ? 'bg-[#189D91] text-white border-[#189D91] shadow-md shadow-[#189D91]/20'
-                        : 'bg-slate-50 text-slate-700 border-slate-100 hover:bg-slate-100'
+                  <div
+                    key={idx}
+                    onClick={() => setSelectedStyle(card.id)}
+                    className={`relative rounded-2xl overflow-hidden border-2 cursor-pointer transition-all ${
+                      isSelected
+                        ? 'border-orange-500 ring-2 ring-orange-500/20 shadow-md scale-[1.02]'
+                        : 'border-slate-100 hover:border-slate-200 hover:scale-[1.01]'
                     }`}
                   >
-                    <IconComp size={20} className={selectedRoom === rt.id ? 'text-white' : 'text-[#189D91]'} />
-                    <span className="text-[11px] font-bold truncate w-full">{rt.label}</span>
-                  </button>
+                    <div className="w-full h-32 relative">
+                      <img src={card.image} className="w-full h-full object-cover" alt={card.label} />
+                      {isSelected && (
+                        <div className="absolute top-2 right-2 w-6 h-6 bg-orange-500 text-white rounded-full flex items-center justify-center shadow-md">
+                          <FiCheck size={14} />
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-2.5 bg-white text-center">
+                      <span className="text-xs font-bold text-slate-800">{card.label}</span>
+                    </div>
+                  </div>
                 );
               })}
             </div>
-          </div>
 
-          {/* Select Design Style */}
-          <div className="space-y-3">
-            <span className="text-[11px] font-black uppercase tracking-[0.2em] text-[#127F75]">
-              Step 2: Select Aesthetic Style
-            </span>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
-              {designStyles.map((style) => (
-                <button
-                  key={style.id}
-                  onClick={() => setSelectedStyle(style.id)}
-                  className={`p-3 rounded-2xl text-left transition-all border ${
-                    selectedStyle === style.id
-                      ? 'bg-[#189D91]/10 border-[#189D91] text-[#127F75] ring-2 ring-[#189D91]/20'
-                      : 'bg-slate-50 border-slate-100 hover:bg-slate-100 text-slate-700'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold">{style.label}</span>
-                    {selectedStyle === style.id && <FiCheck className="text-[#189D91]" size={16} />}
-                  </div>
-                  <p className="text-[10px] text-slate-500 mt-1 leading-snug">{style.desc}</p>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Generate Action Button */}
-          <button
-            onClick={handleGenerateBoard}
-            disabled={isGenerating}
-            className="w-full py-4 bg-gradient-to-r from-[#189D91] to-[#127F75] hover:opacity-95 text-white font-black text-sm rounded-2xl transition-all shadow-lg shadow-[#189D91]/30 flex items-center justify-center gap-2 disabled:opacity-50"
-          >
-            {isGenerating ? (
-              <>
-                <FiRefreshCw className="animate-spin" size={18} />
-                <span>Curating AI Mood Board...</span>
-              </>
-            ) : (
-              <>
-                <LuSparkles size={18} />
-                <span>Generate {selectedStyle} Mood Board</span>
-              </>
-            )}
-          </button>
-        </div>
-
-        {/* Generated Mood Board Canvas */}
-        {!moodBoard && !isGenerating && (
-          <div className="bg-white rounded-3xl p-10 border border-slate-100 shadow-sm text-center space-y-3">
-            <div className="w-16 h-16 bg-teal-50 text-[#189D91] rounded-2xl flex items-center justify-center mx-auto shadow-sm">
-              <LuPalette size={32} />
-            </div>
-            <h3 className="text-base font-black text-slate-800">Customize & Create Your Mood Board</h3>
-            <p className="text-xs text-slate-400 max-w-sm mx-auto font-medium">
-              Select your room type and design style above, then tap "Generate Mood Board" to create your customized AI interior concept.
-            </p>
-          </div>
+            <button
+              onClick={() => setCurrentStep(2)}
+              className="w-full py-4 bg-orange-500 hover:bg-orange-600 text-white font-black text-sm rounded-2xl transition-all shadow-lg shadow-orange-500/20 flex items-center justify-center gap-2"
+            >
+              <span>Next</span>
+              <FiChevronRight size={18} />
+            </button>
+          </motion.div>
         )}
 
-        {moodBoard && (
+        {/* STEP 2: Tell Us Your Preferences */}
+        {currentStep === 2 && (
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            className="space-y-6 bg-white md:p-8 md:rounded-3xl md:border md:border-slate-100 md:shadow-xl"
+          >
+            <div>
+              <h2 className="text-xl md:text-2xl font-black text-slate-900">Tell us your preferences</h2>
+              <p className="text-xs md:text-sm font-medium text-slate-400 mt-1">Help us create a mood board you'll love</p>
+            </div>
+
+            {/* Preferred Colors */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-700">Preferred Colors <span className="text-slate-400 font-normal">(Select up to 5 colors)</span></label>
+              <div className="flex items-center gap-3">
+                {colorOptions.map((col) => {
+                  const isChecked = selectedColors.includes(col.name);
+                  return (
+                    <div
+                      key={col.name}
+                      onClick={() => toggleColor(col.name)}
+                      className={`w-9 h-9 rounded-full cursor-pointer transition-transform flex items-center justify-center border border-black/10 shadow-sm relative ${
+                        isChecked ? 'scale-110 ring-2 ring-orange-500 ring-offset-2' : 'hover:scale-105'
+                      }`}
+                      style={{ backgroundColor: col.hex }}
+                      title={col.name}
+                    >
+                      {isChecked && (
+                        <FiCheck className={['#F5F2E9', '#E2D4C3'].includes(col.hex) ? 'text-slate-900' : 'text-white'} size={16} />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Room Type */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-700">Room Type</label>
+              <div className="grid grid-cols-3 gap-2">
+                {roomTypeOptions.map((rt) => (
+                  <button
+                    key={rt.id}
+                    onClick={() => setSelectedRoom(rt.id)}
+                    className={`py-2.5 px-3 rounded-xl text-xs font-bold transition-all border ${
+                      selectedRoom === rt.id
+                        ? 'border-orange-500 bg-orange-50 text-orange-600'
+                        : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    {rt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Budget Range */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-700">Budget Range</label>
+              <select
+                value={selectedBudget}
+                onChange={(e) => setSelectedBudget(e.target.value)}
+                className="w-full p-3.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-orange-500 shadow-sm"
+              >
+                {budgetOptions.map((b) => (
+                  <option key={b} value={b}>{b}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Room Size */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-700">Room Size (approx.)</label>
+              <select
+                value={selectedSize}
+                onChange={(e) => setSelectedSize(e.target.value)}
+                className="w-full p-3.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-orange-500 shadow-sm"
+              >
+                {roomSizeOptions.map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+            </div>
+
+            <button
+              onClick={handleStartGeneration}
+              className="w-full py-4 bg-orange-500 hover:bg-orange-600 text-white font-black text-sm rounded-2xl transition-all shadow-lg shadow-orange-500/20 flex items-center justify-center gap-2"
+            >
+              <span>Generate Mood Board</span>
+              <FiChevronRight size={18} />
+            </button>
+          </motion.div>
+        )}
+
+        {/* STEP 3: AI Loading Progress Screen */}
+        {currentStep === 3 && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="space-y-6 text-center py-6"
+          >
+            <div>
+              <h2 className="text-lg font-black text-slate-900">AI is generating your personalized mood board...</h2>
+              <p className="text-xs text-slate-400 font-medium mt-1">This may take a few seconds</p>
+            </div>
+
+            {/* Loading Collage Mock */}
+            <div className="relative w-full h-80 rounded-3xl overflow-hidden border border-slate-100 shadow-xl bg-slate-900 p-2 grid grid-cols-3 gap-1.5">
+              <div className="col-span-2 h-full rounded-2xl overflow-hidden relative">
+                <img src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80" className="w-full h-full object-cover opacity-80 animate-pulse" alt="Generating" />
+              </div>
+              <div className="flex flex-col gap-1.5 h-full">
+                <div className="h-1/2 rounded-2xl overflow-hidden">
+                  <img src="https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=400&q=80" className="w-full h-full object-cover opacity-80" alt="Detail" />
+                </div>
+                <div className="h-1/2 rounded-2xl overflow-hidden">
+                  <img src="https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&q=80" className="w-full h-full object-cover opacity-80" alt="Detail" />
+                </div>
+              </div>
+            </div>
+
+            {/* Progress checklist animation */}
+            <div className="bg-white rounded-2xl p-4 border border-slate-100 text-left space-y-3 shadow-sm">
+              <div className="flex items-center gap-3">
+                <FiCheckCircle className={loadingCheckIndex >= 0 ? "text-emerald-500" : "text-slate-300"} size={20} />
+                <span className="text-xs font-bold text-slate-700">Analyzing your preferences</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <FiCheckCircle className={loadingCheckIndex >= 1 ? "text-emerald-500" : "text-slate-300"} size={20} />
+                <span className="text-xs font-bold text-slate-700">Matching style & colors</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <FiCheckCircle className={loadingCheckIndex >= 2 ? "text-emerald-500" : "text-slate-300"} size={20} />
+                <span className="text-xs font-bold text-slate-700">Selecting catalog products</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <FiCheckCircle className={loadingCheckIndex >= 3 ? "text-emerald-500 animate-spin" : "text-slate-300"} size={20} />
+                <span className="text-xs font-bold text-slate-700">Generating AI mood board</span>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* STEP 4: Your AI Generated Mood Board Result Screen */}
+        {currentStep === 4 && moodBoard && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-3xl p-6 border border-slate-100 shadow-xl space-y-6"
-            ref={boardCanvasRef}
+            className="space-y-6"
           >
-            {/* Board Header */}
-            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+            {/* Title & Metadata Header */}
+            <div className="flex items-start justify-between">
               <div>
-                <span className="text-[10px] font-black uppercase tracking-widest text-[#189D91] bg-teal-50 px-2.5 py-1 rounded-full border border-teal-100">
-                  {moodBoard.style} • {moodBoard.roomType}
-                </span>
-                <h2 className="text-xl font-black text-slate-800 mt-2">{moodBoard.title}</h2>
-                <p className="text-xs font-semibold text-slate-500 mt-0.5">{moodBoard.description}</p>
+                <h2 className="text-lg font-black text-slate-900">Your AI Generated Mood Board</h2>
+                <p className="text-xs font-bold text-slate-400 mt-0.5">
+                  {moodBoard.style} • {moodBoard.roomType} • {moodBoard.budget}
+                </p>
               </div>
 
               <div className="flex items-center gap-2">
-                <button
-                  onClick={handleShare}
-                  className="p-2.5 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-600 transition-colors"
-                  title="Share Mood Board"
-                >
+                <button onClick={handleShare} className="p-2 bg-slate-100 hover:bg-slate-200 rounded-full text-slate-600">
                   <FiShare2 size={16} />
                 </button>
               </div>
             </div>
 
-            {/* Section 1: Prominent Big AI Generated Mood Board Concept Image */}
-            {moodBoard.bgImage && (
-              <div className="relative w-full h-96 md:h-[480px] rounded-3xl overflow-hidden border border-slate-200 shadow-xl group bg-slate-900">
-                <img
-                  src={moodBoard.bgImage}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                  alt="AI Generated Mood Board"
-                />
-                <div className="absolute top-4 right-4 bg-[#189D91]/90 backdrop-blur-md text-white text-[10px] font-black px-3.5 py-1.5 rounded-full uppercase tracking-wider shadow-md border border-white/20 flex items-center gap-1.5">
-                  <LuSparkles size={12} className="text-amber-300 animate-pulse" />
-                  <span>AI Generated Interior Concept</span>
+            {/* AI Mood Board Grid Collage (Multi-Tile Display) */}
+            <div className="bg-white rounded-3xl p-3 border border-slate-100 shadow-xl space-y-3">
+              <div className="grid grid-cols-3 gap-2 h-72 md:h-80 rounded-2xl overflow-hidden">
+                {/* Main Hero AI Image */}
+                <div className="col-span-2 h-full relative rounded-xl overflow-hidden">
+                  <img src={moodBoard.bgImage} className="w-full h-full object-cover" alt="Main AI Board" />
                 </div>
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-950/25 to-transparent flex flex-col justify-end p-6 text-white">
-                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-teal-300">
-                    Aesthetic Inspiration • {moodBoard.style}
-                  </span>
-                  <h3 className="text-2xl font-black mt-1 leading-tight">{moodBoard.title}</h3>
-                  <p className="text-xs text-slate-200 mt-1 max-w-xl font-medium leading-relaxed">{moodBoard.description}</p>
+                {/* Secondary Detail Images */}
+                <div className="flex flex-col gap-2 h-full">
+                  <div className="h-1/2 rounded-xl overflow-hidden">
+                    <img src={moodBoard.secondaryImages?.[0] || 'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=400&q=80'} className="w-full h-full object-cover" alt="Detail 1" />
+                  </div>
+                  <div className="h-1/2 rounded-xl overflow-hidden">
+                    <img src={moodBoard.secondaryImages?.[1] || 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&q=80'} className="w-full h-full object-cover" alt="Detail 2" />
+                  </div>
                 </div>
               </div>
-            )}
 
-            {/* Section 2: Color & Texture Swatches */}
-            <div className="space-y-2 pt-2">
-              <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-[#127F75]">
-                Color Palette & Material Swatches
-              </h4>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                {moodBoard.palette?.map((color, idx) => (
+              {/* Color Swatches Grid */}
+              <div className="grid grid-cols-5 gap-2">
+                {moodBoard.palette?.map((col, idx) => (
                   <div
                     key={idx}
-                    onClick={() => handleCopyHex(color.hex)}
-                    className="p-3 bg-slate-50 hover:bg-teal-50/40 rounded-2xl border border-slate-100 transition-all cursor-pointer group flex items-center gap-3"
+                    onClick={() => handleCopyHex(col.hex)}
+                    className="h-14 rounded-xl shadow-inner border border-black/10 cursor-pointer flex flex-col justify-end p-1 hover:scale-105 transition-transform"
+                    style={{ backgroundColor: col.hex }}
+                    title={col.name}
                   >
-                    <div
-                      className="w-10 h-10 rounded-xl shadow-md border border-black/10 shrink-0 group-hover:scale-105 transition-transform"
-                      style={{ backgroundColor: color.hex }}
-                    />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs font-bold text-slate-800 truncate">{color.name}</p>
-                      <p className="text-[10px] font-mono font-bold text-slate-400 flex items-center gap-1">
-                        {color.hex} <FiCopy size={10} />
-                      </p>
-                    </div>
+                    <span className="text-[8px] font-bold text-white bg-black/40 backdrop-blur-xs px-1 rounded truncate">
+                      {col.name}
+                    </span>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Section 3: Curated Store Catalog Products */}
+            {/* Products in this Mood Board */}
             {moodBoard.products && moodBoard.products.length > 0 && (
-              <div className="space-y-4 pt-2">
+              <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-[#127F75]">
-                    Curated Catalog Products for this Board
-                  </h4>
-                  <span className="text-xs font-bold text-slate-400">
-                    {moodBoard.products.length} Matching Items
-                  </span>
+                  <h3 className="text-sm font-black text-slate-900">
+                    Products in this Mood Board ({moodBoard.products.length})
+                  </h3>
                 </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <div className="grid grid-cols-3 gap-2.5">
                   {moodBoard.products.map((prod) => (
                     <div
                       key={prod._id}
                       onClick={() => navigate(`/products/${prod._id}`)}
-                      className="bg-white border border-slate-100 hover:border-[#189D91]/30 rounded-2xl p-3 shadow-sm hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between"
+                      className="bg-white border border-slate-100 rounded-2xl p-2 shadow-sm hover:shadow-md transition-all cursor-pointer flex flex-col justify-between"
                     >
-                      <div className="w-full h-32 bg-slate-50 rounded-xl overflow-hidden mb-2">
-                        <img
-                          src={prod.images?.[0] || 'https://images.unsplash.com/photo-1513519245088-0e12902e35ca?w=300&q=80'}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                          alt={prod.name}
-                        />
+                      <div className="w-full h-24 bg-slate-50 rounded-xl overflow-hidden mb-1.5">
+                        <img src={prod.images?.[0] || 'https://images.unsplash.com/photo-1513519245088-0e12902e35ca?w=300&q=80'} className="w-full h-full object-cover" alt={prod.name} />
                       </div>
-                      <h5 className="text-xs font-bold text-slate-800 line-clamp-1">{prod.name}</h5>
-                      <div className="mt-2 flex items-center justify-between">
-                        <p className="text-xs font-black text-[#189D91]">₹{Number(prod.price).toLocaleString()}</p>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            addToCart(prod, 1);
-                            toast.success(`Added ${prod.name} to cart!`);
-                          }}
-                          className="p-1.5 bg-[#189D91] hover:bg-[#127F75] text-white rounded-lg transition-colors"
-                          title="Add to Cart"
-                        >
-                          <FiShoppingCart size={14} />
-                        </button>
-                      </div>
+                      <h4 className="text-[10px] font-bold text-slate-800 line-clamp-1">{prod.name}</h4>
+                      <p className="text-[11px] font-black text-orange-500 mt-0.5">₹{Number(prod.price).toLocaleString()}</p>
                     </div>
                   ))}
                 </div>
               </div>
             )}
 
-            {/* Section 4: 1-Click Buy Whole Board Toolbar */}
-            <div className="pt-4 border-t border-slate-100 flex flex-col md:flex-row items-center gap-3">
+            {/* Action Bar */}
+            <div className="flex items-center gap-3 pt-2">
               <button
-                onClick={handleAddAllToCart}
-                className="w-full md:flex-1 py-3.5 bg-[#189D91] hover:bg-[#127F75] text-white font-black text-xs rounded-2xl transition-all shadow-md shadow-[#189D91]/20 flex items-center justify-center gap-2"
+                onClick={() => setCurrentStep(2)}
+                className="flex-1 py-3.5 bg-white border border-orange-500 text-orange-500 font-bold text-xs rounded-2xl hover:bg-orange-50 transition-all"
               >
-                <FiShoppingCart size={16} />
-                <span>Buy Whole Board (Add All {moodBoard.products?.length} Items to Cart)</span>
+                Customize
               </button>
               <button
-                onClick={handleGenerateBoard}
-                className="w-full md:w-auto px-5 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-2xl transition-all flex items-center justify-center gap-2"
+                onClick={handleAddAllToCart}
+                className="flex-1 py-3.5 bg-orange-500 hover:bg-orange-600 text-white font-black text-xs rounded-2xl transition-all shadow-md shadow-orange-500/20"
               >
-                <FiRefreshCw size={14} />
-                <span>Regenerate Variety</span>
+                Add All To Cart
+              </button>
+            </div>
+
+            <button
+              onClick={handleSaveBoard}
+              className="w-full py-4 bg-orange-500 hover:bg-orange-600 text-white font-black text-sm rounded-2xl transition-all shadow-lg shadow-orange-500/20 text-center block"
+            >
+              Save to My Boards
+            </button>
+          </motion.div>
+        )}
+
+        {/* STEP 5: Mood Board Saved Success Screen */}
+        {currentStep === 5 && moodBoard && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="space-y-6 text-center py-4"
+          >
+            <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto shadow-md">
+              <FiCheck size={32} />
+            </div>
+
+            <div>
+              <h2 className="text-xl font-black text-slate-900">Mood Board Saved!</h2>
+              <p className="text-xs text-slate-400 font-medium mt-1">Your mood board has been saved successfully</p>
+            </div>
+
+            {/* Preview Collage */}
+            <div className="bg-white rounded-3xl p-2.5 border border-slate-100 shadow-md grid grid-cols-3 gap-1.5 h-48 max-w-xs mx-auto overflow-hidden">
+              <div className="col-span-2 h-full rounded-xl overflow-hidden">
+                <img src={moodBoard.bgImage} className="w-full h-full object-cover" alt="Saved Main" />
+              </div>
+              <div className="flex flex-col gap-1.5 h-full">
+                <div className="h-1/2 rounded-xl overflow-hidden">
+                  <img src={moodBoard.secondaryImages?.[0] || 'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=400&q=80'} className="w-full h-full object-cover" alt="Saved Detail" />
+                </div>
+                <div className="h-1/2 rounded-xl overflow-hidden">
+                  <img src={moodBoard.secondaryImages?.[1] || 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&q=80'} className="w-full h-full object-cover" alt="Saved Detail" />
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="space-y-3 pt-2">
+              <button
+                onClick={handleShare}
+                className="w-full py-3.5 bg-white border border-slate-200 text-slate-700 font-bold text-xs rounded-2xl flex items-center justify-center gap-2 hover:bg-slate-50 transition-all"
+              >
+                <FiShare2 size={16} />
+                <span>Share Mood Board</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  const a = document.createElement('a');
+                  a.href = moodBoard.bgImage;
+                  a.download = `Riddha_MoodBoard_${moodBoard.style.replace(/\s+/g, '_')}.jpg`;
+                  document.body.appendChild(a);
+                  a.click();
+                  document.body.removeChild(a);
+                  toast.success('Downloaded Mood Board!');
+                }}
+                className="w-full py-3.5 bg-white border border-slate-200 text-slate-700 font-bold text-xs rounded-2xl flex items-center justify-center gap-2 hover:bg-slate-50 transition-all"
+              >
+                <FiDownload size={16} />
+                <span>Download Board</span>
+              </button>
+
+              <button
+                onClick={() => setCurrentStep(1)}
+                className="w-full py-3.5 bg-white border border-slate-200 text-slate-700 font-bold text-xs rounded-2xl flex items-center justify-center gap-2 hover:bg-slate-50 transition-all"
+              >
+                <FiPlus size={16} />
+                <span>Create New Mood Board</span>
+              </button>
+
+              <button
+                onClick={handleAddAllToCart}
+                className="w-full py-4 bg-orange-500 hover:bg-orange-600 text-white font-black text-sm rounded-2xl transition-all shadow-lg shadow-orange-500/20 flex items-center justify-center gap-2"
+              >
+                <FiShoppingCart size={18} />
+                <span>Start Shopping</span>
               </button>
             </div>
           </motion.div>
         )}
       </main>
-
-      {/* History Drawer Modal */}
-      <AnimatePresence>
-        {showHistoryModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex justify-end"
-          >
-            <motion.div
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              className="w-full max-w-md bg-white h-full shadow-2xl flex flex-col p-5 overflow-y-auto"
-            >
-              <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-100">
-                <div className="flex items-center gap-2">
-                  <FiClock className="text-[#189D91]" size={18} />
-                  <h3 className="text-base font-black text-slate-800">Saved Mood Boards</h3>
-                </div>
-                <button
-                  onClick={() => setShowHistoryModal(false)}
-                  className="text-xs font-bold text-slate-400 hover:text-slate-700 uppercase"
-                >
-                  Close
-                </button>
-              </div>
-
-              {history.length === 0 ? (
-                <div className="text-center py-16 text-slate-400 space-y-2">
-                  <p className="text-sm font-semibold">No saved mood boards yet.</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {history.map((item) => (
-                    <div
-                      key={item.id}
-                      onClick={() => {
-                        setMoodBoard(item);
-                        setSelectedRoom(item.roomType);
-                        setSelectedStyle(item.style);
-                        setShowHistoryModal(false);
-                      }}
-                      className="p-3 bg-slate-50 hover:bg-teal-50/50 rounded-2xl border border-slate-100 transition-all cursor-pointer group flex items-center justify-between"
-                    >
-                      <div>
-                        <h4 className="text-xs font-bold text-slate-800">{item.title}</h4>
-                        <span className="text-[10px] font-bold text-[#189D91] bg-white px-2 py-0.5 rounded-md border border-slate-100 inline-block mt-1">
-                          {item.style} • {item.roomType}
-                        </span>
-                      </div>
-                      <button
-                        onClick={(e) => handleDeleteHistoryItem(item.id, e)}
-                        className="p-1.5 text-slate-300 hover:text-red-500 rounded-lg transition-colors"
-                        title="Delete from history"
-                      >
-                        <FiTrash2 size={14} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 };

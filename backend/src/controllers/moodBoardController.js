@@ -34,8 +34,8 @@ const roomKeywords = {
 // @access  Public
 exports.generateAiMoodBoard = async (req, res, next) => {
   try {
-    const { roomType = 'Living Room', style = 'Modern Luxury' } = req.body;
-    const cacheKey = getCacheKey(roomType, style);
+    const { roomType = 'Living Room', style = 'Modern Luxury', budget = '₹ 2 - 5 Lakhs', roomSize = '1000 - 1500 sq.ft', preferredColors = [] } = req.body;
+    const cacheKey = getCacheKey(`${roomType}_${style}_${budget}_${roomSize}`, preferredColors.join('-'));
 
     if (moodBoardCache.has(cacheKey)) {
       console.log(`[AI Mood Board] Cache HIT for key: ${cacheKey}`);
@@ -50,26 +50,34 @@ exports.generateAiMoodBoard = async (req, res, next) => {
       title: `${style} ${roomType} Mood Board`,
       roomType,
       style,
+      budget,
+      roomSize,
       palette: [
         { name: 'Calacatta Gold', hex: '#E5D3B3' },
         { name: 'Warm Charcoal', hex: '#2C3539' },
         { name: 'Brushed Brass', hex: '#D4AF37' },
-        { name: 'Champagne Cream', hex: '#F7F5F0' }
+        { name: 'Champagne Cream', hex: '#F7F5F0' },
+        { name: 'Olive Accent', hex: '#556B2F' }
       ],
       bgImage: roomImages[roomType] || roomImages['Living Room'],
-      description: `Curated ${style} aesthetic board for your ${roomType}.`,
+      secondaryImages: [
+        'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=600&q=80',
+        'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=600&q=80',
+        'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=600&q=80'
+      ],
+      description: `Curated ${style} aesthetic board for your ${roomType} (${roomSize}, Budget: ${budget}).`,
       keywords: roomKeywords[roomType] || ['sofa', 'table', 'marble', 'lighting']
     };
 
     if (process.env.GEMINI_API_KEY) {
       try {
         const promptText = `You are a professional interior design stylist for "Riddha Interior Mart".
-Create a Mood Board concept for a ${roomType} styled in ${style} theme.
+Create a personalized Mood Board concept for a ${roomType} styled in ${style} theme with estimated budget ${budget} and room size ${roomSize}.
 
 Provide structured JSON output with:
-1. "title": String (Catchy mood board title like "Elegance in Marble & Gold")
+1. "title": String (Catchy title like "Opulent Emerald & Brass Retreat")
 2. "description": String (20-word summary of the mood board vibe)
-3. "palette": Array of 4 objects with "name" (color/material name) and "hex" (HEX color code like "#E5D3B3").
+3. "palette": Array of 5 objects with "name" (color/material name) and "hex" (HEX color code like "#E5D3B3").
 4. "keywords": Array of 4-6 product search terms from a home store matching this look (e.g. ["marble slab", "gold faucet", "sofa", "lighting"]).
 
 Output ONLY valid JSON.`;
@@ -97,7 +105,7 @@ Output ONLY valid JSON.`;
       }
     }
 
-    // Synthesize a fresh AI interior room design concept image via Gemini 2.5 Flash Image API
+    // Synthesize fresh AI interior room design concept image via Gemini 2.5 Flash Image API
     if (process.env.GEMINI_API_KEY) {
       try {
         const imageGenUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${process.env.GEMINI_API_KEY}`;
@@ -118,7 +126,7 @@ Output ONLY valid JSON.`;
             if (part.inlineData && part.inlineData.data) {
               const genMime = part.inlineData.mimeType || 'image/png';
               boardData.bgImage = `data:${genMime};base64,${part.inlineData.data}`;
-              console.log('[AI Mood Board] Gemini 2.5 Flash Image successfully generated new AI room concept image!');
+              console.log('[AI Mood Board] Gemini 2.5 Flash Image successfully generated main AI room concept!');
               break;
             }
           }

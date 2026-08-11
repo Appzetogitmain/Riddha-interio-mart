@@ -49,6 +49,7 @@ import { Navigate } from 'react-router-dom';
 import { useUser } from './data/UserContext';
 
 const AiRoomVisualizerPage = React.lazy(() => import('./pages/AiRoomVisualizerPage'));;
+const MoodBoardGeneratorPage = React.lazy(() => import('./pages/MoodBoardGeneratorPage'));;
 
 const RootRoute = () => {
   const splashCompleted = localStorage.getItem('splashCompleted') === 'true';
@@ -108,6 +109,7 @@ const UserRoutes = () => {
       <Route path="/notifications" element={<NotificationPage />} />
       <Route path="/addresses" element={<SavedAddressesPage />} />
       <Route path="/ai-room-visualizer" element={<AiRoomVisualizerPage />} />
+      <Route path="/ai-mood-board" element={<MoodBoardGeneratorPage />} />
       <Route path="/bundles" element={<BundlesPage />} />
       <Route path="/bundles/:id" element={<BundleDetailPage />} />
     </Routes>

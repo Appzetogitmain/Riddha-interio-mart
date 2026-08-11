@@ -11,10 +11,11 @@ import { useWishlist } from '../data/WishlistContext';
 import ProductCard from '../components/ProductCard';
 import { toast } from 'react-hot-toast';
 
-import { LuSparkles } from 'react-icons/lu';
+import { LuSparkles, LuPalette } from 'react-icons/lu';
 
 const menuItems = [
   { icon: LuSparkles, title: 'AI Room Visualizer', subtitle: 'Upload room & see AI redesigned transformations', link: '/ai-room-visualizer', badge: 'NEW AI' },
+  { icon: LuPalette,  title: 'AI Mood Board Generator', subtitle: 'Generate style collages & product groupings', link: '/ai-mood-board', badge: 'NEW AI' },
   { icon: FiUser,    title: 'My Profile',        subtitle: 'View and edit personal information',     link: '/profile/edit' },
   { icon: FiCompass, title: 'My Design Profile',  subtitle: 'View your AI style blueprint & matches',  link: '/designer-quiz/results' },
   { icon: FiPackage, title: 'Orders',             subtitle: 'Track, manage and reorder',              link: '/orders' },

@@ -381,12 +381,12 @@ const ProductDetailsPage = () => {
             {/* Specs table — desktop */}
             <div className="hidden md:block mt-4 border-t border-b border-gray-100 py-3">
               {[
-                { label: 'Material',  value: product.material || 'Natural Teak Veneer' },
-                { label: 'Finish',    value: product.finish || 'Matte' },
-                { label: 'Thickness', value: product.thickness || '12 mm' },
-                { label: 'SKU',       value: product.sku || 'VWP-001' },
+                product.material && { label: 'Material',  value: product.material },
+                product.finish && { label: 'Finish',    value: product.finish },
+                product.thickness && { label: 'Thickness', value: product.thickness },
+                product.sku && { label: 'SKU',       value: product.sku },
                 { label: 'Stock',     value: (product.countInStock !== undefined && product.countInStock <= 0) ? 'Out of Stock' : `In Stock (${product.countInStock || 0})`, badge: true },
-              ].map((r, i) => (
+              ].filter(Boolean).map((r, i) => (
                 <div key={i} className="flex items-center py-1.5 text-[13px]">
                   <span className="w-28 text-gray-400 font-medium shrink-0">{r.label}</span>
                   {r.badge

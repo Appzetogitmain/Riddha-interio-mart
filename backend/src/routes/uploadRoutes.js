@@ -1,4 +1,6 @@
 const express = require('express');
+const fs = require('fs');
+const { removeBackground } = require('@imgly/background-removal-node');
 const { protect } = require('../middleware/auth');
 const { 
   uploadRateLimiter, 
@@ -28,6 +30,21 @@ router.post('/bulk', protect, uploadRateLimiter, uploadParser.fields([
 
     // Securely stream images to Cloudinary with compression, resizing, and metadata stripping
     for (const file of images) {
+      if (req.query.removeBg === 'true') {
+        try {
+          console.log(`[Background Removal] Processing file: ${file.path}`);
+          const { pathToFileURL } = require('url');
+          const fileUrl = pathToFileURL(file.path).href;
+          const blob = await removeBackground(fileUrl);
+          const buffer = Buffer.from(await blob.arrayBuffer());
+          await fs.promises.writeFile(file.path, buffer);
+          console.log(`[Background Removal] Completed for file: ${file.path}`);
+        } catch (bgError) {
+          console.error('[Background Removal] Failed for image:', file.path, bgError.message);
+          // Fallback: continue with original image if background removal fails
+        }
+      }
+
       const result = await cloudinary.uploader.upload(file.path, {
         folder: 'riddha_mart/images',
         image_metadata: false, // strips EXIF metadata

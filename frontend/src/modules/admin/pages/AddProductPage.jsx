@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageWrapper from '../components/PageWrapper';
-import { FiArrowLeft, FiImage, FiVideo, FiSave, FiInfo, FiTag, FiDollarSign, FiType, FiUser, FiPackage, FiTrash2, FiPlus, FiX } from 'react-icons/fi';
+import { FiArrowLeft, FiImage, FiVideo, FiSave, FiInfo, FiTag, FiDollarSign, FiType, FiUser, FiPackage, FiTrash2, FiPlus, FiX, FiCamera } from 'react-icons/fi';
 import api from '../../../shared/utils/api';
 import { toast } from 'react-hot-toast';
 import BulkUploadModal from '../components/BulkUploadModal';
@@ -136,6 +136,65 @@ const AddProductPage = () => {
   );
 
   const fileInputRef = React.useRef(null);
+  const cameraInputRef = React.useRef(null);
+
+  const handleRemoveBg = async (index) => {
+    const originalSrc = formData.images[index];
+    if (!originalSrc) return;
+
+    // Set loading state for this specific index
+    setFormData((prev) => {
+      const updated = [...prev.images];
+      updated[index] = { loading: true, originalSrc };
+      return { ...prev, images: updated };
+    });
+
+    try {
+      // Convert image source to File Blob
+      const response = await fetch(originalSrc);
+      const blob = await response.blob();
+      const file = new File([blob], `image_${index}.jpg`, { type: blob.type || "image/jpeg" });
+
+      const uploadData = new FormData();
+      uploadData.append("images", file);
+
+      // Call bulk upload with removeBg=true
+      const { data: uploadRes } = await api.post("/upload/bulk?removeBg=true", uploadData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      if (uploadRes.success && uploadRes.images && uploadRes.images.length > 0) {
+        const cloudinaryUrl = uploadRes.images[0];
+        
+        // Remove the original base64 file from imgFiles so it isn't uploaded again on submit
+        if (originalSrc.startsWith("data:")) {
+          const base64IndexBefore = formData.images
+            .slice(0, index)
+            .filter((img) => img && typeof img === "string" && img.startsWith("data:")).length;
+          setImgFiles((prev) => prev.filter((_, i) => i !== base64IndexBefore));
+        }
+
+        setFormData((prev) => {
+          const updated = [...prev.images];
+          updated[index] = cloudinaryUrl;
+          return { ...prev, images: updated };
+        });
+      } else {
+        throw new Error("Failed to remove background");
+      }
+    } catch (err) {
+      console.error("Background removal failed:", err);
+      toast.error("Failed to remove background.");
+      // Revert back to original image
+      setFormData((prev) => {
+        const updated = [...prev.images];
+        updated[index] = originalSrc;
+        return { ...prev, images: updated };
+      });
+    }
+  };
 
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files);
@@ -150,7 +209,13 @@ const AddProductPage = () => {
   };
 
   const removeImage = (index) => {
-    setImgFiles(prev => prev.filter((_, i) => i !== index));
+    const removedSrc = formData.images[index];
+    if (removedSrc && typeof removedSrc === "string" && removedSrc.startsWith("data:")) {
+      const base64IndexBefore = formData.images
+        .slice(0, index)
+        .filter((img) => img && typeof img === "string" && img.startsWith("data:")).length;
+      setImgFiles((prev) => prev.filter((_, i) => i !== base64IndexBefore));
+    }
     setFormData(prev => ({
       ...prev,
       images: prev.images.filter((_, i) => i !== index)
@@ -159,6 +224,59 @@ const AddProductPage = () => {
 
   const triggerFileInput = () => {
     fileInputRef.current.click();
+  };
+
+  const handleCameraCapture = async () => {
+    if (formData.images.length >= 5) {
+      toast.error("Max 5 images allowed");
+      return;
+    }
+    // 1. Try Flutter openCamera handler
+    if (window.flutter_inappwebview && typeof window.flutter_inappwebview.callHandler === 'function') {
+      try {
+        const result = await window.flutter_inappwebview.callHandler('openCamera');
+        if (result && result.success && result.base64) {
+          const prefix = result.mimeType ? `data:${result.mimeType};base64,` : 'data:image/jpeg;base64,';
+          const dataUrl = result.base64.startsWith('data:') ? result.base64 : `${prefix}${result.base64}`;
+          
+          // Convert base64 to File object
+          const response = await fetch(dataUrl);
+          const blob = await response.blob();
+          const file = new File([blob], result.fileName || `camera_${Date.now()}.jpg`, { type: result.mimeType || 'image/jpeg' });
+          
+          setImgFiles(prev => [...prev, file]);
+          setFormData(prev => ({ ...prev, images: [...prev.images, dataUrl] }));
+          return;
+        }
+      } catch (err) {
+        console.error("Flutter openCamera handler error:", err);
+      }
+    }
+    
+    // 2. Fallback to HTML5 capture input
+    if (cameraInputRef.current) {
+      cameraInputRef.current.click();
+    }
+  };
+
+  const handleCameraFileChange = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+    
+    if (formData.images.length >= 5) {
+      toast.error("Max 5 images allowed");
+      return;
+    }
+
+    setImgFiles(prev => [...prev, ...files]);
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData(prev => ({ ...prev, images: [...prev.images, reader.result] }));
+      };
+      reader.readAsDataURL(file);
+    });
+    e.target.value = "";
   };
 
   const handleSubmit = async (e) => {
@@ -310,27 +428,71 @@ const AddProductPage = () => {
                 />
                 
                 <div className="grid grid-cols-2 gap-3">
-                   {formData.images.map((img, idx) => (
-                     <div key={idx} className="relative aspect-square rounded-xl overflow-hidden border border-soft-oatmeal group">
-                        <img src={img} alt="" className="w-full h-full object-cover" />
-                        <button 
-                          type="button" onClick={() => removeImage(idx)}
-                          className="absolute inset-0 bg-red-500/80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all text-white"
+                    {formData.images.map((img, idx) => {
+                      const isLoading = img && typeof img === 'object' && img.loading;
+                      const src = isLoading ? '' : img;
+                      return (
+                        <div key={idx} className="relative aspect-square rounded-xl overflow-hidden border border-soft-oatmeal group">
+                          {isLoading ? (
+                            <div className="w-full h-full bg-soft-oatmeal/20 flex flex-col items-center justify-center gap-2">
+                              <div className="w-6 h-6 border-2 border-warm-sand border-t-transparent rounded-full animate-spin" />
+                              <span className="text-[8px] font-black text-warm-sand uppercase tracking-widest text-center">Removing BG...</span>
+                            </div>
+                          ) : (
+                             <>
+                               <img src={src} alt="" className="w-full h-full object-cover" />
+                               <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-2 z-10">
+                                 <div className="flex justify-end">
+                                   <button 
+                                     type="button" 
+                                     onClick={() => removeImage(idx)}
+                                     className="p-1.5 bg-red-600 hover:bg-red-700 text-white rounded-full transition-colors shadow-md"
+                                   >
+                                      <FiTrash2 size={12} />
+                                   </button>
+                                 </div>
+                                 <div className="flex justify-center pb-1">
+                                   <button
+                                     type="button"
+                                     onClick={() => handleRemoveBg(idx)}
+                                     className="bg-brand-teal hover:bg-brand-teal/90 text-white text-[8px] font-black px-2 py-1 rounded shadow-md transition-all uppercase tracking-wider whitespace-nowrap"
+                                   >
+                                     Remove BG
+                                   </button>
+                                 </div>
+                               </div>
+                             </>
+                          )}
+                        </div>
+                      );
+                    })}
+                    {formData.images.length < 5 && (
+                      <>
+                        <div 
+                          onClick={triggerFileInput}
+                          className="aspect-square bg-white rounded-xl border-2 border-dashed border-soft-oatmeal flex flex-col items-center justify-center text-warm-sand hover:border-warm-sand hover:text-deep-espresso transition-all cursor-pointer group"
                         >
-                           <FiTrash2 size={16} />
-                        </button>
-                     </div>
-                   ))}
-                   {formData.images.length < 5 && (
-                     <div 
-                       onClick={triggerFileInput}
-                       className="aspect-square bg-white rounded-xl border-2 border-dashed border-soft-oatmeal flex flex-col items-center justify-center text-warm-sand hover:border-warm-sand hover:text-deep-espresso transition-all cursor-pointer group"
-                     >
-                        <FiPlus size={20} className="opacity-40 group-hover:opacity-100" />
-                        <span className="text-[8px] font-black uppercase tracking-widest mt-1">Add Image</span>
-                     </div>
-                   )}
-                </div>
+                           <FiPlus size={20} className="opacity-40 group-hover:opacity-100" />
+                           <span className="text-[8px] font-black uppercase tracking-widest mt-1">Upload File</span>
+                        </div>
+                        <div 
+                          onClick={handleCameraCapture}
+                          className="aspect-square bg-white rounded-xl border-2 border-dashed border-soft-oatmeal flex flex-col items-center justify-center text-warm-sand hover:border-warm-sand hover:text-deep-espresso transition-all cursor-pointer group"
+                        >
+                           <FiCamera size={20} className="opacity-40 group-hover:opacity-100" />
+                           <span className="text-[8px] font-black uppercase tracking-widest mt-1">Take Photo</span>
+                        </div>
+                      </>
+                    )}
+                 </div>
+                 <input 
+                   type="file" 
+                   accept="image/*" 
+                   capture="environment"
+                   hidden
+                   ref={cameraInputRef}
+                   onChange={handleCameraFileChange}
+                 />
 
                  <div className="space-y-4 pt-4 border-t border-soft-oatmeal/30">
                     <div className="space-y-2">

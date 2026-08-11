@@ -1,8 +1,6 @@
 {
-  "timestamp": "2026-08-05T09:20:40.657Z",
-  "query": {
-    "limit": "1"
-  },
+  "timestamp": "2026-08-11T05:53:57.173Z",
+  "query": {},
   "builtFilter": {
     "isApproved": true,
     "isActive": true,
@@ -13,8 +11,58 @@
       ]
     }
   },
-  "resultCount": 1,
+  "resultCount": 10,
   "results": [
+    {
+      "_id": "6a7ab4eefbb213b03d0996ae",
+      "name": "Polycab Wire",
+      "category": {
+        "_id": "6a22be91614854ee3ba47f8c",
+        "name": "Electricals"
+      },
+      "subcategory": "6a4dfe86a06cf368b84a926a",
+      "subsubcategory": "6a4dfe86a06cf368b84a926d"
+    },
+    {
+      "_id": "6a759064fbb213b03d0956f1",
+      "name": "Soft Close Concealed Hinge 110° Full Overlay",
+      "category": {
+        "_id": "6a1544acd45bbef0c578fa3e",
+        "name": "Hardware"
+      },
+      "subcategory": "6a4d7e72a06cf368b84a7556",
+      "subsubcategory": "6a4d7e72a06cf368b84a7560"
+    },
+    {
+      "_id": "6a758b81fbb213b03d094d25",
+      "name": "Havells Life Line Plus HRFR",
+      "category": {
+        "_id": "6a22be91614854ee3ba47f8c",
+        "name": "Electricals"
+      },
+      "subcategory": "6a4dfe86a06cf368b84a926a",
+      "subsubcategory": "6a4dfe86a06cf368b84a926e"
+    },
+    {
+      "_id": "6a733f41fbb213b03d08f824",
+      "name": "HIKVISION",
+      "category": {
+        "_id": "6a4cfde1a06cf368b84a64c6",
+        "name": "Security & Automation"
+      },
+      "subcategory": "6a50d299fb87c84071cbb938",
+      "subsubcategory": "6a50d299fb87c84071cbb93a"
+    },
+    {
+      "_id": "6a733c79fbb213b03d08f2b7",
+      "name": "HINDWARE",
+      "category": {
+        "_id": "6a2bd98474e4adc0617a9df9",
+        "name": "Bath Fitting"
+      },
+      "subcategory": "6a4e05c2a06cf368b84a998f",
+      "subsubcategory": "6a4e05c2a06cf368b84a9991"
+    },
     {
       "_id": "6a71fcd9dfb6131dc25f4c2f",
       "name": "Commercial LED Panel Light CL-Panel-36W-6000K",
@@ -24,6 +72,44 @@
       },
       "subcategory": "6a4d5daea06cf368b84a720b",
       "subsubcategory": "6a4d5daea06cf368b84a720c"
+    },
+    {
+      "_id": "6a58a3d35403001112c2cdf8",
+      "name": "italian white marble",
+      "category": {
+        "_id": "69e1cc1d60884ec078193fe9",
+        "name": "Marble"
+      }
+    },
+    {
+      "_id": "6a589992b9fb911c92044c81",
+      "name": "Makrana White",
+      "category": {
+        "_id": "69e1cc1d60884ec078193fe9",
+        "name": "Marble"
+      },
+      "subcategory": "6a4d111fa06cf368b84a67f1",
+      "subsubcategory": "6a4d111fa06cf368b84a67f2"
+    },
+    {
+      "_id": "6a587cc1b9fb911c920446de",
+      "name": "Makrana White Marble",
+      "category": {
+        "_id": "69e1cc1d60884ec078193fe9",
+        "name": "Marble"
+      },
+      "subcategory": "6a4d111fa06cf368b84a67f1",
+      "subsubcategory": "6a4d111fa06cf368b84a67f2"
+    },
+    {
+      "_id": "6a587c46b9fb911c920446aa",
+      "name": "product listing",
+      "category": {
+        "_id": "6a0d97bf804fbfd108773a6f",
+        "name": "Flooring"
+      },
+      "subcategory": "6a4d4f65a06cf368b84a7146",
+      "subsubcategory": "6a4d4f65a06cf368b84a7149"
     }
   ]
 }

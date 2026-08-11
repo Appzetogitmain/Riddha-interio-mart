@@ -38,12 +38,6 @@
     "category": "6a0daa6c047bdee23fc76678"
   },
   {
-    "_id": "6a22b8c2614854ee3ba47f40",
-    "name": "shine",
-    "category": "6a0daa34047bdee23fc765da",
-    "subcategory": null
-  },
-  {
     "_id": "6a22b965614854ee3ba47f67",
     "name": "Swan Neck Golden",
     "category": "69e1cc1d60884ec078193fe9"
@@ -62,11 +56,6 @@
     "_id": "6a23c5e5614854ee3ba484d6",
     "name": "Smart Recessed LED Panel",
     "category": "6a0daa34047bdee23fc765da"
-  },
-  {
-    "_id": "6a23d0e5614854ee3ba48527",
-    "name": "stoness",
-    "category": "69e1cc1d60884ec078193fe9"
   },
   {
     "_id": "6a23d12e614854ee3ba48529",
@@ -452,5 +441,82 @@
     "category": "6a0d954f804fbfd1087737f1",
     "subcategory": "6a4d1974a06cf368b84a6c76",
     "subsubcategory": "6a4d1974a06cf368b84a6c78"
+  },
+  {
+    "_id": "6a730b3517e61af69f5935b6",
+    "name": "Premium itallitan marble slab",
+    "category": "69e1cc1d60884ec078193fe9",
+    "subcategory": "6a4d111fa06cf368b84a67fa",
+    "subsubcategory": "6a4d111fa06cf368b84a67fc"
+  },
+  {
+    "_id": "6a731aa4db4638654784a283",
+    "name": "slipwell bed",
+    "category": "6a0d954f804fbfd1087737f1",
+    "subcategory": "6a4d1974a06cf368b84a6c76",
+    "subsubcategory": "6a4d1974a06cf368b84a6c78"
+  },
+  {
+    "_id": "6a731fa3494ccc3cb64bce4f",
+    "name": "Philips LED Ceiling Panel Light 18W",
+    "category": "6a0daa34047bdee23fc765da",
+    "subcategory": "6a4d5daea06cf368b84a71eb",
+    "subsubcategory": "6a4d5daea06cf368b84a71f1"
+  },
+  {
+    "_id": "6a733c79fbb213b03d08f2b7",
+    "name": "HINDWARE",
+    "category": "6a2bd98474e4adc0617a9df9",
+    "subcategory": "6a4e05c2a06cf368b84a998f",
+    "subsubcategory": "6a4e05c2a06cf368b84a9991"
+  },
+  {
+    "_id": "6a733f41fbb213b03d08f824",
+    "name": "HIKVISION",
+    "category": "6a4cfde1a06cf368b84a64c6",
+    "subcategory": "6a50d299fb87c84071cbb938",
+    "subsubcategory": "6a50d299fb87c84071cbb93a"
+  },
+  {
+    "_id": "6a73a209fbb213b03d091c8c",
+    "name": "BOTTLE PULL OUTS",
+    "category": "6a1544acd45bbef0c578fa3e",
+    "subcategory": "6a4d7e72a06cf368b84a7588",
+    "subsubcategory": "6a4d7e72a06cf368b84a758a"
+  },
+  {
+    "_id": "6a743b1ffbb213b03d092945",
+    "name": "Shoe Racks",
+    "category": "6a1544acd45bbef0c578fa3e",
+    "subcategory": "6a4d7e72a06cf368b84a7580",
+    "subsubcategory": "6a4d7e72a06cf368b84a7585"
+  },
+  {
+    "_id": "6a758842fbb213b03d09474f",
+    "name": "Premium Emulsion Paint",
+    "category": "6a4cf715a06cf368b84a62e3",
+    "subcategory": "6a4e0f4aa06cf368b84a9dc1",
+    "subsubcategory": "6a4e0f4aa06cf368b84a9dc4"
+  },
+  {
+    "_id": "6a758b81fbb213b03d094d25",
+    "name": "Havells Life Line Plus HRFR",
+    "category": "6a22be91614854ee3ba47f8c",
+    "subcategory": "6a4dfe86a06cf368b84a926a",
+    "subsubcategory": "6a4dfe86a06cf368b84a926e"
+  },
+  {
+    "_id": "6a759064fbb213b03d0956f1",
+    "name": "Soft Close Concealed Hinge 110° Full Overlay",
+    "category": "6a1544acd45bbef0c578fa3e",
+    "subcategory": "6a4d7e72a06cf368b84a7556",
+    "subsubcategory": "6a4d7e72a06cf368b84a7560"
+  },
+  {
+    "_id": "6a7ab4eefbb213b03d0996ae",
+    "name": "Polycab Wire",
+    "category": "6a22be91614854ee3ba47f8c",
+    "subcategory": "6a4dfe86a06cf368b84a926a",
+    "subsubcategory": "6a4dfe86a06cf368b84a926d"
   }
 ]

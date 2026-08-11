@@ -22,7 +22,15 @@ import { useUser } from './modules/user/data/UserContext';
 function App() {
   const { user } = useUser();
   const [showPincodeModal, setShowPincodeModal] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const location = useLocation();
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const isAdminPath = location.pathname.startsWith('/admin');
   const isSellerPath = location.pathname.startsWith('/seller');
   const isDeliveryPath = location.pathname.startsWith('/delivery');
@@ -38,7 +46,7 @@ function App() {
   const userSpecialPaths = ['/order-success', '/orders', '/profile', '/profile/edit'];
   const isTrackOrderPath = location.pathname.startsWith('/track-order/');
   const isCheckoutPath = checkoutPaths.includes(location.pathname);
-  const shouldHideHeader = isDashboardLayout || isCheckoutPath || userSpecialPaths.includes(location.pathname) || isTrackOrderPath;
+  const shouldHideHeader = isDashboardLayout || isCheckoutPath || (userSpecialPaths.includes(location.pathname) && isMobile) || isTrackOrderPath;
 
   useEffect(() => {
     // Clear splash session storage on fresh page load/refresh

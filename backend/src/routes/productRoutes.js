@@ -40,6 +40,12 @@ router.route('/')
     validate
   ], createProduct);
 
+const multer = require('multer');
+const uploadMemory = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
+const { aiImageSearch } = require('../controllers/aiSearchController');
+
+router.post('/ai-image-search', uploadMemory.single('image'), aiImageSearch);
+
 router.get('/search/suggestions', tryProtect, getSearchSuggestions);
 
 router.post('/bulk', protect, authorize('seller', 'admin'), require('../controllers/productController').createBulkProducts);

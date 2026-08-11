@@ -70,26 +70,54 @@ const SearchEntryPage = () => {
     recognition.start();
   };
 
-  // Image Search Logic
-  const handleImageUpload = (e) => {
+  // AI Image Search Logic
+  const [aiData, setAiData] = useState(null);
+  const [activeLookGroup, setActiveLookGroup] = useState('all');
+  const imageSearchCacheRef = React.useRef(new Map());
+
+  const handleImageUpload = async (e) => {
     const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setScannedImage(event.target.result);
-        setIsScanning(true);
-        // Simulate scanning delay
-        setTimeout(() => {
-          setIsScanning(false);
-          // For demo: search for a random furniture category
-          const mockResults = ["Sofa", "Chair", "Table", "Bed"];
-          const randomSearch = mockResults[Math.floor(Math.random() * mockResults.length)];
-          setQuery(randomSearch);
-          handleSearch(randomSearch);
-        }, 3000);
-      };
-      reader.readAsDataURL(file);
-    }
+    if (!file) return;
+
+    const fileCacheKey = `${file.name}_${file.size}_${file.lastModified}`;
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const dataUrl = event.target.result;
+      setScannedImage(dataUrl);
+
+      // Check client-side cache
+      if (imageSearchCacheRef.current.has(fileCacheKey)) {
+        const cachedRes = imageSearchCacheRef.current.get(fileCacheKey);
+        setAiData(cachedRes);
+        setQuery(cachedRes.aiAnalysis?.primaryItem || 'AI Visual Match');
+        return;
+      }
+
+      setIsScanning(true);
+      setAiData(null);
+      setActiveLookGroup('all');
+
+      try {
+        const formData = new FormData();
+        formData.append('image', file);
+
+        const res = await api.post('/products/ai-image-search', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+
+        if (res.data.success) {
+          imageSearchCacheRef.current.set(fileCacheKey, res.data);
+          setAiData(res.data);
+          setQuery(res.data.aiAnalysis?.primaryItem || 'AI Visual Match');
+        }
+      } catch (err) {
+        console.error('AI Image search failed:', err);
+      } finally {
+        setIsScanning(false);
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   // Debounced Search Logic
@@ -263,6 +291,171 @@ const SearchEntryPage = () => {
 
       {/* Content Area */}
       <div className="p-4 md:p-6 max-w-2xl mx-auto overflow-y-auto max-h-[calc(100vh-80px)] no-scrollbar">
+        {/* AI Image Search Results Render */}
+        {aiData && (
+          <motion.div 
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-8 space-y-6"
+          >
+            {/* AI Insights Card */}
+            <div className="p-4 md:p-5 bg-gradient-to-br from-[#127F75] to-[#0D5B54] rounded-3xl text-white shadow-xl relative overflow-hidden">
+              <div className="absolute right-0 top-0 w-32 h-32 bg-white/5 rounded-full blur-2xl pointer-events-none" />
+              <div className="flex items-start gap-4">
+                {scannedImage && (
+                  <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl overflow-hidden border-2 border-white/30 shrink-0 shadow-md">
+                    <img src={scannedImage} className="w-full h-full object-cover" alt="AI Input" />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="px-2.5 py-0.5 bg-white/20 backdrop-blur-md rounded-full text-[10px] font-black uppercase tracking-wider text-teal-100">
+                      AI Visual Analysis
+                    </span>
+                  </div>
+                  <h3 className="text-lg md:text-xl font-black text-white truncate">
+                    {aiData.aiAnalysis.primaryItem}
+                  </h3>
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {aiData.aiAnalysis.category && (
+                      <span className="px-2 py-0.5 bg-white/10 text-white rounded-lg text-[11px] font-bold">
+                        {aiData.aiAnalysis.category}
+                      </span>
+                    )}
+                    {aiData.aiAnalysis.color && (
+                      <span className="px-2 py-0.5 bg-white/10 text-white rounded-lg text-[11px] font-bold">
+                        {aiData.aiAnalysis.color}
+                      </span>
+                    )}
+                    {aiData.aiAnalysis.material && (
+                      <span className="px-2 py-0.5 bg-white/10 text-white rounded-lg text-[11px] font-bold">
+                        {aiData.aiAnalysis.material}
+                      </span>
+                    )}
+                    {aiData.aiAnalysis.style && (
+                      <span className="px-2 py-0.5 bg-white/10 text-white rounded-lg text-[11px] font-bold">
+                        {aiData.aiAnalysis.style}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Shop The Look Filter Chips */}
+            {aiData.shopTheLookGroups && aiData.shopTheLookGroups.length > 0 && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between px-1">
+                  <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-[#127F75]">
+                    Shop The Look ({aiData.shopTheLookGroups.length} Items Detected)
+                  </h4>
+                </div>
+                <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+                  <button
+                    onClick={() => setActiveLookGroup('all')}
+                    className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all border ${
+                      activeLookGroup === 'all'
+                        ? 'bg-[#189D91] text-white border-[#189D91] shadow-md shadow-[#189D91]/20'
+                        : 'bg-white text-gray-700 border-gray-100 hover:bg-gray-50'
+                    }`}
+                  >
+                    All Similar ({aiData.similarProducts?.length || 0})
+                  </button>
+                  {aiData.shopTheLookGroups.map((group, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setActiveLookGroup(group.label)}
+                      className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all border ${
+                        activeLookGroup === group.label
+                          ? 'bg-[#189D91] text-white border-[#189D91] shadow-md shadow-[#189D91]/20'
+                          : 'bg-white text-gray-700 border-gray-100 hover:bg-gray-50'
+                      }`}
+                    >
+                      {group.label} ({group.products.length})
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Similar Products Output */}
+            <div className="space-y-3">
+              <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-[#127F75]">
+                {activeLookGroup === 'all' ? 'Visually Similar Products' : `Matching: ${activeLookGroup}`}
+              </h4>
+
+              {(() => {
+                let displayList = aiData.similarProducts || [];
+                if (activeLookGroup !== 'all' && aiData.shopTheLookGroups) {
+                  const targetGroup = aiData.shopTheLookGroups.find(g => g.label === activeLookGroup);
+                  if (targetGroup) displayList = targetGroup.products;
+                }
+
+                if (displayList.length === 0) {
+                  return (
+                    <div className="py-8 text-center bg-gray-50 rounded-2xl">
+                      <p className="text-sm font-semibold text-gray-400">No exact matches found for this item.</p>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="grid grid-cols-2 gap-3 md:gap-4">
+                    {displayList.map((product) => (
+                      <div
+                        key={product._id}
+                        onClick={() => navigate(`/products/${product._id}`)}
+                        className="bg-white border border-gray-100 hover:border-[#189D91]/30 rounded-2xl p-3 shadow-sm hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between"
+                      >
+                        <div>
+                          <div className="w-full h-36 md:h-44 bg-gray-50 rounded-xl overflow-hidden mb-3 relative">
+                            <img
+                              src={product.images?.[0] || 'https://images.unsplash.com/photo-1513519245088-0e12902e35ca?w=400&q=80'}
+                              alt={product.name}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            />
+                            <span className="absolute top-2 left-2 bg-[#189D91] text-white text-[9px] font-black px-2 py-0.5 rounded-md uppercase tracking-wider">
+                              AI Match
+                            </span>
+                          </div>
+                          <h5 className="text-xs font-bold text-gray-800 line-clamp-2 leading-tight group-hover:text-[#189D91] transition-colors">
+                            {product.name}
+                          </h5>
+                        </div>
+                        <div className="mt-3 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-black text-[#189D91]">
+                              ₹{(() => {
+                                const pPrice = Number(product.price) || 0;
+                                const pDiscount = Number(product.discountPrice) || 0;
+                                const display = (pDiscount > 0 && pDiscount < pPrice) ? pDiscount : pPrice;
+                                return display.toLocaleString();
+                              })()}
+                            </span>
+                            <span className="text-[10px] font-bold text-gray-400 uppercase">
+                              {product.category?.name || 'In Store'}
+                            </span>
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/products/${product._id}`);
+                            }}
+                            className="w-full py-2 bg-[#189D91] hover:bg-[#127F75] text-white text-xs font-bold rounded-xl transition-all shadow-sm active:scale-95 flex items-center justify-center gap-1.5"
+                          >
+                            <span>Buy / View Item</span>
+                            <FiChevronRight size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+            </div>
+          </motion.div>
+        )}
+
         <AnimatePresence mode="wait">
           {query.trim() ? (
             <motion.div

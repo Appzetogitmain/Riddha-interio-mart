@@ -250,6 +250,7 @@ const menuGroups = [
         ],
       },
       { path: "/admin/manage-advertisements", icon: FiStar, label: "Advertisement Plans" },
+      { path: "/admin/manage-bundles", icon: FiZap, label: "Smart Bundles" },
       {
         label: "Featured Highlights",
         icon: FiStar,

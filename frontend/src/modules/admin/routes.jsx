@@ -16,6 +16,7 @@ const ManageFavouriteCategories = React.lazy(() => import('./pages/ManageFavouri
 const ManageCategoryGrid = React.lazy(() => import('./pages/ManageCategoryGrid'));
 const ManageBrands = React.lazy(() => import('./pages/ManageBrands'));
 const ManageAdvertisementPlans = React.lazy(() => import('./pages/ManageAdvertisementPlans'));
+const BundleManagementPage = React.lazy(() => import('./pages/BundleManagementPage'));
 const LoginPage = React.lazy(() => import('../user/pages/LoginPage'));
 const SignupPage = React.lazy(() => import('../user/pages/SignupPage'));
 const AdminProfile = React.lazy(() => import('./pages/AdminProfile'));
@@ -143,6 +144,7 @@ const AdminRoutes = () => {
             <Route path="/manage-featured/add" element={<AddFeaturedProductPage />} />
             <Route path="/manage-brands" element={<ManageBrands />} />
             <Route path="/manage-brands/add" element={<AddBrandPage />} />
+            <Route path="/manage-bundles" element={<BundleManagementPage />} />
             <Route path="/manage-advertisements" element={<ManageAdvertisementPlans />} />
             <Route path="/manage-grid" element={<ManageCategoryGrid />} />
             <Route path="/manage-grid/add" element={<AddCategoryGridItemPage />} />

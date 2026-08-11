@@ -40,6 +40,8 @@ const NotificationPage = React.lazy(() => import('./pages/NotificationPage'));;
 const SplashPage = React.lazy(() => import('./pages/SplashPage'));;
 const OnboardingPage = React.lazy(() => import('./pages/OnboardingPage'));;
 const SavedAddressesPage = React.lazy(() => import('./pages/SavedAddressesPage'));;
+const BundlesPage = React.lazy(() => import('./pages/BundlesPage'));;
+const BundleDetailPage = React.lazy(() => import('./pages/BundleDetailPage'));;
 
 import { Navigate } from 'react-router-dom';
 import { useUser } from './data/UserContext';
@@ -102,6 +104,8 @@ const UserRoutes = () => {
       <Route path="/notifications" element={<NotificationPage />} />
       <Route path="/addresses" element={<SavedAddressesPage />} />
       <Route path="/ai-room-visualizer" element={<AiRoomVisualizerPage />} />
+      <Route path="/bundles" element={<BundlesPage />} />
+      <Route path="/bundles/:id" element={<BundleDetailPage />} />
     </Routes>
   );
 };

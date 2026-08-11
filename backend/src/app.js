@@ -182,6 +182,8 @@ app.use('/api/recommendations', recommendationRoutes);
 app.use('/api/rooms', roomRoutes);
 app.use('/api/bundles', bundleRoutes);
 app.use('/api/quiz', quizRoutes);
+const briefRoutes = require('./routes/briefRoutes');
+app.use('/api/briefs', briefRoutes);
 app.use('/api/assistant', assistantRoutes);
 
 app.get('/', (req, res) => {

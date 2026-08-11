@@ -10,12 +10,47 @@ import {
 } from 'react-icons/fi';
 import { FaStar, FaWhatsapp, FaFacebook, FaTwitter } from 'react-icons/fa';
 import toast from 'react-hot-toast';
-import ProductCard from '../components/ProductCard';
 import ReviewSection from '../components/ReviewSection';
+import RecommendationCarousel from '../components/RecommendationCarousel';
+import CompleteTheRoomWidget from '../components/CompleteTheRoomWidget';
+import BundleCard from '../components/BundleCard';
 import { useWishlist } from '../data/WishlistContext';
 import { useUser } from '../data/UserContext';
 import api from '../../../shared/utils/api';
 import { getDeliveryEstimate } from '../../../shared/utils/delivery';
+
+// Smart bundles that include this product — a thin fetch-and-render row, kept local
+// since it's only used here on the product detail page.
+const BundleSuggestionsRow = ({ productId }) => {
+  const [bundles, setBundles] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!productId) return;
+    let cancelled = false;
+    api.get('/bundles/suggestions', { params: { productIds: productId, limit: 3 } })
+      .then((res) => { if (!cancelled) setBundles(res.data?.data || []); })
+      .catch(() => { if (!cancelled) setBundles([]); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [productId]);
+
+  if (loading || bundles.length === 0) return null;
+
+  return (
+    <section className="mt-8 px-5 md:px-0">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-base font-bold text-gray-900">Save More With a Smart Bundle</h2>
+        <Link to="/bundles" className="text-[11px] font-bold text-[#189D91] hover:underline">See All →</Link>
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+        {bundles.map((bundle) => (
+          <BundleCard key={bundle._id} bundle={bundle} />
+        ))}
+      </div>
+    </section>
+  );
+};
 
 const ProductDetailsPage = () => {
   const { id } = useParams();
@@ -24,7 +59,6 @@ const ProductDetailsPage = () => {
   const { toggleWishlist, isInWishlist } = useWishlist();
   const { user } = useUser();
   const [product, setProduct] = useState(null);
-  const [relatedProducts, setRelatedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeMediaIndex, setActiveMediaIndex] = useState(0);
   const [pincode] = useState(localStorage.getItem('userPincode') || '452018');
@@ -83,9 +117,6 @@ const ProductDetailsPage = () => {
         } catch (e) {
           console.error("Could not save recently viewed", e);
         }
-
-        const allRes = await api.get('/products');
-        setRelatedProducts(allRes.data.data.filter(p => p.category === found.category && (p._id || p.id) !== id).slice(0, 4));
       } catch (err) {
         console.error(err);
       } finally {
@@ -585,24 +616,15 @@ const ProductDetailsPage = () => {
         </AccordionSection>
       </div>
 
-      {/* ── Related products ── */}
-      {relatedProducts.length > 0 && (
-        <section className="mt-8">
-          <div className="flex items-center justify-between mb-4 px-5 md:px-0">
-            <h2 className="text-base font-bold text-gray-900">You May Also Like</h2>
-            <Link to="/products" className="text-[11px] font-bold text-[#189D91] hover:underline">See All →</Link>
-          </div>
-          <div className="overflow-x-auto no-scrollbar -mx-4 px-4 md:mx-0 md:px-0">
-            <div className="flex md:grid md:grid-cols-4 gap-3 pb-2">
-              {relatedProducts.map((p, i) => (
-                <div key={p._id || p.id} className="w-[150px] md:w-auto shrink-0">
-                  <ProductCard product={p} index={i} variant="minimal" />
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
+      {/* ── AI-based recommendations ── */}
+      <RecommendationCarousel productId={product._id || product.id} type="similar" title="Similar Products" limit={6} />
+      <RecommendationCarousel productId={product._id || product.id} type="cross-sell" title="Frequently Bought Together" limit={4} />
+
+      {/* ── Complete the Room ── */}
+      <CompleteTheRoomWidget productId={product._id || product.id} />
+
+      {/* ── Smart Bundles ── */}
+      <BundleSuggestionsRow productId={product._id || product.id} />
 
       {/* ── Mobile fixed action bar ── */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-white px-4 py-3 pb-5 flex gap-3 border-t border-gray-100 shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">

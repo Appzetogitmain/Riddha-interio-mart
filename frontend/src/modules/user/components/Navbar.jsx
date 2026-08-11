@@ -19,7 +19,8 @@ import {
   FiXCircle,
   FiTruck,
   FiFileText,
-  FiHeart
+  FiHeart,
+  FiZap
 } from "react-icons/fi";
 import { AiOutlineShop } from "react-icons/ai";
 import { motion, AnimatePresence } from "framer-motion";
@@ -469,6 +470,7 @@ const Navbar = () => {
                   <div className="pb-3 mb-3 border-b border-gray-50">
                     <SidebarLink to="/" icon={FiHome} label="Home" onClick={closeMobile} />
                     <SidebarLink to="/products" icon={FiGrid} label="Shop Products" onClick={closeMobile} />
+                    <SidebarLink to="/bundles" icon={FiZap} label="Smart Bundles" onClick={closeMobile} />
                     <SidebarLink to="/referral-rewards" icon={LuWallet} label="Riddha Wallet" onClick={closeMobile} />
                     <SidebarLink to="/orders" icon={FiShoppingBag} label="My Orders" onClick={closeMobile} />
                     {user && <SidebarLink to="/wishlist" icon={FiHeart} label="My Wishlist" onClick={closeMobile} />}

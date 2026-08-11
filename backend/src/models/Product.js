@@ -214,6 +214,28 @@ const ProductSchema = new mongoose.Schema({
   seoKeywords: {
     type: [String],
     default: []
+  },
+  // Signals used by the recommendation/room-completion engine. All optional so
+  // existing products keep working without backfill.
+  tags: {
+    type: [String],
+    default: []
+  },
+  roomType: {
+    type: String,
+    enum: ['living', 'bedroom', 'bathroom', 'kitchen', 'office', 'dining', 'outdoor', null],
+    default: null
+  },
+  // Marks a synthetic "single cart item" Product auto-generated for a Bundle
+  // so bundles can flow through the existing cart/checkout/order pipeline untouched.
+  isBundle: {
+    type: Boolean,
+    default: false
+  },
+  bundleRef: {
+    type: mongoose.Schema.ObjectId,
+    ref: 'Bundle',
+    default: null
   }
 }, {
   timestamps: true

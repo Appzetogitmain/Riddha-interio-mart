@@ -48,6 +48,8 @@ const QuizResultsPage = React.lazy(() => import('./pages/QuizResultsPage'));
 import { Navigate } from 'react-router-dom';
 import { useUser } from './data/UserContext';
 
+const AiRoomVisualizerPage = React.lazy(() => import('./pages/AiRoomVisualizerPage'));;
+
 const RootRoute = () => {
   const splashCompleted = localStorage.getItem('splashCompleted') === 'true';
 
@@ -105,6 +107,7 @@ const UserRoutes = () => {
       <Route path="/order/invoice/:id" element={<InvoicePage />} />
       <Route path="/notifications" element={<NotificationPage />} />
       <Route path="/addresses" element={<SavedAddressesPage />} />
+      <Route path="/ai-room-visualizer" element={<AiRoomVisualizerPage />} />
       <Route path="/bundles" element={<BundlesPage />} />
       <Route path="/bundles/:id" element={<BundleDetailPage />} />
     </Routes>

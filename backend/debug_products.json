@@ -1,79 +1,38 @@
 {
-  "timestamp": "2026-08-11T09:37:17.216Z",
+  "timestamp": "2026-08-11T10:19:23.424Z",
   "query": {
-    "search": "Modern Office Desk Set",
+    "search": "sofa",
     "limit": "6"
   },
   "builtFilter": {
-    "isApproved": true,
-    "isActive": true,
-    "seller": {
-      "$nin": [
-        "6a100b07a3cc06ac3f65be01",
-        "6a10057431fa10db6ebdaaff"
-      ]
+    "isBundle": {
+      "$ne": true
     },
     "$text": {
-      "$search": "Modern Office Desk Set"
+      "$search": "sofa"
     }
   },
-  "resultCount": 6,
+  "resultCount": 2,
   "results": [
     {
-      "_id": "6a7ab4eefbb213b03d0996ae",
-      "name": "Polycab Wire",
+      "_id": "6a72f3c0bcbf3be5792cd272",
+      "name": "Modern L-Shaped Fabric Sofa Set UC-LS-9021",
       "category": {
-        "_id": "6a22be91614854ee3ba47f8c",
-        "name": "Electricals"
+        "_id": "6a0d954f804fbfd1087737f1",
+        "name": "Furniture"
       },
-      "subcategory": "6a4dfe86a06cf368b84a926a",
-      "subsubcategory": "6a4dfe86a06cf368b84a926d"
+      "subcategory": "6a4d1974a06cf368b84a6c76",
+      "subsubcategory": "6a4d1974a06cf368b84a6c77"
     },
     {
-      "_id": "6a759064fbb213b03d0956f1",
-      "name": "Soft Close Concealed Hinge 110° Full Overlay",
+      "_id": "6a72ee02d2b0c2bcf3faeb95",
+      "name": "Modern L-Shaped Fabric Sofa Set UC-LS-9021",
       "category": {
-        "_id": "6a1544acd45bbef0c578fa3e",
-        "name": "Hardware"
+        "_id": "6a0d954f804fbfd1087737f1",
+        "name": "Furniture"
       },
-      "subcategory": "6a4d7e72a06cf368b84a7556",
-      "subsubcategory": "6a4d7e72a06cf368b84a7560"
-    },
-    {
-      "_id": "6a733c79fbb213b03d08f2b7",
-      "name": "HINDWARE",
-      "category": {
-        "_id": "6a2bd98474e4adc0617a9df9",
-        "name": "Bath Fitting"
-      },
-      "subcategory": "6a4e05c2a06cf368b84a998f",
-      "subsubcategory": "6a4e05c2a06cf368b84a9991"
-    },
-    {
-      "_id": "6a71fcd9dfb6131dc25f4c2f",
-      "name": "Commercial LED Panel Light CL-Panel-36W-6000K",
-      "category": {
-        "_id": "6a0daa34047bdee23fc765da",
-        "name": "Lighting"
-      },
-      "subcategory": "6a4d5daea06cf368b84a720b",
-      "subsubcategory": "6a4d5daea06cf368b84a720c"
-    },
-    {
-      "_id": "6a3cf1bd3c72ab885b351edd",
-      "name": "Baris Square 40 LED",
-      "category": {
-        "_id": "6a3ce1121a6984f64390c771",
-        "name": "False Ceiling"
-      }
-    },
-    {
-      "_id": "6a3cf1bb3c72ab885b351edc",
-      "name": "Baris Square 52 LED",
-      "category": {
-        "_id": "6a3ce1121a6984f64390c771",
-        "name": "False Ceiling"
-      }
+      "subcategory": "6a4d1974a06cf368b84a6c76",
+      "subsubcategory": "6a4d1974a06cf368b84a6c77"
     }
   ]
 }

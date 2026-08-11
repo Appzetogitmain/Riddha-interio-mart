@@ -518,5 +518,10 @@
     "category": "6a22be91614854ee3ba47f8c",
     "subcategory": "6a4dfe86a06cf368b84a926a",
     "subsubcategory": "6a4dfe86a06cf368b84a926d"
+  },
+  {
+    "_id": "6a7af6f8b2b48db3cc9d755b",
+    "name": "Bundle: bundle set test",
+    "category": "6a7aeb2e6d53872e0de9141a"
   }
 ]

@@ -119,7 +119,7 @@ const OrderListPage = ({ specificStatus }) => {
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      const { data } = await api.get('/orders');
+      const { data } = await api.get('/orders?limit=10000');
       if (data.success) {
         setOrders(data.data || []);
       }

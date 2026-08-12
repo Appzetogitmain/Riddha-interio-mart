@@ -13,7 +13,7 @@ const SplashPage = () => {
   const [loadingComplete, setLoadingComplete] = useState(false);
 
   const handleRedirect = () => {
-    sessionStorage.setItem("splashCompleted", "true");
+    localStorage.setItem("splashCompleted", "true");
     if (user) {
       navigate("/");
     } else {

@@ -1,12 +1,16 @@
-import React, { useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useUser } from "../data/UserContext";
 import TransparentLogo from "../../../assets/transparent_logo.png";
+import { FiPercent, FiTruck } from "react-icons/fi";
+import { MdSecurity } from "react-icons/md";
+import { FaFileInvoice, FaPhoneAlt } from "react-icons/fa";
 
 const SplashPage = () => {
   const navigate = useNavigate();
   const { user } = useUser();
+  const [loadingComplete, setLoadingComplete] = useState(false);
 
   const handleRedirect = () => {
     sessionStorage.setItem("splashCompleted", "true");
@@ -19,6 +23,7 @@ const SplashPage = () => {
 
   useEffect(() => {
     const timer = setTimeout(() => {
+      setLoadingComplete(true);
       handleRedirect();
     }, 3000);
     return () => clearTimeout(timer);
@@ -195,128 +200,10 @@ const SplashPage = () => {
               className="h-full bg-[#EC008C] rounded-full"
             />
           </div>
+        </div>
 
-          {/* Tagline */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.5 }}
-            className="text-center space-y-1 mb-6"
-          >
-            <p className="text-[#1A2639] text-[20px] font-extrabold tracking-tight leading-tight">
-              Connecting India to
-            </p>
-            <p className="text-[#189D91] text-[18px] font-bold tracking-wide leading-tight">
-              Premium Interiors.
-            </p>
-          </motion.div>
-
-          {/* Progress Bar */}
-          <AnimatePresence>
-            {!loadingComplete && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0, marginBottom: 0 }}
-                className="w-full flex flex-col items-center gap-3 mb-6 overflow-hidden"
-              >
-                <div className="flex items-center gap-2.5">
-                  <div className="w-2.5 h-2.5 rounded-full bg-[#EC008C] animate-pulse" />
-                  <span className="text-slate-600 text-[13px] font-bold uppercase tracking-[0.25em]">
-                    Loading
-                  </span>
-                  <div className="w-2.5 h-2.5 rounded-full bg-[#EC008C] animate-pulse delay-75" />
-                </div>
-                <div className="w-56 h-2 bg-pink-50 rounded-full overflow-hidden relative">
-                  <motion.div
-                    initial={{ width: "0%" }}
-                    animate={{ width: "100%" }}
-                    transition={{ duration: 2.5, ease: "easeInOut" }}
-                    className="absolute top-0 left-0 h-full bg-[#EC008C] rounded-full"
-                  />
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          <motion.div
-             initial={{ opacity: 0, y: 20 }}
-             animate={{ opacity: 1, y: 0 }}
-             transition={{ delay: 0.5, duration: 0.5 }}
-             className="w-full flex flex-col"
-          >
-            {/* Feature Cards */}
-            <div className="w-full bg-white rounded-3xl p-4 shadow-[0_4px_25px_rgb(0,0,0,0.03)] border border-slate-50 mb-6">
-              <div className="grid grid-cols-4 gap-1 divide-x divide-slate-100/80">
-                <div className="flex flex-col items-center text-center px-0.5">
-                  <div className="text-[#EC008C] mb-2 drop-shadow-sm scale-110">
-                    <div className="w-8 h-8 mask mask-hexagon bg-[#EC008C] text-white flex items-center justify-center rounded-lg" style={{ clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' }}>
-                       <FiPercent size={16} strokeWidth={3} />
-                    </div>
-                  </div>
-                  <p className="text-[10px] font-bold text-slate-800 leading-tight mb-0.5">Best Prices</p>
-                  <p className="text-[8px] text-slate-500 leading-tight tracking-tight">Wholesale<br/>rates</p>
-                </div>
-                
-                <div className="flex flex-col items-center text-center px-0.5">
-                  <div className="text-[#189D91] mb-2 drop-shadow-sm scale-110">
-                    <div className="w-8 h-8 mask mask-hexagon bg-[#189D91] text-white flex items-center justify-center rounded-lg" style={{ clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' }}>
-                       <MdSecurity size={18} />
-                    </div>
-                  </div>
-                  <p className="text-[10px] font-bold text-slate-800 leading-tight mb-0.5">Trusted Quality</p>
-                  <p className="text-[8px] text-slate-500 leading-tight tracking-tight">Verified<br/>brands</p>
-                </div>
-                
-                <div className="flex flex-col items-center text-center px-0.5">
-                  <div className="text-orange-500 mb-2 drop-shadow-sm scale-110">
-                    <div className="w-8 h-8 mask mask-hexagon bg-orange-500 text-white flex items-center justify-center rounded-lg" style={{ clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' }}>
-                       <FiTruck size={16} strokeWidth={2.5} />
-                    </div>
-                  </div>
-                  <p className="text-[10px] font-bold text-slate-800 leading-tight mb-0.5">Pan India</p>
-                  <p className="text-[8px] text-slate-500 leading-tight tracking-tight">Fast delivery</p>
-                </div>
-                
-                <div className="flex flex-col items-center text-center px-0.5">
-                  <div className="text-purple-600 mb-2 drop-shadow-sm scale-110">
-                    <div className="w-8 h-8 mask mask-hexagon bg-purple-500 text-white flex items-center justify-center rounded-lg" style={{ clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' }}>
-                       <FaFileInvoice size={14} />
-                    </div>
-                  </div>
-                  <p className="text-[10px] font-bold text-slate-800 leading-tight mb-0.5">GST Invoices</p>
-                  <p className="text-[8px] text-slate-500 leading-tight tracking-tight">100% Billing</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="w-full space-y-3 pb-4">
-              <button 
-                onClick={() => {
-                  localStorage.setItem("splashCompleted", "true");
-                  navigate('/login');
-                }}
-                className="w-full bg-[#EC008C] hover:bg-[#d8007e] text-white py-3.5 rounded-[18px] font-semibold text-[15px] transition-all active:scale-[0.98] shadow-md shadow-[#EC008C]/20"
-              >
-                Login / Sign Up
-              </button>
-              <button 
-                onClick={() => {
-                  localStorage.setItem("splashCompleted", "true");
-                  navigate('/login');
-                }}
-                className="w-full bg-white border border-[#EC008C]/30 text-[#EC008C] hover:bg-pink-50 py-3.5 rounded-[18px] font-semibold text-[15px] transition-all active:scale-[0.98] flex items-center justify-center gap-2"
-              >
-                <FaPhoneAlt size={13} />
-                Continue with Mobile
-              </button>
-            </div>
-          </motion.div>
-        </div >
-
-      </div >
-    </div >
+      </div>
+    </div>
   );
 };
 

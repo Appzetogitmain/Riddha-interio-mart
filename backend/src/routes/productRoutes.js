@@ -40,6 +40,16 @@ router.route('/')
     validate
   ], createProduct);
 
+const multer = require('multer');
+const uploadMemory = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
+const { aiImageSearch } = require('../controllers/aiSearchController');
+const { aiRoomVisualize } = require('../controllers/roomVisualizerController');
+const { generateAiMoodBoard } = require('../controllers/moodBoardController');
+
+router.post('/ai-image-search', uploadMemory.single('image'), aiImageSearch);
+router.post('/ai-room-visualize', uploadMemory.single('image'), aiRoomVisualize);
+router.post('/ai-mood-board', generateAiMoodBoard);
+
 router.get('/search/suggestions', tryProtect, getSearchSuggestions);
 
 router.post('/bulk', protect, authorize('seller', 'admin'), require('../controllers/productController').createBulkProducts);

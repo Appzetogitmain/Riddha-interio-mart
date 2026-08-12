@@ -14,6 +14,7 @@ const ComingSoonRoutes = React.lazy(() => import('./modules/comingsoon/routes'))
 import { Toaster } from 'react-hot-toast';
 import PincodeModal from './modules/user/components/PincodeModal';
 import DeliveryBar from './modules/user/components/DeliveryBar';
+import AiAssistantWidget from './modules/user/components/AiAssistantWidget';
 import UserNotifications from './modules/user/components/UserNotifications';
 import AdminNotifications from './modules/admin/components/AdminNotifications';
 import SellerNotifications from './modules/seller/components/SellerNotifications';
@@ -49,9 +50,6 @@ function App() {
   const shouldHideHeader = isDashboardLayout || isCheckoutPath || (userSpecialPaths.includes(location.pathname) && isMobile) || isTrackOrderPath;
 
   useEffect(() => {
-    // Clear splash session storage on fresh page load/refresh
-    sessionStorage.removeItem('splashCompleted');
-    
     // Check if pincode is set in localStorage
     const savedPincode = localStorage.getItem('userPincode');
     if (!savedPincode && !isDashboardLayout) {
@@ -112,6 +110,7 @@ function App() {
       </main>
       {!isDashboardLayout && <div className="print:hidden"><Footer /></div>}
       {!isDashboardLayout && !isProductPage && <div className="print:hidden"><BottomNavbar /></div>}
+      {!isDashboardLayout && <AiAssistantWidget />}
     </div>
   );
 }

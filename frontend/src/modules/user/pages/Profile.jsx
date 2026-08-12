@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import {
   FiUser, FiPackage, FiMapPin, FiSettings, FiLogOut,
   FiChevronRight, FiGift, FiCopy, FiCheck, FiHeart,
-  FiShield, FiPhone, FiFileText, FiAlertCircle
+  FiShield, FiPhone, FiFileText, FiAlertCircle, FiCompass
 } from 'react-icons/fi';
 import { Link, useNavigate } from 'react-router-dom';
 import { useUser } from '../data/UserContext';
@@ -11,8 +11,20 @@ import { useWishlist } from '../data/WishlistContext';
 import ProductCard from '../components/ProductCard';
 import { toast } from 'react-hot-toast';
 
+import { LuSparkles, LuPalette, LuLayoutDashboard, LuCalculator } from 'react-icons/lu';
+
 const menuItems = [
+  { icon: LuSparkles, title: 'Seller AI Copywriting & Marketing Studio', subtitle: 'Auto-generate titles, SEO meta tags, social posts, email campaigns & 1-click publish', link: '/seller/content-generator', badge: 'NEW AI' },
+  { icon: FiTruck, title: 'Real-Time Order Tracking & AI Maps', subtitle: 'Track live driver GPS location, Gemini AI arrival predictions & delivery OTP proof', link: '/orders/track', badge: 'NEW AI' },
+  { icon: FiFileText, title: 'Professional Quotation Generator', subtitle: 'Create GST-compliant legal quotes with payment schedules & AI copy', link: '/quotation-generator', badge: 'NEW AI' },
+  { icon: FiFileText, title: 'BOQ Generator (Bill of Quantities)', subtitle: 'Generate detailed shopping lists via Vision AI & Client Briefs', link: '/boq-generator', badge: 'NEW AI' },
+  { icon: LuCalculator, title: 'AI Cost Estimator', subtitle: 'Calculate itemized room costs, tiers & Gemini AI insights', link: '/cost-estimator', badge: 'NEW AI' },
+  { icon: LuLayoutDashboard, title: 'My Projects Studio', subtitle: 'Track active interior project timelines, budgets & deliverables', link: '/projects', badge: 'STUDIO' },
+  { icon: FiFileText, title: 'AI Project Brief Generator', subtitle: 'Automate professional 8-section design briefs', link: '/client-brief', badge: 'NEW AI' },
+  { icon: LuSparkles, title: 'AI Room Visualizer', subtitle: 'Upload room & see AI redesigned transformations', link: '/ai-room-visualizer', badge: 'NEW AI' },
+  { icon: LuPalette,  title: 'AI Mood Board Generator', subtitle: 'Generate style collages & product groupings', link: '/ai-mood-board', badge: 'NEW AI' },
   { icon: FiUser,    title: 'My Profile',        subtitle: 'View and edit personal information',     link: '/profile/edit' },
+  { icon: FiCompass, title: 'My Design Profile',  subtitle: 'View your AI style blueprint & matches',  link: '/designer-quiz/results' },
   { icon: FiPackage, title: 'Orders',             subtitle: 'Track, manage and reorder',              link: '/orders' },
   { icon: FiHeart,   title: 'Wishlist',           subtitle: 'Saved items and collections',            scrollTarget: 'wishlist-section' },
   { icon: FiMapPin,  title: 'Addresses',          subtitle: 'Manage delivery addresses',              link: '/addresses' },
@@ -114,7 +126,14 @@ const Profile = () => {
                   <Icon size={16} className="text-[#189D91]" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-slate-800 group-hover:text-[#189D91] transition-colors leading-none">{item.title}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-bold text-slate-800 group-hover:text-[#189D91] transition-colors leading-none">{item.title}</p>
+                    {item.badge && (
+                      <span className="px-2 py-0.5 bg-[#189D91] text-white text-[9px] font-black rounded-md uppercase tracking-wider">
+                        {item.badge}
+                      </span>
+                    )}
+                  </div>
                   <p className="text-[10px] text-gray-400 font-medium mt-0.5 leading-none">{item.subtitle}</p>
                 </div>
                 <FiChevronRight size={14} className="text-gray-300 group-hover:text-[#189D91] transition-colors shrink-0" />

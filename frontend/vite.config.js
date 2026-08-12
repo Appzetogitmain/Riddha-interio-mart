@@ -8,4 +8,7 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
+  server: {
+    port: 3000,  // Dedicated port for Riddha-mart (avoids conflict with port 5173)
+  },
 })

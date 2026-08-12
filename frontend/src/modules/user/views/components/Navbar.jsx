@@ -23,6 +23,20 @@ const Navbar = () => {
   const isCartPage = location.pathname === "/cart";
   const [pincode, setPincode] = useState("452018");
 
+  const navLinks = [
+    { name: "Home", path: "/" },
+    { name: "Categories", path: "/categories" },
+    { name: "Design Quiz", path: "/designer-quiz" },
+    { name: "Stores", path: "/stores" },
+    { name: "Contact us", path: "/contact" }
+  ];
+
+  const policyLinks = [
+    { name: "Cancellation Policy", path: "/policies/cancellation" },
+    { name: "Returns Policy", path: "/policies/returns" },
+    { name: "Refund Policy", path: "/policies/refund" }
+  ];
+
   useEffect(() => {
     const savedPincode = localStorage.getItem("userPincode");
     if (savedPincode && savedPincode !== "default") {
@@ -90,6 +104,25 @@ const Navbar = () => {
 
             {/* Right: Icons with Labels */}
             <div className="flex items-center gap-6 shrink-0">
+              <Link
+                to="/designer-quiz"
+                className="flex flex-col items-center text-white/90 hover:text-white transition-colors group"
+              >
+                <div className="h-6 w-6 mb-1 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    className="w-full h-full"
+                  >
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                  </svg>
+                </div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-center">
+                  Design Quiz
+                </span>
+              </Link>
               <Link
                 to="/stores"
                 className="flex flex-col items-center text-white/90 hover:text-white transition-colors group"

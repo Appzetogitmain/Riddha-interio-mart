@@ -40,12 +40,19 @@ const NotificationPage = React.lazy(() => import('./pages/NotificationPage'));;
 const SplashPage = React.lazy(() => import('./pages/SplashPage'));;
 const OnboardingPage = React.lazy(() => import('./pages/OnboardingPage'));;
 const SavedAddressesPage = React.lazy(() => import('./pages/SavedAddressesPage'));;
+const BundlesPage = React.lazy(() => import('./pages/BundlesPage'));;
+const BundleDetailPage = React.lazy(() => import('./pages/BundleDetailPage'));;
+const DesignerQuizPage = React.lazy(() => import('./pages/DesignerQuizPage'));
+const QuizResultsPage = React.lazy(() => import('./pages/QuizResultsPage'));
 
 import { Navigate } from 'react-router-dom';
 import { useUser } from './data/UserContext';
 
+const AiRoomVisualizerPage = React.lazy(() => import('./pages/AiRoomVisualizerPage'));;
+const MoodBoardGeneratorPage = React.lazy(() => import('./pages/MoodBoardGeneratorPage'));;
+
 const RootRoute = () => {
-  const splashCompleted = sessionStorage.getItem('splashCompleted') === 'true';
+  const splashCompleted = localStorage.getItem('splashCompleted') === 'true';
 
   if (splashCompleted) {
     return <HomePage />;
@@ -53,13 +60,42 @@ const RootRoute = () => {
   return <Navigate to="/splash" replace />;
 };
 
+const ClientBriefPage = React.lazy(() => import('./pages/ClientBriefPage'));
+const ProjectsDashboardPage = React.lazy(() => import('./pages/ProjectsDashboardPage'));
+const ProjectDetailPage = React.lazy(() => import('./pages/ProjectDetailPage'));
+const CostEstimatorPage = React.lazy(() => import('./pages/CostEstimatorPage'));
+const BOQGeneratorPage = React.lazy(() => import('./pages/BOQGeneratorPage'));
+const QuotationGeneratorPage = React.lazy(() => import('./pages/QuotationGeneratorPage'));
+const DeliveryPartnerAppPage = React.lazy(() => import('./pages/DeliveryPartnerAppPage'));
+const NotificationCenterPage = React.lazy(() => import('./pages/NotificationCenterPage'));
+const NotificationPreferencesPage = React.lazy(() => import('./pages/NotificationPreferencesPage'));
+const SellerAIContentGeneratorPage = React.lazy(() => import('./pages/SellerAIContentGeneratorPage'));
+
 const UserRoutes = () => {
   return (
     <Routes>
+      <Route path="/client-brief" element={<ClientBriefPage />} />
+      <Route path="/client-brief/:briefId" element={<ClientBriefPage />} />
+      <Route path="/projects" element={<ProjectsDashboardPage />} />
+      <Route path="/projects/:projectId" element={<ProjectDetailPage />} />
+      <Route path="/cost-estimator" element={<CostEstimatorPage />} />
+      <Route path="/cost-estimator/:estimateId" element={<CostEstimatorPage />} />
+      <Route path="/boq-generator" element={<BOQGeneratorPage />} />
+      <Route path="/boq-generator/:boqId" element={<BOQGeneratorPage />} />
+      <Route path="/quotation-generator" element={<QuotationGeneratorPage />} />
+      <Route path="/quotation-generator/:quotationId" element={<QuotationGeneratorPage />} />
+      <Route path="/seller/content-generator" element={<SellerAIContentGeneratorPage />} />
+      <Route path="/notifications" element={<NotificationCenterPage />} />
+      <Route path="/notifications/preferences" element={<NotificationPreferencesPage />} />
+      <Route path="/orders/track" element={<OrderTrackingPage />} />
+      <Route path="/orders/:orderId/track" element={<OrderTrackingPage />} />
+      <Route path="/delivery/partner-app" element={<DeliveryPartnerAppPage />} />
       <Route path="/splash" element={<SplashPage />} />
       <Route path="/onboarding" element={<OnboardingPage />} />
       <Route path="/" element={<RootRoute />} />
 
+      <Route path="/designer-quiz" element={<DesignerQuizPage />} />
+      <Route path="/designer-quiz/results" element={<QuizResultsPage />} />
       <Route path="/contractor-registration" element={<ContractorRegistration />} />
       <Route path="/designer-registration" element={<DesignerRegistration />} />
       <Route path="/builder-registration" element={<BuilderRegistration />} />
@@ -99,6 +135,10 @@ const UserRoutes = () => {
       <Route path="/order/invoice/:id" element={<InvoicePage />} />
       <Route path="/notifications" element={<NotificationPage />} />
       <Route path="/addresses" element={<SavedAddressesPage />} />
+      <Route path="/ai-room-visualizer" element={<AiRoomVisualizerPage />} />
+      <Route path="/ai-mood-board" element={<MoodBoardGeneratorPage />} />
+      <Route path="/bundles" element={<BundlesPage />} />
+      <Route path="/bundles/:id" element={<BundleDetailPage />} />
     </Routes>
   );
 };

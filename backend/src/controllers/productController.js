@@ -147,6 +147,12 @@ exports.getProducts = async (req, res, next) => {
       }
     }
 
+    // Exclude auto-generated bundle "virtual" products from normal catalog
+    // browsing/search — they're surfaced through the dedicated /api/bundles endpoints.
+    if (req.query.includeBundles !== 'true') {
+      filter.isBundle = { $ne: true };
+    }
+
     // 3. Dynamic Price Filters
     if (req.query.minPrice || req.query.maxPrice) {
       filter.price = {};

@@ -16,6 +16,7 @@ const ManageFavouriteCategories = React.lazy(() => import('./pages/ManageFavouri
 const ManageCategoryGrid = React.lazy(() => import('./pages/ManageCategoryGrid'));
 const ManageBrands = React.lazy(() => import('./pages/ManageBrands'));
 const ManageAdvertisementPlans = React.lazy(() => import('./pages/ManageAdvertisementPlans'));
+const BundleManagementPage = React.lazy(() => import('./pages/BundleManagementPage'));
 const LoginPage = React.lazy(() => import('../user/pages/LoginPage'));
 const SignupPage = React.lazy(() => import('../user/pages/SignupPage'));
 const AdminProfile = React.lazy(() => import('./pages/AdminProfile'));
@@ -57,6 +58,8 @@ const FeedbackManagement = React.lazy(() => import('./pages/FeedbackManagement')
 const SellerRecommendationManagement = React.lazy(() => import('./pages/SellerRecommendationManagement'));
 const ManageTerms = React.lazy(() => import('./pages/ManageTerms'));
 const SupportTicketsPage = React.lazy(() => import('./pages/SupportTicketsPage'));
+const BOQSourcingRequestsPage = React.lazy(() => import('./pages/BOQSourcingRequestsPage'));
+const AdminCampaignBuilderPage = React.lazy(() => import('./pages/AdminCampaignBuilderPage'));
 import { RBACProvider } from './data/RBACContext';
 
 const AdminRoutes = () => {
@@ -68,6 +71,7 @@ const AdminRoutes = () => {
           {/* ... (all routes) */}
           <Route index element={<DashboardPage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/boq-sourcing" element={<BOQSourcingRequestsPage />} />
           <Route path="/profile" element={<AdminProfile />} />
           <Route path="/notifications" element={<NotificationsPage />} />
 
@@ -111,6 +115,7 @@ const AdminRoutes = () => {
             <Route path="/bulk-orders" element={<BulkOrdersPage />} />
             <Route path="/returns" element={<ReturnOrdersPage />} />
             <Route path="/product-batches" element={<ProductBatchesPage />} />
+            <Route path="/notifications/campaigns" element={<AdminCampaignBuilderPage />} />
           </Route>
 
           {/* Delivery */}
@@ -143,6 +148,7 @@ const AdminRoutes = () => {
             <Route path="/manage-featured/add" element={<AddFeaturedProductPage />} />
             <Route path="/manage-brands" element={<ManageBrands />} />
             <Route path="/manage-brands/add" element={<AddBrandPage />} />
+            <Route path="/manage-bundles" element={<BundleManagementPage />} />
             <Route path="/manage-advertisements" element={<ManageAdvertisementPlans />} />
             <Route path="/manage-grid" element={<ManageCategoryGrid />} />
             <Route path="/manage-grid/add" element={<AddCategoryGridItemPage />} />

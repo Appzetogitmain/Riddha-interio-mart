@@ -13,11 +13,14 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "@imgly/background-removal-node": "^1.4.5",
+    "adm-zip": "^0.5.10",
     "bcryptjs": "^3.0.3",
     "cloudinary": "^1.41.3",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
+    "csv-parser": "^3.0.0",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "express-mongo-sanitize": "^2.2.0",
@@ -33,8 +36,6 @@
     "nodemailer": "^8.0.7",
     "pdfkit": "^0.18.0",
     "razorpay": "^2.9.6",
-    "csv-parser": "^3.0.0",
-    "adm-zip": "^0.5.10",
     "socket.io": "^4.8.1",
     "qrcode": "^1.5.4"
   },

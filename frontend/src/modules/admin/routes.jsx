@@ -58,6 +58,8 @@ const FeedbackManagement = React.lazy(() => import('./pages/FeedbackManagement')
 const SellerRecommendationManagement = React.lazy(() => import('./pages/SellerRecommendationManagement'));
 const ManageTerms = React.lazy(() => import('./pages/ManageTerms'));
 const SupportTicketsPage = React.lazy(() => import('./pages/SupportTicketsPage'));
+const BOQSourcingRequestsPage = React.lazy(() => import('./pages/BOQSourcingRequestsPage'));
+const AdminCampaignBuilderPage = React.lazy(() => import('./pages/AdminCampaignBuilderPage'));
 import { RBACProvider } from './data/RBACContext';
 
 const AdminRoutes = () => {
@@ -69,6 +71,7 @@ const AdminRoutes = () => {
           {/* ... (all routes) */}
           <Route index element={<DashboardPage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/boq-sourcing" element={<BOQSourcingRequestsPage />} />
           <Route path="/profile" element={<AdminProfile />} />
           <Route path="/notifications" element={<NotificationsPage />} />
 
@@ -112,6 +115,7 @@ const AdminRoutes = () => {
             <Route path="/bulk-orders" element={<BulkOrdersPage />} />
             <Route path="/returns" element={<ReturnOrdersPage />} />
             <Route path="/product-batches" element={<ProductBatchesPage />} />
+            <Route path="/notifications/campaigns" element={<AdminCampaignBuilderPage />} />
           </Route>
 
           {/* Delivery */}

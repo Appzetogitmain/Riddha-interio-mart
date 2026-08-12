@@ -220,7 +220,70 @@ const OrderSchema = new mongoose.Schema({
       type: Date,
       default: Date.now
     }
-  }]
+  }],
+  orderNumber: {
+    type: String
+  },
+  statusHistory: [{
+    status: String,
+    timestamp: { type: Date, default: Date.now },
+    location: {
+      latitude: Number,
+      longitude: Number
+    },
+    notes: String,
+    updatedBy: { type: String, default: 'system' }
+  }],
+  deliveryPartnerDetails: {
+    partnerId: { type: mongoose.Schema.ObjectId, ref: 'DeliveryPartner' },
+    name: String,
+    phone: String,
+    photo: String,
+    rating: Number,
+    vehicle: String,
+    vehicleNo: String
+  },
+  currentLocation: {
+    type: {
+      type: String,
+      enum: ['Point'],
+      default: 'Point'
+    },
+    coordinates: {
+      type: [Number], // [longitude, latitude]
+      default: [77.6412, 12.9716]
+    },
+    timestamp: { type: Date, default: Date.now },
+    speed: { type: Number, default: 0 },
+    heading: { type: Number, default: 0 }
+  },
+  deliveryTimeline: {
+    pickedUpAt: Date,
+    outForDeliveryAt: Date,
+    expectedDeliveryTime: Date,
+    actualDeliveryTime: Date,
+    delayMinutes: { type: Number, default: 0 }
+  },
+  aiPredictions: {
+    estimatedDeliveryTime: String,
+    confidenceLevel: { type: String, enum: ['high', 'medium', 'low'], default: 'high' },
+    delayPredicted: { type: Boolean, default: false },
+    delayReasons: [String],
+    message: String,
+    generatedAt: Date
+  },
+  proofOfDelivery: {
+    photos: [String],
+    signature: String,
+    otp: String,
+    verifiedAt: Date,
+    notes: String
+  },
+  customerRating: {
+    rating: Number,
+    review: String,
+    ratedAt: Date
+  }
 }, {
   timestamps: true
 });
@@ -233,6 +296,7 @@ OrderSchema.index({ 'shippingAddress.fullName': 1 });
 OrderSchema.index({ user: 1, createdAt: -1 });
 OrderSchema.index({ status: 1, createdAt: -1 });
 OrderSchema.index({ paymentStatus: 1, createdAt: -1 });
+OrderSchema.index({ currentLocation: '2dsphere' });
 
 OrderSchema.post('save', function() {
   try {

@@ -19,13 +19,17 @@ import {
   FiXCircle,
   FiTruck,
   FiFileText,
+  FiList,
   FiHeart,
   FiZap,
-  FiCompass
+  FiCompass,
+  FiSearch,
+  FiPercent,
+  FiBell
 } from "react-icons/fi";
 import { AiOutlineShop } from "react-icons/ai";
 import { motion, AnimatePresence } from "framer-motion";
-import { LuWallet } from "react-icons/lu";
+import { LuWallet, LuLayoutDashboard, LuCalculator } from "react-icons/lu";
 import { useCart } from "../data/CartContext";
 import { useUser } from "../data/UserContext";
 import { useWishlist } from "../data/WishlistContext";
@@ -265,6 +269,78 @@ const Navbar = () => {
                 </div>
               </Link>
 
+              {/* Project Brief */}
+              <Link
+                to="/client-brief"
+                className="flex items-center gap-2 group border-l border-gray-100 pl-4 lg:pl-6 text-left"
+              >
+                <FiFileText className="text-gray-500 w-5 h-5 group-hover:text-[#004D40] transition-colors" />
+                <div className="flex flex-col text-left">
+                  <span className="text-[11px] font-bold text-gray-700 leading-none group-hover:text-[#004D40] transition-colors font-sans">Project Brief</span>
+                  <span className="text-[10px] font-bold text-[#004D40] mt-0.5 font-sans">AI Generator</span>
+                </div>
+              </Link>
+
+              {/* Project Management Studio */}
+              <Link
+                to="/projects"
+                className="flex items-center gap-2 group border-l border-gray-100 pl-4 lg:pl-6 text-left"
+              >
+                <LuLayoutDashboard className="text-gray-500 w-5 h-5 group-hover:text-[#004D40] transition-colors" />
+                <div className="flex flex-col text-left">
+                  <span className="text-[11px] font-bold text-gray-700 leading-none group-hover:text-[#004D40] transition-colors font-sans">Projects</span>
+                  <span className="text-[10px] font-bold text-[#004D40] mt-0.5 font-sans">Dashboard</span>
+                </div>
+              </Link>
+
+              {/* Cost Estimator */}
+              <Link
+                to="/cost-estimator"
+                className="flex items-center gap-2 group border-l border-gray-100 pl-4 lg:pl-6 text-left"
+              >
+                <LuCalculator className="text-gray-500 w-5 h-5 group-hover:text-[#004D40] transition-colors" />
+                <div className="flex flex-col text-left">
+                  <span className="text-[11px] font-bold text-gray-700 leading-none group-hover:text-[#004D40] transition-colors font-sans">Cost Estimator</span>
+                  <span className="text-[10px] font-bold text-[#004D40] mt-0.5 font-sans">AI Calculation</span>
+                </div>
+              </Link>
+
+              {/* BOQ Generator */}
+              <Link
+                to="/boq-generator"
+                className="flex items-center gap-2 group border-l border-gray-100 pl-4 lg:pl-6 text-left"
+              >
+                <FiList className="text-gray-500 w-5 h-5 group-hover:text-[#004D40] transition-colors" />
+                <div className="flex flex-col text-left">
+                  <span className="text-[11px] font-bold text-gray-700 leading-none group-hover:text-[#004D40] transition-colors font-sans">BOQ Generator</span>
+                  <span className="text-[10px] font-bold text-[#004D40] mt-0.5 font-sans">Quantities & AI</span>
+                </div>
+              </Link>
+
+              {/* Quotation Generator */}
+              <Link
+                to="/quotation-generator"
+                className="flex items-center gap-2 group border-l border-gray-100 pl-4 lg:pl-6 text-left"
+              >
+                <FiFileText className="text-gray-500 w-5 h-5 group-hover:text-[#004D40] transition-colors" />
+                <div className="flex flex-col text-left">
+                  <span className="text-[11px] font-bold text-gray-700 leading-none group-hover:text-[#004D40] transition-colors font-sans">Quotation Generator</span>
+                  <span className="text-[10px] font-bold text-[#004D40] mt-0.5 font-sans">GST & Quotes</span>
+                </div>
+              </Link>
+
+              {/* Order Tracking */}
+              <Link
+                to="/orders/track"
+                className="flex items-center gap-2 group border-l border-gray-100 pl-4 lg:pl-6 text-left"
+              >
+                <FiTruck className="text-gray-500 w-5 h-5 group-hover:text-[#004D40] transition-colors" />
+                <div className="flex flex-col text-left">
+                  <span className="text-[11px] font-bold text-gray-700 leading-none group-hover:text-[#004D40] transition-colors font-sans">Order Tracking</span>
+                  <span className="text-[10px] font-bold text-[#004D40] mt-0.5 font-sans">Live GPS & AI</span>
+                </div>
+              </Link>
+
               <div className="h-8 w-[1px] bg-gray-100"></div>
 
               {/* User Actions */}
@@ -273,6 +349,14 @@ const Navbar = () => {
                   <FiUser className="w-5 h-5 text-gray-500 group-hover:text-[#004D40] transition-colors" />
                   <span className="text-[12px] font-bold text-gray-700 group-hover:text-[#004D40] transition-colors hidden xl:inline">
                     {user ? (user.fullName?.split(' ')[0] || 'Profile') : 'Login'}
+                  </span>
+                </Link>
+
+                <Link to="/notifications" className="flex items-center gap-2 group relative">
+                  <FiBell className="w-5 h-5 text-gray-500 group-hover:text-[#004D40] transition-colors" />
+                  <span className="text-[12px] font-bold text-gray-700 group-hover:text-[#004D40] transition-colors hidden xl:inline">Notifications</span>
+                  <span className="absolute -top-1.5 -right-1.5 bg-amber-500 text-deep-espresso text-[9px] font-black h-4 w-4 flex items-center justify-center rounded-full border-2 border-white">
+                    3
                   </span>
                 </Link>
 
@@ -482,6 +566,13 @@ const Navbar = () => {
                   {/* Primary Nav */}
                   <div className="pb-3 mb-3 border-b border-gray-50">
                     <SidebarLink to="/" icon={FiHome} label="Home" onClick={closeMobile} />
+                    <SidebarLink to="/cost-estimator" icon={LuCalculator} label="AI Cost Estimator" onClick={closeMobile} />
+                    <SidebarLink to="/boq-generator" icon={FiList} label="BOQ Generator" onClick={closeMobile} />
+                    <SidebarLink to="/quotation-generator" icon={FiFileText} label="Quotation Generator" onClick={closeMobile} />
+                    <SidebarLink to="/orders/track" icon={FiTruck} label="Real-Time Order Tracking" onClick={closeMobile} />
+                    <SidebarLink to="/delivery/partner-app" icon={FiTruck} label="Delivery Partner Dispatch App" onClick={closeMobile} />
+                    <SidebarLink to="/projects" icon={LuLayoutDashboard} label="My Projects Studio" onClick={closeMobile} />
+                    <SidebarLink to="/client-brief" icon={FiFileText} label="AI Project Brief" onClick={closeMobile} />
                     <SidebarLink to="/products" icon={FiGrid} label="Shop Products" onClick={closeMobile} />
                     <SidebarLink to="/bundles" icon={FiZap} label="Smart Bundles" onClick={closeMobile} />
                     <SidebarLink to="/designer-quiz" icon={FiCompass} label="Designer Quiz" onClick={closeMobile} />

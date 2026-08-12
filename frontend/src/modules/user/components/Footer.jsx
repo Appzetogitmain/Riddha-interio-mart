@@ -100,14 +100,19 @@ const Footer = () => {
               Quick Links
             </h4>
             <ul className="space-y-4 text-sm font-semibold text-gray-500">
-              {["Home", "All Products", "Tiles", "Designer Paints"].map(
+              {[
+                { label: "Home", path: "/" },
+                { label: "All Products", path: "/products" },
+                { label: "AI Project Brief", path: "/client-brief" },
+                { label: "Design Quiz", path: "/designer-quiz" }
+              ].map(
                 (link, i) => (
                   <li key={i}>
                     <Link
-                      to={link === "Home" ? "/" : "/products"}
+                      to={link.path}
                       className="hover:text-[#189D91] hover:translate-x-1.5 transition-all duration-300 inline-block"
                     >
-                      {link}
+                      {link.label}
                     </Link>
                   </li>
                 ),

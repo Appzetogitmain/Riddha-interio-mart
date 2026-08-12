@@ -30,6 +30,7 @@ const SellerTerms = React.lazy(() => import('./pages/SellerTerms'));
 const SellerBulkOrders = React.lazy(() => import('./pages/SellerBulkOrders'));
 const AdvertisementPlans = React.lazy(() => import('./pages/AdvertisementPlans'));
 const MyAdvertisements = React.lazy(() => import('./pages/MyAdvertisements'));
+const SellerAIContentGeneratorPage = React.lazy(() => import('../user/pages/SellerAIContentGeneratorPage'));
 
 const SellerRoutes = () => {
   return (
@@ -69,6 +70,7 @@ const SellerRoutes = () => {
         <Route path="/bulk-orders" element={<SellerBulkOrders />} />
         <Route path="/advertisement-plans" element={<AdvertisementPlans />} />
         <Route path="/my-advertisements" element={<MyAdvertisements />} />
+        <Route path="/content-generator" element={<SellerAIContentGeneratorPage />} />
       </Route>
     </Routes>
   );

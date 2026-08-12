@@ -167,6 +167,8 @@ app.use('/api/product-batches', productBatchRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/notifications', notificationRoutes);
+const notificationCenterRoutes = require('./routes/notificationCenterRoutes');
+app.use('/api/notifications-center', notificationCenterRoutes);
 app.use('/api/returns', returnRoutes);
 app.use('/api/referrals', referralRoutes);
 app.use('/api/tax', taxRoutes);
@@ -184,6 +186,18 @@ app.use('/api/bundles', bundleRoutes);
 app.use('/api/quiz', quizRoutes);
 const briefRoutes = require('./routes/briefRoutes');
 app.use('/api/briefs', briefRoutes);
+const projectRoutes = require('./routes/projectRoutes');
+app.use('/api/projects', projectRoutes);
+const estimateRoutes = require('./routes/estimateRoutes');
+app.use('/api/estimates', estimateRoutes);
+const boqRoutes = require('./routes/boqRoutes');
+app.use('/api/boqs', boqRoutes);
+const quotationRoutes = require('./routes/quotationRoutes');
+app.use('/api/quotations', quotationRoutes);
+const trackingRoutes = require('./routes/trackingRoutes');
+app.use('/api/tracking', trackingRoutes);
+const contentGeneratorRoutes = require('./routes/contentGeneratorRoutes');
+app.use('/api/content', contentGeneratorRoutes);
 app.use('/api/assistant', assistantRoutes);
 
 app.get('/', (req, res) => {

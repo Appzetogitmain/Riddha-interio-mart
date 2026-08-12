@@ -1,16 +1,27 @@
 const mongoose = require('mongoose');
 
 const NotificationSchema = new mongoose.Schema({
-  recipient: {
+  notificationId: {
     type: mongoose.Schema.Types.ObjectId,
-    required: true,
-    refPath: 'recipientModel'
+    auto: true
   },
-  recipientModel: {
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+
+  type: {
     type: String,
     required: true,
-    enum: ['User', 'Seller', 'Delivery', 'Admin']
+    default: 'order_confirmed'
   },
+  category: {
+    type: String,
+    enum: ['orders', 'projects', 'promotions', 'account', 'engagement'],
+    default: 'orders'
+  },
+
   title: {
     type: String,
     required: true
@@ -19,38 +30,68 @@ const NotificationSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  type: {
-    type: String,
-    enum: [
-      'order_update', 
-      'payment_success', 
-      'delivery_update', 
-      'seller_approval', 
-      'admin_alert', 
-      'stock_alert',
-      'other'
-    ],
-    default: 'other'
+  messageHtml: {
+    type: String
   },
-  read: {
+
+  // Multi-Channel Variants
+  channels: {
+    sms: String,
+    email: String,
+    push: String,
+    whatsapp: String,
+    inApp: String
+  },
+
+  // Gemini AI metadata
+  generatedByGemini: {
     type: Boolean,
     default: false
   },
-  metadata: {
-    type: mongoose.Schema.Types.Mixed,
-    default: {}
+  geminiPrompt: String,
+
+  // Action links
+  actionUrl: String,
+  actionLabel: String,
+  deepLink: String,
+
+  // Related Entity
+  relatedEntity: {
+    type: { type: String, enum: ['order', 'project', 'product', 'quotation', 'account'] },
+    id: mongoose.Schema.Types.ObjectId
   },
-  createdAt: {
-    type: Date,
-    default: Date.now
-  }
+
+  // Delivery status per channel
+  deliveryStatus: {
+    sms: { type: String, enum: ['pending', 'sent', 'delivered', 'failed'], default: 'pending' },
+    email: { type: String, enum: ['pending', 'sent', 'opened', 'failed'], default: 'pending' },
+    push: { type: String, enum: ['pending', 'sent', 'read', 'failed'], default: 'pending' },
+    whatsapp: { type: String, enum: ['pending', 'sent', 'read', 'failed'], default: 'pending' },
+    inApp: { type: String, enum: ['pending', 'sent', 'read'], default: 'sent' }
+  },
+
+  // Tracking timestamps
+  tracking: {
+    sentAt: { type: Date, default: Date.now },
+    deliveredAt: Date,
+    openedAt: Date,
+    clickedAt: Date,
+    clickedUrl: String
+  },
+
+  isRead: {
+    type: Boolean,
+    default: false
+  },
+  scheduledFor: Date,
+  sentAt: { type: Date, default: Date.now },
+  expiresAt: Date
+}, {
+  timestamps: true
 });
 
-// Indexes for fast querying of user's notifications and unread counts
-NotificationSchema.index({ recipient: 1, createdAt: -1 });
-NotificationSchema.index({ recipient: 1, read: 1 });
-NotificationSchema.index({ recipient: 1, recipientModel: 1, createdAt: -1 });
-NotificationSchema.index({ recipient: 1, recipientModel: 1, read: 1, createdAt: -1 });
-NotificationSchema.index({ createdAt: 1 }, { expireAfterSeconds: 30 * 24 * 60 * 60 });
+NotificationSchema.index({ userId: 1, createdAt: -1 });
+NotificationSchema.index({ category: 1, isRead: 1 });
+NotificationSchema.index({ type: 1 });
 
 module.exports = mongoose.model('Notification', NotificationSchema);

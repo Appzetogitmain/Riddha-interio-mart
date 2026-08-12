@@ -11,9 +11,16 @@ import { useWishlist } from '../data/WishlistContext';
 import ProductCard from '../components/ProductCard';
 import { toast } from 'react-hot-toast';
 
-import { LuSparkles, LuPalette } from 'react-icons/lu';
+import { LuSparkles, LuPalette, LuLayoutDashboard, LuCalculator } from 'react-icons/lu';
 
 const menuItems = [
+  { icon: LuSparkles, title: 'Seller AI Copywriting & Marketing Studio', subtitle: 'Auto-generate titles, SEO meta tags, social posts, email campaigns & 1-click publish', link: '/seller/content-generator', badge: 'NEW AI' },
+  { icon: FiTruck, title: 'Real-Time Order Tracking & AI Maps', subtitle: 'Track live driver GPS location, Gemini AI arrival predictions & delivery OTP proof', link: '/orders/track', badge: 'NEW AI' },
+  { icon: FiFileText, title: 'Professional Quotation Generator', subtitle: 'Create GST-compliant legal quotes with payment schedules & AI copy', link: '/quotation-generator', badge: 'NEW AI' },
+  { icon: FiFileText, title: 'BOQ Generator (Bill of Quantities)', subtitle: 'Generate detailed shopping lists via Vision AI & Client Briefs', link: '/boq-generator', badge: 'NEW AI' },
+  { icon: LuCalculator, title: 'AI Cost Estimator', subtitle: 'Calculate itemized room costs, tiers & Gemini AI insights', link: '/cost-estimator', badge: 'NEW AI' },
+  { icon: LuLayoutDashboard, title: 'My Projects Studio', subtitle: 'Track active interior project timelines, budgets & deliverables', link: '/projects', badge: 'STUDIO' },
+  { icon: FiFileText, title: 'AI Project Brief Generator', subtitle: 'Automate professional 8-section design briefs', link: '/client-brief', badge: 'NEW AI' },
   { icon: LuSparkles, title: 'AI Room Visualizer', subtitle: 'Upload room & see AI redesigned transformations', link: '/ai-room-visualizer', badge: 'NEW AI' },
   { icon: LuPalette,  title: 'AI Mood Board Generator', subtitle: 'Generate style collages & product groupings', link: '/ai-mood-board', badge: 'NEW AI' },
   { icon: FiUser,    title: 'My Profile',        subtitle: 'View and edit personal information',     link: '/profile/edit' },

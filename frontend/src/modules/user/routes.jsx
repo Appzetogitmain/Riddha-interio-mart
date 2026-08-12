@@ -60,9 +60,36 @@ const RootRoute = () => {
   return <Navigate to="/splash" replace />;
 };
 
+const ClientBriefPage = React.lazy(() => import('./pages/ClientBriefPage'));
+const ProjectsDashboardPage = React.lazy(() => import('./pages/ProjectsDashboardPage'));
+const ProjectDetailPage = React.lazy(() => import('./pages/ProjectDetailPage'));
+const CostEstimatorPage = React.lazy(() => import('./pages/CostEstimatorPage'));
+const BOQGeneratorPage = React.lazy(() => import('./pages/BOQGeneratorPage'));
+const QuotationGeneratorPage = React.lazy(() => import('./pages/QuotationGeneratorPage'));
+const DeliveryPartnerAppPage = React.lazy(() => import('./pages/DeliveryPartnerAppPage'));
+const NotificationCenterPage = React.lazy(() => import('./pages/NotificationCenterPage'));
+const NotificationPreferencesPage = React.lazy(() => import('./pages/NotificationPreferencesPage'));
+const SellerAIContentGeneratorPage = React.lazy(() => import('./pages/SellerAIContentGeneratorPage'));
+
 const UserRoutes = () => {
   return (
     <Routes>
+      <Route path="/client-brief" element={<ClientBriefPage />} />
+      <Route path="/client-brief/:briefId" element={<ClientBriefPage />} />
+      <Route path="/projects" element={<ProjectsDashboardPage />} />
+      <Route path="/projects/:projectId" element={<ProjectDetailPage />} />
+      <Route path="/cost-estimator" element={<CostEstimatorPage />} />
+      <Route path="/cost-estimator/:estimateId" element={<CostEstimatorPage />} />
+      <Route path="/boq-generator" element={<BOQGeneratorPage />} />
+      <Route path="/boq-generator/:boqId" element={<BOQGeneratorPage />} />
+      <Route path="/quotation-generator" element={<QuotationGeneratorPage />} />
+      <Route path="/quotation-generator/:quotationId" element={<QuotationGeneratorPage />} />
+      <Route path="/seller/content-generator" element={<SellerAIContentGeneratorPage />} />
+      <Route path="/notifications" element={<NotificationCenterPage />} />
+      <Route path="/notifications/preferences" element={<NotificationPreferencesPage />} />
+      <Route path="/orders/track" element={<OrderTrackingPage />} />
+      <Route path="/orders/:orderId/track" element={<OrderTrackingPage />} />
+      <Route path="/delivery/partner-app" element={<DeliveryPartnerAppPage />} />
       <Route path="/splash" element={<SplashPage />} />
       <Route path="/onboarding" element={<OnboardingPage />} />
       <Route path="/" element={<RootRoute />} />

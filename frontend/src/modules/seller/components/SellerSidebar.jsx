@@ -21,7 +21,8 @@ import {
   PlusCircle,
   Search,
   Truck,
-  ShoppingBag
+  ShoppingBag,
+  Sparkles
 } from "lucide-react";
 import { useUser } from "../../user/data/UserContext";
 import api from "../../../shared/utils/api";
@@ -29,6 +30,7 @@ import logo from "../../../assets/transparent_logo.png";
 
 const menuItems = [
   { path: "/seller/dashboard", icon: LayoutDashboard, label: "Dashboard" },
+  { path: "/seller/content-generator", icon: Sparkles, label: "AI Copywriter Studio" },
   {
     label: "Products",
     icon: Package,
@@ -36,6 +38,7 @@ const menuItems = [
     children: [
       { path: "/seller/my-products", label: "All Products" },
       { path: "/seller/add-product", label: "Add New Product" },
+      { path: "/seller/content-generator", label: "AI Content Generator" },
       { path: "/seller/bulk-upload", label: "Bulk Upload" },
       { path: "/seller/catalog", label: "Browse Catalog" },
     ],
@@ -60,6 +63,7 @@ const menuItems = [
     path: "/seller/marketing",
     children: [
       { path: "/seller/marketing", label: "Marketing Overview" },
+      { path: "/seller/content-generator", label: "AI Copywriting Studio" },
       { path: "/seller/advertisement-plans", label: "Advertisement Plans" },
       { path: "/seller/my-advertisements", label: "My Advertisements" },
     ]

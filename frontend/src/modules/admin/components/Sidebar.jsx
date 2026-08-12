@@ -32,7 +32,8 @@ import {
   FiActivity,
   FiLayers,
   FiMessageSquare,
-  FiHelpCircle
+  FiHelpCircle,
+  FiBell
 } from "react-icons/fi";
 import logoImage from "../../../assets/transparent_logo.png";
 
@@ -48,6 +49,8 @@ const menuGroups = [
   {
     title: "Operations",
     items: [
+      { path: "/admin/notifications/campaigns", icon: FiBell, label: "Notification Campaigns" },
+      { path: "/admin/boq-sourcing", icon: FiPackage, label: "BOQ Sourcing Requests" },
       {
         label: "Inventory",
         icon: FiBox,

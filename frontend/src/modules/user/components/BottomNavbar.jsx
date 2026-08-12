@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { FiHome, FiGrid, FiShoppingCart, FiUser } from 'react-icons/fi';
+import { LuLayoutDashboard } from 'react-icons/lu';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '../data/CartContext';
 
@@ -39,6 +40,7 @@ const BottomNavbar = () => {
 
   const navItems = [
     { name: 'Home', path: '/', icon: FiHome },
+    { name: 'Projects', path: '/projects', icon: LuLayoutDashboard },
     { name: 'Categories', path: '/categories', icon: FiGrid },
     { name: 'Cart', path: '/cart', icon: FiShoppingCart, badge: cartCount },
     { name: 'Profile', path: '/profile', icon: FiUser },
@@ -46,7 +48,7 @@ const BottomNavbar = () => {
 
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40">
-      <div className="bg-white/95 backdrop-blur-2xl border-t border-soft-oatmeal/20 shadow-[0_-8px_30px_rgb(0,0,0,0.05)] px-8 py-3 pb-5 flex justify-between items-center transition-all duration-500">
+      <div className="bg-white/95 backdrop-blur-2xl border-t border-soft-oatmeal/20 shadow-[0_-8px_30px_rgb(0,0,0,0.05)] px-4 sm:px-6 py-3 pb-5 flex justify-between items-center transition-all duration-500">
         {navItems.map((item) => (
           <NavLink
             key={item.name}

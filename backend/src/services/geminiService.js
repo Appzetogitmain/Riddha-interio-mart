@@ -23,7 +23,7 @@ class GeminiService {
    * @param {string} [endpoint] - Optional endpoint path.
    * @param {boolean} [expectJson] - Whether the prompt expects JSON formatting.
    */
-  async generate(prompt, requirement, userId = null, endpoint = '/api/quiz/complete', expectJson = false) {
+  async generate(prompt, requirement, userId = null, endpoint = '/api/quiz/complete', expectJson = false, imagePart = null) {
     // If API key is missing, throw error immediately to trigger the fallback handler
     if (!this.apiKey || !this.model) {
       throw new Error("Gemini API key is unconfigured");
@@ -46,7 +46,8 @@ class GeminiService {
         options.generationConfig = { responseMimeType: "application/json" };
       }
 
-      const result = await this.model.generateContent(prompt, options);
+      const contentParts = imagePart ? [prompt, imagePart] : prompt;
+      const result = await this.model.generateContent(contentParts, options);
       const response = await result.response;
       const responseText = response.text();
 

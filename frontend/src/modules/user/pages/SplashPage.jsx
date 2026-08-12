@@ -28,10 +28,10 @@ const SplashPage = () => {
     <div className="min-h-screen w-full bg-slate-50 flex items-center justify-center font-sans overflow-hidden">
       {/* Mobile container wrapper */}
       <div className="w-full max-w-[420px] h-[100dvh] md:h-[90vh] md:min-h-[750px] md:max-h-[850px] bg-[#fcfcfc] md:rounded-[2.5rem] flex flex-col justify-between relative py-6 shadow-2xl overflow-y-auto no-scrollbar border border-slate-100/50">
-        
+
         {/* Background wave blob */}
         <div className="absolute left-0 top-[35%] w-[120px] h-[320px] bg-teal-50/70 rounded-r-full blur-3xl pointer-events-none z-0" />
-        
+
         {/* Hanging Teal Pendant Light (Top-Left) */}
         <div className="absolute top-0 left-[10%] w-24 h-44 pointer-events-none z-10">
           <div className="absolute top-0 left-12 w-[1.5px] h-24 bg-slate-800" />
@@ -56,7 +56,7 @@ const SplashPage = () => {
             <div key={i} className="w-[3px] h-[3px] rounded-full bg-[#189D91]" />
           ))}
         </div>
-        
+
         {/* Right dots (Pink) */}
         <div className="absolute right-4 top-[24%] grid grid-cols-3 gap-1.5 opacity-60 z-10">
           {[...Array(21)].map((_, i) => (
@@ -65,7 +65,7 @@ const SplashPage = () => {
         </div>
 
         {/* Skip Button */}
-        <button 
+        <button
           onClick={handleRedirect}
           className="absolute top-4 right-4 bg-white border border-slate-200/80 text-slate-700 text-xs px-3.5 py-1.5 rounded-full flex items-center gap-1.5 font-bold z-50 shadow-sm active:scale-95 transition-all"
         >
@@ -74,17 +74,17 @@ const SplashPage = () => {
 
         {/* Top Branding Logo */}
         <div className="flex flex-col items-center mt-6 px-4 shrink-0 z-10">
-          <img 
-            src={TransparentLogo} 
-            alt="Riddha Interior Mart" 
-            className="w-[200px] h-auto object-contain" 
+          <img
+            src={TransparentLogo}
+            alt="Riddha Interior Mart"
+            className="w-[200px] h-auto object-contain"
           />
         </div>
 
         {/* Tagline Headings */}
         <div className="text-center px-6 mt-2 mb-1 shrink-0 z-10">
           <h2 className="text-[#1A2639] text-[22px] font-black tracking-tight leading-tight">
-            Connecting India to <br/>
+            Connecting India to <br />
             <span className="text-[#189D91]">Premium Interiors</span>
           </h2>
           <div className="flex justify-center my-2.5">
@@ -106,22 +106,22 @@ const SplashPage = () => {
                   <stop offset="100%" stopColor="#EC008C" />
                 </linearGradient>
               </defs>
-              <path 
-                d="M 12,35 C 80,18 240,18 308,35 C 315,50 315,170 308,185 C 240,202 80,202 12,185 C 5,170 5,50 12,35 Z" 
-                stroke="url(#frameGrad)" 
-                strokeWidth="5" 
+              <path
+                d="M 12,35 C 80,18 240,18 308,35 C 315,50 315,170 308,185 C 240,202 80,202 12,185 C 5,170 5,50 12,35 Z"
+                stroke="url(#frameGrad)"
+                strokeWidth="5"
                 strokeLinejoin="round"
               />
             </svg>
             {/* Clipped interior image */}
-            <div 
-              className="w-[96%] h-[94%] overflow-hidden" 
+            <div
+              className="w-[96%] h-[94%] overflow-hidden"
               style={{ clipPath: 'path("M 12,35 C 80,18 240,18 308,35 C 315,50 315,170 308,185 C 240,202 80,202 12,185 C 5,170 5,50 12,35 Z")' }}
             >
-              <img 
-                src="https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&q=80&w=600" 
-                className="w-full h-full object-cover scale-105" 
-                alt="Premium Commercial Interior" 
+              <img
+                src="https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&q=80&w=600"
+                className="w-full h-full object-cover scale-105"
+                alt="Premium Commercial Interior"
               />
             </div>
           </div>
@@ -194,10 +194,7 @@ const SplashPage = () => {
               transition={{ duration: 3.0, ease: "easeInOut" }}
               className="h-full bg-[#EC008C] rounded-full"
             />
-<<<<<<< HEAD
           </div>
-=======
-          </motion.div>
 
           {/* Tagline */}
           <motion.div
@@ -316,11 +313,10 @@ const SplashPage = () => {
               </button>
             </div>
           </motion.div>
->>>>>>> 5c337c7418f6d78a05577a915fdebe4decdbf934
-        </div>
+        </div >
 
-      </div>
-    </div>
+      </div >
+    </div >
   );
 };
 

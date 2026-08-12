@@ -132,12 +132,10 @@ const OrderDetail = () => {
     try {
       toast.loading('Preparing invoice...', { id: 'pdf-download' });
       
-      // Always use the backend proxy download endpoint.
-      // It auto-generates if missing, then streams the PDF directly.
       const authData = JSON.parse(localStorage.getItem('riddha_user') || '{}');
       const token = authData?.token || authData?.user?.token || '';
       const API_BASE = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000/api`;
-      const downloadUrl = `${API_BASE}/orders/${id}/download-invoice`;
+      const downloadUrl = `${API_BASE}/invoices/orders/${id}/invoice/seller`;
       
       const response = await fetch(downloadUrl, {
         method: 'GET',
@@ -155,7 +153,8 @@ const OrderDetail = () => {
       const blobUrl = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
       const a = document.createElement('a');
       a.href = blobUrl;
-      a.download = `invoice_${id?.slice(-8).toUpperCase()}.pdf`;
+      const invNum = order?.sellerInvoiceNumber ? order.sellerInvoiceNumber.replace(/\//g, '-') : id?.slice(-8).toUpperCase();
+      a.download = `Seller_Invoice_${invNum}.pdf`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -171,85 +170,60 @@ const OrderDetail = () => {
   };
 
   const handleShareInvoice = async () => {
-    if (!order?.invoiceUrl) {
-      toast.error('Invoice not generated yet');
-      return;
-    }
+    setUpdating(true);
     try {
-      toast.loading('Preparing file for sharing...', { id: 'share' });
+      toast.loading('Sharing invoice with Riddha...', { id: 'share' });
+      const { data } = await api.post(`/invoices/orders/${id}/invoice/share`);
+      if (data.success) {
+        toast.success('Invoice shared successfully with Riddha!', { id: 'share' });
+        fetchOrderDetail();
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to share invoice', { id: 'share' });
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleDownloadLabel = async () => {
+    if (!order) return;
+    setUpdating(true);
+    try {
+      toast.loading('Preparing shipping label & e-way bill...', { id: 'label-download' });
       
       const authData = JSON.parse(localStorage.getItem('riddha_user') || '{}');
       const token = authData?.token || authData?.user?.token || '';
       const API_BASE = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000/api`;
-      const downloadUrl = `${API_BASE}/orders/${id}/download-invoice`;
+      const downloadUrl = `${API_BASE}/invoices/orders/${id}/invoice/label`;
       
       const response = await fetch(downloadUrl, {
-        headers: { 'Authorization': `Bearer ${token}` }
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
       });
-      
-      if (!response.ok) throw new Error('Failed to fetch invoice');
-      
-      const blob = await response.blob();
-      const file = new File([blob], `invoice_${order._id.slice(-8).toUpperCase()}.pdf`, { type: 'application/pdf' });
-      
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        toast.dismiss('share');
-        await navigator.share({
-          files: [file],
-          title: `Invoice #${order._id.slice(-8).toUpperCase()}`,
-        });
-      } else if (navigator.share) {
-        toast.dismiss('share');
-        await navigator.share({
-          title: `Invoice #${order._id.slice(-8).toUpperCase()}`,
-          url: order.invoiceUrl,
-        });
-      } else {
-        await navigator.clipboard.writeText(order.invoiceUrl);
-        toast.success('Invoice link copied to clipboard!', { id: 'share' });
-      }
-    } catch (err) {
-      if (err.name !== 'AbortError') {
-        toast.error('Failed to share invoice', { id: 'share' });
-      } else {
-        toast.dismiss('share');
-      }
-    }
-  };
 
-  const handleDownloadLabel = () => {
-    if (!order) return;
-    const addr = order.shippingAddress || {};
-    const lines = [
-      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
-      '          SHIPPING LABEL',
-      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
-      '',
-      `TO:`,
-      `  ${addr.fullName || 'N/A'}`,
-      `  ${addr.address || ''}`,
-      `  ${addr.city || ''}, ${addr.state || ''} - ${addr.pincode || ''}`,
-      `  Phone: ${addr.phone || 'N/A'}`,
-      '',
-      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
-      `Order #: ${order._id.slice(-8).toUpperCase()}`,
-      `Items  : ${order.orderItems?.length || 1}`,
-      `Total  : ₹${order.totalPrice?.toLocaleString()}`,
-      `Payment: ${order.paymentMethod} (${order.isPaid ? 'Paid' : 'COD'})`,
-      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
-      '',
-      'FROM: Riddha Interio Mart',
-    ];
-    const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `label-${order._id.slice(-8)}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    toast.success('Label downloaded');
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.message || 'Download failed');
+      }
+
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = `shipping_label_eway_bill_${id?.slice(-8).toUpperCase()}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(blobUrl);
+      
+      toast.success('E-Way Bill & Labels downloaded!', { id: 'label-download' });
+    } catch (err) {
+      toast.error(err.message || 'Failed to download labels. Please make sure invoice is shared.', { id: 'label-download' });
+    } finally {
+      setUpdating(false);
+    }
   };
 
   if (loading) {
@@ -316,21 +290,41 @@ const OrderDetail = () => {
               disabled={updating}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all disabled:opacity-50"
             >
-              <LuDownload size={13} /> {order?.invoiceUrl ? 'Download Invoice' : 'Generate Invoice'}
+              <LuDownload size={13} /> Download Invoice
             </button>
-            {order?.invoiceUrl && (
+            
+            {order?.sellerInvoiceShared ? (
+              <button
+                disabled
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-bold text-emerald-700 transition-all opacity-90 cursor-not-allowed"
+              >
+                Invoice Shared ✓
+              </button>
+            ) : (
               <button
                 onClick={handleShareInvoice}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#189D91] border border-[#189D91] text-xs font-bold text-white hover:bg-[#137A71] transition-all"
+                disabled={updating}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#189D91] border border-[#189D91] text-xs font-bold text-white hover:bg-[#137A71] transition-all disabled:opacity-50"
               >
                 <LuShare2 size={13} /> Share Invoice
               </button>
             )}
+
             <button
               onClick={handleDownloadLabel}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all"
+              disabled={(!order?.labelDownloadEnabled && !order?.sellerInvoiceShared) || updating}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
+                (!order?.labelDownloadEnabled && !order?.sellerInvoiceShared)
+                  ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'
+                  : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+              }`}
+              title={(!order?.labelDownloadEnabled && !order?.sellerInvoiceShared) ? 'Share invoice first to unlock shipping labels & E-Way bills' : 'Download shipping labels & E-Way bills'}
             >
-              <LuDownload size={13} /> Download Label
+              {(!order?.labelDownloadEnabled && !order?.sellerInvoiceShared) ? (
+                <span className="text-[10px]">🔒</span>
+              ) : (
+                <LuDownload size={13} />
+              )} Download Label
             </button>
           </div>
         </div>

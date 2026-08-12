@@ -200,8 +200,27 @@ const OrderSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
-  invoiceUrl: {
-    type: String
+  sellerInvoiceNumber: String,
+  marketplaceInvoiceNumber: String,
+  eWayBillNumber: String,
+  sellerInvoiceShared: {
+    type: Boolean,
+    default: false
+  },
+  sellerInvoiceSharedAt: {
+    type: Date
+  },
+  labelDownloadEnabled: {
+    type: Boolean,
+    default: false
+  },
+  customerInvoiceSentAt: {
+    type: Date
+  },
+  customerInvoiceSentStatus: {
+    type: String,
+    enum: ['pending', 'sent', 'failed'],
+    default: 'pending'
   },
   shippingCoordinates: {
     latitude: { type: Number },

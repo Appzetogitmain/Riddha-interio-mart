@@ -98,6 +98,10 @@ const SellerSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  signatureImage: {
+    type: String,
+    default: ''
+  },
   createdAt: {
     type: Date,
     default: Date.now

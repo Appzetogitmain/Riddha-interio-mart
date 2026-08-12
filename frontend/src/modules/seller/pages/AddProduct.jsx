@@ -1137,7 +1137,43 @@ const AddProduct = () => {
                         </div>
                       </div>
 
-                      {/* Removed hardcoded specs, managed by ProductVariantsEditor now */}
+                      {/* Material, Dimensions, and Thickness */}
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-slate-600 uppercase tracking-wider ml-1">
+                          Material
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. Copper, Wood, Ceramic"
+                          value={formData.material || ""}
+                          onChange={(e) => handleFieldChange('material', e.target.value)}
+                          className={`w-full px-6 py-4 rounded-2xl border-none font-semibold text-sm transition-all bg-slate-50 text-slate-900 focus:ring-2 focus:ring-seller-primary/10`}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-slate-600 uppercase tracking-wider ml-1">
+                          Dimensions
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. 60x60 cm or 3x6 ft"
+                          value={formData.dimensions || ""}
+                          onChange={(e) => handleFieldChange('dimensions', e.target.value)}
+                          className={`w-full px-6 py-4 rounded-2xl border-none font-semibold text-sm transition-all bg-slate-50 text-slate-900 focus:ring-2 focus:ring-seller-primary/10`}
+                        />
+                      </div>
+                      <div className="space-y-2 md:col-span-2">
+                        <label className="text-xs font-bold text-slate-600 uppercase tracking-wider ml-1">
+                          Thickness
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. 0.9 cm or 18 mm"
+                          value={formData.thickness || ""}
+                          onChange={(e) => handleFieldChange('thickness', e.target.value)}
+                          className={`w-full px-6 py-4 rounded-2xl border-none font-semibold text-sm transition-all bg-slate-50 text-slate-900 focus:ring-2 focus:ring-seller-primary/10`}
+                        />
+                      </div>
                     </div>
                   </div>
 
@@ -1165,7 +1201,17 @@ const AddProduct = () => {
                         }
                       }
 
-                      setFormData((prev) => ({
+                       if (data.image && data.image.startsWith('data:')) {
+                         fetch(data.image)
+                           .then(res => res.blob())
+                           .then(blob => {
+                             const file = new File([blob], `ai_generated_${Date.now()}.jpg`, { type: 'image/jpeg' });
+                             setImgFiles(prev => [...prev, file]);
+                           })
+                           .catch(err => console.error("Failed to convert base64 image to File:", err));
+                       }
+
+                       setFormData((prev) => ({
                         ...prev,
                         description: data.description,
                         hsnCode: data.hsnCode,

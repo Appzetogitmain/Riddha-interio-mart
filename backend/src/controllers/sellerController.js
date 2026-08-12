@@ -168,7 +168,7 @@ exports.getSellerMe = async (req, res, next) => {
 // @desc    Update Seller Profile
 exports.updateSellerProfile = async (req, res, next) => {
   try {
-    const { fullName, email, phone, shopName, shopAddress, avatar, gstNumber, panNumber, hsnNumber, bankDetails } = req.body;
+    const { fullName, email, phone, shopName, shopAddress, avatar, gstNumber, panNumber, hsnNumber, bankDetails, signatureImage } = req.body;
     
     const seller = await Seller.findById(req.user.id);
     if (!seller) return res.status(404).json({ success: false, error: 'Seller not found' });
@@ -190,7 +190,8 @@ exports.updateSellerProfile = async (req, res, next) => {
       avatar: avatar || seller.avatar,
       gstNumber: gstNumber !== undefined ? gstNumber : seller.gstNumber,
       panNumber: panNumber !== undefined ? panNumber : seller.panNumber,
-      hsnNumber: hsnNumber !== undefined ? hsnNumber : seller.hsnNumber
+      hsnNumber: hsnNumber !== undefined ? hsnNumber : seller.hsnNumber,
+      signatureImage: signatureImage !== undefined ? signatureImage : seller.signatureImage
     };
 
     // Merge bankDetails fields individually to allow partial updates

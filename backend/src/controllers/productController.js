@@ -554,7 +554,7 @@ exports.getProduct = async (req, res, next) => {
 // @desc    Get all products for the logged in seller
 exports.getSellerProducts = async (req, res, next) => {
   try {
-    const products = await Product.find({ seller: req.user.id });
+    const products = await Product.find({ seller: req.user.id }).sort({ createdAt: -1 });
     res.status(200).json({ success: true, count: products.length, data: products });
   } catch (error) {
     next(error);
@@ -929,7 +929,7 @@ exports.generateHSNCodeHandler = async (req, res, next) => {
 // @access  Private/Admin or Seller
 exports.generateProductContentHandler = async (req, res, next) => {
   try {
-    const { name, category, subcategory, subsubcategory, brand, material, color, dimensions, thickness, sku, generateImage } = req.body;
+    const { name, category, subcategory, subsubcategory, brand, material, color, dimensions, thickness, sku, generateImage, customPrompt } = req.body;
     const generateImageBool = generateImage === true || generateImage === 'true';
     console.log("POST /api/products/generate-content body:", req.body, "parsed generateImage:", generateImageBool);
     const aiService = require('../services/aiService');
@@ -944,7 +944,8 @@ exports.generateProductContentHandler = async (req, res, next) => {
       dimensions,
       thickness,
       sku,
-      generateImageBool
+      generateImageBool,
+      customPrompt
     );
 
     if (content) {

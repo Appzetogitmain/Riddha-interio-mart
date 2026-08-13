@@ -39,6 +39,7 @@ const SellerProfile = () => {
   const navigate = useNavigate();
   const { logout, user: currentUser, setUser } = useUser();
   const avatarInputRef = useRef(null);
+  const signatureInputRef = useRef(null);
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -55,6 +56,7 @@ const SellerProfile = () => {
     email: currentUser?.email || "",
     phone: currentUser?.phone || "",
     avatar: currentUser?.avatar || "",
+    signatureImage: currentUser?.signatureImage || "",
     shopAddress: "",
     gstNumber: "",
     panNumber: "",
@@ -89,6 +91,7 @@ const SellerProfile = () => {
           email: s.email || "",
           phone: s.phone || "",
           avatar: s.avatar || "",
+          signatureImage: s.signatureImage || "",
           shopAddress: s.shopAddress || "",
           gstNumber: s.gstNumber || "",
           panNumber: s.panNumber || "",
@@ -197,6 +200,27 @@ const SellerProfile = () => {
     } catch (err) {
       console.error('Upload failed:', err);
       toast.error(err.response?.data?.error || err.response?.data?.message || 'Failed to upload profile photo.');
+    } finally {
+      setIsSaving(false);
+      input.value = '';
+    }
+  };
+
+  const handleSignatureChange = async (e) => {
+    const input = e.target;
+    const file = input.files?.[0];
+    if (!file) return;
+    setIsSaving(true);
+    try {
+      const url = await uploadImage(file);
+      setProfileData(prev => ({ ...prev, signatureImage: url }));
+      const { data } = await api.put('/auth/seller/profile', { signatureImage: url });
+      if (data.success) {
+        toast.success('Signature photo updated successfully.');
+      }
+    } catch (err) {
+      console.error('Signature upload failed:', err);
+      toast.error(err.response?.data?.error || err.response?.data?.message || 'Failed to upload signature.');
     } finally {
       setIsSaving(false);
       input.value = '';
@@ -530,6 +554,51 @@ const SellerProfile = () => {
                   ))}
                 </div>
               ) : null}
+            </div>
+
+            {/* Signature Upload Card */}
+            <div className="bg-white p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] border border-slate-100 shadow-sm space-y-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-1.5 h-5 md:h-6 bg-seller-primary rounded-full" />
+                  <h3 className="text-base md:text-lg font-semibold text-slate-900 tracking-tight">Authorized Signature</h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => signatureInputRef.current?.click()}
+                  className="px-4 py-2 bg-seller-primary text-white hover:bg-seller-dark border border-seller-primary active:scale-95 rounded-xl font-semibold text-[9px] uppercase tracking-widest transition-all"
+                >
+                  Upload Signature
+                </button>
+                <input
+                  type="file"
+                  ref={signatureInputRef}
+                  onChange={handleSignatureChange}
+                  accept="image/*"
+                  className="hidden"
+                />
+              </div>
+
+              {/* Signature Preview */}
+              <div className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50/50 min-h-[140px]">
+                {profileData.signatureImage ? (
+                  <div className="flex flex-col items-center gap-3 w-full">
+                    <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 max-w-[280px]">
+                      <img 
+                        src={profileData.signatureImage} 
+                        alt="Seller Signature" 
+                        className="max-h-[60px] object-contain mx-auto" 
+                      />
+                    </div>
+                    <p className="text-[9px] font-semibold text-slate-400 uppercase tracking-widest">Active Signature Image</p>
+                  </div>
+                ) : (
+                  <div className="text-center space-y-2">
+                    <p className="text-xs font-bold text-slate-500">No Signature Uploaded</p>
+                    <p className="text-[10px] text-slate-400 max-w-xs mx-auto">Upload a clean signature image with a white background. This signature will appear on tax invoices.</p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 

@@ -354,9 +354,8 @@ const OrderDetailPage = () => {
                 </div>
               </div>
             </div>
-
-            {/* Merchant info if exists */}
-            {order.seller && (
+              {/* Merchant info if exists */}
+              {order.seller && (
               <div className="bg-white p-6 rounded-2xl border border-soft-oatmeal shadow-sm space-y-4">
                 <div className="flex items-center gap-2 text-deep-espresso border-b border-soft-oatmeal pb-3">
                   <LuPackage className="text-warm-sand" size={18} />
@@ -375,6 +374,140 @@ const OrderDetailPage = () => {
                 </div>
               </div>
             )}
+
+            {/* Seller Invoice (Bill A) Card */}
+            <div className="bg-white p-6 rounded-2xl border border-soft-oatmeal shadow-sm space-y-4">
+              <div className="flex items-center gap-2 text-deep-espresso border-b border-soft-oatmeal pb-3">
+                <LuPrinter className="text-warm-sand" size={18} />
+                <h3 className="font-bold">Seller Invoice (Bill A)</h3>
+              </div>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-warm-sand">Sharing Status:</span>
+                  <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
+                    order.sellerInvoiceShared 
+                      ? 'bg-green-100 text-green-700 border border-green-200' 
+                      : 'bg-yellow-100 text-yellow-700 border border-yellow-200'
+                  }`}>
+                    {order.sellerInvoiceShared ? 'Received ✓' : 'Pending'}
+                  </span>
+                </div>
+                {order.sellerInvoiceSharedAt && (
+                  <p className="text-[10px] text-warm-sand">
+                    Received: {new Date(order.sellerInvoiceSharedAt).toLocaleString()}
+                  </p>
+                )}
+                
+                {order.sellerInvoiceShared ? (
+                  <button
+                    onClick={async () => {
+                      try {
+                        const authData = JSON.parse(localStorage.getItem('riddha_user') || '{}');
+                        const token = authData?.token || authData?.user?.token || '';
+                        const API_BASE = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000/api`;
+                        const downloadUrl = `${API_BASE}/invoices/orders/${order._id}/invoice/seller`;
+                        
+                        const response = await fetch(downloadUrl, {
+                          method: 'GET',
+                          headers: {
+                            'Authorization': `Bearer ${token}`,
+                          },
+                        });
+
+                        if (!response.ok) {
+                          throw new Error('Failed to download invoice');
+                        }
+
+                        const blob = await response.blob();
+                        const blobUrl = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
+                        const a = document.createElement('a');
+                        a.href = blobUrl;
+                        const invNum = order.sellerInvoiceNumber ? order.sellerInvoiceNumber.replace(/\//g, '-') : order._id;
+                        a.download = `Seller_Invoice_${invNum}.pdf`;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        window.URL.revokeObjectURL(blobUrl);
+                      } catch (err) {
+                        console.error('Failed to download seller invoice:', err);
+                      }
+                    }}
+                    className="w-full py-2.5 bg-[#189D91] text-white rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-[#137A71] transition-all flex items-center justify-center gap-2"
+                  >
+                    <LuPrinter size={14} /> Download Bill A
+                  </button>
+                ) : (
+                  <p className="text-[10px] text-warm-sand italic text-center py-2">
+                    Waiting for seller to generate and share invoice.
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Customer Invoice (Bill C) Card */}
+            <div className="bg-white p-6 rounded-2xl border border-soft-oatmeal shadow-sm space-y-4">
+              <div className="flex items-center gap-2 text-deep-espresso border-b border-soft-oatmeal pb-3">
+                <LuPrinter className="text-warm-sand" size={18} />
+                <h3 className="font-bold">Customer Invoice (Bill C)</h3>
+              </div>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-warm-sand">Email Delivery:</span>
+                  <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
+                    order.customerInvoiceSentStatus === 'sent' 
+                      ? 'bg-green-100 text-green-700 border border-green-200' 
+                      : order.customerInvoiceSentStatus === 'failed'
+                      ? 'bg-red-100 text-red-700 border border-red-200'
+                      : 'bg-yellow-100 text-yellow-700 border border-yellow-200'
+                  }`}>
+                    {order.customerInvoiceSentStatus || 'pending'}
+                  </span>
+                </div>
+                {order.customerInvoiceSentAt && (
+                  <p className="text-[10px] text-warm-sand">
+                    Sent at: {new Date(order.customerInvoiceSentAt).toLocaleString()}
+                  </p>
+                )}
+                
+                <button
+                  onClick={async () => {
+                    try {
+                      const authData = JSON.parse(localStorage.getItem('riddha_user') || '{}');
+                      const token = authData?.token || authData?.user?.token || '';
+                      const API_BASE = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000/api`;
+                      const downloadUrl = `${API_BASE}/invoices/orders/${order._id}/invoice/customer`;
+                      
+                      const response = await fetch(downloadUrl, {
+                        method: 'GET',
+                        headers: {
+                          'Authorization': `Bearer ${token}`,
+                        },
+                      });
+
+                      if (!response.ok) {
+                        throw new Error('Failed to download invoice');
+                      }
+
+                      const blob = await response.blob();
+                      const blobUrl = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
+                      const a = document.createElement('a');
+                      a.href = blobUrl;
+                      const invNum = order.marketplaceInvoiceNumber ? order.marketplaceInvoiceNumber.replace(/\//g, '-') : order._id;
+                      a.download = `Customer_Invoice_${invNum}.pdf`;
+                      document.body.appendChild(a);
+                      a.click();
+                      document.body.removeChild(a);
+                      window.URL.revokeObjectURL(blobUrl);
+                    } catch (err) {
+                      console.error('Failed to download customer invoice:', err);
+                    }
+                  }}
+                  className="w-full py-2.5 bg-red-800 text-white rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-red-900 transition-all flex items-center justify-center gap-2"
+                >
+                  <LuPrinter size={14} /> Download Bill C
+                </button>
+              </div>
+            </div>
 
             {/* Order Timeline */}
             <div className="bg-white p-6 rounded-2xl border border-soft-oatmeal shadow-sm space-y-6">

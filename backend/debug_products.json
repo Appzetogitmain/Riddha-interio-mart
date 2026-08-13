@@ -1,106 +1,96 @@
 {
-  "timestamp": "2026-08-12T11:56:35.439Z",
+  "timestamp": "2026-08-12T15:23:10.067Z",
   "query": {
     "isApproved": "pending",
     "isActive": "all"
   },
   "builtFilter": {
-    "isApproved": true,
-    "isActive": true,
-    "seller": {
-      "$nin": [
-        "6a100b07a3cc06ac3f65be01",
-        "6a10057431fa10db6ebdaaff"
-      ]
-    },
-    "isBundle": {
-      "$ne": true
-    }
+    "isApproved": false
   },
   "resultCount": 10,
   "results": [
     {
-      "_id": "6a7c242857735308abaf356b",
-      "name": "Tiles",
+      "_id": "6a758842fbb213b03d09474f",
+      "name": "Premium Emulsion Paint",
       "category": {
-        "_id": "6a0d97bf804fbfd108773a6f",
-        "name": "Flooring"
+        "_id": "6a4cf715a06cf368b84a62e3",
+        "name": "Paint"
       },
-      "subcategory": "6a4d4f65a06cf368b84a713f",
-      "subsubcategory": "6a4d4f65a06cf368b84a7140"
+      "subcategory": "6a4e0f4aa06cf368b84a9dc1",
+      "subsubcategory": "6a4e0f4aa06cf368b84a9dc4"
     },
     {
-      "_id": "6a7c1e7757735308abaf2d26",
-      "name": "Marble look Tile",
-      "category": {
-        "_id": "6a0d97bf804fbfd108773a6f",
-        "name": "Flooring"
-      },
-      "subcategory": "6a4d4f65a06cf368b84a7150",
-      "subsubcategory": "6a4d4f65a06cf368b84a7151"
-    },
-    {
-      "_id": "6a7ab4eefbb213b03d0996ae",
-      "name": "Polycab Wire",
-      "category": {
-        "_id": "6a22be91614854ee3ba47f8c",
-        "name": "Electricals"
-      },
-      "subcategory": "6a4dfe86a06cf368b84a926a",
-      "subsubcategory": "6a4dfe86a06cf368b84a926d"
-    },
-    {
-      "_id": "6a759064fbb213b03d0956f1",
-      "name": "Soft Close Concealed Hinge 110° Full Overlay",
+      "_id": "6a73a209fbb213b03d091c8c",
+      "name": "BOTTLE PULL OUTS",
       "category": {
         "_id": "6a1544acd45bbef0c578fa3e",
         "name": "Hardware"
       },
-      "subcategory": "6a4d7e72a06cf368b84a7556",
-      "subsubcategory": "6a4d7e72a06cf368b84a7560"
+      "subcategory": "6a4d7e72a06cf368b84a7588",
+      "subsubcategory": "6a4d7e72a06cf368b84a758a"
     },
     {
-      "_id": "6a758b81fbb213b03d094d25",
-      "name": "Havells Life Line Plus HRFR",
+      "_id": "6a731fa3494ccc3cb64bce4f",
+      "name": "Philips LED Ceiling Panel Light 18W",
       "category": {
-        "_id": "6a22be91614854ee3ba47f8c",
-        "name": "Electricals"
+        "_id": "6a0daa34047bdee23fc765da",
+        "name": "Lighting"
       },
-      "subcategory": "6a4dfe86a06cf368b84a926a",
-      "subsubcategory": "6a4dfe86a06cf368b84a926e"
+      "subcategory": "6a4d5daea06cf368b84a71eb",
+      "subsubcategory": "6a4d5daea06cf368b84a71f1"
     },
     {
-      "_id": "6a743b1ffbb213b03d092945",
-      "name": "Shoe Racks",
+      "_id": "6a731aa4db4638654784a283",
+      "name": "slipwell bed",
       "category": {
-        "_id": "6a1544acd45bbef0c578fa3e",
-        "name": "Hardware"
+        "_id": "6a0d954f804fbfd1087737f1",
+        "name": "Furniture"
       },
-      "subcategory": "6a4d7e72a06cf368b84a7580",
-      "subsubcategory": "6a4d7e72a06cf368b84a7585"
+      "subcategory": "6a4d1974a06cf368b84a6c76",
+      "subsubcategory": "6a4d1974a06cf368b84a6c78"
     },
     {
-      "_id": "6a733f41fbb213b03d08f824",
-      "name": "HIKVISION",
+      "_id": "6a730b3517e61af69f5935b6",
+      "name": "Premium itallitan marble slab",
       "category": {
-        "_id": "6a4cfde1a06cf368b84a64c6",
-        "name": "Security & Automation"
+        "_id": "69e1cc1d60884ec078193fe9",
+        "name": "Marble"
       },
-      "subcategory": "6a50d299fb87c84071cbb938",
-      "subsubcategory": "6a50d299fb87c84071cbb93a"
+      "subcategory": "6a4d111fa06cf368b84a67fa",
+      "subsubcategory": "6a4d111fa06cf368b84a67fc"
     },
     {
-      "_id": "6a733c79fbb213b03d08f2b7",
-      "name": "HINDWARE",
+      "_id": "6a72f56a641bae80fc8d00e0",
+      "name": "King Size Hydraulic Storage Bed SW-HB-7788",
       "category": {
-        "_id": "6a2bd98474e4adc0617a9df9",
-        "name": "Bath Fitting"
+        "_id": "6a0d954f804fbfd1087737f1",
+        "name": "Furniture"
       },
-      "subcategory": "6a4e05c2a06cf368b84a998f",
-      "subsubcategory": "6a4e05c2a06cf368b84a9991"
+      "subcategory": "6a4d1974a06cf368b84a6c76",
+      "subsubcategory": "6a4d1974a06cf368b84a6c78"
     },
     {
-      "_id": "6a71fcd9dfb6131dc25f4c2f",
+      "_id": "6a72f3c0bcbf3be5792cd272",
+      "name": "Modern L-Shaped Fabric Sofa Set UC-LS-9021",
+      "category": {
+        "_id": "6a0d954f804fbfd1087737f1",
+        "name": "Furniture"
+      },
+      "subcategory": "6a4d1974a06cf368b84a6c76",
+      "subsubcategory": "6a4d1974a06cf368b84a6c77"
+    },
+    {
+      "_id": "6a72ee02d2b0c2bcf3faeb95",
+      "name": "Modern L-Shaped Fabric Sofa Set UC-LS-9021",
+      "category": {
+        "_id": "6a0d954f804fbfd1087737f1",
+        "name": "Furniture"
+      },
+      "subcategory": "6a4d1974a06cf368b84a6c76",
+      "subsubcategory": "6a4d1974a06cf368b84a6c77"
+    },
+    {
+      "_id": "6a72ec5b9498e7c6ff77d42a",
       "name": "Commercial LED Panel Light CL-Panel-36W-6000K",
       "category": {
         "_id": "6a0daa34047bdee23fc765da",
@@ -110,12 +100,14 @@
       "subsubcategory": "6a4d5daea06cf368b84a720c"
     },
     {
-      "_id": "6a58a3d35403001112c2cdf8",
-      "name": "italian white marble",
+      "_id": "6a71fae2d66ecd299c95aebf",
+      "name": "LED Ceiling Panel Light LP-Panel-24W-6500K",
       "category": {
-        "_id": "69e1cc1d60884ec078193fe9",
-        "name": "Marble"
-      }
+        "_id": "6a0daa34047bdee23fc765da",
+        "name": "Lighting"
+      },
+      "subcategory": "6a4d5daea06cf368b84a71eb",
+      "subsubcategory": "6a4d5daea06cf368b84a71ec"
     }
   ]
 }

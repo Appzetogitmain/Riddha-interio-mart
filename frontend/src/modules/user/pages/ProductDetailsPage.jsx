@@ -78,6 +78,57 @@ const ProductDetailsPage = () => {
   const deliveryEstimate = getDeliveryEstimate(pincode);
   const wishlisted = product ? isInWishlist(product._id || product.id) : false;
 
+  const specItems = React.useMemo(() => {
+    if (!product) return [];
+    const allSpecs = {};
+
+    const addSpec = (key, val) => {
+      if (!val || val === 'N/A' || val === 'undefined') return;
+      const strVal = typeof val === 'object' ? (val.name || JSON.stringify(val)) : String(val);
+      if (!strVal.trim()) return;
+
+      const existingKey = Object.keys(allSpecs).find(
+        (ek) => ek.toLowerCase() === key.trim().toLowerCase()
+      );
+
+      if (existingKey) {
+        const currentLower = allSpecs[existingKey].toLowerCase();
+        const newLower = strVal.toLowerCase();
+        if (currentLower === 'premium' || currentLower === 'other' || currentLower === 'n/a' || currentLower === '') {
+          allSpecs[existingKey] = strVal;
+        } else if (newLower !== 'premium' && newLower !== 'other' && newLower !== 'n/a') {
+          if (strVal.length > allSpecs[existingKey].length) {
+            allSpecs[existingKey] = strVal;
+          }
+        }
+      } else {
+        allSpecs[key.trim()] = strVal;
+      }
+    };
+
+    if (product.specifications) {
+      Object.entries(product.specifications).forEach(([k, v]) => {
+        addSpec(k, v);
+      });
+    }
+
+    if (product.dynamicAttributes) {
+      Object.entries(product.dynamicAttributes).forEach(([k, v]) => {
+        addSpec(k, v);
+      });
+    }
+
+    if (product.material) {
+      addSpec("Material", product.material);
+    }
+    
+    if (product.dimensions) {
+      addSpec("Dimensions", product.dimensions);
+    }
+
+    return Object.entries(allSpecs);
+  }, [product]);
+
   useEffect(() => {
     const load = async () => {
       try {
@@ -410,23 +461,33 @@ const ProductDetailsPage = () => {
               {product.description || 'Premium quality product with high-quality finish. Perfect for luxury interiors.'}
             </p>
 
-            {/* Specs table — desktop */}
-            <div className="hidden md:block mt-4 border-t border-b border-gray-100 py-3">
-              {[
-                product.material && { label: 'Material',  value: product.material },
-                product.finish && { label: 'Finish',    value: product.finish },
-                product.thickness && { label: 'Thickness', value: product.thickness },
-                product.sku && { label: 'SKU',       value: product.sku },
-                { label: 'Stock',     value: (product.countInStock !== undefined && product.countInStock <= 0) ? 'Out of Stock' : `In Stock (${product.countInStock || 0})`, badge: true },
-              ].filter(Boolean).map((r, i) => (
-                <div key={i} className="flex items-center py-1.5 text-[13px]">
-                  <span className="w-28 text-gray-400 font-medium shrink-0">{r.label}</span>
-                  {r.badge
-                    ? <span className={`border text-[11px] font-bold px-2 py-0.5 ${r.value === 'Out of Stock' ? 'bg-red-50 border-red-100 text-red-600' : 'bg-emerald-50 border-emerald-100 text-emerald-600'}`}>{r.value}</span>
-                    : <span className="text-gray-800 font-semibold">{r.value}</span>
-                  }
+            {/* Full Specifications Table */}
+            <div className="mt-6 border-t border-gray-100 pt-5 px-5 md:px-0">
+              <h3 className="text-[12px] font-black text-gray-900 uppercase tracking-[0.2em] mb-4">Specifications</h3>
+              <div className="divide-y divide-gray-100 border border-gray-100 rounded-xl overflow-hidden shadow-xs">
+                {specItems.map(([k, v], i) => (
+                  <div key={`spec-${k}`} className={`flex py-2.5 px-4 text-[13px] ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50/40'}`}>
+                    <span className="w-36 text-gray-400 font-semibold uppercase text-[10px] tracking-wider shrink-0">{k}</span>
+                    <span className="text-gray-800 font-bold">{v}</span>
+                  </div>
+                ))}
+                {product.sku && (
+                  <div className="flex py-2.5 px-4 text-[13px] bg-white">
+                    <span className="w-36 text-gray-400 font-semibold uppercase text-[10px] tracking-wider shrink-0">SKU</span>
+                    <span className="text-gray-800 font-bold">{product.sku}</span>
+                  </div>
+                )}
+                <div className="flex py-2.5 px-4 text-[13px] bg-gray-50/40">
+                  <span className="w-36 text-gray-400 font-semibold uppercase text-[10px] tracking-wider shrink-0">Stock Status</span>
+                  <span className={`text-[11px] font-bold px-2 py-0.5 border rounded ${
+                    (product.countInStock !== undefined && product.countInStock <= 0) 
+                      ? 'bg-red-50 border-red-100 text-red-600' 
+                      : 'bg-emerald-50 border-emerald-100 text-emerald-600'
+                  }`}>
+                    {(product.countInStock !== undefined && product.countInStock <= 0) ? 'Out of Stock' : `In Stock (${product.countInStock || 0})`}
+                  </span>
                 </div>
-              ))}
+              </div>
             </div>
 
             {/* Delivery estimate */}
@@ -484,9 +545,9 @@ const ProductDetailsPage = () => {
               )}
             </div>
 
-            {/* Features (desktop inline) */}
+            {/* Features (inline) */}
             {product.features?.length > 0 && (
-              <div className="hidden md:flex flex-wrap gap-2 mt-4">
+              <div className="flex flex-wrap gap-2 mt-4">
                 {product.features.map((f, i) => (
                   <span key={i} className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-gray-600 bg-gray-50 border border-gray-100 px-2.5 py-1">
                     <FiCheck size={10} className="text-[#189D91]" /> {f}
@@ -518,37 +579,9 @@ const ProductDetailsPage = () => {
       </div>
 
       {/* ── Accordion sections ── */}
-      <div className="mt-4 space-y-1 hidden md:block">
+      <div className="mt-4 space-y-1 px-5 md:px-0">
 
-        {/* Specifications */}
-        {((product.specifications && Object.keys(product.specifications).length > 0) || 
-          (product.dynamicAttributes && Object.keys(product.dynamicAttributes).length > 0)) && (
-          <AccordionSection
-            label="Specifications"
-            open={openSection === 'specs'}
-            onToggle={() => toggleSection('specs')}
-          >
-            <div className="divide-y divide-gray-50">
-              {/* Render legacy specs */}
-              {product.specifications && Object.entries(product.specifications).map(([k, v], i) => (
-                <div key={`spec-${k}`} className={`flex py-2.5 px-5 text-[13px] ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50/60'}`}>
-                  <span className="w-36 text-gray-400 font-medium uppercase text-[11px] tracking-wider shrink-0">{k}</span>
-                  <span className="text-gray-800 font-semibold">{typeof v === 'object' ? (v.name || JSON.stringify(v)) : v}</span>
-                </div>
-              ))}
-              {/* Render dynamic attributes */}
-              {product.dynamicAttributes && Object.entries(product.dynamicAttributes).map(([k, v], i) => {
-                const globalIndex = (product.specifications ? Object.keys(product.specifications).length : 0) + i;
-                return (
-                  <div key={`dyn-${k}`} className={`flex py-2.5 px-5 text-[13px] ${globalIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50/60'}`}>
-                    <span className="w-36 text-gray-400 font-medium uppercase text-[11px] tracking-wider shrink-0">{k}</span>
-                    <span className="text-gray-800 font-semibold">{typeof v === 'object' ? (v.name || JSON.stringify(v)) : v}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </AccordionSection>
-        )}
+
 
         {/* Material */}
         {(product.material || product.thickness) && (

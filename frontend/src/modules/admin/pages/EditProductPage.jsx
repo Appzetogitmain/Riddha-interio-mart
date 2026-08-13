@@ -30,6 +30,7 @@ const EditProductPage = () => {
     description: '',
     material: '',
     dimensions: '',
+    thickness: '',
     stock: 50,
     unit: 'piece',
     unitValue: '1',
@@ -665,11 +666,11 @@ const EditProductPage = () => {
                    ></textarea>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-soft-oatmeal/50">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-soft-oatmeal/50">
                    <div className="space-y-2">
                       <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest">Material</label>
                       <input 
-                        type="text" placeholder="e.g. Carrara Marble"
+                        type="text" placeholder="e.g. Copper, Ceramic, Wood"
                         value={formData.material}
                         onChange={(e) => setFormData({...formData, material: e.target.value})}
                         className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-4 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-warm-sand transition-all font-medium"
@@ -678,9 +679,18 @@ const EditProductPage = () => {
                    <div className="space-y-2">
                       <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest">Dimensions</label>
                       <input 
-                        type="text" placeholder="e.g. 60x60x2 cm"
+                        type="text" placeholder="e.g. 60x60 cm or 3x6 ft"
                         value={formData.dimensions}
                         onChange={(e) => setFormData({...formData, dimensions: e.target.value})}
+                        className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-4 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-warm-sand transition-all font-medium"
+                      />
+                   </div>
+                   <div className="space-y-2">
+                      <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest">Thickness</label>
+                      <input 
+                        type="text" placeholder="e.g. 0.9 cm or 18 mm"
+                        value={formData.thickness}
+                        onChange={(e) => setFormData({...formData, thickness: e.target.value})}
                         className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-4 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-warm-sand transition-all font-medium"
                       />
                    </div>

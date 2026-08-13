@@ -140,6 +140,47 @@ class EmailService {
   }
 
   /**
+   * Generates and sends customer tax invoice (Bill C) via email
+   */
+  async sendCustomerInvoiceEmail(to, order, pdfBuffer) {
+    try {
+      const subject = `Tax Invoice - Order #${order._id.toString().slice(-8).toUpperCase()} - Riddha Interior Mart`;
+      const htmlContent = `
+        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
+          <div style="background-color: #e11d48; padding: 20px; text-align: center;">
+            <span style="color: #ffffff; font-size: 20px; font-weight: bold; letter-spacing: 1px;">RIDDHA INTERIOR MART</span>
+          </div>
+          <div style="padding: 30px;">
+            <p>Dear Customer,</p>
+            <p>Thank you for shopping with Riddha Interior Mart!</p>
+            <p>We are pleased to share the Tax Invoice for your recent purchase (Order ID: <strong>#${order._id.toString().toUpperCase()}</strong>).</p>
+            <p>The total amount of <strong>Rs. ${order.totalPrice.toLocaleString()}</strong> has been processed successfully.</p>
+            <p>Please find the attached PDF invoice for your records.</p>
+            <br/>
+            <p>Best regards,<br/><strong>Team Riddha</strong></p>
+          </div>
+          <div style="background-color: #f7fafc; padding: 15px; text-align: center; font-size: 12px; color: #718096; border-top: 1px solid #e2e8f0;">
+            This is an automated email. Please do not reply directly.
+          </div>
+        </div>
+      `;
+
+      const attachments = [
+        {
+          filename: `Invoice_${order.marketplaceInvoiceNumber ? order.marketplaceInvoiceNumber.replace(/\//g, '-') : order._id}.pdf`,
+          content: pdfBuffer
+        }
+      ];
+
+      await this.sendMailDirect(to, subject, htmlContent, attachments);
+      console.log(`[EmailService] Sent Customer Tax Invoice PDF to ${to}`);
+    } catch (err) {
+      console.error(`[EmailService] Failed to send customer tax invoice email to ${to}:`, err.message);
+      throw err;
+    }
+  }
+
+  /**
    * Enqueues a new transactional email job
    */
   async queueEmail(to, subject, templateName, templateData) {

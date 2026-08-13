@@ -28,6 +28,7 @@ const AIContentPanel = ({
   });
 
   const [newKeyword, setNewKeyword] = useState("");
+  const [customPrompt, setCustomPrompt] = useState("");
 
   const steps = [
     "Analyzing product attributes",
@@ -93,7 +94,8 @@ const AIContentPanel = ({
         dimensions: formData.dimensions,
         thickness: formData.thickness,
         sku: formData.sku,
-        generateImage: generateImage
+        generateImage: generateImage,
+        customPrompt: customPrompt
       });
 
       if (response.data.success) {
@@ -192,6 +194,20 @@ const AIContentPanel = ({
           <label htmlFor="generate-image-chk" className="text-xs font-bold text-slate-600 cursor-pointer select-none">
             Generate Product Image with AI also?
           </label>
+        </div>
+
+        <div className="space-y-2 px-1">
+          <label htmlFor="custom-prompt-input" className="text-xs font-bold text-slate-600 block">
+            Custom AI Instructions / Prompts (Optional):
+          </label>
+          <textarea
+            id="custom-prompt-input"
+            rows="2"
+            placeholder="e.g. Specify materials (e.g. Copper wire, Teak wood) or describe desired product image features..."
+            value={customPrompt}
+            onChange={(e) => setCustomPrompt(e.target.value)}
+            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-slate-200 transition-all resize-none placeholder:text-slate-400 text-slate-700 font-sans"
+          />
         </div>
 
         <button

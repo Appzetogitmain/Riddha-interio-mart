@@ -121,14 +121,14 @@ OUTPUT FORMAT (STRICT JSON):
 const generateProductContent = async (
   name, category, subcategory, subsubcategory,
   brand, material, color, dimensions, thickness,
-  sku, generateImage = false
+  sku, generateImage = false, customPrompt = ""
 ) => {
   try {
     if (!process.env.GEMINI_API_KEY) {
       throw new Error('GEMINI_API_KEY is missing in environment variables');
     }
 
-    const prompt = `You are a premium product copywriter, database specialist, and SEO specialist for Riddha Interior Mart (RIMX), an e-commerce platform specializing in home interiors, building materials, furniture, tiles, and fittings.
+    let prompt = `You are a premium product copywriter, database specialist, and SEO specialist for Riddha Interior Mart (RIMX), an e-commerce platform specializing in home interiors, building materials, furniture, tiles, and fittings.
 
 Your primary objective is to research the product using the provided Model Number / SKU and other inputs, and generate complete, highly accurate catalog details.
 
@@ -149,11 +149,16 @@ YOUR TASK:
 2. **HSN Code**: The most appropriate 6-digit HSN code under Indian GST rules for this product.
 3. **Brand Name**: Inferred brand/manufacturer name based on the SKU/Model Number, Product Name, and Category (e.g., Sleepwell, CenturyPly, Kajaria, Jaquar, Asian Paints, etc.). If you cannot infer it, return the Brand (Current Selection) or "other".
 4. **SEO Keywords**: Array of 5-8 high-traffic search terms.
-5. **Specifications**: Flat JSON of 4-6 technical attributes specific to this product type (e.g., {"Finish": "Glossy", "Material": "Ceramic", "Warranty": "5 Years"}).
-6. **Dimensions**: A flat JSON object containing "height", "width", "thickness", and "unit" if they can be determined/inferred from the SKU, product type, or name (e.g. {"height": "75", "width": "180", "thickness": "18", "unit": "cm"}). Return empty strings for any fields you cannot determine.
+5. **Specifications**: Flat JSON of 4-6 technical attributes specific to this product type (e.g., {"Finish": "Glossy", "Material": "Ceramic", "Warranty": "5 Years"}). Ensure the "Material" attribute contains the specific raw material composition (e.g., "Copper" for copper wires, "Teak Wood" for wood furniture, "Ceramic" or "Clay" for tiles) rather than generic adjectives like "Premium", "First Quality", or "Locat".
+6. **Dimensions & Thickness**: Parse or infer dimensions and thickness values. Do not remove thickness, as some items (like tiles, glass, plywood) have thickness, while other items have only length, width, and height. Create a flat JSON object containing "height", "width", "thickness", and "unit" if they can be determined/inferred from the inputs or SKU. Return empty strings for any fields you cannot determine.
 7. **Image Prompt**: A highly descriptive, detailed, professional studio product photography prompt (25-35 words). Describe the product setup, specific material textures, color details, angles, professional studio lighting, and a clean minimalist backdrop to guide the image generator accurately.
+`;
 
-OUTPUT FORMAT (STRICT JSON). Ensure all double quotes inside string values are properly escaped (e.g. \"...) and no raw newlines are used inside the values:
+    if (customPrompt && customPrompt.trim()) {
+      prompt += `\n\nCRITICAL VENDOR/ADMIN REQUESTED IMAGE AND DETAILS INSTRUCTIONS TO FOLLOW STRICTLY:\n${customPrompt}\n`;
+    }
+
+    prompt += `\nOUTPUT FORMAT (STRICT JSON). Ensure all double quotes inside string values are properly escaped (e.g. \\"...) and no raw newlines are used inside the values:
 {
   "description": "...",
   "hsn_code": "XXXXXX",

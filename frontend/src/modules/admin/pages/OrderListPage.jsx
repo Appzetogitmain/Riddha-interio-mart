@@ -109,11 +109,17 @@ const OrderListPage = ({ specificStatus }) => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [deliveryBoys, setDeliveryBoys] = useState([]);
   const [assignLoading, setAssignLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, sellerFilter, paymentFilter, assignmentFilter, activeTab, urlStatus, specificStatus]);
 
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      const { data } = await api.get('/orders');
+      const { data } = await api.get('/orders?limit=10000');
       if (data.success) {
         setOrders(data.data || []);
       }
@@ -252,6 +258,13 @@ const OrderListPage = ({ specificStatus }) => {
       return matchesSearch && order.status?.toLowerCase() === currentStatus?.toLowerCase();
     });
   }, [searchTerm, currentStatus, activeTab, orders, sellerFilter, paymentFilter, assignmentFilter]);
+
+  const paginatedOrders = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredOrders.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredOrders, currentPage, itemsPerPage]);
+
+  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
 
   const hasActiveFilters =
     sellerFilter !== 'all' || paymentFilter !== 'all' || assignmentFilter !== 'all' || searchTerm.trim().length > 0;
@@ -421,8 +434,8 @@ const OrderListPage = ({ specificStatus }) => {
                       <p className="text-[10px] font-black text-warm-sand mt-3 uppercase tracking-widest">Accessing Pipeline...</p>
                     </td>
                   </tr>
-                ) : filteredOrders.length > 0 ? (
-                  filteredOrders.map((order) => {
+                ) : paginatedOrders.length > 0 ? (
+                  paginatedOrders.map((order) => {
                     const StatusIcon = statusIcons[order.status] || LuClipboardList;
                     const orderDisplayId = order.orderId || (order._id ? `ORD-${order._id.slice(-6).toUpperCase()}` : 'ORD-NEW');
                     
@@ -510,6 +523,54 @@ const OrderListPage = ({ specificStatus }) => {
               </tbody>
             </table>
           </div>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-6 py-4 bg-soft-oatmeal/5 border-t border-soft-oatmeal/60 flex-wrap gap-4">
+              <p className="text-xs text-warm-sand font-semibold uppercase tracking-wider">
+                Showing <span className="font-bold text-deep-espresso">{((currentPage - 1) * itemsPerPage) + 1}</span> to{" "}
+                <span className="font-bold text-deep-espresso">
+                  {Math.min(currentPage * itemsPerPage, filteredOrders.length)}
+                </span>{" "}
+                of <span className="font-bold text-deep-espresso">{filteredOrders.length}</span> Orders
+              </p>
+              
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1.5 rounded-lg border border-soft-oatmeal text-xs font-bold text-deep-espresso hover:bg-soft-oatmeal/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all uppercase tracking-wider"
+                >
+                  Prev
+                </button>
+                
+                {[...Array(totalPages)].map((_, index) => {
+                  const pageNumber = index + 1;
+                  return (
+                    <button
+                      key={pageNumber}
+                      onClick={() => setCurrentPage(pageNumber)}
+                      className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${
+                        currentPage === pageNumber
+                          ? "bg-red-800 text-white shadow-md shadow-red-800/20"
+                          : "border border-soft-oatmeal text-deep-espresso hover:bg-soft-oatmeal/20"
+                      }`}
+                    >
+                      {pageNumber}
+                    </button>
+                  );
+                })}
+                
+                <button
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-1.5 rounded-lg border border-soft-oatmeal text-xs font-bold text-deep-espresso hover:bg-soft-oatmeal/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all uppercase tracking-wider"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

@@ -43,7 +43,36 @@ const FALLBACKS = {
     "Browse design galleries focusing on your primary style for layout ideas.",
     "Collect swatches of your preferred materials to see how they coordinate under natural light.",
     "Prioritize lighting fixtures that offer adjustable brightness to match different moods."
-  ]
+  ],
+
+  // --- Journey orchestration (Req #17) ---
+  // Deliberately generic: the controller overlays the deterministic next step from
+  // the feature registry, so these only supply the human-facing wording.
+  journeyGuidance: {
+    currentStage: "discovery",
+    nextRecommendedStep: "Keep exploring products that match your style.",
+    suggestedFeature: null,
+    suggestedCTA: "Continue browsing",
+    helpMessage: "Take your time exploring — we'll suggest the right next step as you go.",
+    urgency: "low"
+  },
+
+  journeyContextHelp: {
+    help: "Here you can browse and compare options, and add anything you like to your cart.",
+    steps: [
+      "Use the filters to narrow down to your style and budget.",
+      "Open a product to see full details and similar items.",
+      "Add what you like to your cart or wishlist."
+    ],
+    suggestedFeature: null
+  },
+
+  journeyUpsell: {
+    shouldSuggest: false,
+    suggestion: "",
+    reasoning: "",
+    cta: ""
+  }
 };
 
 /**

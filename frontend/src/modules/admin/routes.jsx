@@ -17,6 +17,7 @@ const ManageCategoryGrid = React.lazy(() => import('./pages/ManageCategoryGrid')
 const ManageBrands = React.lazy(() => import('./pages/ManageBrands'));
 const ManageAdvertisementPlans = React.lazy(() => import('./pages/ManageAdvertisementPlans'));
 const BundleManagementPage = React.lazy(() => import('./pages/BundleManagementPage'));
+const JourneyAnalyticsDashboard = React.lazy(() => import('./pages/JourneyAnalyticsDashboard'));
 const LoginPage = React.lazy(() => import('../user/pages/LoginPage'));
 const SignupPage = React.lazy(() => import('../user/pages/SignupPage'));
 const AdminProfile = React.lazy(() => import('./pages/AdminProfile'));
@@ -80,6 +81,7 @@ const AdminRoutes = () => {
           <Route element={<ProtectedRoute permission="analytics" />}>
             <Route path="/analytics" element={<AnalyticsPage />} />
             <Route path="/recommendation-analytics" element={<AdminRecommendationAnalytics />} />
+            <Route path="/journey-analytics" element={<JourneyAnalyticsDashboard />} />
             <Route path="/activity" element={<ActivityPage />} />
           </Route>
 

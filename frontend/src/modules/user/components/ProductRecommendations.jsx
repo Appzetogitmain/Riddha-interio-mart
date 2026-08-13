@@ -41,11 +41,11 @@ const ProductRecommendations = ({ productId }) => {
     <section className="mt-12 pt-8 border-t border-gray-100">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-3">
         <div>
-          <div className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md mb-1">
-            <Sparkles className="w-3.5 h-3.5" />
+          <div className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-950 bg-emerald-100 border border-emerald-300 px-2.5 py-1 rounded-md mb-1">
+            <Sparkles className="w-3.5 h-3.5 text-emerald-700" />
             <span>AI Smart Recommendations</span>
           </div>
-          <h3 className="text-xl font-bold text-gray-900">Customers Also Explored & Paired</h3>
+          <h3 className="text-xl font-black text-gray-900">Customers Also Explored & Paired</h3>
         </div>
 
         {/* Filter Pills */}
@@ -59,10 +59,10 @@ const ProductRecommendations = ({ productId }) => {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-colors ${
                 activeTab === tab.id
-                  ? 'bg-emerald-900 text-emerald-300 shadow-2xs'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  ? 'bg-emerald-950 text-white shadow-xs'
+                  : 'bg-white text-gray-800 border border-gray-300 hover:bg-gray-100'
               }`}
             >
               {tab.label}

@@ -19,12 +19,17 @@ import UserNotifications from './modules/user/components/UserNotifications';
 import AdminNotifications from './modules/admin/components/AdminNotifications';
 import SellerNotifications from './modules/seller/components/SellerNotifications';
 import { useUser } from './modules/user/data/UserContext';
+import { useJourneyPageTracking } from './modules/user/data/useJourney';
 
 function App() {
   const { user } = useUser();
   const [showPincodeModal, setShowPincodeModal] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const location = useLocation();
+
+  // Record every route change against the user's journey (Requirement #17).
+  // Fire-and-forget: never blocks or breaks the page being tracked.
+  useJourneyPageTracking();
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);

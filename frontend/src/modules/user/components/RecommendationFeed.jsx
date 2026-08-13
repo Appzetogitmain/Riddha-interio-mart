@@ -58,14 +58,14 @@ const RecommendationFeed = () => {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-xs font-semibold mb-2">
-              <Sparkles className="w-3.5 h-3.5" />
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-100 text-emerald-950 rounded-full text-xs font-bold border border-emerald-200 mb-2">
+              <Sparkles className="w-3.5 h-3.5 text-emerald-700" />
               <span>Gemini AI Personalization</span>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
+            <h2 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">
               Curated Recommendations For You
             </h2>
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-sm font-medium text-gray-600 mt-1">
               Tailored to your design preferences, room quizzes, and browsing habits.
             </p>
           </div>
@@ -73,16 +73,16 @@ const RecommendationFeed = () => {
           <div className="flex items-center gap-3">
             <button
               onClick={handleRefresh}
-              className="px-3.5 py-2 bg-white border border-gray-200 hover:border-emerald-500 text-gray-700 rounded-xl text-xs font-semibold flex items-center gap-2 shadow-2xs hover:shadow-xs transition-all active:scale-95"
+              className="px-3.5 py-2 bg-white border border-gray-300 hover:border-emerald-600 text-gray-900 rounded-xl text-xs font-bold flex items-center gap-2 shadow-xs hover:shadow-md transition-all active:scale-95"
             >
-              <RefreshCw className="w-3.5 h-3.5 text-emerald-600" />
+              <RefreshCw className="w-3.5 h-3.5 text-emerald-700" />
               <span>Refresh Feed</span>
             </button>
           </div>
         </div>
 
         {/* Navigation Tabs */}
-        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-2 mb-6 border-b border-gray-100">
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-2 mb-6 border-b border-gray-200">
           {[
             { id: 'personalized', label: 'Picks For You', icon: Sparkles },
             { id: 'style', label: 'Based on Your Style', icon: Compass },
@@ -95,13 +95,13 @@ const RecommendationFeed = () => {
               <button
                 key={tab.id}
                 onClick={() => { setActiveTab(tab.id); fetchRecommendations(); }}
-                className={`px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-2 whitespace-nowrap transition-all ${
+                className={`px-4 py-2.5 rounded-xl text-xs font-extrabold flex items-center gap-2 whitespace-nowrap transition-all ${
                   isActive
-                    ? 'bg-emerald-900 text-emerald-300 shadow-xs'
-                    : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+                    ? 'bg-emerald-950 text-white shadow-md border border-emerald-700'
+                    : 'bg-white text-gray-800 border border-gray-300 hover:bg-gray-100 hover:text-gray-900'
                 }`}
               >
-                <Icon className={`w-4 h-4 ${isActive ? 'text-emerald-400' : 'text-gray-400'}`} />
+                <Icon className={`w-4 h-4 ${isActive ? 'text-emerald-400' : 'text-gray-500'}`} />
                 <span>{tab.label}</span>
               </button>
             );

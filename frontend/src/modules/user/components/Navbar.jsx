@@ -587,6 +587,7 @@ const Navbar = () => {
                     <SidebarLink to="/client-brief" icon={FiFileText} label="AI Project Brief" onClick={closeMobile} />
                     <SidebarLink to="/products" icon={FiGrid} label="Shop Products" onClick={closeMobile} />
                     <SidebarLink to="/bundles" icon={FiZap} label="Smart Bundles" onClick={closeMobile} />
+                    <SidebarLink to="/journey" icon={FiCompass} label="My Journey" onClick={closeMobile} />
                     <SidebarLink to="/recommendations" icon={FiZap} label="AI Recommendations Feed" onClick={closeMobile} />
                     <SidebarLink to="/designer-quiz" icon={FiCompass} label="Designer Quiz" onClick={closeMobile} />
                     <SidebarLink to="/referral-rewards" icon={LuWallet} label="Riddha Wallet" onClick={closeMobile} />

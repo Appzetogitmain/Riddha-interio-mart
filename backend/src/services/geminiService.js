@@ -3,16 +3,18 @@ const geminiUsageTracker = require('./geminiUsageTracker');
 const { callWithFallback } = require('../utils/geminiErrorHandler');
 
 class GeminiService {
-  constructor() {
-    this.apiKey = process.env.GEMINI_API_KEY;
-    this.modelName = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
-    
-    if (this.apiKey) {
-      this.genAI = new GoogleGenerativeAI(this.apiKey);
-      this.model = this.genAI.getGenerativeModel({ model: this.modelName });
-    } else {
-      console.warn('[GEMINI SERVICE WARNING] GEMINI_API_KEY is not defined in environment variables. Gemini calls will fall back to local templates.');
+  getModel() {
+    const apiKey = process.env.GEMINI_API_KEY;
+    const modelName = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
+    if (!apiKey) {
+      return null;
     }
+    if (!this.genAI || this.currentApiKey !== apiKey) {
+      this.currentApiKey = apiKey;
+      this.genAI = new GoogleGenerativeAI(apiKey);
+      this.model = this.genAI.getGenerativeModel({ model: modelName });
+    }
+    return this.model;
   }
 
   /**
@@ -24,8 +26,8 @@ class GeminiService {
    * @param {boolean} [expectJson] - Whether the prompt expects JSON formatting.
    */
   async generate(prompt, requirement, userId = null, endpoint = '/api/quiz/complete', expectJson = false, imagePart = null) {
-    // If API key is missing, throw error immediately to trigger the fallback handler
-    if (!this.apiKey || !this.model) {
+    const model = this.getModel();
+    if (!model) {
       throw new Error("Gemini API key is unconfigured");
     }
 
@@ -33,7 +35,7 @@ class GeminiService {
       // 1. Calculate input tokens
       let inputTokens = 0;
       try {
-        const inputCount = await this.model.countTokens(prompt);
+        const inputCount = await model.countTokens(prompt);
         inputTokens = inputCount.totalTokens;
       } catch (err) {
         // Fallback estimation: ~4 chars per token
@@ -47,7 +49,7 @@ class GeminiService {
       }
 
       const contentParts = imagePart ? [prompt, imagePart] : prompt;
-      const result = await this.model.generateContent(contentParts, options);
+      const result = await model.generateContent(contentParts, options);
       const response = await result.response;
       const responseText = response.text();
 

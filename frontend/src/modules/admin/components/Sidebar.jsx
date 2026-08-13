@@ -44,6 +44,7 @@ const menuGroups = [
       { path: "/admin", icon: FiLayout, label: "Dashboard" },
       { path: "/admin/analytics", icon: FiTrendingUp, label: "Analytics" },
       { path: "/admin/recommendation-analytics", icon: FiZap, label: "AI Recommendations" },
+      { path: "/admin/journey-analytics", icon: FiTrendingUp, label: "User Journeys" },
       { path: "/admin/activity", icon: FiActivity, label: "System Logs" },
     ],
   },

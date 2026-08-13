@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import {
   FiUser, FiPackage, FiMapPin, FiSettings, FiLogOut,
   FiChevronRight, FiGift, FiCopy, FiCheck, FiHeart,
-  FiShield, FiPhone, FiFileText, FiAlertCircle, FiCompass
+  FiShield, FiPhone, FiFileText, FiAlertCircle, FiCompass, FiTruck
 } from 'react-icons/fi';
 import { Link, useNavigate } from 'react-router-dom';
 import { useUser } from '../data/UserContext';
@@ -126,15 +126,16 @@ const Profile = () => {
                   <Icon size={16} className="text-[#189D91]" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-bold text-slate-800 group-hover:text-[#189D91] transition-colors leading-none">{item.title}</p>
+                  <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                    <p className="text-sm font-bold text-slate-800 group-hover:text-[#189D91] transition-colors leading-tight">{item.title}</p>
                     {item.badge && (
-                      <span className="px-2 py-0.5 bg-[#189D91] text-white text-[9px] font-black rounded-md uppercase tracking-wider">
+                      <span className="inline-flex items-center gap-1 shrink-0 whitespace-nowrap px-2 py-0.5 bg-[#189D91] text-white text-[9px] font-black rounded-md uppercase tracking-wider leading-none">
+                        {item.badge.includes('AI') && <LuSparkles className="w-2.5 h-2.5 text-amber-300" />}
                         {item.badge}
                       </span>
                     )}
                   </div>
-                  <p className="text-[10px] text-gray-400 font-medium mt-0.5 leading-none">{item.subtitle}</p>
+                  <p className="text-[10px] text-gray-400 font-medium mt-1 leading-normal">{item.subtitle}</p>
                 </div>
                 <FiChevronRight size={14} className="text-gray-300 group-hover:text-[#189D91] transition-colors shrink-0" />
               </div>

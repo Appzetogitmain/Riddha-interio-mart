@@ -43,7 +43,7 @@ const RecommendationCard = ({ item, onExplain, onTrack }) => {
       className="group relative bg-white border border-gray-100 rounded-2xl p-3 shadow-xs hover:shadow-xl transition-all duration-300 flex flex-col justify-between hover:-translate-y-1 cursor-pointer"
     >
       {/* AI Recommendation Badge */}
-      <div className="absolute top-4 left-4 z-10 flex items-center gap-1.5 px-2.5 py-1 bg-emerald-900/90 backdrop-blur-md text-emerald-300 text-[11px] font-medium rounded-full shadow-sm">
+      <div className="absolute top-4 left-4 z-10 flex items-center gap-1.5 px-3 py-1 bg-emerald-950 text-white text-[11px] font-bold rounded-full shadow-md border border-emerald-700/50">
         <Sparkles className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
         <span className="truncate max-w-[140px]">{reason}</span>
       </div>
@@ -51,9 +51,9 @@ const RecommendationCard = ({ item, onExplain, onTrack }) => {
       {/* Wishlist Button */}
       <button
         onClick={handleWishlist}
-        className="absolute top-4 right-4 z-10 p-2 bg-white/80 hover:bg-white backdrop-blur-md rounded-full shadow-sm transition-transform active:scale-95"
+        className="absolute top-4 right-4 z-10 p-2 bg-white/90 hover:bg-white backdrop-blur-md rounded-full shadow-md transition-transform active:scale-95 border border-gray-200"
       >
-        <Heart className={`w-4 h-4 ${isWishlisted ? 'fill-red-500 text-red-500' : 'text-gray-600'}`} />
+        <Heart className={`w-4 h-4 ${isWishlisted ? 'fill-red-500 text-red-500' : 'text-gray-700'}`} />
       </button>
 
       {/* Product Image */}
@@ -66,9 +66,9 @@ const RecommendationCard = ({ item, onExplain, onTrack }) => {
         {onExplain && (
           <button
             onClick={(e) => { e.stopPropagation(); onExplain(item); }}
-            className="absolute bottom-2 right-2 px-2 py-1 bg-black/60 hover:bg-black/80 backdrop-blur-xs text-white text-[10px] rounded-lg flex items-center gap-1 transition-opacity opacity-0 group-hover:opacity-100"
+            className="absolute bottom-2 right-2 px-2.5 py-1 bg-gray-950/90 hover:bg-black text-white text-[10px] font-bold rounded-lg flex items-center gap-1.5 shadow-md border border-gray-700"
           >
-            <Info className="w-3 h-3 text-emerald-400" />
+            <Info className="w-3.5 h-3.5 text-emerald-400" />
             <span>Why Recommended?</span>
           </button>
         )}
@@ -77,31 +77,31 @@ const RecommendationCard = ({ item, onExplain, onTrack }) => {
       {/* Card Info */}
       <div className="flex-1 flex flex-col justify-between">
         <div>
-          <span className="text-[11px] uppercase tracking-wider text-emerald-700 font-semibold">{category}</span>
-          <Link to={`/products/${productId}`} className="block font-medium text-gray-900 text-sm hover:text-emerald-700 line-clamp-1 mt-0.5">
+          <span className="text-[11px] uppercase tracking-wider text-emerald-800 font-extrabold">{category}</span>
+          <Link to={`/products/${productId}`} className="block font-bold text-gray-900 text-sm hover:text-emerald-700 line-clamp-1 mt-0.5">
             {name}
           </Link>
           
           <div className="flex items-center gap-1.5 mt-1.5">
-            <div className="flex items-center text-amber-400">
+            <div className="flex items-center text-amber-500">
               <Star className="w-3.5 h-3.5 fill-amber-400" />
-              <span className="text-xs font-semibold text-gray-800 ml-1">{rating}</span>
+              <span className="text-xs font-bold text-gray-900 ml-1">{rating}</span>
             </div>
-            <span className="text-xs text-gray-400">({reviews})</span>
+            <span className="text-xs font-medium text-gray-500">({reviews})</span>
           </div>
         </div>
 
         {/* Price & Cart */}
-        <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-50">
+        <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
           <div>
-            <span className="text-base font-bold text-gray-900">₹{price.toLocaleString()}</span>
+            <span className="text-base font-extrabold text-gray-900">₹{price.toLocaleString()}</span>
             {discountPrice && (
-              <span className="text-xs text-gray-400 line-through ml-1.5">₹{discountPrice.toLocaleString()}</span>
+              <span className="text-xs font-medium text-gray-400 line-through ml-1.5">₹{discountPrice.toLocaleString()}</span>
             )}
           </div>
           <button
             onClick={handleAddToCart}
-            className="p-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl shadow-xs transition-colors flex items-center justify-center active:scale-95"
+            className="p-2 bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl shadow-xs transition-colors flex items-center justify-center active:scale-95"
             title="Add to Cart"
           >
             <ShoppingBag className="w-4 h-4" />

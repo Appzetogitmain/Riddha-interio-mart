@@ -6,6 +6,7 @@ import { useUser } from '../data/UserContext';
 import { FiArrowRight, FiShoppingBag, FiTrash2, FiClock, FiPlus, FiMinus, FiSearch, FiX, FiArrowLeft, FiStar } from 'react-icons/fi';
 import Button from '../../../shared/components/Button';
 import { getDeliveryEstimate } from '../../../shared/utils/delivery';
+import SmartGuide from '../components/SmartGuide';
 
 const CartPage = () => {
   const { cart, updateQuantity, removeFromCart, pricingBreakdown } = useCart();
@@ -147,6 +148,9 @@ const CartPage = () => {
 
           {/* Right Column: Order Summary */}
           <div className="col-span-5 pl-8">
+            {/* Journey guidance at the decision point (Req #17) */}
+            <SmartGuide currentPage="/cart" includeUpsell className="mb-4" />
+
             <div className="border border-gray-200 rounded-[20px] p-8 bg-white shadow-sm">
               <h2 className="text-xl font-bold text-gray-900 mb-6">Order Summary</h2>
               

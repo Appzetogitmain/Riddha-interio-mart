@@ -201,6 +201,8 @@ app.use('/api/tracking', trackingRoutes);
 const contentGeneratorRoutes = require('./routes/contentGeneratorRoutes');
 app.use('/api/content', contentGeneratorRoutes);
 app.use('/api/assistant', assistantRoutes);
+const journeyRoutes = require('./routes/journeyRoutes');
+app.use('/api/journey', journeyRoutes);
 
 app.get('/', (req, res) => {
   res.json({ message: 'Welcome to Riddha Mart API' });

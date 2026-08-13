@@ -24,6 +24,7 @@ export const permissionsMap = {
   menuMapping: {
     'Dashboard': 'dashboard',
     'Analytics': 'analytics',
+    'AI Recommendations': 'analytics',
     'Order Tracking': 'orders',
     'Delivery Management': 'delivery',
     'Assign Delivery': 'delivery',

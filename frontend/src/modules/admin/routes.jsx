@@ -60,6 +60,7 @@ const ManageTerms = React.lazy(() => import('./pages/ManageTerms'));
 const SupportTicketsPage = React.lazy(() => import('./pages/SupportTicketsPage'));
 const BOQSourcingRequestsPage = React.lazy(() => import('./pages/BOQSourcingRequestsPage'));
 const AdminCampaignBuilderPage = React.lazy(() => import('./pages/AdminCampaignBuilderPage'));
+const AdminRecommendationAnalytics = React.lazy(() => import('./pages/AdminRecommendationAnalytics'));
 import { RBACProvider } from './data/RBACContext';
 
 const AdminRoutes = () => {
@@ -78,6 +79,7 @@ const AdminRoutes = () => {
           {/* Analytics & Activity */}
           <Route element={<ProtectedRoute permission="analytics" />}>
             <Route path="/analytics" element={<AnalyticsPage />} />
+            <Route path="/recommendation-analytics" element={<AdminRecommendationAnalytics />} />
             <Route path="/activity" element={<ActivityPage />} />
           </Route>
 

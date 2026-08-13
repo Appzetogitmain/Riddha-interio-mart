@@ -44,6 +44,7 @@ const BundlesPage = React.lazy(() => import('./pages/BundlesPage'));;
 const BundleDetailPage = React.lazy(() => import('./pages/BundleDetailPage'));;
 const DesignerQuizPage = React.lazy(() => import('./pages/DesignerQuizPage'));
 const QuizResultsPage = React.lazy(() => import('./pages/QuizResultsPage'));
+const RecommendationPage = React.lazy(() => import('./pages/RecommendationPage'));
 
 import { Navigate } from 'react-router-dom';
 import { useUser } from './data/UserContext';
@@ -139,6 +140,7 @@ const UserRoutes = () => {
       <Route path="/ai-mood-board" element={<MoodBoardGeneratorPage />} />
       <Route path="/bundles" element={<BundlesPage />} />
       <Route path="/bundles/:id" element={<BundleDetailPage />} />
+      <Route path="/recommendations" element={<RecommendationPage />} />
     </Routes>
   );
 };

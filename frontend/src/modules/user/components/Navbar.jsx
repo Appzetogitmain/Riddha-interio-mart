@@ -269,6 +269,18 @@ const Navbar = () => {
                 </div>
               </Link>
 
+              {/* AI Recommendations */}
+              <Link
+                to="/recommendations"
+                className="flex items-center gap-2 group border-l border-gray-100 pl-4 lg:pl-6 text-left"
+              >
+                <FiZap className="text-gray-500 w-5 h-5 group-hover:text-[#004D40] transition-colors" />
+                <div className="flex flex-col text-left">
+                  <span className="text-[11px] font-bold text-gray-700 leading-none group-hover:text-[#004D40] transition-colors font-sans">AI Recommendations</span>
+                  <span className="text-[10px] font-bold text-[#004D40] mt-0.5 font-sans">For You</span>
+                </div>
+              </Link>
+
               {/* Project Brief */}
               <Link
                 to="/client-brief"
@@ -575,6 +587,7 @@ const Navbar = () => {
                     <SidebarLink to="/client-brief" icon={FiFileText} label="AI Project Brief" onClick={closeMobile} />
                     <SidebarLink to="/products" icon={FiGrid} label="Shop Products" onClick={closeMobile} />
                     <SidebarLink to="/bundles" icon={FiZap} label="Smart Bundles" onClick={closeMobile} />
+                    <SidebarLink to="/recommendations" icon={FiZap} label="AI Recommendations Feed" onClick={closeMobile} />
                     <SidebarLink to="/designer-quiz" icon={FiCompass} label="Designer Quiz" onClick={closeMobile} />
                     <SidebarLink to="/referral-rewards" icon={LuWallet} label="Riddha Wallet" onClick={closeMobile} />
                     <SidebarLink to="/orders" icon={FiShoppingBag} label="My Orders" onClick={closeMobile} />

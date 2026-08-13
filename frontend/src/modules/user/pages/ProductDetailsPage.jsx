@@ -12,6 +12,7 @@ import { FaStar, FaWhatsapp, FaFacebook, FaTwitter } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 import ReviewSection from '../components/ReviewSection';
 import RecommendationCarousel from '../components/RecommendationCarousel';
+import ProductRecommendations from '../components/ProductRecommendations';
 import CompleteTheRoomWidget from '../components/CompleteTheRoomWidget';
 import BundleCard from '../components/BundleCard';
 import { useWishlist } from '../data/WishlistContext';
@@ -617,6 +618,7 @@ const ProductDetailsPage = () => {
       </div>
 
       {/* ── AI-based recommendations ── */}
+      <ProductRecommendations productId={product._id || product.id} />
       <RecommendationCarousel productId={product._id || product.id} type="similar" title="Similar Products" limit={6} />
       <RecommendationCarousel productId={product._id || product.id} type="cross-sell" title="Frequently Bought Together" limit={4} />
 

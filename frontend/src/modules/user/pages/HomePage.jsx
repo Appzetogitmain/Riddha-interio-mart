@@ -142,6 +142,8 @@ const SectionGrid = ({ products, loading, containerVariants }) => {
   );
 };
 
+import RecommendationFeed from '../components/RecommendationFeed';
+
 const HomePage = () => {
   const [products, setProducts] = useState([]);
   const [advertisedProducts, setAdvertisedProducts] = useState([]);
@@ -270,6 +272,9 @@ const HomePage = () => {
 
 
 
+
+      {/* AI Recommendation Engine Feed */}
+      <RecommendationFeed />
 
       {/* Trust & Help Bar (Now below ShopByCategory) */}
       <TrustBar />

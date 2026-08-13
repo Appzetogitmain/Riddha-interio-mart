@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FiArrowLeft, FiCamera, FiShoppingCart, FiSearch, FiChevronDown, FiHeart, FiStar } from 'react-icons/fi';
 import api from '../../../shared/utils/api';
 import { useCart } from '../data/CartContext';
+import SearchRefinement from '../components/SearchRefinement';
 
 const SearchProductsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -107,6 +108,8 @@ const SearchProductsPage = () => {
 
       {/* Main Content */}
       <main className="max-w-3xl mx-auto px-4 py-4">
+        <SearchRefinement query={query} />
+
         <div className="mb-4">
           <p className="text-sm font-bold text-gray-400">
             {filteredProducts.length} results found

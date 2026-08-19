@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '../data/CartContext';
 import { useUser } from '../data/UserContext';
@@ -43,8 +43,8 @@ const CartPage = () => {
         </div>
         <h2 className="text-xl font-bold text-slate-800 mb-2">Your cart is empty</h2>
         <p className="text-gray-400 mb-8 text-xs font-semibold">Add some beautiful pieces to your collection!</p>
-        <button 
-          onClick={() => navigate('/products')} 
+        <button
+          onClick={() => navigate('/products')}
           className="px-10 py-3.5 bg-[#189D91] hover:bg-[#14847a] text-white font-bold rounded-xl text-xs uppercase tracking-wider transition-all duration-300 shadow-md shadow-[#189D91]/15 hover:shadow-lg active:scale-[0.98]"
         >
           START SHOPPING
@@ -59,7 +59,7 @@ const CartPage = () => {
       <div className="hidden md:block max-w-6xl mx-auto px-6 py-8">
         {/* Breadcrumbs */}
         <div className="text-[13px] text-gray-500 font-medium mb-8">
-          Home <span className="mx-2">&gt;</span> Cart <span className="mx-2">&gt;</span> <span className="text-gray-900">Checkout</span>
+          <Link to="/" className="hover:text-[#189D91] hover:underline transition-colors cursor-pointer">Home</Link> <span className="mx-2">&gt;</span> Cart <span className="mx-2">&gt;</span> <span className="text-gray-900">Checkout</span>
         </div>
 
         {/* Stepper */}
@@ -85,7 +85,7 @@ const CartPage = () => {
               <h2 className="text-xl font-bold text-gray-900">Cart Items</h2>
               <button onClick={() => navigate('/products')} className="text-sm font-bold text-[#189D91]">+ Add More Items</button>
             </div>
-            
+
             <div className="space-y-4">
               <AnimatePresence>
                 {cart.map((item) => (
@@ -98,15 +98,15 @@ const CartPage = () => {
                     <div className="absolute right-4 top-4 text-[#189D91]">
                       <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
                     </div>
-                    
+
                     <div className="w-24 h-24 bg-gray-50 rounded-lg overflow-hidden flex-shrink-0 border border-gray-100">
                       <img src={item.images?.[0] || item.image} alt={item.name} className="w-full h-full object-cover" />
                     </div>
                     <div className="flex-1 flex flex-col justify-between pr-6">
                       <div className="flex justify-between items-start">
                         <div>
-                           <h3 className="font-bold text-gray-900 text-lg">{item.name}</h3>
-                           <p className="text-sm font-semibold text-gray-500 mt-1">₹{item.price?.toLocaleString('en-IN')}</p>
+                          <h3 className="font-bold text-gray-900 text-lg">{item.name}</h3>
+                          <p className="text-sm font-semibold text-gray-500 mt-1">₹{item.price?.toLocaleString('en-IN')}</p>
                         </div>
                         <button
                           onClick={() => removeFromCart(item._id || item.id)}
@@ -115,7 +115,7 @@ const CartPage = () => {
                           <FiX size={22} />
                         </button>
                       </div>
-                      
+
                       <div className="flex items-center gap-4 mt-4">
                         <span className="text-sm font-medium text-gray-500">Qty:</span>
                         <div className="flex items-center gap-3">
@@ -153,7 +153,7 @@ const CartPage = () => {
 
             <div className="border border-gray-200 rounded-[20px] p-8 bg-white shadow-sm">
               <h2 className="text-xl font-bold text-gray-900 mb-6">Order Summary</h2>
-              
+
               {/* Mini Cart Items (like screenshot) */}
               <div className="space-y-5 mb-6 border-b border-gray-100 pb-6">
                 {cart.map((item) => (
@@ -251,7 +251,7 @@ const CartPage = () => {
               >
                 <div className="flex flex-col gap-4">
                   <div className="flex gap-4 relative">
-                    <button 
+                    <button
                       onClick={() => removeFromCart(item._id || item.id)}
                       className="absolute top-0 right-0 text-gray-400 hover:text-gray-600 p-1 z-10 bg-white rounded-full"
                     >
@@ -268,7 +268,7 @@ const CartPage = () => {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center justify-between mt-1">
                     <span className="text-[15px] font-semibold text-gray-900">Quantity</span>
                     <div className="flex items-center bg-gray-50 rounded-[10px] p-0.5 border border-gray-100/80">
@@ -310,7 +310,7 @@ const CartPage = () => {
               {deliveryCharges === 0 ? 'FREE' : `₹${deliveryCharges?.toLocaleString('en-IN')}`}
             </span>
           </div>
-          
+
           {discountOnMRP > 0 && (
             <div className="flex justify-between items-center text-[15px] font-medium text-emerald-600">
               <span>Discount</span>

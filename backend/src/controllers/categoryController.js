@@ -5,7 +5,7 @@ exports.getCategories = async (req, res, next) => {
   try {
     const cacheService = require('../services/cacheService');
     const cacheKey = 'categories:all';
-    
+
     let categories = cacheService.get(cacheKey);
     let cached = true;
 
@@ -24,10 +24,18 @@ exports.getCategories = async (req, res, next) => {
 // @desc    Get category by name (slug)
 exports.getCategoryBySlug = async (req, res, next) => {
   try {
-    const slug = req.params.slug.replace(/-/g, ' ');
+    const rawSlug = req.params.slug;
+    const slug = rawSlug.replace(/-/g, ' ');
+
     // Case insensitive match
-    const category = await Category.findOne({ name: { $regex: new RegExp(`^${slug}$`, 'i') } });
-    
+    let category = await Category.findOne({ name: { $regex: new RegExp(`^${slug}$`, 'i') } });
+
+    // Fallback: If not found, do a robust space-ignoring match (handles stale frontend caches where 'modularkitchen' is sent instead of 'modular-kitchen')
+    if (!category) {
+      const allCats = await Category.find();
+      category = allCats.find(c => c.name.replace(/\s+/g, '').toLowerCase() === rawSlug.replace(/[-]/g, '').toLowerCase());
+    }
+
     if (!category) return res.status(404).json({ success: false, error: 'Category not found' });
     res.status(200).json({ success: true, data: category });
   } catch (err) {
@@ -123,7 +131,7 @@ exports.deleteCategory = async (req, res, next) => {
   try {
     const Product = require('../models/Product');
     const Catalog = require('../models/Catalog');
-    
+
     const category = await Category.findById(req.params.id);
     if (!category) return res.status(404).json({ success: false, error: 'Category not found' });
 

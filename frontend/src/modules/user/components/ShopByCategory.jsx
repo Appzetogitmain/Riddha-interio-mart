@@ -21,10 +21,10 @@ const ShopByCategory = () => {
         // Filter to categories that have a valid http image, or just take all
         const validCategories = response.data.data.filter(c => c.image && c.image.startsWith('http'));
         // If not enough with http images, fallback to the rest
-        const displayCategories = validCategories.length >= 6 
-          ? validCategories 
+        const displayCategories = validCategories.length >= 6
+          ? validCategories
           : response.data.data;
-        
+
         setCategories(displayCategories.slice(0, 8)); // Display up to 8
       } catch (err) {
         console.error('Failed to fetch categories:', err);
@@ -51,20 +51,20 @@ const ShopByCategory = () => {
         {/* 3-column Grid on mobile, wraps into rows */}
         <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-4">
           {categories.slice(0, 6).map((cat, idx) => (
-            <Link 
-              key={idx} 
+            <Link
+              key={idx}
               to={`/category/${getCategorySlug(cat.name)}`}
               className="group flex flex-col items-center"
             >
               <div className="relative w-full aspect-square rounded-xl md:rounded-2xl overflow-hidden mb-1.5 md:mb-3 shadow-sm transition-all duration-300 group-hover:shadow-md group-hover:-translate-y-1">
-                <img 
-                  src={cat.image || 'https://via.placeholder.com/400x400?text=No+Image'} 
+                <img
+                  src={cat.image || 'https://via.placeholder.com/400x400?text=No+Image'}
                   alt={cat.name}
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
-              <h3 className="text-[10px] md:text-sm font-bold text-gray-700 group-hover:text-[#189D91] transition-colors leading-tight text-center">
+              <h3 className="text-[10px] md:text-sm font-medium text-gray-600 group-hover:text-[#189D91] transition-colors leading-tight text-center">
                 {cat.name}
               </h3>
             </Link>

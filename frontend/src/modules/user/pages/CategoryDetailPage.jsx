@@ -11,7 +11,7 @@ const CategoryDetailPage = () => {
   const [searchParams] = useSearchParams();
   const subFilter = searchParams.get('sub');
   const subSubFilter = searchParams.get('subsub');
-  
+
   const [category, setCategory] = useState(null);
   const [allCategories, setAllCategories] = useState([]);
   const [products, setProducts] = useState([]);
@@ -111,7 +111,7 @@ const CategoryDetailPage = () => {
 
           {/* Main Content Area */}
           <main className="flex-1 w-full order-2">
-            
+
             {/* Horizontal Sub-subcategories (Small Circular Images) at Top */}
             {subFilter && (() => {
               const activeSub = category.subcategories?.find(s => s.name.toLowerCase() === subFilter.toLowerCase());
@@ -125,7 +125,7 @@ const CategoryDetailPage = () => {
                       >
                         All {activeSub.name}
                       </Link>
-                      
+
                       {activeSub.subsubcategories.map(ss => {
                         const isSubSubActive = subSubFilter && ss.name.toLowerCase() === subSubFilter.toLowerCase();
                         return (
@@ -214,7 +214,7 @@ const CategoryDetailPage = () => {
             <aside className="w-full lg:w-32 xl:w-40 shrink-0 order-1 mb-6 lg:mb-0">
               <div className="lg:sticky lg:top-24">
                 <h3 className="text-[11px] font-semibold uppercase tracking-wider text-deep-espresso/50 mb-4 border-b border-soft-oatmeal pb-2">Collections</h3>
-                <div className="flex flex-row lg:flex-col overflow-x-auto lg:overflow-visible no-scrollbar gap-4 lg:gap-6 pb-2 lg:pb-0">
+                <div className="flex flex-row lg:flex-col overflow-x-auto lg:overflow-x-hidden lg:overflow-y-auto custom-scrollbar lg:max-h-[calc(100vh-140px)] gap-4 lg:gap-6 pb-2 lg:pb-4 lg:pr-2">
                   {category.subcategories.map(sub => {
                     const isSubActive = subFilter && sub.name.toLowerCase() === subFilter.toLowerCase();
                     return (

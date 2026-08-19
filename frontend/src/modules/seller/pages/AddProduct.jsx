@@ -108,6 +108,47 @@ const AddProduct = () => {
     }
   }, [catalogId, id]);
 
+  // Automatically resolve Subcategory & Sub-subcategory IDs into their names
+  useEffect(() => {
+    if (categories.length > 0 && formData.category && (formData.subcategory || formData.subsubcategory)) {
+      setFormData((prev) => {
+        let changed = false;
+        let newSub = prev.subcategory;
+        let newSubSub = prev.subsubcategory;
+
+        if (newSub && newSub.length === 24) {
+          const cat = categories.find((c) => c.name === prev.category || c._id === prev.category);
+          if (cat && cat.subcategories) {
+            const sub = cat.subcategories.find((s) => s._id === newSub);
+            if (sub) {
+              newSub = sub.name;
+              changed = true;
+            }
+          }
+        }
+
+        if (newSubSub && newSubSub.length === 24) {
+          const cat = categories.find((c) => c.name === prev.category || c._id === prev.category);
+          if (cat && cat.subcategories) {
+            const sub = cat.subcategories.find((s) => s._id === prev.subcategory || s.name === prev.subcategory);
+            if (sub && sub.subsubcategories) {
+              const subsub = sub.subsubcategories.find((ss) => ss._id === newSubSub);
+              if (subsub) {
+                newSubSub = subsub.name;
+                changed = true;
+              }
+            }
+          }
+        }
+
+        if (changed) {
+          return { ...prev, subcategory: newSub, subsubcategory: newSubSub };
+        }
+        return prev;
+      });
+    }
+  }, [categories, formData.category, formData.subcategory, formData.subsubcategory]);
+
   const fetchProductForEdit = async () => {
     try {
       setLoading(true);
@@ -132,7 +173,7 @@ const AddProduct = () => {
         unit: item.unit || "piece",
         unitValue: item.unitValue || "1",
         countInStock: item.countInStock || "",
-        images: item.images || (item.image ? [item.image] : []), 
+        images: item.images || (item.image ? [item.image] : []),
         videoUrl: item.videoUrl || "",
         gstRate: item.gstRate || "",
         b2bPrice: item.b2bPrice || "",
@@ -295,9 +336,9 @@ const AddProduct = () => {
 
   const fc = (name) => {
     const hasErr = touched[name] && fieldErrors[name];
-    const isOk  = touched[name] && !fieldErrors[name] && (formData[name] !== '' && formData[name] != null);
+    const isOk = touched[name] && !fieldErrors[name] && (formData[name] !== '' && formData[name] != null);
     if (hasErr) return 'bg-red-50 ring-2 ring-red-300/50 focus:ring-red-300/50';
-    if (isOk)   return 'bg-emerald-50/50 ring-1 ring-emerald-200 focus:ring-emerald-200/50';
+    if (isOk) return 'bg-emerald-50/50 ring-1 ring-emerald-200 focus:ring-emerald-200/50';
     return 'bg-slate-50 focus:ring-2 focus:ring-seller-primary/10';
   };
 
@@ -352,7 +393,7 @@ const AddProduct = () => {
 
       if (uploadRes.success && uploadRes.images && uploadRes.images.length > 0) {
         const cloudinaryUrl = uploadRes.images[0];
-        
+
         // Remove the original base64 file from imgFiles so it isn't uploaded again on submit
         if (originalSrc.startsWith("data:")) {
           const base64IndexBefore = formData.images
@@ -446,12 +487,12 @@ const AddProduct = () => {
         if (result && result.success && result.base64) {
           const prefix = result.mimeType ? `data:${result.mimeType};base64,` : 'data:image/jpeg;base64,';
           const dataUrl = result.base64.startsWith('data:') ? result.base64 : `${prefix}${result.base64}`;
-          
+
           // Convert base64 to File object
           const response = await fetch(dataUrl);
           const blob = await response.blob();
           const file = new File([blob], result.fileName || `camera_${Date.now()}.jpg`, { type: result.mimeType || 'image/jpeg' });
-          
+
           setImgFiles(prev => [...prev, file]);
           setFormData(prev => ({ ...prev, images: [...prev.images, dataUrl] }));
           return;
@@ -460,7 +501,7 @@ const AddProduct = () => {
         console.error("Flutter openCamera handler error:", err);
       }
     }
-    
+
     // 2. Fallback to HTML5 capture input
     if (cameraInputRef.current) {
       cameraInputRef.current.click();
@@ -470,7 +511,7 @@ const AddProduct = () => {
   const handleCameraFileChange = (e) => {
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
-    
+
     if (formData.images.length >= 5) {
       setError("Max 5 images allowed");
       return;
@@ -509,8 +550,8 @@ const AddProduct = () => {
       console.error(err);
       setError(
         err.response?.data?.error ||
-          err.message ||
-          "Failed to auto-add products",
+        err.message ||
+        "Failed to auto-add products",
       );
     } finally {
       setIsSubmitting(false);
@@ -854,7 +895,7 @@ const AddProduct = () => {
                               disabled={isGeneratingHSN}
                               className={`text-[9px] font-black uppercase tracking-wider flex items-center gap-1 px-2 py-0.5 rounded-full ${isGeneratingHSN ? 'bg-slate-100 text-slate-400' : 'bg-seller-primary/10 text-seller-primary hover:bg-seller-primary hover:text-white transition-colors'}`}
                             >
-                               {isGeneratingHSN ? 'Generating...' : 'Auto Generate ✨'}
+                              {isGeneratingHSN ? 'Generating...' : 'Auto Generate ✨'}
                             </button>
                           </div>
                         </div>
@@ -869,13 +910,12 @@ const AddProduct = () => {
                             handleFieldChange('hsnCode', val);
                           }}
                           onBlur={() => handleBlur('hsnCode')}
-                          className={`w-full px-6 py-4 rounded-2xl font-semibold text-sm transition-all border ${
-                            formData.hsnCode.length === 0
+                          className={`w-full px-6 py-4 rounded-2xl font-semibold text-sm transition-all border ${formData.hsnCode.length === 0
                               ? `${touched['hsnCode'] ? 'bg-red-50 border-red-200 ring-2 ring-red-300/40' : 'bg-slate-50 border-transparent focus:ring-2 focus:ring-seller-primary/10'} text-slate-900`
                               : /^\d{4}$|^\d{6}$|^\d{8}$/.test(formData.hsnCode)
                                 ? "bg-emerald-50 text-slate-900 border-emerald-200 ring-1 ring-emerald-200"
                                 : "bg-red-50 text-slate-900 border-red-200 ring-2 ring-red-300/40"
-                          } text-slate-900`}
+                            } text-slate-900`}
                         />
                         {touched['hsnCode'] && fieldErrors['hsnCode']
                           ? <p className="text-[10px] font-bold text-red-500 flex items-center gap-1 mt-1.5 ml-1"><X size={9} />{fieldErrors['hsnCode']}</p>
@@ -998,13 +1038,12 @@ const AddProduct = () => {
                                 handleBlur('category');
                               }, 150);
                             }}
-                            className={`w-full px-6 py-4 rounded-2xl border-none font-semibold text-sm transition-all ${
-                              formData.category
+                            className={`w-full px-6 py-4 rounded-2xl border-none font-semibold text-sm transition-all ${formData.category
                                 ? "bg-emerald-50/50 ring-1 ring-emerald-200 text-slate-900"
                                 : touched['category'] && fieldErrors['category']
                                   ? "bg-red-50 ring-2 ring-red-300/50 text-slate-900"
                                   : "bg-slate-50 text-slate-900 focus:ring-2 focus:ring-seller-primary/10"
-                            }`}
+                              }`}
                           />
                           {isCatOpen && (
                             <div className="absolute left-0 right-0 top-full mt-3 bg-white border border-slate-100 rounded-2xl shadow-2xl z-50 max-h-60 overflow-y-auto overflow-x-hidden p-2">
@@ -1187,7 +1226,7 @@ const AddProduct = () => {
                     formData={formData}
                     onApply={(data) => {
                       console.log("Seller page applying AI content:", data);
-                      
+
                       let matchedBrandId = "";
                       if (data.brandName) {
                         const matched = brands.find(
@@ -1201,23 +1240,23 @@ const AddProduct = () => {
                         }
                       }
 
-                       if (data.image && data.image.startsWith('data:')) {
-                         fetch(data.image)
-                           .then(res => res.blob())
-                           .then(blob => {
-                             const file = new File([blob], `ai_generated_${Date.now()}.jpg`, { type: 'image/jpeg' });
-                             setImgFiles(prev => [...prev, file]);
-                           })
-                           .catch(err => console.error("Failed to convert base64 image to File:", err));
-                       }
+                      if (data.image && data.image.startsWith('data:')) {
+                        fetch(data.image)
+                          .then(res => res.blob())
+                          .then(blob => {
+                            const file = new File([blob], `ai_generated_${Date.now()}.jpg`, { type: 'image/jpeg' });
+                            setImgFiles(prev => [...prev, file]);
+                          })
+                          .catch(err => console.error("Failed to convert base64 image to File:", err));
+                      }
 
-                       setFormData((prev) => ({
+                      setFormData((prev) => ({
                         ...prev,
                         description: data.description,
                         hsnCode: data.hsnCode,
                         sku: data.sku,
                         brand: matchedBrandId || prev.brand,
-                        dimensions: data.dimensions?.height && data.dimensions?.width 
+                        dimensions: data.dimensions?.height && data.dimensions?.width
                           ? `${data.dimensions.height} x ${data.dimensions.width} ${data.dimensions.unit || ''}`.trim()
                           : prev.dimensions,
                         thickness: data.dimensions?.thickness || prev.thickness,
@@ -1301,13 +1340,12 @@ const AddProduct = () => {
                           value={formData.discountPrice}
                           onChange={(e) => handleFieldChange('discountPrice', e.target.value)}
                           onBlur={() => handleBlur('discountPrice')}
-                          className={`w-full px-6 py-4 rounded-2xl border-none font-bold transition-all ${
-                            touched['discountPrice'] && fieldErrors['discountPrice']
+                          className={`w-full px-6 py-4 rounded-2xl border-none font-bold transition-all ${touched['discountPrice'] && fieldErrors['discountPrice']
                               ? 'bg-red-50 ring-2 ring-red-300/50 text-slate-900'
                               : touched['discountPrice'] && !fieldErrors['discountPrice'] && formData.discountPrice
                                 ? 'bg-emerald-50/50 ring-1 ring-emerald-200 text-emerald-700'
                                 : 'bg-slate-50 text-emerald-600 focus:ring-2 focus:ring-emerald-500/10'
-                          } placeholder:text-emerald-200`}
+                            } placeholder:text-emerald-200`}
                         />
                         {fieldErr('discountPrice')}
                         {!fieldErrors['discountPrice'] && formData.price && (
@@ -1638,11 +1676,10 @@ const AddProduct = () => {
                       <button
                         type="submit"
                         disabled={isSubmitting || success}
-                        className={`w-full py-5 rounded-[2rem] font-bold text-sm uppercase tracking-widest flex items-center justify-center gap-3 shadow-xl transition-all active:scale-95 ${
-                          success
+                        className={`w-full py-5 rounded-[2rem] font-bold text-sm uppercase tracking-widest flex items-center justify-center gap-3 shadow-xl transition-all active:scale-95 ${success
                             ? "bg-emerald-500 text-white"
                             : "bg-seller-primary text-white hover:bg-seller-dark shadow-seller-primary/20"
-                        }`}
+                          }`}
                       >
                         {isSubmitting ? (
                           <Clock size={18} className="animate-spin" />

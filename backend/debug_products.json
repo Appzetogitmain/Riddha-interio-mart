@@ -1,7 +1,10 @@
 {
-  "timestamp": "2026-08-13T10:28:34.361Z",
-  "query": {},
+  "timestamp": "2026-08-19T13:01:57.180Z",
+  "query": {
+    "category": "Modular Kitchen"
+  },
   "builtFilter": {
+    "category": "6a0daaed047bdee23fc767b7",
     "isApproved": true,
     "isActive": true,
     "seller": {
@@ -14,107 +17,25 @@
       "$ne": true
     }
   },
-  "resultCount": 10,
+  "resultCount": 2,
   "results": [
     {
       "_id": "6a7cb0d4391d4b105319b393",
       "name": "CAROUSEL",
       "category": {
         "_id": "6a0daaed047bdee23fc767b7",
-        "name": "ModularKitchen"
+        "name": "Modular Kitchen"
       },
       "subcategory": "6a4d7691a06cf368b84a7489",
       "subsubcategory": "6a4d7691a06cf368b84a748e"
     },
     {
-      "_id": "6a7c7ab5f9423d7fdd08b928",
-      "name": "flooring tiles",
+      "_id": "6a115739107b7b663108dd7c",
+      "name": "Test ModularKitchen Product 1",
       "category": {
-        "_id": "6a0d97bf804fbfd108773a6f",
-        "name": "Flooring"
-      },
-      "subcategory": "6a4d4f65a06cf368b84a7146",
-      "subsubcategory": "6a4d4f65a06cf368b84a7148"
-    },
-    {
-      "_id": "6a7c77bcf9423d7fdd08b78f",
-      "name": "Tiles",
-      "category": {
-        "_id": "6a0d97bf804fbfd108773a6f",
-        "name": "Flooring"
-      },
-      "subcategory": "6a4d4f65a06cf368b84a713f",
-      "subsubcategory": "6a4d4f65a06cf368b84a7140"
-    },
-    {
-      "_id": "6a7c242857735308abaf356b",
-      "name": "Tiles",
-      "category": {
-        "_id": "6a0d97bf804fbfd108773a6f",
-        "name": "Flooring"
-      },
-      "subcategory": "6a4d4f65a06cf368b84a713f",
-      "subsubcategory": "6a4d4f65a06cf368b84a7140"
-    },
-    {
-      "_id": "6a7c1e7757735308abaf2d26",
-      "name": "Marble look Tile",
-      "category": {
-        "_id": "6a0d97bf804fbfd108773a6f",
-        "name": "Flooring"
-      },
-      "subcategory": "6a4d4f65a06cf368b84a7150",
-      "subsubcategory": "6a4d4f65a06cf368b84a7151"
-    },
-    {
-      "_id": "6a7ab4eefbb213b03d0996ae",
-      "name": "Polycab Wire",
-      "category": {
-        "_id": "6a22be91614854ee3ba47f8c",
-        "name": "Electricals"
-      },
-      "subcategory": "6a4dfe86a06cf368b84a926a",
-      "subsubcategory": "6a4dfe86a06cf368b84a926d"
-    },
-    {
-      "_id": "6a759064fbb213b03d0956f1",
-      "name": "Soft Close Concealed Hinge 110° Full Overlay",
-      "category": {
-        "_id": "6a1544acd45bbef0c578fa3e",
-        "name": "Hardware"
-      },
-      "subcategory": "6a4d7e72a06cf368b84a7556",
-      "subsubcategory": "6a4d7e72a06cf368b84a7560"
-    },
-    {
-      "_id": "6a758b81fbb213b03d094d25",
-      "name": "Havells Life Line Plus HRFR",
-      "category": {
-        "_id": "6a22be91614854ee3ba47f8c",
-        "name": "Electricals"
-      },
-      "subcategory": "6a4dfe86a06cf368b84a926a",
-      "subsubcategory": "6a4dfe86a06cf368b84a926e"
-    },
-    {
-      "_id": "6a743b1ffbb213b03d092945",
-      "name": "Shoe Racks",
-      "category": {
-        "_id": "6a1544acd45bbef0c578fa3e",
-        "name": "Hardware"
-      },
-      "subcategory": "6a4d7e72a06cf368b84a7580",
-      "subsubcategory": "6a4d7e72a06cf368b84a7585"
-    },
-    {
-      "_id": "6a733f41fbb213b03d08f824",
-      "name": "HIKVISION",
-      "category": {
-        "_id": "6a4cfde1a06cf368b84a64c6",
-        "name": "Security & Automation"
-      },
-      "subcategory": "6a50d299fb87c84071cbb938",
-      "subsubcategory": "6a50d299fb87c84071cbb93a"
+        "_id": "6a0daaed047bdee23fc767b7",
+        "name": "Modular Kitchen"
+      }
     }
   ]
 }

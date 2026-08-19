@@ -57,10 +57,9 @@ const SidebarLink = ({ to, icon: Icon, label, onClick }) => (
     end={to === '/'}
     onClick={onClick}
     className={({ isActive }) =>
-      `flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group ${
-        isActive
-          ? 'bg-[#189D91]/10 text-[#189D91] border border-[#189D91]/15'
-          : 'text-gray-700 hover:bg-[#189D91]/5 hover:text-[#189D91] border border-transparent'
+      `flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group ${isActive
+        ? 'bg-[#189D91]/10 text-[#189D91] border border-[#189D91]/15'
+        : 'text-gray-700 hover:bg-[#189D91]/5 hover:text-[#189D91] border border-transparent'
       }`
     }
   >
@@ -185,15 +184,14 @@ const Navbar = () => {
 
   return (
     <>
-      <nav className={`transition-all duration-300 border-b relative z-50 md:bg-white ${
-        scrolled
-          ? 'bg-white shadow-md border-gray-200'
-          : 'bg-gradient-to-r from-[#189D91]/10 via-white to-[#EC008C]/10 border-gray-200 md:border-gray-100'
-      }`}>
+      <nav className={`transition-all duration-300 border-b relative z-50 md:bg-white ${scrolled
+        ? 'bg-white shadow-md border-gray-200'
+        : 'bg-gradient-to-r from-[#189D91]/10 via-white to-[#EC008C]/10 border-gray-200 md:border-gray-100'
+        }`}>
         <div className="max-w-[1700px] mx-auto px-4 lg:px-6">
           {/* Main Desktop Header Row */}
-          <div className="hidden md:flex items-center justify-between py-2.5 gap-4 lg:gap-6">
-            <div className="flex items-center gap-6 lg:gap-8 shrink-0">
+          <div className="hidden md:flex items-center justify-between py-2.5 gap-2 lg:gap-4">
+            <div className="flex items-center gap-3 lg:gap-5 shrink-0">
               <Link to="/" className="flex items-center lg:-my-4 relative z-10">
                 <img
                   src={TransparentLogo}
@@ -207,7 +205,7 @@ const Navbar = () => {
                 <FiMapPin className="text-[#004D40] w-5 h-5 shrink-0" />
                 <div className="flex flex-col">
                   <span className="text-[10px] font-medium text-gray-400 leading-none">Delivering to</span>
-                  <button 
+                  <button
                     onClick={handleOpenPincodeModal}
                     className="flex items-center gap-1 text-[11.5px] font-bold text-gray-800 mt-0.5 group"
                   >
@@ -217,7 +215,7 @@ const Navbar = () => {
               </div>
 
               {/* Delivery Time */}
-              <div className="flex items-center gap-2 text-gray-900 border-l border-gray-100 pl-4 lg:pl-6">
+              <div className="flex items-center gap-2 text-gray-900 border-l border-gray-100 pl-2 lg:pl-4">
                 <FiTruck className="text-[#004D40] w-5 h-5 shrink-0" />
                 <div className="flex flex-col">
                   <span className="text-[10px] font-medium text-gray-400 leading-none">Delivery in</span>
@@ -234,170 +232,165 @@ const Navbar = () => {
               </div>
             )}
 
-            {/* Actions on the far right of Row 1 */}
-            <div className="flex items-center gap-5 lg:gap-6 shrink-0">
+            {/* AI Tools & Services */}
+            <div className="flex items-center gap-1.5 lg:gap-2 lg:px-1 shrink overflow-x-auto custom-scrollbar pt-1 md:pb-1">
               {/* Become a Seller */}
-              <Link to="/seller/join" className="flex items-center gap-2 group">
-                <AiOutlineShop className="text-gray-500 w-5 h-5 group-hover:text-[#004D40] transition-colors" />
+              <Link to="/seller/join" className="flex items-center gap-1.5 group">
+                <AiOutlineShop className="text-gray-500 w-4 h-4 group-hover:text-[#004D40] transition-colors" />
                 <div className="flex flex-col text-left">
-                  <span className="text-[11px] font-bold text-gray-700 leading-none group-hover:text-[#004D40] transition-colors">Become a Seller</span>
-                  <span className="text-[10px] font-bold text-[#004D40] mt-0.5">Join Now</span>
+                  <span className="text-[10px] font-bold text-gray-700 leading-none group-hover:text-[#004D40] transition-colors">Become a Seller</span>
+                  <span className="text-[9px] font-bold text-[#004D40] mt-0.5">Join Now</span>
                 </div>
               </Link>
 
               {/* Bulk Order */}
               <button
                 onClick={() => setIsBulkModalOpen(true)}
-                className="flex items-center gap-2 group border-l border-gray-100 pl-4 lg:pl-6 text-left"
+                className="flex items-center gap-1.5 group border-l border-gray-100 pl-2 lg:pl-3 xl:pl-4 text-left"
               >
-                <FiFileText className="text-gray-500 w-5 h-5 group-hover:text-[#004D40] transition-colors" />
+                <FiFileText className="text-gray-500 w-4 h-4 group-hover:text-[#004D40] transition-colors" />
                 <div className="flex flex-col text-left">
-                  <span className="text-[11px] font-bold text-gray-700 leading-none group-hover:text-[#004D40] transition-colors">Bulk Order</span>
-                  <span className="text-[10px] font-bold text-[#004D40] mt-0.5">Best Price</span>
+                  <span className="text-[10px] font-bold text-gray-700 leading-none group-hover:text-[#004D40] transition-colors">Bulk Order</span>
+                  <span className="text-[9px] font-bold text-[#004D40] mt-0.5">Best Price</span>
                 </div>
               </button>
 
               {/* Design Quiz */}
               <Link
                 to="/designer-quiz"
-                className="flex items-center gap-2 group border-l border-gray-100 pl-4 lg:pl-6 text-left"
+                className="flex items-center gap-1.5 group border-l border-gray-100 pl-2 lg:pl-3 xl:pl-4 text-left"
               >
-                <FiCompass className="text-gray-500 w-5 h-5 group-hover:text-[#004D40] transition-colors" />
+                <FiCompass className="text-gray-500 w-4 h-4 group-hover:text-[#004D40] transition-colors" />
                 <div className="flex flex-col text-left">
-                  <span className="text-[11px] font-bold text-gray-700 leading-none group-hover:text-[#004D40] transition-colors font-sans">Design Quiz</span>
-                  <span className="text-[10px] font-bold text-[#004D40] mt-0.5 font-sans">AI Persona</span>
+                  <span className="text-[10px] font-bold text-gray-700 leading-none group-hover:text-[#004D40] transition-colors font-sans">Design Quiz</span>
+                  <span className="text-[9px] font-bold text-[#004D40] mt-0.5 font-sans">AI Persona</span>
                 </div>
               </Link>
 
               {/* AI Recommendations */}
               <Link
                 to="/recommendations"
-                className="flex items-center gap-2 group border-l border-gray-100 pl-4 lg:pl-6 text-left"
+                className="flex items-center gap-1.5 group border-l border-gray-100 pl-2 lg:pl-3 xl:pl-4 text-left"
               >
-                <FiZap className="text-gray-500 w-5 h-5 group-hover:text-[#004D40] transition-colors" />
+                <FiZap className="text-gray-500 w-4 h-4 group-hover:text-[#004D40] transition-colors" />
                 <div className="flex flex-col text-left">
-                  <span className="text-[11px] font-bold text-gray-700 leading-none group-hover:text-[#004D40] transition-colors font-sans">AI Recommendations</span>
-                  <span className="text-[10px] font-bold text-[#004D40] mt-0.5 font-sans">For You</span>
+                  <span className="text-[10px] font-bold text-gray-700 leading-none group-hover:text-[#004D40] transition-colors font-sans">AI Recommendations</span>
+                  <span className="text-[9px] font-bold text-[#004D40] mt-0.5 font-sans">For You</span>
                 </div>
               </Link>
 
               {/* Project Brief */}
               <Link
                 to="/client-brief"
-                className="flex items-center gap-2 group border-l border-gray-100 pl-4 lg:pl-6 text-left"
+                className="flex items-center gap-1.5 group border-l border-gray-100 pl-2 lg:pl-3 xl:pl-4 text-left"
               >
-                <FiFileText className="text-gray-500 w-5 h-5 group-hover:text-[#004D40] transition-colors" />
+                <FiFileText className="text-gray-500 w-4 h-4 group-hover:text-[#004D40] transition-colors" />
                 <div className="flex flex-col text-left">
-                  <span className="text-[11px] font-bold text-gray-700 leading-none group-hover:text-[#004D40] transition-colors font-sans">Project Brief</span>
-                  <span className="text-[10px] font-bold text-[#004D40] mt-0.5 font-sans">AI Generator</span>
+                  <span className="text-[10px] font-bold text-gray-700 leading-none group-hover:text-[#004D40] transition-colors font-sans">Project Brief</span>
+                  <span className="text-[9px] font-bold text-[#004D40] mt-0.5 font-sans">AI Generator</span>
                 </div>
               </Link>
 
               {/* Project Management Studio */}
               <Link
                 to="/projects"
-                className="flex items-center gap-2 group border-l border-gray-100 pl-4 lg:pl-6 text-left"
+                className="flex items-center gap-1.5 group border-l border-gray-100 pl-2 lg:pl-3 xl:pl-4 text-left"
               >
-                <LuLayoutDashboard className="text-gray-500 w-5 h-5 group-hover:text-[#004D40] transition-colors" />
+                <LuLayoutDashboard className="text-gray-500 w-4 h-4 group-hover:text-[#004D40] transition-colors" />
                 <div className="flex flex-col text-left">
-                  <span className="text-[11px] font-bold text-gray-700 leading-none group-hover:text-[#004D40] transition-colors font-sans">Projects</span>
-                  <span className="text-[10px] font-bold text-[#004D40] mt-0.5 font-sans">Dashboard</span>
+                  <span className="text-[10px] font-bold text-gray-700 leading-none group-hover:text-[#004D40] transition-colors font-sans">Projects</span>
+                  <span className="text-[9px] font-bold text-[#004D40] mt-0.5 font-sans">Dashboard</span>
                 </div>
               </Link>
 
               {/* Cost Estimator */}
               <Link
                 to="/cost-estimator"
-                className="flex items-center gap-2 group border-l border-gray-100 pl-4 lg:pl-6 text-left"
+                className="flex items-center gap-1.5 group border-l border-gray-100 pl-2 lg:pl-3 xl:pl-4 text-left"
               >
-                <LuCalculator className="text-gray-500 w-5 h-5 group-hover:text-[#004D40] transition-colors" />
+                <LuCalculator className="text-gray-500 w-4 h-4 group-hover:text-[#004D40] transition-colors" />
                 <div className="flex flex-col text-left">
-                  <span className="text-[11px] font-bold text-gray-700 leading-none group-hover:text-[#004D40] transition-colors font-sans">Cost Estimator</span>
-                  <span className="text-[10px] font-bold text-[#004D40] mt-0.5 font-sans">AI Calculation</span>
+                  <span className="text-[10px] font-bold text-gray-700 leading-none group-hover:text-[#004D40] transition-colors font-sans">Cost Estimator</span>
+                  <span className="text-[9px] font-bold text-[#004D40] mt-0.5 font-sans">AI Calculation</span>
                 </div>
               </Link>
 
               {/* BOQ Generator */}
               <Link
                 to="/boq-generator"
-                className="flex items-center gap-2 group border-l border-gray-100 pl-4 lg:pl-6 text-left"
+                className="flex items-center gap-1.5 group border-l border-gray-100 pl-2 lg:pl-3 xl:pl-4 text-left"
               >
-                <FiList className="text-gray-500 w-5 h-5 group-hover:text-[#004D40] transition-colors" />
+                <FiList className="text-gray-500 w-4 h-4 group-hover:text-[#004D40] transition-colors" />
                 <div className="flex flex-col text-left">
-                  <span className="text-[11px] font-bold text-gray-700 leading-none group-hover:text-[#004D40] transition-colors font-sans">BOQ Generator</span>
-                  <span className="text-[10px] font-bold text-[#004D40] mt-0.5 font-sans">Quantities & AI</span>
+                  <span className="text-[10px] font-bold text-gray-700 leading-none group-hover:text-[#004D40] transition-colors font-sans">BOQ Generator</span>
+                  <span className="text-[9px] font-bold text-[#004D40] mt-0.5 font-sans">Quantities & AI</span>
                 </div>
               </Link>
 
               {/* Quotation Generator */}
               <Link
                 to="/quotation-generator"
-                className="flex items-center gap-2 group border-l border-gray-100 pl-4 lg:pl-6 text-left"
+                className="flex items-center gap-1.5 group border-l border-gray-100 pl-2 lg:pl-3 xl:pl-4 text-left"
               >
-                <FiFileText className="text-gray-500 w-5 h-5 group-hover:text-[#004D40] transition-colors" />
+                <FiFileText className="text-gray-500 w-4 h-4 group-hover:text-[#004D40] transition-colors" />
                 <div className="flex flex-col text-left">
-                  <span className="text-[11px] font-bold text-gray-700 leading-none group-hover:text-[#004D40] transition-colors font-sans">Quotation Generator</span>
-                  <span className="text-[10px] font-bold text-[#004D40] mt-0.5 font-sans">GST & Quotes</span>
+                  <span className="text-[10px] font-bold text-gray-700 leading-none group-hover:text-[#004D40] transition-colors font-sans">Quotation Gen</span>
+                  <span className="text-[9px] font-bold text-[#004D40] mt-0.5 font-sans">GST & Quotes</span>
                 </div>
               </Link>
 
               {/* Order Tracking */}
               <Link
                 to="/orders/track"
-                className="flex items-center gap-2 group border-l border-gray-100 pl-4 lg:pl-6 text-left"
+                className="flex items-center gap-1.5 group border-l border-gray-100 pl-2 lg:pl-3 xl:pl-4 text-left"
               >
-                <FiTruck className="text-gray-500 w-5 h-5 group-hover:text-[#004D40] transition-colors" />
+                <FiTruck className="text-gray-500 w-4 h-4 group-hover:text-[#004D40] transition-colors" />
                 <div className="flex flex-col text-left">
-                  <span className="text-[11px] font-bold text-gray-700 leading-none group-hover:text-[#004D40] transition-colors font-sans">Order Tracking</span>
-                  <span className="text-[10px] font-bold text-[#004D40] mt-0.5 font-sans">Live GPS & AI</span>
+                  <span className="text-[10px] font-bold text-gray-700 leading-none group-hover:text-[#004D40] transition-colors font-sans">Order Tracking</span>
+                  <span className="text-[9px] font-bold text-[#004D40] mt-0.5 font-sans">Live GPS & AI</span>
                 </div>
               </Link>
 
-              <div className="h-8 w-[1px] bg-gray-100"></div>
+            </div>
 
-              {/* User Actions */}
-              <div className="flex items-center gap-4 lg:gap-5">
-                <Link to="/profile" className="flex items-center gap-2 group">
-                  <FiUser className="w-5 h-5 text-gray-500 group-hover:text-[#004D40] transition-colors" />
-                  <span className="text-[12px] font-bold text-gray-700 group-hover:text-[#004D40] transition-colors hidden xl:inline">
-                    {user ? (user.fullName?.split(' ')[0] || 'Profile') : 'Login'}
+            <div className="h-8 w-[1px] bg-gray-200 shrink-0 mx-1"></div>
+
+            {/* User Actions */}
+            <div className="flex items-center gap-3 lg:gap-4 shrink-0 pr-1">
+              <Link to="/profile" className="flex items-center group relative" title={user ? (user.fullName?.split(' ')[0] || 'Profile') : 'Login'}>
+                <FiUser className="w-5 h-5 text-gray-500 group-hover:text-[#004D40] transition-colors" />
+              </Link>
+
+              <Link to="/notifications" className="flex items-center group relative" title="Notifications">
+                <FiBell className="w-5 h-5 text-gray-500 group-hover:text-[#004D40] transition-colors" />
+                <span className="absolute -top-1.5 -right-1.5 bg-amber-500 text-deep-espresso text-[9px] font-black h-4 w-4 flex items-center justify-center rounded-full border-2 border-white">
+                  3
+                </span>
+              </Link>
+
+              <Link to="/wishlist" className="flex items-center group relative" title="Wishlist">
+                <FiHeart className="w-5 h-5 text-gray-500 group-hover:text-red-500 transition-colors" />
+                {wishlistCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[9px] font-bold h-4 w-4 flex items-center justify-center rounded-full border-2 border-white">
+                    {wishlistCount > 9 ? '9+' : wishlistCount}
                   </span>
-                </Link>
-
-                <Link to="/notifications" className="flex items-center gap-2 group relative">
-                  <FiBell className="w-5 h-5 text-gray-500 group-hover:text-[#004D40] transition-colors" />
-                  <span className="text-[12px] font-bold text-gray-700 group-hover:text-[#004D40] transition-colors hidden xl:inline">Notifications</span>
-                  <span className="absolute -top-1.5 -right-1.5 bg-amber-500 text-deep-espresso text-[9px] font-black h-4 w-4 flex items-center justify-center rounded-full border-2 border-white">
-                    3
-                  </span>
-                </Link>
-
-                <Link to="/wishlist" className="flex items-center gap-2 group relative">
-                  <FiHeart className="w-5 h-5 text-gray-500 group-hover:text-red-500 transition-colors" />
-                  <span className="text-[12px] font-bold text-gray-700 group-hover:text-red-500 transition-colors hidden xl:inline">Wishlist</span>
-                  {wishlistCount > 0 && (
-                    <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[9px] font-bold h-4 w-4 flex items-center justify-center rounded-full border-2 border-white">
-                      {wishlistCount > 9 ? '9+' : wishlistCount}
-                    </span>
-                  )}
-                </Link>
-
-                <Link to="/cart" className="flex items-center gap-2 group relative">
-                  <FiShoppingCart className="w-5 h-5 text-gray-500 group-hover:text-[#004D40] transition-colors" />
-                  <span className="text-[12px] font-bold text-gray-700 group-hover:text-[#004D40] transition-colors hidden xl:inline">Cart</span>
-                  {cartCount > 0 && (
-                    <span className="absolute -top-1.5 -right-1.5 bg-[#FF6B35] text-white text-[9px] font-bold h-4 w-4 flex items-center justify-center rounded-full border-2 border-white">
-                      {cartCount}
-                    </span>
-                  )}
-                </Link>
-
-                {user && (
-                  <div className="flex items-center border-l border-gray-100 pl-3">
-                    <NotificationDropdown />
-                  </div>
                 )}
-              </div>
+              </Link>
+
+              <Link to="/cart" className="flex items-center group relative" title="Cart">
+                <FiShoppingCart className="w-5 h-5 text-gray-500 group-hover:text-[#004D40] transition-colors" />
+                {cartCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 bg-[#FF6B35] text-white text-[9px] font-bold h-4 w-4 flex items-center justify-center rounded-full border-2 border-white">
+                    {cartCount}
+                  </span>
+                )}
+              </Link>
+
+              {user && (
+                <div className="flex items-center border-l border-gray-100 pl-3">
+                  <NotificationDropdown />
+                </div>
+              )}
             </div>
           </div>
 
@@ -445,7 +438,7 @@ const Navbar = () => {
           <div className="flex items-center gap-4 w-full overflow-hidden">
             {/* All Categories Button */}
             <div className="relative group/cat shrink-0">
-              <Link 
+              <Link
                 to="/categories"
                 className="flex items-center gap-2 bg-[#004D40] text-white px-5 py-2.5 rounded-lg font-bold text-xs uppercase tracking-wider hover:bg-[#003d33] transition-colors shadow-sm"
               >
@@ -473,7 +466,7 @@ const Navbar = () => {
             </div>
 
             {/* Dynamic Parent Categories next to All Categories */}
-            <div className="flex items-center gap-6 lg:gap-8 overflow-x-auto no-scrollbar scroll-smooth ml-6">
+            <div className="flex items-center gap-6 lg:gap-8 overflow-x-auto custom-scrollbar pb-1 scroll-smooth ml-6">
               {categories.map((cat, i) => {
                 const slug = getCategorySlug(cat.name);
                 const linkTo = `/category/${slug}`;

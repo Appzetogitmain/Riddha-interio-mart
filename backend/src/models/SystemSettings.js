@@ -50,6 +50,38 @@ const SystemSettingsSchema = new mongoose.Schema({
       { iconName: 'LuRotateCcw', title: '10 Days', subtitle: 'Easy Returns' },
       { iconName: 'LuFileText', title: 'GST Invoice', subtitle: 'For All Orders' }
     ]
+  },
+
+  // Requirement A — Sample Request rules engine. Admin configurable.
+  sampleRules: {
+    // Free samples a customer may take per rolling calendar month.
+    freeSamplesPerMonth: { type: Number, default: 3 },
+    // Charged per sample item once the free quota is spent. Falls back to the
+    // product's own sampleCharge when that is set.
+    defaultSampleCharge: { type: Number, default: 250 },
+    // Sample fee is credited back against the customer's first order.
+    refundChargeAgainstFirstOrder: { type: Boolean, default: true },
+    // Auto-decline when the customer already has this many delivered samples
+    // still awaiting feedback.
+    maxPendingFeedbackSamples: { type: Number, default: 3 },
+    // Verified enterpriser/contractor accounts skip manual approval.
+    autoApproveVerifiedContractors: { type: Boolean, default: true },
+    // Days after delivery before the "How was the sample?" nudge is sent.
+    feedbackFollowUpDays: { type: Number, default: 3 },
+    maxItemsPerRequest: { type: Number, default: 5 }
+  },
+
+  // Requirement A — RFQ routing & SLA.
+  rfqRules: {
+    // Hours a seller has to respond before the SLA is breached.
+    slaResponseHours: { type: Number, default: 24 },
+    // Days an unanswered / unaccepted RFQ stays open before it expires.
+    expiryDays: { type: Number, default: 30 },
+    // RFQs estimated above this value are always copied to the Riddha team.
+    internalReviewValueThreshold: { type: Number, default: 500000 },
+    // Cap on how many sellers one RFQ fans out to in competitive mode.
+    maxSellersPerRFQ: { type: Number, default: 5 },
+    competitiveQuotingEnabled: { type: Boolean, default: true }
   }
 });
 

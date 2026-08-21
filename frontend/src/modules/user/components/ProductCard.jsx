@@ -7,6 +7,9 @@ import { useWishlist } from '../data/WishlistContext';
 import { useUser } from '../data/UserContext';
 import OptimizedImage from '../../../shared/components/OptimizedImage';
 import Button from '../../../shared/components/Button';
+// Requirement A — per-card B2B quote & sample entry points
+import RequestQuoteButton from './RFQ/RequestQuoteButton';
+import RequestSampleButton from './Samples/RequestSampleButton';
 
 /* ─── Reusable Sub-Components (Enhancement Overlays) ─── */
 
@@ -255,6 +258,30 @@ const ProductCard = ({ product, index = 0, variant = 'grid' }) => {
         <div className="mt-2 pt-2 border-t border-slate-100 flex items-center gap-1 text-[9px] md:text-[11px] text-slate-500">
           <span className="text-[#189D91] text-xs">🚚</span>
           <span>Delivery by: <span className="font-semibold text-slate-700">{getDeliveryEstimate()}</span></span>
+        </div>
+
+        {/* ── B2B: bulk quote & sample (Requirement A) ── */}
+        <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
+          <RequestQuoteButton
+            products={[{
+              productId,
+              productDescription: product.name,
+              quantity: '',
+              unit: 'pcs'
+            }]}
+            source="product-card"
+            variant="link"
+            size="sm"
+            label="Bulk quote"
+            className="text-[10px] md:text-[11px]"
+          />
+          <RequestSampleButton
+            product={product}
+            variant="ghost"
+            size="sm"
+            label="Sample"
+            className="!px-0 text-[10px] md:text-[11px] underline underline-offset-2"
+          />
         </div>
       </div>
     </div>

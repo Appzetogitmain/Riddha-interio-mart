@@ -219,7 +219,7 @@ exports.createCampaign = async (req, res, next) => {
 
     res.status(201).json({
       success: true,
-      message: 'Campaign created with Gemini A/B testing variants',
+      message: 'Campaign created with AI A/B testing variants',
       data: campaign
     });
   } catch (error) {

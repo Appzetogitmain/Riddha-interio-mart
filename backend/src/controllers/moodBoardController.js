@@ -1,4 +1,7 @@
 const crypto = require('crypto');
+const openaiClient = require('../services/openaiService');
+const OpenAIErrorHandler = require('../utils/openaiErrorHandler');
+const OpenAIUsageTracker = require('../services/openaiUsageTracker');
 const Product = require('../models/Product');
 const Category = require('../models/Category');
 
@@ -69,7 +72,7 @@ exports.generateAiMoodBoard = async (req, res, next) => {
       keywords: roomKeywords[roomType] || ['sofa', 'table', 'marble', 'lighting']
     };
 
-    if (process.env.GEMINI_API_KEY) {
+    if (process.env.OPENAI_API_KEY) {
       try {
         const promptText = `You are a professional interior design stylist for "Riddha Interior Mart".
 Create a personalized Mood Board concept for a ${roomType} styled in ${style} theme with estimated budget ${budget} and room size ${roomSize}.
@@ -82,57 +85,73 @@ Provide structured JSON output with:
 
 Output ONLY valid JSON.`;
 
-        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`;
-        const response = await fetch(geminiUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: promptText }] }],
-            generationConfig: { responseMimeType: 'application/json' }
+        const aiResponse = await OpenAIErrorHandler.callWithRetry(() =>
+          openaiClient.generateText(promptText, {
+            modelType: 'general',
+            expectJson: true,
+            temperature: 0.8,
+            maxTokens: 600,
           })
-        });
+        );
 
-        if (response.ok) {
-          const geminiData = await response.json();
-          const rawText = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
-          const parsed = JSON.parse(rawText);
-          if (parsed.palette && parsed.palette.length > 0) {
-            boardData = { ...boardData, ...parsed };
-          }
+        await OpenAIUsageTracker.trackUsage(
+          {
+            inputTokens: aiResponse.inputTokens,
+            outputTokens: aiResponse.outputTokens,
+            totalTokens: aiResponse.totalTokens,
+          },
+          'mood-board',
+          req.user?._id || null,
+          '/api/products/ai-mood-board',
+          aiResponse.model
+        );
+
+        const rawText = (aiResponse.text || '{}').replace(/```json/g, '').replace(/```/g, '').trim();
+        const parsed = JSON.parse(rawText);
+        if (parsed.palette && parsed.palette.length > 0) {
+          boardData = { ...boardData, ...parsed };
         }
-      } catch (geminiErr) {
-        console.warn('[AI Mood Board] Gemini API warning:', geminiErr.message);
+      } catch (aiErr) {
+        const errorInfo = OpenAIErrorHandler.handleError(aiErr, {
+          service: 'AIMoodBoard',
+          method: 'generateMoodBoardConcept',
+        });
+        console.warn('[AI Mood Board] OpenAI API warning:', errorInfo.message);
       }
     }
 
-    // Synthesize fresh AI interior room design concept image via Gemini 2.5 Flash Image API
-    if (process.env.GEMINI_API_KEY) {
+    // Synthesize a fresh AI interior room concept image via the OpenAI images API
+    if (process.env.OPENAI_API_KEY) {
       try {
-        const imageGenUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${process.env.GEMINI_API_KEY}`;
         const imageGenPrompt = `A fully furnished, high-resolution interior photography of a ${style} ${roomType} featuring elegant decor, warm lighting, and luxury material finishes.`;
 
-        const imgRes = await fetch(imageGenUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: imageGenPrompt }] }]
-          })
+        const imgResult = await openaiClient.generateImage(imageGenPrompt, {
+          size: '1024x1024',
+          quality: 'medium',
         });
 
-        if (imgRes.ok) {
-          const imgData = await imgRes.json();
-          const candidateParts = imgData?.candidates?.[0]?.content?.parts || [];
-          for (const part of candidateParts) {
-            if (part.inlineData && part.inlineData.data) {
-              const genMime = part.inlineData.mimeType || 'image/png';
-              boardData.bgImage = `data:${genMime};base64,${part.inlineData.data}`;
-              console.log('[AI Mood Board] Gemini 2.5 Flash Image successfully generated main AI room concept!');
-              break;
-            }
-          }
+        if (imgResult.dataUrl) {
+          boardData.bgImage = imgResult.dataUrl;
+          console.log('[AI Mood Board] OpenAI images API generated the main AI room concept!');
+
+          await OpenAIUsageTracker.trackUsage(
+            {
+              inputTokens: imgResult.inputTokens,
+              outputTokens: imgResult.outputTokens,
+              totalTokens: imgResult.totalTokens,
+            },
+            'mood-board-image',
+            req.user?._id || null,
+            '/api/products/ai-mood-board',
+            imgResult.model
+          );
         }
       } catch (imgErr) {
-        console.warn('[AI Mood Board] Gemini 2.5 Flash Image warning:', imgErr.message);
+        const errorInfo = OpenAIErrorHandler.handleError(imgErr, {
+          service: 'AIMoodBoard',
+          method: 'imageGeneration',
+        });
+        console.warn('[AI Mood Board] OpenAI image generation warning:', errorInfo.message);
       }
     }
 

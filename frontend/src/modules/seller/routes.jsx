@@ -33,6 +33,9 @@ const MyAdvertisements = React.lazy(() => import('./pages/MyAdvertisements'));
 const SellerAIContentGeneratorPage = React.lazy(() => import('../user/pages/SellerAIContentGeneratorPage'));
 const OffersListPage = React.lazy(() => import('./pages/OffersListPage'));
 const OfferFormPage = React.lazy(() => import('./pages/OfferFormPage'));
+// Requirement A — RFQ inbox and sample queue
+const SellerRFQs = React.lazy(() => import('./pages/SellerRFQs'));
+const SellerSamples = React.lazy(() => import('./pages/SellerSamples'));
 
 const SellerRoutes = () => {
   return (
@@ -70,6 +73,8 @@ const SellerRoutes = () => {
         <Route path="/marketing" element={<Marketing />} />
         <Route path="/help" element={<HelpCenter />} />
         <Route path="/bulk-orders" element={<SellerBulkOrders />} />
+        <Route path="/rfqs" element={<SellerRFQs />} />
+        <Route path="/samples" element={<SellerSamples />} />
         <Route path="/advertisement-plans" element={<AdvertisementPlans />} />
         <Route path="/my-advertisements" element={<MyAdvertisements />} />
         <Route path="/content-generator" element={<SellerAIContentGeneratorPage />} />

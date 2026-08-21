@@ -8,6 +8,8 @@ import {
 } from 'react-icons/fi';
 import { LuSparkles, LuBrain } from 'react-icons/lu';
 import { projectService } from '../services/projectService';
+// Requirement A — raise a quotation request against this project
+import RequestQuoteButton from '../components/RFQ/RequestQuoteButton';
 import toast from 'react-hot-toast';
 
 const ProjectDetailPage = () => {
@@ -217,6 +219,14 @@ const ProjectDetailPage = () => {
               <FiFileText />
               <span>Generate AI Report</span>
             </button>
+            {/* ── B2B: quote for this project (Requirement A) ── */}
+            <RequestQuoteButton
+              projectId={projectId}
+              projectName={project.projectName}
+              source="project"
+              size="sm"
+              label="Request a Quote"
+            />
           </div>
         </div>
 

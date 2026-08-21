@@ -124,7 +124,7 @@ const generateEstimatePDF = (estimate) => {
       }
 
       if (estimate.aiAnalysis?.costBreakdownAnalysis) {
-        doc.fontSize(11).font('Helvetica-Bold').fillColor('#2d3748').text('Gemini AI Cost Analysis', 50, y);
+        doc.fontSize(11).font('Helvetica-Bold').fillColor('#2d3748').text('AI Cost Analysis', 50, y);
         y = doc.y + 6;
 
         doc.fontSize(8.5).font('Helvetica').fillColor('#334155')

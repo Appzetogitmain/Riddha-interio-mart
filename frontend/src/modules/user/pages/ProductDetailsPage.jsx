@@ -19,6 +19,9 @@ import { useWishlist } from '../data/WishlistContext';
 import { useUser } from '../data/UserContext';
 import api from '../../../shared/utils/api';
 import { getDeliveryEstimate } from '../../../shared/utils/delivery';
+// Requirement A — B2B quote & sample entry points
+import RequestQuoteButton from '../components/RFQ/RequestQuoteButton';
+import RequestSampleButton from '../components/Samples/RequestSampleButton';
 
 // Smart bundles that include this product — a thin fetch-and-render row, kept local
 // since it's only used here on the product detail page.
@@ -543,6 +546,23 @@ const ProductDetailsPage = () => {
                   </button>
                 </>
               )}
+            </div>
+
+            {/* ── B2B: quote & sample (Requirement A) ── */}
+            <div className="flex flex-wrap gap-2 mt-3 max-w-md">
+              <RequestQuoteButton
+                products={[{
+                  productId: product._id || product.id,
+                  productDescription: product.name,
+                  quantity: '',
+                  unit: 'pcs'
+                }]}
+                source="product-detail"
+                variant="outline"
+                size="sm"
+                label="Request a Quote"
+              />
+              <RequestSampleButton product={product} variant="ghost" size="sm" />
             </div>
 
             {/* Features (inline) */}

@@ -224,7 +224,7 @@ exports.reportDeliveryIssue = async (req, res, next) => {
 
     res.status(201).json({
       success: true,
-      message: 'Issue reported successfully. Gemini AI solution generated.',
+      message: 'Issue reported successfully. AI solution generated.',
       data: {
         issue,
         aiAnalysis

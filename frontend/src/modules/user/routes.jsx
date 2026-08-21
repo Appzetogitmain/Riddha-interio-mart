@@ -72,6 +72,9 @@ const DeliveryPartnerAppPage = React.lazy(() => import('./pages/DeliveryPartnerA
 const NotificationCenterPage = React.lazy(() => import('./pages/NotificationCenterPage'));
 const NotificationPreferencesPage = React.lazy(() => import('./pages/NotificationPreferencesPage'));
 const SellerAIContentGeneratorPage = React.lazy(() => import('./pages/SellerAIContentGeneratorPage'));
+// Requirement A — B2B Request for Quotation & Sample Requests
+const RFQPage = React.lazy(() => import('./pages/RFQPage'));
+const SamplesPage = React.lazy(() => import('./pages/SamplesPage'));
 
 const UserRoutes = () => {
   return (
@@ -87,6 +90,12 @@ const UserRoutes = () => {
       <Route path="/quotation-generator" element={<QuotationGeneratorPage />} />
       <Route path="/quotation-generator/:quotationId" element={<QuotationGeneratorPage />} />
       <Route path="/seller/content-generator" element={<SellerAIContentGeneratorPage />} />
+      <Route path="/rfq" element={<RFQPage />} />
+      <Route path="/rfq/new" element={<RFQPage />} />
+      <Route path="/rfq/:rfqId" element={<RFQPage />} />
+      <Route path="/samples" element={<SamplesPage />} />
+      <Route path="/samples/new" element={<SamplesPage />} />
+      <Route path="/samples/:id" element={<SamplesPage />} />
       <Route path="/notifications" element={<NotificationCenterPage />} />
       <Route path="/notifications/preferences" element={<NotificationPreferencesPage />} />
       <Route path="/orders/track" element={<OrderTrackingPage />} />

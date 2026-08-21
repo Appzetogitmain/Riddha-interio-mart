@@ -7,11 +7,13 @@ const SystemSettings = require('../models/SystemSettings');
 const invoicePdfService = require('./invoicePdfService');
 const emailService = require('./emailService');
 const walletService = require('./walletService');
+const rfqSlaService = require('./rfqSlaService');
 
 class CronService {
   constructor() {
     this.intervalId = null;
     this.invoiceIntervalId = null;
+    this.rfqIntervalId = null;
   }
 
   start() {
@@ -27,10 +29,26 @@ class CronService {
       await this.sendPendingCustomerInvoices();
     }, 60 * 1000);
     
+    // Requirement A: RFQ SLA escalation, RFQ expiry and the post-sample
+    // feedback nudge. Every 15 minutes keeps SLA breaches visible promptly
+    // without hammering the collections.
+    this.rfqIntervalId = setInterval(async () => {
+      await this.runRFQSweeps();
+    }, 15 * 60 * 1000);
+
     // Run once immediately on start
     this.clearExpiredEscrows();
     this.clearExpiredAdvertisements();
     this.sendPendingCustomerInvoices();
+    this.runRFQSweeps();
+  }
+
+  async runRFQSweeps() {
+    try {
+      await rfqSlaService.runAll();
+    } catch (error) {
+      console.error('[CRON] Error in RFQ/sample sweeps:', error.message);
+    }
   }
 
   stop() {
@@ -40,6 +58,9 @@ class CronService {
     }
     if (this.invoiceIntervalId) {
       clearInterval(this.invoiceIntervalId);
+    }
+    if (this.rfqIntervalId) {
+      clearInterval(this.rfqIntervalId);
     }
   }
 

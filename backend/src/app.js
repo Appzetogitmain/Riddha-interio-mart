@@ -205,6 +205,11 @@ app.use('/api/content', contentGeneratorRoutes);
 app.use('/api/assistant', assistantRoutes);
 const journeyRoutes = require('./routes/journeyRoutes');
 app.use('/api/journey', journeyRoutes);
+// Requirement A — B2B Request for Quotation & Sample Requests
+const rfqRoutes = require('./routes/rfqRoutes');
+app.use('/api/rfq', rfqRoutes);
+const sampleRoutes = require('./routes/sampleRoutes');
+app.use('/api/samples', sampleRoutes);
 
 app.get('/', (req, res) => {
   res.json({ message: 'Welcome to Riddha Mart API' });

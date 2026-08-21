@@ -9,6 +9,8 @@ import {
 } from 'react-icons/fi';
 import { LuSparkles, LuBrain, LuPalette, LuCalculator, LuLayers } from 'react-icons/lu';
 import { boqService } from '../services/boqService';
+// Requirement A — turn a finished BOQ straight into a priced RFQ
+import RequestQuoteButton from '../components/RFQ/RequestQuoteButton';
 import api from '../../../shared/utils/api';
 import { useUser } from '../data/UserContext';
 import toast from 'react-hot-toast';
@@ -413,6 +415,29 @@ const BOQGeneratorPage = () => {
                   <FiPlus /> Add New Item
                 </button>
               </div>
+
+              {/* ── B2B: quote the whole BOQ (Requirement A) ── */}
+              {items.length > 0 && (
+                <div className="p-3.5 bg-soft-oatmeal/60 border border-warm-sand/30 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <p className="text-xs font-semibold text-deep-espresso">
+                    Ready for pricing? Send these {items.length} item(s) to sellers as a single quotation request.
+                  </p>
+                  <RequestQuoteButton
+                    products={items.map((item) => ({
+                      productId: item.productId || null,
+                      productDescription: item.itemName,
+                      quantity: item.quantity || '',
+                      unit: 'pcs',
+                      application: item.category || ''
+                    }))}
+                    projectId={currentBOQ?.projectId || null}
+                    projectName={currentBOQ?.boqName || ''}
+                    source="boq-results"
+                    size="sm"
+                    className="shrink-0"
+                  />
+                </div>
+              )}
 
               {items.length > 0 && items.some(i => !i.productId || i.supplier !== 'Riddha Interio Catalog') && (
                 <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">

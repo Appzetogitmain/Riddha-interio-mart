@@ -17,7 +17,7 @@ const AIUsageLogSchema = new mongoose.Schema({
   },
   provider: {
     type: String,
-    enum: ['gemini', 'openai'],
+    enum: ['openai'],
     default: 'openai',
     index: true,
   },

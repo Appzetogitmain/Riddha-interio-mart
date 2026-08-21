@@ -78,14 +78,14 @@ async function runTests() {
     }
 
     // 5. Test AI assistant chat response loop
-    console.log('\n--- 5. Testing Gemini AI Loop with Product Query ---');
-    if (process.env.GEMINI_API_KEY) {
+    console.log('\n--- 5. Testing OpenAI Loop with Product Query ---');
+    if (process.env.OPENAI_API_KEY) {
       const response = await assistantService.getAiResponse(conversation, 'I am looking for modern sofas in stock under 50000', null);
       console.log('AI response message:', response.message);
       console.log('AI recommended products count:', response.products ? response.products.length : 0);
       console.log('AI quick actions:', response.actions);
     } else {
-      console.log('Skipping Gemini API test because GEMINI_API_KEY is not defined.');
+      console.log('Skipping OpenAI API test because OPENAI_API_KEY is not defined.');
     }
 
     // Clean up test data

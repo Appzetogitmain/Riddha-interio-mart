@@ -7,6 +7,8 @@ import { FiArrowRight, FiShoppingBag, FiTrash2, FiClock, FiPlus, FiMinus, FiSear
 import Button from '../../../shared/components/Button';
 import { getDeliveryEstimate } from '../../../shared/utils/delivery';
 import SmartGuide from '../components/SmartGuide';
+// Requirement A — capture bulk buyers who will not check out at list price
+import RequestQuoteButton from '../components/RFQ/RequestQuoteButton';
 
 const CartPage = () => {
   const { cart, updateQuantity, removeFromCart, pricingBreakdown } = useCart();
@@ -202,6 +204,28 @@ const CartPage = () => {
               >
                 Proceed to Checkout
               </button>
+
+              {/* ── B2B: bulk pricing (Requirement A) ── */}
+              {cart.length > 0 && (
+                <div className="mt-4 rounded-xl border border-[#189D91]/25 bg-[#189D91]/5 p-4 text-center">
+                  <p className="mb-2 text-[13px] font-semibold text-gray-800">Need bulk pricing?</p>
+                  <p className="mb-3 text-[11px] text-gray-500">
+                    Get a quotation for these {cart.length} item{cart.length === 1 ? '' : 's'} at contractor rates.
+                  </p>
+                  <RequestQuoteButton
+                    products={cart.map((item) => ({
+                      productId: item._id || item.id,
+                      productDescription: item.name,
+                      quantity: item.quantity || '',
+                      unit: 'pcs'
+                    }))}
+                    source="cart"
+                    variant="outline"
+                    fullWidth
+                    label="Request a quote"
+                  />
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -332,6 +356,22 @@ const CartPage = () => {
           >
             Proceed to Checkout
           </button>
+          {cart.length > 0 && (
+            <div className="mt-2 text-center">
+              <RequestQuoteButton
+                products={cart.map((item) => ({
+                  productId: item._id || item.id,
+                  productDescription: item.name,
+                  quantity: item.quantity || '',
+                  unit: 'pcs'
+                }))}
+                source="cart-mobile"
+                variant="link"
+                label="Need bulk pricing? Request a quote"
+                className="text-[13px]"
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>

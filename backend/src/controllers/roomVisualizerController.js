@@ -1,4 +1,7 @@
 const crypto = require('crypto');
+const openaiClient = require('../services/openaiService');
+const OpenAIErrorHandler = require('../utils/openaiErrorHandler');
+const OpenAIUsageTracker = require('../services/openaiUsageTracker');
 const Product = require('../models/Product');
 const Category = require('../models/Category');
 
@@ -100,7 +103,7 @@ exports.aiRoomVisualize = async (req, res, next) => {
       suggestedKeywords: ['sofa', 'marble', 'lighting', 'table', 'faucet']
     };
 
-    if (process.env.GEMINI_API_KEY) {
+    if (process.env.OPENAI_API_KEY) {
       try {
         const promptText = `You are a high-end interior architect for "Riddha Interior Mart".
 Analyze this uploaded room image for a ${roomType} redesign in ${style} style.
@@ -113,68 +116,74 @@ Provide structured JSON:
 
 Output ONLY valid JSON.`;
 
-        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`;
-        const response = await fetch(geminiUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{
-              parts: [
-                { text: promptText },
-                { inline_data: { mime_type: mimeType, data: base64Image } }
-              ]
-            }],
-            generationConfig: { responseMimeType: 'application/json' }
-          })
-        });
+        const aiResponse = await OpenAIErrorHandler.callWithRetry(() =>
+          openaiClient.generateWithVision(
+            promptText,
+            [{ base64: base64Image, mimeType, detail: 'auto' }],
+            { modelType: 'vision', expectJson: true, temperature: 0.5, maxTokens: 600 }
+          )
+        );
 
-        if (response.ok) {
-          const geminiData = await response.json();
-          const rawText = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
-          const parsed = JSON.parse(rawText);
-          if (parsed.designHighlights) {
-            aiAnalysis = { ...aiAnalysis, ...parsed };
-          }
+        await OpenAIUsageTracker.trackUsage(
+          {
+            inputTokens: aiResponse.inputTokens,
+            outputTokens: aiResponse.outputTokens,
+            totalTokens: aiResponse.totalTokens,
+          },
+          'room-visualizer',
+          req.user?._id || null,
+          '/api/products/ai-room-visualize',
+          aiResponse.model
+        );
+
+        const rawText = (aiResponse.text || '{}').replace(/```json/g, '').replace(/```/g, '').trim();
+        const parsed = JSON.parse(rawText);
+        if (parsed.designHighlights) {
+          aiAnalysis = { ...aiAnalysis, ...parsed };
         }
-      } catch (geminiErr) {
-        console.warn('[AI Room Visualizer] Gemini analysis warning:', geminiErr.message);
+      } catch (aiErr) {
+        const errorInfo = OpenAIErrorHandler.handleError(aiErr, {
+          service: 'AIRoomVisualizer',
+          method: 'roomAnalysis',
+        });
+        console.warn('[AI Room Visualizer] OpenAI analysis warning:', errorInfo.message);
       }
     }
 
     let enhancedImageUrl = `data:${mimeType};base64,${base64Image}`;
 
-    if (process.env.GEMINI_API_KEY) {
+    if (process.env.OPENAI_API_KEY) {
       try {
-        const imageGenUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${process.env.GEMINI_API_KEY}`;
-        const imageGenPrompt = `Redesign and furnish this room photo as a fully decorated, modern ${roomType} in ${style} interior style. Add plush furniture, elegant lighting, wall art, marble/wood flooring, and decor while preserving room perspective.`;
+        const imageGenPrompt = `Redesign and furnish this room photo as a fully decorated, modern ${roomType} in ${style} interior style. Add plush furniture, elegant lighting, wall art, marble/wood flooring, and decor. Preserve the original room's perspective, camera angle, window and door placement, and overall geometry.`;
 
-        const imgGenResponse = await fetch(imageGenUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{
-              parts: [
-                { text: imageGenPrompt },
-                { inline_data: { mime_type: mimeType, data: base64Image } }
-              ]
-            }]
-          })
-        });
+        const imgResult = await openaiClient.editImage(
+          imageGenPrompt,
+          { buffer: req.file.buffer, mimeType },
+          { size: '1024x1024', quality: 'medium' }
+        );
 
-        if (imgGenResponse.ok) {
-          const imgGenData = await imgGenResponse.json();
-          const candidateParts = imgGenData?.candidates?.[0]?.content?.parts || [];
-          for (const part of candidateParts) {
-            if (part.inlineData && part.inlineData.data) {
-              const genMime = part.inlineData.mimeType || 'image/png';
-              enhancedImageUrl = `data:${genMime};base64,${part.inlineData.data}`;
-              console.log('[AI Room Visualizer] Gemini 2.5 Flash Image generated AI redesign image!');
-              break;
-            }
-          }
+        if (imgResult.dataUrl) {
+          enhancedImageUrl = imgResult.dataUrl;
+          console.log('[AI Room Visualizer] OpenAI images API generated the AI redesign image!');
+
+          await OpenAIUsageTracker.trackUsage(
+            {
+              inputTokens: imgResult.inputTokens,
+              outputTokens: imgResult.outputTokens,
+              totalTokens: imgResult.totalTokens,
+            },
+            'room-visualizer-image',
+            req.user?._id || null,
+            '/api/products/ai-room-visualize',
+            imgResult.model
+          );
         }
       } catch (imgErr) {
-        console.warn('[AI Room Visualizer] Gemini 2.5 Flash Image generation error:', imgErr.message);
+        const errorInfo = OpenAIErrorHandler.handleError(imgErr, {
+          service: 'AIRoomVisualizer',
+          method: 'imageEdit',
+        });
+        console.warn('[AI Room Visualizer] OpenAI image generation error:', errorInfo.message);
       }
     }
 

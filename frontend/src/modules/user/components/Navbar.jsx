@@ -29,7 +29,7 @@ import {
 } from "react-icons/fi";
 import { AiOutlineShop } from "react-icons/ai";
 import { motion, AnimatePresence } from "framer-motion";
-import { LuWallet, LuLayoutDashboard, LuCalculator } from "react-icons/lu";
+import { LuWallet, LuLayoutDashboard, LuCalculator, LuLayers } from "react-icons/lu";
 import { useCart } from "../data/CartContext";
 import { useUser } from "../data/UserContext";
 import { useWishlist } from "../data/WishlistContext";
@@ -386,6 +386,17 @@ const Navbar = () => {
                 )}
               </Link>
 
+              {/* ── B2B: standalone quotation request (Requirement A) ── */}
+              <Link
+                to="/rfq/new"
+                state={{ source: 'header' }}
+                title="Request a quotation"
+                className="hidden lg:inline-flex items-center gap-1.5 rounded-lg border border-[#189D91] px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-[#189D91] transition-colors hover:bg-[#189D91] hover:text-white"
+              >
+                <FiFileText className="w-3.5 h-3.5" />
+                Get Quote
+              </Link>
+
               {user && (
                 <div className="flex items-center border-l border-gray-100 pl-3">
                   <NotificationDropdown />
@@ -584,6 +595,8 @@ const Navbar = () => {
                     <SidebarLink to="/recommendations" icon={FiZap} label="AI Recommendations Feed" onClick={closeMobile} />
                     <SidebarLink to="/designer-quiz" icon={FiCompass} label="Designer Quiz" onClick={closeMobile} />
                     <SidebarLink to="/referral-rewards" icon={LuWallet} label="Riddha Wallet" onClick={closeMobile} />
+                    <SidebarLink to="/rfq" icon={FiFileText} label="My Quotation Requests" onClick={closeMobile} />
+                    <SidebarLink to="/samples" icon={LuLayers} label="My Sample Requests" onClick={closeMobile} />
                     <SidebarLink to="/orders" icon={FiShoppingBag} label="My Orders" onClick={closeMobile} />
                     {user && <SidebarLink to="/wishlist" icon={FiHeart} label="My Wishlist" onClick={closeMobile} />}
                     <SidebarLink to="/profile" icon={FiUser} label="My Account" onClick={closeMobile} />

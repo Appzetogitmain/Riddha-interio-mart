@@ -52,6 +52,9 @@ const menuItems = [
     children: [
       { path: "/seller/orders",       label: "All Orders"   },
       { path: "/seller/bulk-orders",  label: "Bulk Orders"  },
+      // Requirement A — B2B quote & sample queues
+      { path: "/seller/rfqs",         label: "Quotation Requests" },
+      { path: "/seller/samples",      label: "Sample Requests" },
     ]
   },
   { path: "/seller/stock-management", icon: Boxes, label: "Inventory" },

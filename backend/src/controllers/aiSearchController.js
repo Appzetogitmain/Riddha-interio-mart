@@ -1,4 +1,7 @@
 const crypto = require('crypto');
+const openaiClient = require('../services/openaiService');
+const OpenAIErrorHandler = require('../utils/openaiErrorHandler');
+const OpenAIUsageTracker = require('../services/openaiUsageTracker');
 const Product = require('../models/Product');
 const Category = require('../models/Category');
 const Brand = require('../models/Brand');
@@ -12,7 +15,7 @@ const getCacheKey = (buffer) => {
   return crypto.createHash('sha256').update(buffer).digest('hex');
 };
 
-// @desc    Perform AI Image Recognition & Visual Search via Gemini 3.6 Flash
+// @desc    Perform AI Image Recognition & Visual Search via OpenAI vision
 // @route   POST /api/products/ai-image-search
 // @access  Public
 exports.aiImageSearch = async (req, res, next) => {
@@ -24,10 +27,10 @@ exports.aiImageSearch = async (req, res, next) => {
       });
     }
 
-    if (!process.env.GEMINI_API_KEY) {
+    if (!process.env.OPENAI_API_KEY) {
       return res.status(500).json({
         success: false,
-        message: 'GEMINI_API_KEY is not configured in environment variables.'
+        message: 'OPENAI_API_KEY is not configured in environment variables.'
       });
     }
 
@@ -41,10 +44,10 @@ exports.aiImageSearch = async (req, res, next) => {
     let aiAnalysis = null;
 
     if (cachedAnalysis) {
-      console.log(`[AI Image Search] Cache HIT for image hash: ${imageHash.substring(0, 12)}... (Saved Gemini API call)`);
+      console.log(`[AI Image Search] Cache HIT for image hash: ${imageHash.substring(0, 12)}... (Saved OpenAI API call)`);
       aiAnalysis = cachedAnalysis;
     } else {
-      console.log(`[AI Image Search] Cache MISS for image hash: ${imageHash.substring(0, 12)}... Calling Gemini API.`);
+      console.log(`[AI Image Search] Cache MISS for image hash: ${imageHash.substring(0, 12)}... Calling OpenAI API.`);
 
     const storeCategories = [
       "Marble", "Furniture", "Flooring", "Lighting", "Wall Solutions", "OutDoor", 
@@ -72,33 +75,40 @@ Provide a structured JSON output with the following fields:
 
 Output ONLY valid JSON. No markdown codeblocks surrounding it.`;
 
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${process.env.GEMINI_API_KEY}`;
-    
-    const geminiResponse = await fetch(geminiUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{
-          parts: [
-            { text: promptText },
-            { inline_data: { mime_type: mimeType, data: base64Image } }
-          ]
-        }],
-        generationConfig: { responseMimeType: 'application/json' }
-      })
-    });
+    let rawText = '{}';
+    try {
+      const aiResponse = await OpenAIErrorHandler.callWithRetry(() =>
+        openaiClient.generateWithVision(
+          promptText,
+          [{ base64: base64Image, mimeType, detail: 'auto' }],
+          { modelType: 'vision', expectJson: true, temperature: 0.3, maxTokens: 800 }
+        )
+      );
 
-    if (!geminiResponse.ok) {
-      const errText = await geminiResponse.text();
-      console.error('[AI Image Search] Gemini API error:', errText);
+      await OpenAIUsageTracker.trackUsage(
+        {
+          inputTokens: aiResponse.inputTokens,
+          outputTokens: aiResponse.outputTokens,
+          totalTokens: aiResponse.totalTokens,
+        },
+        'image-search',
+        req.user?._id || null,
+        '/api/products/ai-image-search',
+        aiResponse.model
+      );
+
+      rawText = (aiResponse.text || '{}').replace(/```json/g, '').replace(/```/g, '').trim();
+    } catch (aiErr) {
+      const errorInfo = OpenAIErrorHandler.handleError(aiErr, {
+        service: 'AIImageSearch',
+        method: 'aiImageSearch',
+      });
+      console.error('[AI Image Search] OpenAI API error:', errorInfo.message);
       return res.status(500).json({
         success: false,
-        message: 'AI Image Analysis service error'
+        message: errorInfo.message
       });
     }
-
-    const geminiData = await geminiResponse.json();
-    const rawText = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
     
     let parsedAi = {};
     try {

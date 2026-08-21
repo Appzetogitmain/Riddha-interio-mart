@@ -103,7 +103,7 @@ exports.generateContent = async (req, res, next) => {
 
     res.status(201).json({
       success: true,
-      message: 'Content generated successfully with Gemini AI',
+      message: 'Content generated successfully with OpenAI',
       data: newContent
     });
   } catch (error) {

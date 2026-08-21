@@ -145,7 +145,7 @@ exports.generateBrief = async (req, res, next) => {
     });
   } catch (err) {
     console.error('Generate brief error:', err);
-    return res.status(500).json({ success: false, error: 'Failed to generate brief via Gemini AI.' });
+    return res.status(500).json({ success: false, error: 'Failed to generate brief via OpenAI.' });
   }
 };
 

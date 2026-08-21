@@ -1,35 +1,16 @@
+const openaiClient = require('./openaiService');
+const OpenAIErrorHandler = require('../utils/openaiErrorHandler');
+const OpenAIUsageTracker = require('./openaiUsageTracker');
+
 // Utility: sleep for ms milliseconds
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // Simple in-memory image cache
 const imageCache = new Map();
 
-// Utility: Call Gemini API with auto-retry on 503 overload errors
-const callGeminiWithRetry = async (url, requestBody, maxRetries = 5) => {
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    try {
-      const fetchResponse = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestBody),
-      });
-      if (fetchResponse.ok) return fetchResponse;
-      const errorText = await fetchResponse.text();
-      if (fetchResponse.status === 503 && attempt < maxRetries) {
-        const delay = Math.pow(2, attempt) * 2000; // 2s, 4s, 8s, 16s
-        console.warn(`[Gemini] 503 on attempt ${attempt}/${maxRetries}. Retrying in ${delay}ms...`);
-        await sleep(delay);
-        continue;
-      }
-      throw new Error(`Gemini API error: ${fetchResponse.status} - ${errorText}`);
-    } catch (err) {
-      if (attempt === maxRetries) throw err;
-      const delay = Math.pow(2, attempt) * 2000;
-      console.warn(`[Gemini] Error on attempt ${attempt}/${maxRetries}: ${err.message}. Retrying in ${delay}ms...`);
-      await sleep(delay);
-    }
-  }
-};
+// Utility: run an OpenAI call with retry/backoff on transient (5xx / 429) errors
+const callOpenAIWithRetry = (apiCall, maxRetries = 3) =>
+  OpenAIErrorHandler.callWithRetry(apiCall, maxRetries);
 
 // Utility: Fetch an image URL with a timeout, returns Response or null
 const fetchImage = async (url, timeoutMs) => {
@@ -61,14 +42,10 @@ const fetchImage = async (url, timeoutMs) => {
 };
 
 // =============================================================================
-// Generate HSN Code via Gemini
+// Generate HSN Code via OpenAI
 // =============================================================================
 const generateHSNCode = async (category, subcategory, productType, productName, description) => {
   try {
-    if (!process.env.GEMINI_API_KEY) {
-      throw new Error('GEMINI_API_KEY is missing in environment variables');
-    }
-
     const prompt = `You are an expert in GST classification and HSN code mapping.
 
 Your task is to generate the most accurate HSN (Harmonized System of Nomenclature) code for a product based on the given inputs.
@@ -94,23 +71,37 @@ OUTPUT FORMAT (STRICT JSON):
   "hsn_code": "XXXXXX"
 }`;
 
-    // Use pinned stable model — avoids the congested gemini-flash-latest alias
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`;
-    const requestBody = {
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { responseMimeType: 'application/json' },
-    };
+    const response = await callOpenAIWithRetry(
+      () =>
+        openaiClient.generateText(prompt, {
+          modelType: 'general',
+          expectJson: true,
+          temperature: 0.2,
+          maxTokens: 100,
+        }),
+      3
+    );
 
-    const fetchResponse = await callGeminiWithRetry(url, requestBody, 3);
-    const data = await fetchResponse.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    await OpenAIUsageTracker.trackUsage(
+      {
+        inputTokens: response.inputTokens,
+        outputTokens: response.outputTokens,
+        totalTokens: response.totalTokens,
+      },
+      'hsn-code',
+      null,
+      '/api/products/generate-hsn',
+      response.model
+    );
+
+    const text = response.text;
     if (text) {
-      const parsed = JSON.parse(text);
+      const parsed = JSON.parse(text.replace(/```json/g, '').replace(/```/g, '').trim());
       return parsed.hsn_code;
     }
     return null;
   } catch (error) {
-    console.error('Error generating HSN code via Gemini:', error);
+    console.error('Error generating HSN code via OpenAI:', error);
     throw new Error(`Failed to generate HSN code: ${error.message}`);
   }
 };
@@ -124,10 +115,6 @@ const generateProductContent = async (
   sku, generateImage = false, customPrompt = ""
 ) => {
   try {
-    if (!process.env.GEMINI_API_KEY) {
-      throw new Error('GEMINI_API_KEY is missing in environment variables');
-    }
-
     let prompt = `You are a premium product copywriter, database specialist, and SEO specialist for Riddha Interior Mart (RIMX), an e-commerce platform specializing in home interiors, building materials, furniture, tiles, and fittings.
 
 Your primary objective is to research the product using the provided Model Number / SKU and other inputs, and generate complete, highly accurate catalog details.
@@ -175,19 +162,33 @@ YOUR TASK:
 }
 `;
 
-    // Use pinned stable model with 503 auto-retry
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`;
-    const requestBody = {
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { responseMimeType: 'application/json' },
-    };
+    const response = await callOpenAIWithRetry(
+      () =>
+        openaiClient.generateText(prompt, {
+          modelType: 'general',
+          expectJson: true,
+          temperature: 0.4,
+          maxTokens: 1200,
+        }),
+      5
+    );
 
-    const fetchResponse = await callGeminiWithRetry(url, requestBody, 5);
-    const data = await fetchResponse.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    await OpenAIUsageTracker.trackUsage(
+      {
+        inputTokens: response.inputTokens,
+        outputTokens: response.outputTokens,
+        totalTokens: response.totalTokens,
+      },
+      'product-content',
+      null,
+      '/api/products/generate-content',
+      response.model
+    );
+
+    const text = response.text;
     if (!text) return null;
 
-    const parsed = JSON.parse(text);
+    const parsed = JSON.parse(text.replace(/```json/g, '').replace(/```/g, '').trim());
     let imageBase64 = null;
 
     // ── Image Generation (only when vendor explicitly requests it) ─────────────
@@ -199,7 +200,7 @@ YOUR TASK:
       } else {
         console.log(`[ImageGen] Starting image generation for: "${name}"`);
 
-        // AI-generated prompt from Gemini (already short due to 15-word instruction)
+        // AI-generated prompt from the content model (already short due to the word limit)
         // Falls back to a clean, concise prompt if missing
         const aiPrompt = parsed.image_prompt ||
           `${name || 'interior product'} studio photo, white background, professional lighting`;
@@ -271,7 +272,7 @@ YOUR TASK:
     return { ...parsed, image: imageBase64 };
 
   } catch (error) {
-    console.error('Error generating product content via Gemini:', error);
+    console.error('Error generating product content via OpenAI:', error);
     throw new Error(`Failed to generate product content: ${error.message}`);
   }
 };

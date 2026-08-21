@@ -236,6 +236,19 @@ const ProductSchema = new mongoose.Schema({
     type: mongoose.Schema.ObjectId,
     ref: 'Bundle',
     default: null
+  },
+  // Requirement A — Sample Requests. Interior materials are bought by touch, so
+  // a seller/admin opts each product into the sample programme individually.
+  sampleAvailable: {
+    type: Boolean,
+    default: false,
+    index: true
+  },
+  // Charged only once the customer is past their free-sample quota. 0 = free.
+  sampleCharge: {
+    type: Number,
+    default: 0,
+    min: 0
   }
 }, {
   timestamps: true

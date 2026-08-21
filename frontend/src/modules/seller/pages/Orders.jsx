@@ -19,7 +19,9 @@ import {
   Download,
   MoreVertical,
   Activity,
-  RefreshCw
+  RefreshCw,
+  Plus,
+  Car
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import api from "../../../shared/utils/api";
@@ -36,6 +38,13 @@ const Orders = () => {
   const [selectedOrderForAssign, setSelectedOrderForAssign] = useState(null);
   const [assigning, setAssigning] = useState(false);
   const [assignmentMode, setAssignmentMode] = useState('select-type');
+
+  // Seller-managed staff picker state
+  const [staffList, setStaffList] = useState([]);
+  const [loadingStaff, setLoadingStaff] = useState(false);
+  const [showAddStaffForm, setShowAddStaffForm] = useState(false);
+  const [savingStaff, setSavingStaff] = useState(false);
+  const [newStaff, setNewStaff] = useState({ name: '', phone: '', vehicleNumber: '', drivingLicense: '' });
   const [activeTab, setActiveTab] = useState('All');
   const [expandedOrderId, setExpandedOrderId] = useState(null);
   const [showRangeModal, setShowRangeModal] = useState(false);
@@ -141,10 +150,31 @@ const Orders = () => {
   };
 
   const handleSellerManagedSelect = async () => {
+    setAssignmentMode('seller-managed');
+    setShowAddStaffForm(false);
+    setLoadingStaff(true);
+    try {
+      const res = await api.get('/seller/staff');
+      if (res.data.success) {
+        setStaffList(res.data.data || []);
+        // No staff on file yet — jump straight to the add-staff form.
+        if (!res.data.data || res.data.data.length === 0) {
+          setShowAddStaffForm(true);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to fetch staff:', err);
+    } finally {
+      setLoadingStaff(false);
+    }
+  };
+
+  const finalizeSellerManaged = async (staffId) => {
     setAssigning(true);
     try {
       const { data } = await api.put(`/orders/${selectedOrderForAssign._id}/assign-delivery`, {
-        deliveryType: 'seller-managed'
+        deliveryType: 'seller-managed',
+        staffId: staffId || undefined
       });
       if (data.success) {
         setShowAssignModal(false);
@@ -155,6 +185,24 @@ const Orders = () => {
       toast.error(err.response?.data?.error || err.response?.data?.message || 'Assignment failed. Please try again.');
     } finally {
       setAssigning(false);
+    }
+  };
+
+  const handleAddStaff = async () => {
+    if (!newStaff.name.trim() || !newStaff.phone.trim()) return;
+    setSavingStaff(true);
+    try {
+      const res = await api.post('/seller/staff', newStaff);
+      if (res.data.success) {
+        setStaffList((prev) => [res.data.data, ...prev]);
+        setNewStaff({ name: '', phone: '', vehicleNumber: '', drivingLicense: '' });
+        setShowAddStaffForm(false);
+      }
+    } catch (err) {
+      console.error('Failed to add staff:', err);
+      toast.error(err.response?.data?.error || 'Failed to add staff member.');
+    } finally {
+      setSavingStaff(false);
     }
   };
 
@@ -485,6 +533,132 @@ const Orders = () => {
                           </div>
                           <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Automated shipping via Shiprocket API</p>
                         </div>
+                      </button>
+                    </div>
+                  </>
+                ) : assignmentMode === 'seller-managed' ? (
+                  <>
+                    <div className="px-5 py-4 md:p-8 border-b border-slate-50 flex items-center justify-between">
+                      <div>
+                        <h3 className="text-lg md:text-2xl font-bold text-slate-900 tracking-tight">Delivery Staff</h3>
+                        <p className="text-xs md:text-sm font-medium text-slate-500 mt-0.5">Who will handle this delivery?</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => setAssignmentMode('select-type')} className="px-3 py-1.5 border border-slate-200 rounded-lg flex items-center justify-center hover:bg-slate-50 transition-all text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                          Back
+                        </button>
+                        <button onClick={() => setShowAssignModal(false)} className="p-2 hover:bg-slate-100 rounded-xl transition-colors">
+                          <X size={20} className="text-slate-400" />
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="px-4 py-3 md:p-8 max-h-[55vh] overflow-y-auto custom-scrollbar space-y-2.5 md:space-y-4">
+                      {loadingStaff ? (
+                        <div className="text-center py-8">
+                          <div className="w-8 h-8 border-2 border-slate-100 border-t-seller-primary rounded-full animate-spin mx-auto mb-2" />
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Loading staff...</p>
+                        </div>
+                      ) : (
+                        <>
+                          {staffList.map((staff) => (
+                            <div
+                              key={staff._id}
+                              className="p-3.5 md:p-5 rounded-xl md:rounded-3xl border border-slate-100 hover:border-seller-primary/30 hover:bg-seller-light/10 transition-all flex items-center justify-between group"
+                            >
+                              <div className="flex items-center gap-3 md:gap-4 min-w-0">
+                                <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-seller-primary flex items-center justify-center text-white border-2 border-white shadow-sm shrink-0">
+                                  <User size={17} />
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="text-sm font-bold text-slate-900 truncate">{staff.name}</p>
+                                  <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                                    <span className="text-[10px] font-bold text-slate-400">{staff.phone}</span>
+                                    {staff.vehicleNumber && (
+                                      <>
+                                        <span className="w-1 h-1 rounded-full bg-slate-300"></span>
+                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1"><Car size={11} /> {staff.vehicleNumber}</span>
+                                      </>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                              <button
+                                onClick={() => finalizeSellerManaged(staff._id)}
+                                disabled={assigning}
+                                className="bg-seller-primary text-white px-4 py-2 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-seller-dark transition-all disabled:opacity-50 shrink-0"
+                              >
+                                {assigning ? 'Assigning...' : 'Assign'}
+                              </button>
+                            </div>
+                          ))}
+
+                          {!showAddStaffForm ? (
+                            <button
+                              onClick={() => setShowAddStaffForm(true)}
+                              className="w-full p-4 rounded-2xl border-2 border-dashed border-slate-200 hover:border-seller-primary/50 text-slate-500 hover:text-seller-primary transition-all flex items-center justify-center gap-2 font-bold text-[10px] uppercase tracking-widest"
+                            >
+                              <Plus size={16} /> Add New Staff
+                            </button>
+                          ) : (
+                            <div className="p-4 md:p-5 rounded-2xl border border-slate-200 bg-slate-50/50 space-y-3">
+                              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">New Staff Details</p>
+                              <input
+                                type="text"
+                                placeholder="Full Name *"
+                                value={newStaff.name}
+                                onChange={(e) => setNewStaff({ ...newStaff, name: e.target.value })}
+                                className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-semibold focus:outline-none focus:border-seller-primary/50"
+                              />
+                              <input
+                                type="text"
+                                placeholder="Phone Number *"
+                                value={newStaff.phone}
+                                onChange={(e) => setNewStaff({ ...newStaff, phone: e.target.value })}
+                                className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-semibold focus:outline-none focus:border-seller-primary/50"
+                              />
+                              <input
+                                type="text"
+                                placeholder="Vehicle Number"
+                                value={newStaff.vehicleNumber}
+                                onChange={(e) => setNewStaff({ ...newStaff, vehicleNumber: e.target.value })}
+                                className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-semibold focus:outline-none focus:border-seller-primary/50"
+                              />
+                              <input
+                                type="text"
+                                placeholder="Driving License (optional)"
+                                value={newStaff.drivingLicense}
+                                onChange={(e) => setNewStaff({ ...newStaff, drivingLicense: e.target.value })}
+                                className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-semibold focus:outline-none focus:border-seller-primary/50"
+                              />
+                              <div className="flex gap-2 pt-1">
+                                <button
+                                  onClick={() => setShowAddStaffForm(false)}
+                                  className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-500 font-bold text-[10px] uppercase tracking-widest hover:bg-white transition-all"
+                                >
+                                  Cancel
+                                </button>
+                                <button
+                                  onClick={handleAddStaff}
+                                  disabled={savingStaff || !newStaff.name.trim() || !newStaff.phone.trim()}
+                                  className="flex-1 py-2.5 rounded-xl bg-seller-primary text-white font-bold text-[10px] uppercase tracking-widest hover:bg-seller-dark transition-all disabled:opacity-50"
+                                >
+                                  {savingStaff ? 'Saving...' : 'Save Staff'}
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+
+                    <div className="p-4 md:p-6 bg-gray-50/50 border-t border-gray-50 text-center">
+                      <button
+                        onClick={() => finalizeSellerManaged(null)}
+                        disabled={assigning}
+                        className="text-[10px] font-bold text-slate-400 hover:text-slate-600 uppercase tracking-widest underline underline-offset-2 disabled:opacity-50"
+                      >
+                        Continue without assigning a staff member
                       </button>
                     </div>
                   </>

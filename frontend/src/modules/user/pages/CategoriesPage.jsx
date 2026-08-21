@@ -1,262 +1,312 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import ProductCard from '../components/ProductCard';
+import FilterPanel from '../components/FilterPanel';
+import AppliedFilters from '../components/AppliedFilters';
+import { FiFilter, FiChevronDown, FiX } from 'react-icons/fi';
 import api from '../../../shared/utils/api';
 
-const getCategorySlug = (name) => {
-  if (!name) return '';
-  return name.toLowerCase().replace(/\s+/g, '-');
-};
-
-const FOR_YOU_CATEGORY = {
-  _id: 'for_you',
-  name: 'For You',
-  image: 'https://cdn-icons-png.flaticon.com/512/3500/3500833.png',
-  isSpecial: true
-};
-
 const CategoriesPage = () => {
-  const [categories, setCategories] = useState([]);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [sortBy, setSortBy] = useState('featured');
+  const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeCategory, setActiveCategory] = useState(null);
-  const [recentProducts, setRecentProducts] = useState([]);
-  const [recentlyViewed, setRecentlyViewed] = useState([]);
+  const [filterOptions, setFilterOptions] = useState(null);
+  const [filterLoading, setFilterLoading] = useState(false);
+
+  const [filters, setFilters] = useState({
+    minPrice: searchParams.get('minPrice') ? Number(searchParams.get('minPrice')) : undefined,
+    maxPrice: searchParams.get('maxPrice') ? Number(searchParams.get('maxPrice')) : undefined,
+    stock: searchParams.get('stock') || undefined,
+    minRating: searchParams.get('minRating') ? Number(searchParams.get('minRating')) : undefined,
+    userLat: searchParams.get('userLat') ? Number(searchParams.get('userLat')) : undefined,
+    userLon: searchParams.get('userLon') ? Number(searchParams.get('userLon')) : undefined,
+    distance: searchParams.get('distance') || undefined,
+    region: searchParams.get('region') || undefined,
+    verifiedOnly: searchParams.get('verifiedOnly') || undefined,
+    verificationStatus: searchParams.get('verificationStatus') || undefined,
+    deliveryDay: searchParams.get('deliveryDay') || undefined,
+    deliveryType: searchParams.get('deliveryType') || undefined,
+    freeDelivery: searchParams.get('freeDelivery') || undefined,
+    newArrivalDays: searchParams.get('newArrivalDays') || undefined,
+    offerType: searchParams.get('offerType') || undefined,
+    grade: searchParams.get('grade') || undefined,
+    ecoFriendly: searchParams.get('ecoFriendly') || undefined,
+    waterproof: searchParams.get('waterproof') || undefined
+  });
+
+  useEffect(() => {
+    const fetchFilterOptions = async () => {
+      try {
+        const res = await api.get('/filters/options');
+        if (res.data && res.data.data) {
+          setFilterOptions(res.data.data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch filter options:', err);
+      }
+    };
+    fetchFilterOptions();
+  }, []);
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    const fetchCategoriesAndProducts = async () => {
+    const fetchProducts = async () => {
       try {
-        const [catRes, prodRes] = await Promise.all([
-          api.get('/categories'),
-          api.get('/products?limit=6&sort=-createdAt')
-        ]);
-        
-        const recent = JSON.parse(localStorage.getItem('recently_viewed_products') || '[]');
-        setRecentlyViewed(recent);
-        
-        const cats = catRes.data.data;
-        const allCats = [FOR_YOU_CATEGORY, ...cats];
-        setCategories(allCats);
-        if (allCats.length > 0) {
-          setActiveCategory(allCats[0]);
-        }
-        
-        if (prodRes.data.success) {
-          setRecentProducts(prodRes.data.data.products || prodRes.data.data || []);
-        }
+        setLoading(true);
+        const params = {};
+
+        if (filters.minPrice !== undefined) params.minPrice = filters.minPrice;
+        if (filters.maxPrice !== undefined) params.maxPrice = filters.maxPrice;
+        if (filters.stock) params.stock = filters.stock;
+        if (filters.minRating !== undefined) params.minRating = filters.minRating;
+        if (filters.userLat !== undefined) params.userLat = filters.userLat;
+        if (filters.userLon !== undefined) params.userLon = filters.userLon;
+        if (filters.distance) params.distance = filters.distance;
+        if (filters.region) params.region = filters.region;
+        if (filters.verifiedOnly) params.verifiedOnly = filters.verifiedOnly;
+        if (filters.verificationStatus) params.verificationStatus = filters.verificationStatus;
+        if (filters.deliveryDay) params.deliveryDay = filters.deliveryDay;
+        if (filters.deliveryType) params.deliveryType = filters.deliveryType;
+        if (filters.freeDelivery) params.freeDelivery = filters.freeDelivery;
+        if (filters.newArrivalDays) params.newArrivalDays = filters.newArrivalDays;
+        if (filters.offerType) params.offerType = filters.offerType;
+        if (filters.grade) params.grade = filters.grade;
+        if (filters.ecoFriendly) params.ecoFriendly = filters.ecoFriendly;
+        if (filters.waterproof) params.waterproof = filters.waterproof;
+
+        const endpoint = Object.keys(params).length > 0 ? '/filters/search' : '/products';
+        const res = await api.get(endpoint, { params });
+        setProducts(res.data.data || []);
       } catch (err) {
-        console.error('Failed to load categories:', err);
+        console.error('Failed to fetch products:', err);
+        setProducts([]);
       } finally {
         setLoading(false);
       }
     };
-    fetchCategoriesAndProducts();
-  }, []);
+    fetchProducts();
+  }, [filters]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen py-40 text-center font-display text-[#189D91] animate-pulse uppercase tracking-widest text-sm font-bold">
-        Loading Categories...
-      </div>
-    );
-  }
+  const sortedProducts = useMemo(() => {
+    let result = [...products];
+
+    const getEffectivePrice = (p) => {
+      const pPrice = Number(p.price) || 0;
+      const pDiscount = Number(p.discountPrice) || 0;
+      return (pDiscount > 0 && pDiscount < pPrice) ? pDiscount : pPrice;
+    };
+
+    if (sortBy === 'price-low') result.sort((a, b) => getEffectivePrice(a) - getEffectivePrice(b));
+    if (sortBy === 'price-high') result.sort((a, b) => getEffectivePrice(b) - getEffectivePrice(a));
+
+    return result;
+  }, [sortBy, products]);
+
+  const handleFiltersChange = (newFilters) => {
+    const params = new URLSearchParams(searchParams);
+
+    Object.entries(newFilters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        params.set(key, value);
+      } else {
+        params.delete(key);
+      }
+    });
+
+    setFilters(newFilters);
+    setSearchParams(params);
+  };
+
+  const handleRemoveFilter = (filterNames) => {
+    const names = Array.isArray(filterNames) ? filterNames : [filterNames];
+    const newFilters = { ...filters };
+    names.forEach(name => {
+      delete newFilters[name];
+    });
+    handleFiltersChange(newFilters);
+  };
+
+  const handleClearAllFilters = () => {
+    handleFiltersChange({
+      minPrice: undefined,
+      maxPrice: undefined,
+      stock: undefined,
+      minRating: undefined,
+      userLat: undefined,
+      userLon: undefined,
+      distance: undefined,
+      region: undefined,
+      verifiedOnly: undefined,
+      verificationStatus: undefined,
+      deliveryDay: undefined,
+      deliveryType: undefined,
+      freeDelivery: undefined,
+      newArrivalDays: undefined,
+      offerType: undefined,
+      grade: undefined,
+      ecoFriendly: undefined,
+      waterproof: undefined
+    });
+  };
 
   return (
-    <div className="flex h-[calc(100vh-60px)] md:h-[calc(100vh-140px)] bg-white overflow-hidden border-t border-gray-100">
-      {/* Left Sidebar - Categories */}
-      <div className="w-[85px] md:w-48 bg-[#F8F9FA] overflow-y-auto no-scrollbar shrink-0 border-r border-gray-100">
-        <div className="py-2">
-          {categories.map((cat) => {
-            const isActive = activeCategory?._id === cat._id;
-            return (
-              <div
-                key={cat._id}
-                onClick={() => setActiveCategory(cat)}
-                className={`flex flex-col items-center justify-center p-3 cursor-pointer transition-all relative ${
-                  isActive ? 'bg-white' : 'hover:bg-gray-100'
-                }`}
-              >
-                {/* Active Indicator Line */}
-                {isActive && (
-                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#189D91] rounded-r-md"></div>
-                )}
-                
-                <div className={`w-12 h-12 md:w-16 md:h-16 rounded-xl overflow-hidden bg-gray-50 mb-1.5 md:mb-2 shadow-sm ${isActive ? (cat.isSpecial ? 'ring-2 ring-blue-500' : 'ring-2 ring-[#189D91]') : 'ring-1 ring-gray-200'} ${cat.isSpecial ? 'bg-blue-50/50 p-2' : ''}`}>
-                  <img
-                    src={cat.image}
-                    alt={cat.name}
-                    className={`w-full h-full object-cover ${cat.isSpecial ? 'object-contain' : 'mix-blend-multiply'}`}
-                  />
-                </div>
-                <span
-                  className={`text-[9px] md:text-xs text-center leading-tight px-1 ${
-                    isActive ? (cat.isSpecial ? 'font-bold text-blue-600' : 'font-bold text-[#189D91]') : 'font-medium text-gray-600'
-                  }`}
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-2 md:py-6"
+    >
+      {/* Header */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 md:mb-6 gap-4 md:gap-8"
+      >
+        <div className="space-y-1">
+          <h1 className="text-xl md:text-2xl font-display font-semibold tracking-tight">All Categories</h1>
+          <p className="text-deep-espresso/70 text-sm md:text-base font-normal">
+            Showing {sortedProducts.length} premium pieces for your dream home.
+          </p>
+        </div>
+
+        <div className="flex items-center space-x-4 w-full md:w-auto">
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setIsSidebarOpen(true)}
+            className="md:hidden flex-1 flex items-center justify-center space-x-3 px-6 py-3.5 bg-soft-oatmeal/10 border border-soft-oatmeal/20 rounded-2xl text-deep-espresso font-bold"
+          >
+            <FiFilter className="h-5 w-5" />
+            <span>Filters</span>
+          </motion.button>
+
+          <div className="hidden md:flex items-center space-x-3 text-[11px] font-semibold text-deep-espresso/40 mr-4">
+            <span>Sort by:</span>
+          </div>
+          <div className="relative group flex-1 md:flex-none">
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="appearance-none w-full md:w-64 px-6 py-3.5 bg-white border border-soft-oatmeal rounded-2xl focus:outline-none focus:ring-4 focus:ring-warm-sand/10 cursor-pointer pr-12 text-sm font-semibold text-deep-espresso transition-all"
+            >
+              <option value="featured">Featured Recommendations</option>
+              <option value="price-low">Price: Low to High</option>
+              <option value="price-high">Price: High to Low</option>
+            </select>
+            <FiChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400" />
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Applied Filters */}
+      <AppliedFilters
+        filters={filters}
+        onRemoveFilter={handleRemoveFilter}
+        onClearAll={handleClearAllFilters}
+      />
+
+      <div className="flex gap-16 relative">
+        {/* Sidebar - Desktop */}
+        <aside className="hidden md:block w-72 flex-shrink-0 sticky top-32 max-h-[calc(100vh-9rem)] overflow-y-auto pr-2">
+          <FilterPanel
+            filters={filters}
+            onFiltersChange={handleFiltersChange}
+            filterOptions={filterOptions}
+            isLoading={filterLoading}
+          />
+        </aside>
+
+        {/* Product Grid */}
+        <div className="flex-1">
+          {loading ? (
+            <div className="flex items-center justify-center py-32">
+              <div className="h-12 w-12 border-4 border-warm-sand/20 border-t-warm-sand rounded-full animate-spin"></div>
+            </div>
+          ) : (
+            <AnimatePresence mode="wait">
+              {sortedProducts.length > 0 ? (
+                <motion.div
+                  key="products"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.4 }}
+                  className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3 md:gap-10"
                 >
-                  {cat.name}
-                </span>
-              </div>
-            );
-          })}
+                  {sortedProducts.map((product, index) => (
+                    <ProductCard key={product._id || product.id} product={product} index={index} variant="list" />
+                  ))}
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="empty"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="flex flex-col items-center justify-center py-32 text-center"
+                >
+                  <div className="mb-8 p-10 bg-soft-oatmeal/10 rounded-full text-deep-espresso/10">
+                    <FiFilter className="h-24 w-24" />
+                  </div>
+                  <h3 className="text-2xl md:text-3xl font-display font-semibold mb-3">No matching pieces</h3>
+                  <p className="text-deep-espresso/40 max-w-sm text-lg font-medium leading-relaxed">Try adjusting your filters to find your perfect interior elements.</p>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={handleClearAllFilters}
+                    className="mt-10 bg-[#189D91] hover:bg-[#14847a] text-white px-10 py-4 rounded-xl font-bold text-sm shadow-md shadow-[#189D91]/15 transition-all"
+                  >
+                    Reset all filters
+                  </motion.button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          )}
         </div>
       </div>
 
-      {/* Right Content - Subcategories */}
-      <div className="flex-1 overflow-y-auto bg-white p-4 md:p-8 no-scrollbar pb-24 md:pb-8">
-        {activeCategory && activeCategory._id === 'for_you' ? (
-          <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in duration-300">
-            {/* Top Banner */}
-            <div className="rounded-2xl overflow-hidden bg-gradient-to-r from-blue-50 to-indigo-50 p-5 md:p-6 border border-blue-100 flex items-center justify-between">
-              <div>
-                <h3 className="text-sm md:text-xl font-bold text-gray-900">Personalized For You</h3>
-                <p className="text-[10px] md:text-sm text-gray-600 mt-1">Recommendations based on your interests</p>
-              </div>
-              <div className="bg-blue-600 text-white p-2 rounded-full hidden md:block">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-              </div>
-            </div>
-
-            {/* New & Upcoming Launches */}
-            <div>
-              <h3 className="text-sm md:text-lg font-bold text-gray-800 mb-4 tracking-tight">New & Upcoming Launches</h3>
-              <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-x-3 gap-y-5 md:gap-6">
-                {recentProducts.slice(0, 6).map((prod) => (
-                  <Link
-                    to={`/product/${prod.slug || prod._id}`}
-                    key={prod._id}
-                    className="flex flex-col items-center gap-2 group"
-                  >
-                    <div className="w-full aspect-square rounded-2xl bg-gray-50 overflow-hidden border border-gray-100 relative group-hover:shadow-md transition-all">
-                      <img
-                        src={prod.images?.[0] || 'https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?w=400&q=80'}
-                        alt={prod.name}
-                        className="w-full h-full object-cover mix-blend-multiply group-hover:scale-105 transition-transform"
-                      />
-                      <div className="absolute bottom-1.5 left-1.5 right-1.5 bg-[#189D91] hover:bg-[#115E59] text-white text-[8px] md:text-[10px] font-bold text-center py-1.5 rounded uppercase tracking-wider shadow-sm transition-colors">
-                        Shop Now
-                      </div>
-                    </div>
-                    <span className="text-[10px] md:text-xs font-semibold text-center leading-tight text-gray-700 group-hover:text-[#189D91] line-clamp-2 w-full px-1">
-                      {prod.name}
-                    </span>
-                  </Link>
-                ))}
-              </div>
-            </div>
-
-            {/* Recently Viewed Products */}
-            {recentlyViewed.length > 0 && (
-              <div>
-                <h3 className="text-sm md:text-lg font-bold text-gray-800 mb-4 tracking-tight">Recently Viewed</h3>
-                <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-x-3 gap-y-5 md:gap-6">
-                  {recentlyViewed.map(prod => (
-                    <Link to={`/product/${prod.slug || prod._id}`} key={prod._id} className="flex flex-col items-center gap-2 group">
-                      <div className="w-full aspect-square rounded-2xl bg-gray-50 overflow-hidden border border-gray-100 relative group-hover:shadow-md transition-all">
-                        <img
-                          src={prod.images?.[0] || 'https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?w=400&q=80'}
-                          alt={prod.name}
-                          className="w-full h-full object-cover mix-blend-multiply group-hover:scale-105 transition-transform"
-                        />
-                      </div>
-                      <span className="text-[10px] md:text-xs font-semibold text-center leading-tight text-gray-700 group-hover:text-[#189D91] line-clamp-2 w-full px-1">
-                        {prod.name}
-                      </span>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        ) : activeCategory ? (
-          <div className="max-w-4xl mx-auto animate-in fade-in duration-300">
-            {/* Recently Viewed Products (Top of Category) */}
-            {recentlyViewed.length > 0 && (
-              <div className="mb-10">
-                <h3 className="text-sm md:text-lg font-bold text-gray-800 mb-4 tracking-tight">Recently Viewed</h3>
-                <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-x-3 gap-y-5 md:gap-6">
-                  {recentlyViewed.map(prod => (
-                    <Link to={`/product/${prod.slug || prod._id}`} key={prod._id} className="flex flex-col items-center gap-2 group">
-                      <div className="w-full aspect-square rounded-2xl md:rounded-3xl bg-gray-50 overflow-hidden border border-gray-100 relative group-hover:shadow-md transition-all">
-                        <img
-                          src={prod.images?.[0] || 'https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?w=400&q=80'}
-                          alt={prod.name}
-                          className="w-full h-full object-cover mix-blend-multiply group-hover:scale-105 transition-transform"
-                        />
-                      </div>
-                      <span className="text-[10px] md:text-xs font-semibold text-center leading-tight text-gray-700 group-hover:text-[#189D91] line-clamp-2 w-full px-1">
-                        {prod.name}
-                      </span>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-sm md:text-xl font-bold text-gray-800">{activeCategory.name}</h2>
-              <Link
-                to={`/category/${getCategorySlug(activeCategory.name)}`}
-                className="text-[10px] md:text-xs text-[#189D91] font-bold uppercase tracking-wider hover:underline"
-              >
-                View All
-              </Link>
-            </div>
-
-            {activeCategory.subcategories && activeCategory.subcategories.length > 0 ? (
-              <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-x-3 gap-y-6 md:gap-6">
-                {activeCategory.subcategories.map((sub) => (
-                  <Link
-                    to={`/category/${getCategorySlug(activeCategory.name)}?sub=${sub.name.toLowerCase()}`}
-                    key={sub._id}
-                    className="flex flex-col items-center gap-2 group"
-                  >
-                    <div className="w-full aspect-square rounded-2xl md:rounded-3xl bg-gray-50 overflow-hidden border border-gray-100 group-hover:shadow-md transition-all">
-                      <img
-                        src={sub.image && !sub.image.startsWith('C:') ? sub.image : 'https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?w=400&q=80'}
-                        alt={sub.name}
-                        className="w-full h-full object-cover mix-blend-multiply group-hover:scale-105 transition-transform"
-                      />
-                    </div>
-                    <span className="text-[10px] md:text-xs font-semibold text-center leading-tight text-gray-700 group-hover:text-[#189D91]">
-                      {sub.name}
-                    </span>
-                  </Link>
-                ))}
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center py-20">
-                <p className="text-gray-400 text-xs md:text-sm mb-4">No subcategories found for {activeCategory.name}</p>
-                <Link
-                  to={`/category/${getCategorySlug(activeCategory.name)}`}
-                  className="px-6 py-2 bg-[#189D91] text-white rounded-full text-[10px] md:text-xs font-bold uppercase tracking-wider hover:bg-[#115E59]"
+      {/* Mobile Sidebar Overlay */}
+      <AnimatePresence>
+        {isSidebarOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[60] md:hidden bg-deep-espresso/40 backdrop-blur-md px-4 pt-20"
+          >
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="absolute right-0 top-0 h-full w-[85%] bg-white shadow-[-20px_0_60px_-15px_rgba(0,0,0,0.3)] flex flex-col"
+            >
+              <div className="p-8 border-b border-soft-oatmeal flex justify-between items-center">
+                <h3 className="text-xl font-display font-semibold text-deep-espresso">Filters</h3>
+                <motion.button
+                  whileTap={{ scale: 0.8 }}
+                  onClick={() => setIsSidebarOpen(false)}
+                  className="p-3 bg-soft-oatmeal/20 rounded-full"
                 >
-                  Shop All {activeCategory.name}
-                </Link>
+                  <FiX className="h-6 w-6" />
+                </motion.button>
               </div>
-            )}
-            
-            {/* Promotional Banner for Category */}
-            <div className="mt-12 rounded-2xl md:rounded-3xl overflow-hidden relative shadow-sm border border-gray-100 group block">
-              <Link to={`/category/${getCategorySlug(activeCategory.name)}`}>
-                <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent z-10" />
-                <img 
-                  src={activeCategory.image} 
-                  className="w-full h-32 md:h-48 object-cover object-center group-hover:scale-105 transition-transform duration-700" 
-                  alt=""
+              <div className="p-8 space-y-6 overflow-y-auto flex-1">
+                <FilterPanel
+                  filters={filters}
+                  onFiltersChange={(newFilters) => {
+                    handleFiltersChange(newFilters);
+                    setIsSidebarOpen(false);
+                  }}
+                  filterOptions={filterOptions}
+                  isLoading={filterLoading}
                 />
-                <div className="absolute inset-0 z-20 flex flex-col justify-center p-6 md:p-10">
-                  <span className="text-white/80 text-[9px] md:text-xs font-bold uppercase tracking-[0.2em] mb-1 md:mb-2">Explore the Collection</span>
-                  <h3 className="text-white text-lg md:text-3xl font-black">{activeCategory.name}</h3>
-                  <div className="mt-3 md:mt-4 inline-flex items-center gap-2 text-[#189D91] bg-white w-fit px-4 py-1.5 md:px-5 md:py-2 rounded-full text-[10px] md:text-xs font-bold uppercase tracking-wider">
-                    Shop Now
-                  </div>
-                </div>
-              </Link>
-            </div>
-
-          </div>
-        ) : null}
-      </div>
-    </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 };
 

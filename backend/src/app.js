@@ -52,6 +52,8 @@ const roomRoutes = require('./routes/roomRoutes');
 const bundleRoutes = require('./routes/bundleRoutes');
 const quizRoutes = require('./routes/quizRoutes');
 const assistantRoutes = require('./routes/assistantRoutes');
+const filterRoutes = require('./routes/filterRoutes');
+const adminVendorRoutes = require('./routes/adminVendorRoutes');
 const errorHandler = require('./middleware/errorMiddleware');
 const authRoutes = require('./routes/authRoutes');
 const { initSocket } = require('./socket');
@@ -210,6 +212,13 @@ const rfqRoutes = require('./routes/rfqRoutes');
 app.use('/api/rfq', rfqRoutes);
 const sampleRoutes = require('./routes/sampleRoutes');
 app.use('/api/samples', sampleRoutes);
+
+// Advanced filtering APIs (Phase 2)
+app.use('/api/filters', filterRoutes);
+app.use('/api/admin/sellers', adminVendorRoutes);
+
+const sellerStaffRoutes = require('./routes/sellerStaffRoutes');
+app.use('/api/seller/staff', sellerStaffRoutes);
 
 app.get('/', (req, res) => {
   res.json({ message: 'Welcome to Riddha Mart API' });

@@ -1,4 +1,4 @@
-const logger = require('./logger');
+const logger = console;
 
 /**
  * Handle OpenAI API errors gracefully

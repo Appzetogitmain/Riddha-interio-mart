@@ -191,18 +191,20 @@ const ProductCard = ({ product, index = 0, variant = 'grid' }) => {
 
         <div className="flex items-center justify-between gap-2 md:gap-4 min-w-0 pt-1 md:pt-2 mt-auto">
           <Link to={`/products/${productId}`} className="min-w-0 flex-1 flex flex-col hover:opacity-80 transition-opacity">
-            <div className="flex flex-col md:flex-row md:items-baseline md:gap-2 min-w-0">
+            <div className="flex flex-col gap-0.5 min-w-0">
               <span className={`text-[16px] md:text-xl font-black tracking-tight whitespace-nowrap ${isList ? 'text-[#B71C1C]' : 'text-black'}`}>
                 ₹{displayPriceString}
                 {isList && <span className="ml-1 text-[9px] md:text-[11px] text-gray-400 font-medium">incl. GST</span>}
               </span>
               {originalPrice > displayPrice && (
-                <span className="text-[10px] md:text-sm text-gray-300 line-through font-medium whitespace-nowrap mt-0.5 md:mt-0">
-                  {isList && "MRP: "}₹{originalPriceString}
-                </span>
-              )}
-              {isList && originalPrice > displayPrice && (
-                <span className="hidden md:inline text-[11px] font-bold text-[#B71C1C] italic">({discountPercent}% off)</span>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-[10px] md:text-sm text-gray-300 line-through font-medium">
+                    {isList && "MRP: "}₹{originalPriceString}
+                  </span>
+                  {isList && (
+                    <span className="text-[10px] md:text-[11px] font-bold text-[#B71C1C] italic whitespace-nowrap">({discountPercent}% off)</span>
+                  )}
+                </div>
               )}
             </div>
             {!isList && (

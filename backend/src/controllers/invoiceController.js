@@ -125,14 +125,14 @@ const downloadShippingLabels = async (req, res) => {
 // @access  Private (Admin only)
 const downloadCustomerInvoice = async (req, res) => {
   try {
-    // Only Admin is allowed to access/download Bill C
-    if (req.user.role !== "admin") {
-      return res.status(403).json({ success: false, message: "Only Admin can view/download Customer invoices" });
-    }
-
     let order = await Order.findById(req.params.id);
     if (!order) {
       return res.status(404).json({ success: false, message: "Order not found" });
+    }
+
+    // Auth check: Admin can access any order's invoice, or the customer who placed it
+    if (req.user.role !== "admin" && order.user.toString() !== req.user.id) {
+      return res.status(403).json({ success: false, message: "Not authorized to access this invoice" });
     }
 
     // Auto-generate invoice numbers if not already generated

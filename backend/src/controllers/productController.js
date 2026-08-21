@@ -1025,3 +1025,118 @@ exports.generateProductContentHandler = async (req, res, next) => {
     res.status(500).json({ success: false, error: 'AI Service Error: ' + error.message });
   }
 };
+
+// @desc    Get available filter options for the UI
+// @route   GET /api/products/filters/options
+// @access  Public
+exports.getFilterOptions = async (req, res, next) => {
+  try {
+    const filterService = require('../services/filterService');
+    const options = await filterService.getFilterOptions();
+
+    res.status(200).json({
+      success: true,
+      data: options
+    });
+  } catch (error) {
+    console.error('[Filter Options Error]:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+// @desc    Get products with advanced filtering (location, specs, delivery, etc.)
+// @route   GET /api/products/filters/search
+// @access  Public
+exports.getProductsWithFilters = async (req, res, next) => {
+  try {
+    const filterService = require('../services/filterService');
+    const cacheService = require('../services/cacheService');
+    const paginate = require('../utils/paginate');
+
+    // Build cache key from all filter parameters
+    const cacheKey = `products:filters:${JSON.stringify(req.query)}`;
+    const cachedData = cacheService.get(cacheKey);
+    if (cachedData) {
+      return res.status(200).json({
+        success: true,
+        cached: true,
+        ...cachedData
+      });
+    }
+
+    // Parse user location from query
+    let userLocation = null;
+    if (req.query.userLat && req.query.userLon) {
+      userLocation = [Number(req.query.userLon), Number(req.query.userLat)];
+    }
+
+    // Build base product filter (price, stock, specs, delivery, payment — all Product-level)
+    const productFilter = filterService.buildFilterQuery(req.query);
+
+    // Resolve seller-side (verification/region/distance) and offer-type restrictions
+    // against their full collections — NOT scoped to any one page — then fold the
+    // resulting id lists into the main query. Doing this before paginate() runs means
+    // totalResults/totalPages reflect the true filtered count, and no matching product
+    // is silently dropped just because it fell outside the first page's unfiltered slice.
+    const sellerIds = await filterService.resolveSellerIds({
+      verifiedOnly: req.query.verifiedOnly,
+      verificationStatus: req.query.verificationStatus,
+      region: req.query.region,
+      distance: req.query.distance,
+      userCoordinates: userLocation
+    });
+    if (sellerIds) {
+      productFilter.seller = { $in: sellerIds };
+    }
+
+    const offerProductIds = await filterService.resolveOfferProductIds(req.query.offerType);
+    if (offerProductIds) {
+      productFilter._id = { $in: offerProductIds };
+    }
+
+    // Get paginated products
+    const populateOptions = [
+      { path: 'seller', select: 'fullName shopName location region verificationStatus deliveryCapabilities' },
+      { path: 'brand', select: 'name logo' },
+      { path: 'category', select: 'name' }
+    ];
+
+    let result = await paginate(Product, productFilter, req, populateOptions);
+
+    // Attach offer pricing
+    if (result.data && result.data.length > 0) {
+      await attachOfferPricing(result.data);
+    }
+
+    // Format response
+    const formattedData = result.data.map(p => {
+      const pObj = p.toObject ? p.toObject() : { ...p };
+      if (pObj.category && typeof pObj.category === 'object') {
+        pObj.categoryId = pObj.category._id;
+        pObj.category = pObj.category.name;
+      }
+      return pObj;
+    });
+
+    const outputPayload = {
+      count: formattedData.length,
+      totalResults: result.totalResults,
+      totalPages: result.totalPages,
+      page: result.page,
+      limit: result.limit,
+      data: formattedData
+    };
+
+    // Cache results
+    cacheService.set(cacheKey, outputPayload, 300);
+
+    res.status(200).json({
+      success: true,
+      cached: false,
+      ...outputPayload
+    });
+  } catch (error) {
+    console.error('[Products with Filters Error]:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+};

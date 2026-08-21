@@ -173,6 +173,12 @@ const OrderSchema = new mongoose.Schema({
     enum: ['in-app', 'seller-managed', 'shiprocket'],
     default: 'in-app'
   },
+  // Seller's own staff member handling this delivery, when deliveryType is 'seller-managed'
+  assignedStaff: {
+    type: mongoose.Schema.ObjectId,
+    ref: 'SellerStaff',
+    default: null
+  },
   deliveryAssignmentTime: {
     type: Date
   },

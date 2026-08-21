@@ -15,9 +15,9 @@ const ProductMultiSelect = ({ selected = [], onChange, mode = 'seller' }) => {
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      let url = '/api/products/my-products';
+      let url = '/products/my-products';
       if (mode === 'admin') {
-        url = '/api/products?limit=100&isApproved=true';
+        url = '/products?limit=100&isApproved=true';
       }
       const res = await api.get(url);
       const productsData = res.data?.data || [];

@@ -12,7 +12,8 @@ const OffersListPage = () => {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState({
     type: typeSlug ? slugToLabel(typeSlug) : 'all',
-    approvalStatus: 'all'
+    approvalStatus: 'all',
+    offerStatus: 'all'
   });
 
   useEffect(() => {
@@ -25,6 +26,7 @@ const OffersListPage = () => {
       const params = {};
       if (filter.type && filter.type !== 'all') params.type = filter.type;
       if (filter.approvalStatus && filter.approvalStatus !== 'all') params.approvalStatus = filter.approvalStatus;
+      if (filter.offerStatus && filter.offerStatus !== 'all') params.isActive = filter.offerStatus === 'active';
 
       const res = await api.get('/offers', { params });
       setOffers(res.data?.data || []);
@@ -44,6 +46,26 @@ const OffersListPage = () => {
       fetchOffers();
     } catch (err) {
       toast.error('Failed to delete offer');
+    }
+  };
+
+  const handleCloseOffer = async (id) => {
+    try {
+      await api.put(`/offers/${id}`, { isActive: false });
+      toast.success('Offer closed successfully');
+      fetchOffers();
+    } catch (err) {
+      toast.error('Failed to close offer');
+    }
+  };
+
+  const handleRestartOffer = async (id) => {
+    try {
+      await api.put(`/offers/${id}`, { isActive: true });
+      toast.success('Offer restarted successfully');
+      fetchOffers();
+    } catch (err) {
+      toast.error('Failed to restart offer');
     }
   };
 
@@ -77,7 +99,7 @@ const OffersListPage = () => {
       </div>
 
       {/* Filters */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-3 gap-4">
         <div>
           <label className="block text-xs font-semibold text-slate-600 uppercase mb-2">Type</label>
           <select
@@ -92,7 +114,7 @@ const OffersListPage = () => {
           </select>
         </div>
         <div>
-          <label className="block text-xs font-semibold text-slate-600 uppercase mb-2">Status</label>
+          <label className="block text-xs font-semibold text-slate-600 uppercase mb-2">Approval Status</label>
           <select
             value={filter.approvalStatus}
             onChange={(e) => setFilter({ ...filter, approvalStatus: e.target.value })}
@@ -102,6 +124,18 @@ const OffersListPage = () => {
             <option value="pending">Pending Approval</option>
             <option value="approved">Approved</option>
             <option value="rejected">Rejected</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-xs font-semibold text-slate-600 uppercase mb-2">Offer Status</label>
+          <select
+            value={filter.offerStatus}
+            onChange={(e) => setFilter({ ...filter, offerStatus: e.target.value })}
+            className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="all">All Status</option>
+            <option value="active">Active Offers</option>
+            <option value="closed">Closed Offers</option>
           </select>
         </div>
       </div>
@@ -166,21 +200,40 @@ const OffersListPage = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 text-center">
-                      <div className="flex justify-center gap-2">
-                        <button
-                          onClick={() => navigate(`/seller/offers/edit/${offer._id}`)}
-                          className="p-2 hover:bg-slate-100 rounded transition text-blue-600"
-                          title="Edit"
-                        >
-                          <Edit size={16} />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(offer._id)}
-                          className="p-2 hover:bg-red-100 rounded transition text-red-600"
-                          title="Delete"
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                      <div className="flex flex-col gap-2">
+                        <div className="flex justify-center gap-2">
+                          <button
+                            onClick={() => navigate(`/seller/offers/edit/${offer._id}`)}
+                            className="p-2 hover:bg-slate-100 rounded transition text-blue-600"
+                            title="Edit"
+                          >
+                            <Edit size={16} />
+                          </button>
+                          {offer.isActive ? (
+                            <button
+                              onClick={() => handleCloseOffer(offer._id)}
+                              className="px-3 py-1 bg-red-100 hover:bg-red-200 text-red-700 font-semibold text-xs rounded transition"
+                              title="Close Offer"
+                            >
+                              Close
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleRestartOffer(offer._id)}
+                              className="px-3 py-1 bg-green-100 hover:bg-green-200 text-green-700 font-semibold text-xs rounded transition"
+                              title="Restart Offer"
+                            >
+                              Restart
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleDelete(offer._id)}
+                            className="p-2 hover:bg-red-100 rounded transition text-red-600"
+                            title="Delete"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
                       </div>
                     </td>
                   </tr>

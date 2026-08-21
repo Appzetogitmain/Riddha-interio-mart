@@ -1,7 +1,18 @@
 {
-  "timestamp": "2026-08-21T08:40:20.194Z",
-  "query": {},
+  "timestamp": "2026-08-21T08:45:30.740Z",
+  "query": {
+    "isApproved": "pending",
+    "isActive": "all"
+  },
   "builtFilter": {
+    "isApproved": true,
+    "isActive": true,
+    "seller": {
+      "$nin": [
+        "6a100b07a3cc06ac3f65be01",
+        "6a10057431fa10db6ebdaaff"
+      ]
+    },
     "isBundle": {
       "$ne": true
     }
@@ -89,16 +100,6 @@
       "subsubcategory": "6a4dfe86a06cf368b84a926e"
     },
     {
-      "_id": "6a758842fbb213b03d09474f",
-      "name": "Premium Emulsion Paint",
-      "category": {
-        "_id": "6a4cf715a06cf368b84a62e3",
-        "name": "Paint"
-      },
-      "subcategory": "6a4e0f4aa06cf368b84a9dc1",
-      "subsubcategory": "6a4e0f4aa06cf368b84a9dc4"
-    },
-    {
       "_id": "6a743b1ffbb213b03d092945",
       "name": "Shoe Racks",
       "category": {
@@ -107,6 +108,16 @@
       },
       "subcategory": "6a4d7e72a06cf368b84a7580",
       "subsubcategory": "6a4d7e72a06cf368b84a7585"
+    },
+    {
+      "_id": "6a733f41fbb213b03d08f824",
+      "name": "HIKVISION",
+      "category": {
+        "_id": "6a4cfde1a06cf368b84a64c6",
+        "name": "Security & Automation"
+      },
+      "subcategory": "6a50d299fb87c84071cbb938",
+      "subsubcategory": "6a50d299fb87c84071cbb93a"
     }
   ]
 }

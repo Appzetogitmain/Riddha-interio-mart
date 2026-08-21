@@ -12,8 +12,21 @@ const paginate = async (model, query, req, populate = null, projection = null) =
   const limit = parseInt(req.query.limit, 10) || 10;
   const startIndex = (page - 1) * limit;
 
-  // Use lean() for read-only performance optimization
-  let queryBuilder = model.find(query, projection).lean();
+  // Build query without lean() initially so populate works
+  let queryBuilder = model.find(query, projection);
+
+  if (populate) {
+    if (Array.isArray(populate)) {
+      populate.forEach(p => {
+        queryBuilder = queryBuilder.populate(p);
+      });
+    } else {
+      queryBuilder = queryBuilder.populate(populate);
+    }
+  }
+
+  // Use lean() for read-only performance optimization (after populate)
+  queryBuilder = queryBuilder.lean();
 
   if (req.query.sort) {
     // If sort is passed in query like sort=price or sort=-price
@@ -25,16 +38,6 @@ const paginate = async (model, query, req, populate = null, projection = null) =
   }
 
   queryBuilder = queryBuilder.skip(startIndex).limit(limit);
-
-  if (populate) {
-    if (Array.isArray(populate)) {
-      populate.forEach(p => {
-        queryBuilder = queryBuilder.populate(p);
-      });
-    } else {
-      queryBuilder = queryBuilder.populate(populate);
-    }
-  }
 
   const data = await queryBuilder;
   const totalResults = await model.countDocuments(query);

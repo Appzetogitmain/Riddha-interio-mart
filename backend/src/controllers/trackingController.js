@@ -1,7 +1,7 @@
 const Order = require('../models/Order');
 const DeliveryPartner = require('../models/DeliveryPartner');
 const DeliveryIssue = require('../models/DeliveryIssue');
-const geminiTrackingService = require('../services/geminiTrackingService');
+const trackingService = require('../services/trackingService');
 
 // Helper to generate 4-digit OTP
 const generateOTP = () => Math.floor(1000 + Math.random() * 9000).toString();
@@ -60,7 +60,7 @@ exports.getOrderTracking = async (req, res, next) => {
 
     // Generate AI Prediction if missing or older than 15 mins
     if (!order.aiPredictions || !order.aiPredictions.generatedAt || (Date.now() - new Date(order.aiPredictions.generatedAt).getTime() > 15 * 60000)) {
-      const aiEst = await geminiTrackingService.predictDeliveryTime({
+      const aiEst = await trackingService.predictDeliveryTime({
         currentLat: order.currentLocation?.coordinates?.[1] || 12.9716,
         currentLng: order.currentLocation?.coordinates?.[0] || 77.6412,
         destination: order.shippingAddress?.fullAddress || 'Indiranagar, Bengaluru',
@@ -139,7 +139,7 @@ exports.getETAPrediction = async (req, res, next) => {
     const { orderId } = req.params;
     const order = await Order.findById(orderId);
 
-    const prediction = await geminiTrackingService.predictDeliveryTime({
+    const prediction = await trackingService.predictDeliveryTime({
       currentLat: order?.currentLocation?.coordinates?.[1] || 12.9716,
       currentLng: order?.currentLocation?.coordinates?.[0] || 77.6412,
       destination: order?.shippingAddress?.fullAddress || 'Bengaluru',
@@ -161,7 +161,7 @@ exports.checkDelays = async (req, res, next) => {
     const { orderId } = req.params;
     const order = await Order.findById(orderId);
 
-    const delayAnalysis = await geminiTrackingService.detectDelays({
+    const delayAnalysis = await trackingService.detectDelays({
       currentLat: order?.currentLocation?.coordinates?.[1] || 12.9716,
       currentLng: order?.currentLocation?.coordinates?.[0] || 77.6412,
       destination: order?.shippingAddress?.fullAddress || 'Bengaluru',
@@ -190,7 +190,7 @@ exports.reportDeliveryIssue = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Order not found' });
     }
 
-    const aiAnalysis = await geminiTrackingService.suggestIssueResolution({
+    const aiAnalysis = await trackingService.suggestIssueResolution({
       issueType: issueType || 'delivery_delayed',
       description: description || 'Delay in receiving parcel',
       orderValue: order.totalPrice || 12500,

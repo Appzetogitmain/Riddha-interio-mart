@@ -1,7 +1,7 @@
 const Notification = require('../models/Notification');
 const NotificationPreference = require('../models/NotificationPreference');
 const NotificationCampaign = require('../models/NotificationCampaign');
-const geminiNotificationService = require('../services/geminiNotificationService');
+const notificationService = require('../services/notificationService');
 
 // 1. Send Notification (Triggered or Manual)
 exports.sendNotification = async (req, res, next) => {
@@ -26,7 +26,7 @@ exports.sendNotification = async (req, res, next) => {
     }
 
     // Generate Gemini multi-channel variants
-    const aiVariants = await geminiNotificationService.generatePersonalizedMessage({
+    const aiVariants = await notificationService.generatePersonalizedMessage({
       type: type || 'order_confirmed',
       customerName: req.user.fullName || req.user.name || 'Client',
       context: { title, message }
@@ -180,7 +180,7 @@ exports.createCampaign = async (req, res, next) => {
   try {
     const { campaignName, type = 'promotional', segment, goal } = req.body;
 
-    const abVariants = await geminiNotificationService.generateABTestVariants({
+    const abVariants = await notificationService.generateABTestVariants({
       goal: goal || campaignName,
       segment: segment || 'Modern Style Enthusiasts'
     }, req.user._id);
@@ -295,7 +295,7 @@ exports.getNotificationAnalytics = async (req, res, next) => {
 exports.generatePersonalizedMessage = async (req, res, next) => {
   try {
     const { type, customerName, context, tone } = req.body;
-    const aiVariants = await geminiNotificationService.generatePersonalizedMessage({
+    const aiVariants = await notificationService.generatePersonalizedMessage({
       type,
       customerName: customerName || 'Valued Client',
       context,
@@ -315,7 +315,7 @@ exports.generatePersonalizedMessage = async (req, res, next) => {
 exports.getOptimalSendTime = async (req, res, next) => {
   try {
     const { timezone, type, quietHours } = req.body;
-    const sendTimeObj = await geminiNotificationService.calculateOptimalSendTime({
+    const sendTimeObj = await notificationService.calculateOptimalSendTime({
       timezone,
       type,
       quietHours

@@ -1,6 +1,6 @@
 const BOQ = require('../models/BOQ');
 const ClientBrief = require('../models/ClientBrief');
-const geminiBoqService = require('../services/geminiBoqService');
+const boqService = require('../services/boqService');
 const { generateBOQPDF, generateBOQCSV } = require('../utils/boqPdfGenerator');
 const emailService = require('../services/emailService');
 
@@ -35,7 +35,7 @@ exports.createBOQ = async (req, res, next) => {
     const { boqName = 'Bill of Quantities', description = '', projectId, briefId, items = [] } = req.body;
 
     const summary = calculateBOQSummary(items);
-    const analysis = await geminiBoqService.analyzeMissingItems(items, 'Living Room', userId);
+    const analysis = await boqService.analyzeMissingItems(items, 'Living Room', userId);
     summary.completenessScore = analysis.completenessScore || 85;
 
     const boq = await BOQ.create({
@@ -123,7 +123,7 @@ exports.updateBOQ = async (req, res, next) => {
     if (Array.isArray(req.body.items)) {
       boq.items = req.body.items;
       const summary = calculateBOQSummary(boq.items);
-      const analysis = await geminiBoqService.analyzeMissingItems(boq.items, 'Living Room', req.user._id);
+      const analysis = await boqService.analyzeMissingItems(boq.items, 'Living Room', req.user._id);
       summary.completenessScore = analysis.completenessScore || 85;
       boq.summary = summary;
       boq.aiAnalysis.missingItems = analysis.missingItems || [];
@@ -167,7 +167,7 @@ exports.addItemToBOQ = async (req, res, next) => {
       priority: priority || 'essential'
     };
 
-    const syncedItems = await geminiBoqService.syncItemsWithProductCatalog([newItem]);
+    const syncedItems = await boqService.syncItemsWithProductCatalog([newItem]);
     boq.items.push(syncedItems[0]);
     const summary = calculateBOQSummary(boq.items);
     boq.summary = summary;
@@ -250,9 +250,9 @@ exports.extractFromDrawing = async (req, res, next) => {
       mimeType = req.file.mimetype;
     }
 
-    const extractedItems = await geminiBoqService.extractItemsFromDrawing(base64Image, mimeType, userId);
+    const extractedItems = await boqService.extractItemsFromDrawing(base64Image, mimeType, userId);
     const summary = calculateBOQSummary(extractedItems);
-    const analysis = await geminiBoqService.analyzeMissingItems(extractedItems, 'Living Room', userId);
+    const analysis = await boqService.analyzeMissingItems(extractedItems, 'Living Room', userId);
     summary.completenessScore = analysis.completenessScore || 85;
 
     const boq = await BOQ.create({
@@ -300,9 +300,9 @@ exports.generateFromBrief = async (req, res, next) => {
       scope: brief.functionalScope || []
     };
 
-    const generatedItems = await geminiBoqService.generateBOQFromBrief(briefData, userId);
+    const generatedItems = await boqService.generateBOQFromBrief(briefData, userId);
     const summary = calculateBOQSummary(generatedItems);
-    const analysis = await geminiBoqService.analyzeMissingItems(generatedItems, briefData.roomType, userId);
+    const analysis = await boqService.analyzeMissingItems(generatedItems, briefData.roomType, userId);
     summary.completenessScore = analysis.completenessScore || 90;
 
     const boq = await BOQ.create({
@@ -440,7 +440,7 @@ exports.enhanceItemDescription = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'BOQ item not found' });
     }
 
-    const enhancedDesc = await geminiBoqService.enhanceItemDescription(item.itemName, item.category, req.user._id);
+    const enhancedDesc = await boqService.enhanceItemDescription(item.itemName, item.category, req.user._id);
     item.description = enhancedDesc;
     await boq.save();
 

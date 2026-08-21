@@ -1,7 +1,7 @@
 const CostEstimate = require('../models/CostEstimate');
 const CostingRate = require('../models/CostingRate');
 const { calculateEstimateCosts, calculateTierComparison } = require('../utils/costingEngine');
-const geminiEstimatorService = require('../services/geminiEstimatorService');
+const estimatorService = require('../services/estimatorService');
 const { generateEstimatePDF } = require('../utils/estimatePdfGenerator');
 const emailService = require('../services/emailService');
 const mongoose = require('mongoose');
@@ -50,11 +50,11 @@ exports.createEstimate = async (req, res, next) => {
       timelineImpact,
       riskAssessment
     ] = await Promise.all([
-      geminiEstimatorService.analyzeCostBreakdown({ roomType, area, materialTier, costBreakdown: calculatedCosts }, userId),
-      geminiEstimatorService.suggestOptimizations({ roomType, area, materialTier, costBreakdown: calculatedCosts }, userId),
-      geminiEstimatorService.compareTiers(tierCompTotals.economy, tierCompTotals.standard, tierCompTotals.premium, roomType, area, userId),
-      geminiEstimatorService.analyzeTimelineImpact(timeline, calculatedCosts.timelineAdjustment, calculatedCosts.grandTotal, userId),
-      geminiEstimatorService.assessRisksAndContingency({ roomType, scope, costBreakdown: calculatedCosts }, userId)
+      estimatorService.analyzeCostBreakdown({ roomType, area, materialTier, costBreakdown: calculatedCosts }, userId),
+      estimatorService.suggestOptimizations({ roomType, area, materialTier, costBreakdown: calculatedCosts }, userId),
+      estimatorService.compareTiers(tierCompTotals.economy, tierCompTotals.standard, tierCompTotals.premium, roomType, area, userId),
+      estimatorService.analyzeTimelineImpact(timeline, calculatedCosts.timelineAdjustment, calculatedCosts.grandTotal, userId),
+      estimatorService.assessRisksAndContingency({ roomType, scope, costBreakdown: calculatedCosts }, userId)
     ]);
 
     const estimate = await CostEstimate.create({
@@ -209,7 +209,7 @@ exports.getTierComparison = async (req, res, next) => {
       timeline: estimate.timeline
     });
 
-    const comparisonAnalysis = await geminiEstimatorService.compareTiers(
+    const comparisonAnalysis = await estimatorService.compareTiers(
       tierCompTotals.economy,
       tierCompTotals.standard,
       tierCompTotals.premium,

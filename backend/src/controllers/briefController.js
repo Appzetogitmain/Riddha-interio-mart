@@ -1,5 +1,5 @@
 const ClientBrief = require('../models/ClientBrief');
-const geminiBriefService = require('../services/geminiBriefService');
+const briefService = require('../services/briefService');
 const mongoose = require('mongoose');
 const PDFDocument = require('pdfkit');
 const nodemailer = require('nodemailer');
@@ -126,7 +126,7 @@ exports.generateBrief = async (req, res, next) => {
     await brief.save();
 
     const userId = req.user ? req.user.id : null;
-    const result = await geminiBriefService.generateFullBrief(brief.formAnswers, userId);
+    const result = await briefService.generateFullBrief(brief.formAnswers, userId);
 
     brief.briefContent = result.briefContent;
     brief.status = 'finalized';

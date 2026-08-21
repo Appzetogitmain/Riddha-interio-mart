@@ -2,10 +2,9 @@ const mongoose = require('mongoose');
 const Product = require('../models/Product');
 const UserQuizResult = require('../models/UserQuizResult');
 const profileService = require('../services/profileService');
-const geminiDesignService = require('../services/geminiDesignService');
-const geminiRecommendationService = require('../services/geminiRecommendationService');
-const geminiMoodBoardService = require('../services/geminiMoodBoardService');
-const geminiUsageTracker = require('../services/geminiUsageTracker');
+const designService = require('../services/designService');
+const recommendationService = require('../services/recommendationService');
+const moodBoardService = require('../services/moodBoardService');
 
 // Helpers for quiz parsing
 const mapRoomType = (rt) => {
@@ -96,14 +95,14 @@ exports.submitQuiz = async (req, res) => {
     const [personality, narrative, suggestions, moodBoardContent] = await Promise.all([
       profileService.generateDesignerPersonality(designProfile, userId),
       profileService.generateProfileNarrative(designProfile, userId),
-      geminiDesignService.generateSuggestions(designProfile, userId),
-      geminiMoodBoardService.generateMoodBoardContent(designProfile, moodBoardThemes, userId)
+      designService.generateSuggestions(designProfile, userId),
+      moodBoardService.generateMoodBoardContent(designProfile, moodBoardThemes, userId)
     ]);
 
     designProfile.personality = personality; // Save personality back to profile
 
     // 4. Score products & get top matches (also generates custom product explanations)
-    const enhancedRecs = await geminiRecommendationService.enhanceRecommendations(products, designProfile, userId);
+    const enhancedRecs = await recommendationService.enhanceRecommendations(products, designProfile, userId);
 
     // 5. Structure productExplanations map for storing
     const productExplanations = {};

@@ -3,7 +3,7 @@ const ProjectAlert = require('../models/ProjectAlert');
 const ProjectReport = require('../models/ProjectReport');
 const ClientBrief = require('../models/ClientBrief');
 const User = require('../models/User');
-const geminiProjectService = require('../services/geminiProjectService');
+const projectService = require('../services/projectService');
 const emailService = require('../services/emailService');
 
 // Helper: Calculate overall completion percentage and health score
@@ -404,7 +404,7 @@ exports.updatePhaseStatus = async (req, res, next) => {
     // Trigger AI summary for phase update
     let aiSummary = '';
     try {
-      aiSummary = await geminiProjectService.generateHealthNarrative(project, req.user._id);
+      aiSummary = await projectService.generateHealthNarrative(project, req.user._id);
       project.aiInsights.healthNarrative = aiSummary;
       project.aiInsights.generatedAt = new Date();
       await project.save();
@@ -530,7 +530,7 @@ exports.addBudgetItem = async (req, res, next) => {
       
       let aiRec = `Monitor upcoming orders for ${category.name} to prevent budget overrun.`;
       try {
-        const aiAlert = await geminiProjectService.generateAlertMessage('budget-alert', { name: category.name, spent: category.spent, planned: category.planned }, req.user?._id);
+        const aiAlert = await projectService.generateAlertMessage('budget-alert', { name: category.name, spent: category.spent, planned: category.planned }, req.user?._id);
         aiRec = aiAlert?.aiRecommendation || aiRec;
 
         await ProjectAlert.create({
@@ -584,9 +584,9 @@ exports.getProjectHealth = async (req, res, next) => {
 
     // Call Gemini services in parallel for fresh insights
     const [healthNarrative, riskAssessment, nextSteps] = await Promise.all([
-      geminiProjectService.generateHealthNarrative(project, req.user._id),
-      geminiProjectService.assessProjectRisks(project, req.user._id),
-      geminiProjectService.recommendNextSteps(project, req.user._id)
+      projectService.generateHealthNarrative(project, req.user._id),
+      projectService.assessProjectRisks(project, req.user._id),
+      projectService.recommendNextSteps(project, req.user._id)
     ]);
 
     project.aiInsights = {
@@ -632,7 +632,7 @@ exports.generateReport = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Project not found' });
     }
 
-    const summaryContent = await geminiProjectService.generateReportSummary(project, req.user?._id || project.userId);
+    const summaryContent = await projectService.generateReportSummary(project, req.user?._id || project.userId);
 
     const report = await ProjectReport.create({
       projectId: project._id,
@@ -686,7 +686,7 @@ exports.emailReport = async (req, res, next) => {
       targetEmails.push(project.clientId?.email || 'client@example.com');
     }
 
-    const clientEmailBody = await geminiProjectService.generateClientEmailContent(project, req.user?._id || project.userId);
+    const clientEmailBody = await projectService.generateClientEmailContent(project, req.user?._id || project.userId);
 
     // Generate PDF attachment buffer
     const { generateProjectReportPDF } = require('../utils/projectReportPdfGenerator');

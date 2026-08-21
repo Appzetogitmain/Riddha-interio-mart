@@ -14,27 +14,27 @@
 ---
 
 ## Phase 2: Core Services Migration
-**Status:** PENDING - In progress
+**Status:** IN PROGRESS (6/18 services done, 33% complete)
 
 ### Services to Migrate (18 total)
 Priority order based on dependencies:
 
-#### Batch 1: Foundation Services (Critical)
-- [ ] `geminiService.js` → `openaiServiceWrapper.js` (base service - **MOST CRITICAL**)
-- [ ] `geminiErrorHandler.js` → Already replaced with `openaiErrorHandler.js`
-- [ ] `geminiUsageTracker.js` → Already replaced with `openaiUsageTracker.js`
-- [ ] `geminiPrompts.js` → Review & rename to `aiPrompts.js`
+#### Batch 1: Foundation Services (Critical) ✅ COMPLETE
+- [x] `geminiService.js` → `openaiServiceWrapper.js` (base service - **MOST CRITICAL**)
+- [x] `geminiErrorHandler.js` → Already replaced with `openaiErrorHandler.js`
+- [x] `geminiUsageTracker.js` → Already replaced with `openaiUsageTracker.js`
+- [x] `geminiPrompts.js` → Reviewed & renamed to `aiPrompts.js`
 
-#### Batch 2: Recommendation & Analysis (High Priority)
-- [ ] `geminiRecommendationService.js`
-- [ ] `geminiJourneyService.js`
-- [ ] `geminiProfileService.js`
+#### Batch 2: Recommendation & Analysis (High Priority) ✅ COMPLETE
+- [x] `geminiRecommendationService.js` → `recommendationService.js` (done)
+- [x] `geminiJourneyService.js` → `journeyService.js` (done)
+- [x] `geminiProfileService.js` → `profileService.js` (done)
 
-#### Batch 3: Content & Generation (High Priority)  
-- [ ] `geminiContentGeneratorService.js`
-- [ ] `geminiBriefService.js`
-- [ ] `geminiBoqService.js`
-- [ ] `geminiQuotationService.js`
+#### Batch 3: Content & Generation (High Priority) - 1/4 DONE
+- [x] `geminiContentGeneratorService.js` → `contentGeneratorService.js` (done)
+- [ ] `geminiBriefService.js` → `briefService.js` (pending)
+- [ ] `geminiBoqService.js` → `boqService.js` (pending)
+- [ ] `geminiQuotationService.js` → `quotationService.js` (pending)
 
 #### Batch 4: Design & Estimation (Medium Priority)
 - [ ] `geminiDesignService.js`

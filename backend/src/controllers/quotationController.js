@@ -3,7 +3,7 @@ const QuotationTemplate = require('../models/QuotationTemplate');
 const CostEstimate = require('../models/CostEstimate');
 const BOQ = require('../models/BOQ');
 const { generateQuotationNumber, calculateQuotationPricing, generateInstallmentSchedule } = require('../utils/quotationEngine');
-const geminiQuotationService = require('../services/geminiQuotationService');
+const quotationService = require('../services/quotationService');
 const { generateQuotationPDF } = require('../utils/quotationPdfGenerator');
 const emailService = require('../services/emailService');
 
@@ -338,19 +338,19 @@ exports.generateAIEnhancements = async (req, res, next) => {
     let closingMessage = '';
 
     if (type === 'opening' || type === 'all') {
-      openingMessage = await geminiQuotationService.generateOpeningMessage(data, userId);
+      openingMessage = await quotationService.generateOpeningMessage(data, userId);
     }
     if (type === 'payment' || type === 'all') {
-      paymentSuggestions = await geminiQuotationService.suggestPaymentTerms(grandTotal, '30 days', userId);
+      paymentSuggestions = await quotationService.suggestPaymentTerms(grandTotal, '30 days', userId);
     }
     if (type === 'delivery' || type === 'all') {
-      deliveryTerms = await geminiQuotationService.generateDeliveryTerms({ itemCount: items.length }, userId);
+      deliveryTerms = await quotationService.generateDeliveryTerms({ itemCount: items.length }, userId);
     }
     if (type === 'summary' || type === 'all') {
-      summaryData = await geminiQuotationService.summarizeQuotation(items, grandTotal, userId);
+      summaryData = await quotationService.summarizeQuotation(items, grandTotal, userId);
     }
     if (type === 'closing' || type === 'all') {
-      closingMessage = await geminiQuotationService.generateClosingMessage(data, userId);
+      closingMessage = await quotationService.generateClosingMessage(data, userId);
     }
 
     res.status(200).json({

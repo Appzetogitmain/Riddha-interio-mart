@@ -1,116 +1,32 @@
 {
-  "timestamp": "2026-08-21T09:20:59.022Z",
+  "timestamp": "2026-08-21T09:53:24.488Z",
   "query": {
-    "isApproved": "pending",
-    "isActive": "all"
+    "limit": "1"
   },
   "builtFilter": {
-    "isApproved": false,
+    "isApproved": true,
+    "isActive": true,
+    "seller": {
+      "$nin": [
+        "6a100b07a3cc06ac3f65be01",
+        "6a10057431fa10db6ebdaaff"
+      ]
+    },
     "isBundle": {
       "$ne": true
     }
   },
-  "resultCount": 10,
+  "resultCount": 1,
   "results": [
     {
-      "_id": "6a758842fbb213b03d09474f",
-      "name": "Premium Emulsion Paint",
+      "_id": "6a7cb0d4391d4b105319b393",
+      "name": "CAROUSEL",
       "category": {
-        "_id": "6a4cf715a06cf368b84a62e3",
-        "name": "Paint"
+        "_id": "6a0daaed047bdee23fc767b7",
+        "name": "Modular Kitchen"
       },
-      "subcategory": "6a4e0f4aa06cf368b84a9dc1",
-      "subsubcategory": "6a4e0f4aa06cf368b84a9dc4"
-    },
-    {
-      "_id": "6a73a209fbb213b03d091c8c",
-      "name": "BOTTLE PULL OUTS",
-      "category": {
-        "_id": "6a1544acd45bbef0c578fa3e",
-        "name": "Hardware"
-      },
-      "subcategory": "6a4d7e72a06cf368b84a7588",
-      "subsubcategory": "6a4d7e72a06cf368b84a758a"
-    },
-    {
-      "_id": "6a731fa3494ccc3cb64bce4f",
-      "name": "Philips LED Ceiling Panel Light 18W",
-      "category": {
-        "_id": "6a0daa34047bdee23fc765da",
-        "name": "Lighting"
-      },
-      "subcategory": "6a4d5daea06cf368b84a71eb",
-      "subsubcategory": "6a4d5daea06cf368b84a71f1"
-    },
-    {
-      "_id": "6a731aa4db4638654784a283",
-      "name": "slipwell bed",
-      "category": {
-        "_id": "6a0d954f804fbfd1087737f1",
-        "name": "Furniture"
-      },
-      "subcategory": "6a4d1974a06cf368b84a6c76",
-      "subsubcategory": "6a4d1974a06cf368b84a6c78"
-    },
-    {
-      "_id": "6a730b3517e61af69f5935b6",
-      "name": "Premium itallitan marble slab",
-      "category": {
-        "_id": "69e1cc1d60884ec078193fe9",
-        "name": "Marble"
-      },
-      "subcategory": "6a4d111fa06cf368b84a67fa",
-      "subsubcategory": "6a4d111fa06cf368b84a67fc"
-    },
-    {
-      "_id": "6a72f56a641bae80fc8d00e0",
-      "name": "King Size Hydraulic Storage Bed SW-HB-7788",
-      "category": {
-        "_id": "6a0d954f804fbfd1087737f1",
-        "name": "Furniture"
-      },
-      "subcategory": "6a4d1974a06cf368b84a6c76",
-      "subsubcategory": "6a4d1974a06cf368b84a6c78"
-    },
-    {
-      "_id": "6a72f3c0bcbf3be5792cd272",
-      "name": "Modern L-Shaped Fabric Sofa Set UC-LS-9021",
-      "category": {
-        "_id": "6a0d954f804fbfd1087737f1",
-        "name": "Furniture"
-      },
-      "subcategory": "6a4d1974a06cf368b84a6c76",
-      "subsubcategory": "6a4d1974a06cf368b84a6c77"
-    },
-    {
-      "_id": "6a72ee02d2b0c2bcf3faeb95",
-      "name": "Modern L-Shaped Fabric Sofa Set UC-LS-9021",
-      "category": {
-        "_id": "6a0d954f804fbfd1087737f1",
-        "name": "Furniture"
-      },
-      "subcategory": "6a4d1974a06cf368b84a6c76",
-      "subsubcategory": "6a4d1974a06cf368b84a6c77"
-    },
-    {
-      "_id": "6a72ec5b9498e7c6ff77d42a",
-      "name": "Commercial LED Panel Light CL-Panel-36W-6000K",
-      "category": {
-        "_id": "6a0daa34047bdee23fc765da",
-        "name": "Lighting"
-      },
-      "subcategory": "6a4d5daea06cf368b84a720b",
-      "subsubcategory": "6a4d5daea06cf368b84a720c"
-    },
-    {
-      "_id": "6a71fae2d66ecd299c95aebf",
-      "name": "LED Ceiling Panel Light LP-Panel-24W-6500K",
-      "category": {
-        "_id": "6a0daa34047bdee23fc765da",
-        "name": "Lighting"
-      },
-      "subcategory": "6a4d5daea06cf368b84a71eb",
-      "subsubcategory": "6a4d5daea06cf368b84a71ec"
+      "subcategory": "6a4d7691a06cf368b84a7489",
+      "subsubcategory": "6a4d7691a06cf368b84a748e"
     }
   ]
 }

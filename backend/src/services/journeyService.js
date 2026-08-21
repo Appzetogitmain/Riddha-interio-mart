@@ -3,7 +3,7 @@ const openaiClient = require('./openaiService');
 const OpenAIErrorHandler = require('../utils/openaiErrorHandler');
 const OpenAIUsageTracker = require('./openaiUsageTracker');
 const cacheService = require('./cacheService');
-const { FALLBACKS } = require('../utils/geminiErrorHandler');
+const { FALLBACKS } = require('../utils/fallbacks');
 const { FEATURES, getFeaturesForPersona } = require('../utils/journeyRegistry');
 
 // Journey guidance is a UI enhancement sitting in front of a deterministic

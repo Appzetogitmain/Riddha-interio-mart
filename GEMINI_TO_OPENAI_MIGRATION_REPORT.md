@@ -129,16 +129,12 @@ These services call backend APIs (no direct Gemini SDK usage):
 
 **Backend (.env):**
 ```
-GEMINI_API_KEY=[REDACTED]
-GEMINI_MODEL=gemini-3.5-flash (if not set, defaults to gemini-3.5-flash)
+GEMINI_API_KEY=[YOUR_API_KEY_HERE] (if not set, defaults to gemini-3.5-flash)
 ```
 
 **Frontend (.env):**
 ```
-VITE_GEMINI_API_KEY=[REDACTED]
-```
-
-### NPM Dependencies
+VITE_GEMINI_API_KEY=[YOUR_API_KEY_HERE] NPM Dependencies
 
 **Backend:**
 ```json
@@ -463,4 +459,5 @@ After migration, verify:
 ---
 
 **Ready to proceed with Phase 1: Foundation Setup**
+
 

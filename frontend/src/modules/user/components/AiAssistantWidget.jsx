@@ -2,10 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  FiMessageSquare, FiX, FiSend, FiUser, FiCompass,
+  FiX, FiSend, FiUser, FiCompass,
   FiShoppingBag, FiTruck, FiCornerDownRight, FiCheckCircle,
   FiAlertCircle, FiLogIn, FiHelpCircle, FiFileText
 } from 'react-icons/fi';
+
+const TEJAS_ICON = '/ask tejas final icon.png';
 import { useUser } from '../data/UserContext';
 import api from '../../../shared/utils/api';
 import toast from 'react-hot-toast';
@@ -223,13 +225,14 @@ const AiAssistantWidget = () => {
   };
 
   return (
-    <div className="fixed bottom-24 right-6 z-[999] print:hidden">
+    <div className="fixed bottom-44 md:bottom-28 right-6 z-[999] print:hidden">
       {/* Floating Action Button */}
       <motion.button
         onClick={() => setIsOpen(!isOpen)}
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
-        className="w-14 h-14 bg-[#189D91] hover:bg-[#004D40] text-white rounded-full flex items-center justify-center shadow-xl border border-white/20 transition-colors focus:outline-none"
+        aria-label="Ask Tejas"
+        className={`w-14 h-14 rounded-full flex items-center justify-center shadow-xl border border-white/20 transition-colors focus:outline-none overflow-hidden ${isOpen ? 'bg-[#189D91] hover:bg-[#004D40] text-white' : 'bg-white'}`}
       >
         <AnimatePresence mode="wait">
           {isOpen ? (
@@ -237,9 +240,15 @@ const AiAssistantWidget = () => {
               <FiX size={24} />
             </motion.div>
           ) : (
-            <motion.div key="chat" initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0, opacity: 0 }}>
-              <FiMessageSquare size={24} />
-            </motion.div>
+            <motion.img
+              key="chat"
+              src={TEJAS_ICON}
+              alt="Ask Tejas"
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0, opacity: 0 }}
+              className="w-full h-full object-cover"
+            />
           )}
         </AnimatePresence>
       </motion.button>
@@ -252,16 +261,16 @@ const AiAssistantWidget = () => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 30, scale: 0.95 }}
             transition={{ type: 'spring', damping: 25, stiffness: 350 }}
-            className="absolute bottom-20 right-0 w-[350px] sm:w-[380px] h-[500px] bg-white rounded-3xl shadow-2xl border border-gray-100 flex flex-col overflow-hidden"
+            className="absolute bottom-[76px] right-0 w-[350px] sm:w-[380px] h-[440px] max-h-[calc(100vh-180px)] bg-white rounded-3xl shadow-2xl border border-gray-100 flex flex-col overflow-hidden"
           >
             {/* Header */}
             <div className="bg-[#189D91] text-white px-5 py-4 flex items-center justify-between border-b border-[#189D91]/15">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center border border-white/25">
-                  <FiCompass className="w-5 h-5 text-white" />
+                <div className="w-10 h-10 rounded-full bg-white overflow-hidden flex items-center justify-center border border-white/25 shrink-0">
+                  <img src={TEJAS_ICON} alt="Ask Tejas" className="w-full h-full object-cover" />
                 </div>
                 <div>
-                  <h3 className="font-extrabold text-sm tracking-tight leading-none">Riddha Design AI</h3>
+                  <h3 className="font-extrabold text-sm tracking-tight leading-none">Ask Tejas</h3>
                   <div className="flex items-center gap-1.5 mt-1">
                     <span className="w-2 h-2 rounded-full bg-[#4ADE80]"></span>
                     <span className="text-[10px] font-semibold uppercase tracking-wider text-white/70">Online Consultant</span>
@@ -277,10 +286,10 @@ const AiAssistantWidget = () => {
             <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50/50 no-scrollbar">
               {messages.length === 0 && (
                 <div className="text-center py-6 px-4 space-y-3">
-                  <div className="w-12 h-12 bg-[#189D91]/10 rounded-2xl flex items-center justify-center mx-auto text-[#189D91]">
-                    <FiCompass size={22} />
+                  <div className="w-12 h-12 rounded-2xl overflow-hidden mx-auto border border-[#189D91]/15">
+                    <img src={TEJAS_ICON} alt="Ask Tejas" className="w-full h-full object-cover" />
                   </div>
-                  <h4 className="font-bold text-slate-800 text-sm">Welcome to Riddha Interio!</h4>
+                  <h4 className="font-bold text-slate-800 text-sm">Hi, I'm Tejas! 👋</h4>
                   <p className="text-xs text-gray-400 leading-relaxed">
                     I am your AI design assistant. Ask me questions about product search, design pairings, styling, or track your orders!
                   </p>
@@ -291,7 +300,7 @@ const AiAssistantWidget = () => {
                 <div key={index} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'} space-y-1.5`}>
                   {/* Avatar Name for Bot */}
                   {msg.role === 'assistant' && (
-                    <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400 ml-1">Riddha AI</span>
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400 ml-1">Tejas</span>
                   )}
                   
                   {/* Message Content Bubble */}
@@ -392,7 +401,7 @@ const AiAssistantWidget = () => {
               {/* Typing Dot Loader */}
               {isLoading && (
                 <div className="flex flex-col items-start space-y-1">
-                  <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400 ml-1">Riddha AI</span>
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400 ml-1">Tejas</span>
                   <div className="bg-white border border-gray-100 rounded-2xl rounded-tl-none px-4 py-3 shadow-sm flex items-center gap-1">
                     <span className="w-1.5 h-1.5 bg-[#189D91] rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
                     <span className="w-1.5 h-1.5 bg-[#189D91] rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>

@@ -4,7 +4,7 @@ const OpenAIErrorHandler = require('../utils/openaiErrorHandler');
 const OpenAIUsageTracker = require('./openaiUsageTracker');
 const cacheService = require('./cacheService');
 const { FALLBACKS } = require('../utils/fallbacks');
-const { FEATURES, getFeaturesForPersona } = require('../utils/journeyRegistry');
+const { FEATURES, SEQUENCES, getFeature, getFeaturesForPersona } = require('../utils/journeyRegistry');
 
 // Journey guidance is a UI enhancement sitting in front of a deterministic
 // next-step calculation, so a slow model answer is worse than an instant
@@ -25,6 +25,146 @@ const HELP_TTL_SECONDS = 900;
  * guidance is an enhancement, never a hard dependency.
  */
 class JourneyService {
+  /**
+   * Plain (non-AI) journey bookkeeping — persona detection, session lookup/creation,
+   * signal collection, and deterministic next-step recommendation. These carry the
+   * journey feature whether or not OpenAI is configured; the three AI-backed methods
+   * below only ever enrich what these compute.
+   */
+
+  /** Maps an authenticated req.user (User/Seller/Admin doc) onto a journey persona. */
+  personaFor(user) {
+    if (!user) return 'customer';
+    if (user.role === 'admin') return 'admin';
+    if (user.role === 'seller') return 'seller';
+    if (user.userType === 'enterpriser') return 'enterpriser';
+    return 'customer';
+  }
+
+  /** Gathers the lightweight behavioural signals the guidance prompts and stage inference rely on. */
+  async collectSignals(userId) {
+    const empty = { cartCount: 0, cartItems: [], cartValue: 0, hasQuiz: false, orderCount: 0, projectCount: 0 };
+    if (!userId) return empty;
+
+    try {
+      const Cart = require('../models/Cart');
+      const Order = require('../models/Order');
+      const UserQuizResult = require('../models/UserQuizResult');
+      const Project = require('../models/Project');
+
+      const [cart, quizCount, orderCount, projectCount] = await Promise.all([
+        Cart.findOne({ user: userId }).populate('items.product', 'name price').lean().catch(() => null),
+        UserQuizResult.countDocuments({ userId }).catch(() => 0),
+        Order.countDocuments({ user: userId }).catch(() => 0),
+        Project.countDocuments({ userId }).catch(() => 0)
+      ]);
+
+      const items = cart?.items || [];
+      return {
+        cartCount: items.length,
+        cartItems: items.map((i) => i.product?.name).filter(Boolean),
+        cartValue: items.reduce((sum, i) => sum + (Number(i.product?.price) || 0) * (i.quantity || 0), 0),
+        hasQuiz: quizCount > 0,
+        orderCount,
+        projectCount
+      };
+    } catch (err) {
+      console.warn('[JOURNEY] collectSignals failed:', err.message);
+      return empty;
+    }
+  }
+
+  /** Feature ids the user has already completed, from journey history plus behavioural signals. */
+  completedFeatureIds(signals = {}, journeyDoc = null) {
+    const ids = new Set();
+    (journeyDoc?.stepsCompleted || []).forEach((s) => { if (s.feature) ids.add(s.feature); });
+    if (signals.hasQuiz) ids.add('req-4');
+    if (signals.orderCount > 0) ids.add('req-13');
+    if (signals.projectCount > 0) ids.add('req-9');
+    return ids;
+  }
+
+  /** Deterministic stage guess for personas/sessions with no journey document yet. */
+  inferStage(signals = {}, persona = 'customer') {
+    if (signals.orderCount > 0) return 'post-purchase';
+    if (signals.cartCount > 0) return 'purchase';
+    if (signals.hasQuiz || signals.projectCount > 0) return 'decision';
+    return persona === 'admin' ? 'discovery' : 'discovery';
+  }
+
+  /** Deterministic ordering of not-yet-completed features — the guaranteed floor AI guidance enriches. */
+  recommendFeatures(persona, done, stage, limit = 5) {
+    const doneSet = done instanceof Set ? done : new Set(done || []);
+    const sequence = (SEQUENCES[persona] || []).map((id) => getFeature(id)).filter(Boolean).filter((f) => !doneSet.has(f.id));
+
+    if (sequence.length >= limit) return sequence.slice(0, limit);
+
+    const extras = getFeaturesForPersona(persona).filter((f) => !doneSet.has(f.id) && !sequence.includes(f));
+    return [...sequence, ...extras].slice(0, limit);
+  }
+
+  formatDuration(ms) {
+    if (!ms || ms <= 0) return '0m';
+    const minutes = Math.round(ms / 60000);
+    if (minutes < 60) return `${minutes}m`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ${minutes % 60}m`;
+    const days = Math.floor(hours / 24);
+    return `${days}d ${hours % 24}h`;
+  }
+
+  /** Finds the caller's in-progress journey (by user or session), creating one if none exists. */
+  async getOrCreateJourney({ userId, sessionId, persona, device, referrer }) {
+    const UserJourney = require('../models/UserJourney');
+    const query = userId ? { user: userId, status: 'in-progress' } : { sessionId, status: 'in-progress' };
+
+    let journey = await UserJourney.findOne(query).sort({ createdAt: -1 });
+
+    if (!journey) {
+      journey = await UserJourney.create({
+        user: userId || null,
+        sessionId: sessionId || `user_${userId}`,
+        persona,
+        device,
+        referrer
+      });
+    } else if (userId && !journey.user) {
+      // Anonymous session just logged in — attach it to the account going forward.
+      journey.user = userId;
+      await journey.save();
+    }
+
+    return journey;
+  }
+
+  /** Consolidated "where is this visitor, and what's next" snapshot used by status/suggestion endpoints. */
+  async buildStatus({ user, sessionId, device, referrer }) {
+    const UserJourney = require('../models/UserJourney');
+    const UserProfile = require('../models/UserProfile');
+
+    const userId = user?._id || null;
+    const persona = this.personaFor(user);
+    const signals = await this.collectSignals(userId);
+    const inferredStage = this.inferStage(signals, persona);
+
+    const query = userId ? { user: userId, status: 'in-progress' } : (sessionId ? { sessionId, status: 'in-progress' } : null);
+    const journey = query ? await UserJourney.findOne(query).sort({ createdAt: -1 }).lean().catch(() => null) : null;
+
+    const profile = userId ? await UserProfile.findOne({ userId }).lean().catch(() => null) : null;
+
+    const completed = this.completedFeatureIds(signals, journey);
+    const stage = journey?.currentStage || inferredStage;
+    const [nextFeature] = this.recommendFeatures(persona, completed, stage, 1);
+
+    return {
+      journeyId: journey?._id || null,
+      persona,
+      stage,
+      profile: profile || {},
+      nextStep: nextFeature ? { featureId: nextFeature.id, label: nextFeature.label, route: nextFeature.route } : null
+    };
+  }
+
   /** Compact catalogue of features the given persona is allowed to be pointed at. */
   _featureMenu(persona, exclude = []) {
     return getFeaturesForPersona(persona)

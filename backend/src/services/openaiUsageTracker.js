@@ -1,5 +1,5 @@
 const AIUsageLog = require('../models/AIUsageLog');
-const logger = require('../utils/logger');
+const logger = console;
 
 /**
  * Track OpenAI API usage and token consumption

@@ -805,11 +805,12 @@ exports.assignOrderToDeliveryBoy = async (req, res) => {
       return res.status(403).json({ success: false, error: 'Not authorized: You do not own this order.' });
     }
 
-    const { deliveryBoyId, deliveryType } = req.body;
+    const { deliveryBoyId, deliveryType, staffId } = req.body;
 
     if (deliveryType === 'seller-managed') {
       order.deliveryType = 'seller-managed';
       order.deliveryBoy = undefined;
+      order.assignedStaff = staffId || null;
       order.deliveryStatus = 'Accepted'; // Seller implicitly accepts
       order.deliveryAssignmentTime = Date.now();
       await order.save();

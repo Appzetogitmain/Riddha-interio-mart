@@ -124,6 +124,85 @@ const ProductSchema = new mongoose.Schema({
     min: 0,
     index: true
   },
+  // Stock/Availability status for filtering
+  stock: {
+    type: String,
+    enum: ['in_stock', 'limited_stock', 'made_to_order', 'pre_order', 'available_on_request', 'out_of_stock'],
+    default: 'in_stock',
+    index: true
+  },
+  // Detailed product specifications
+  specifications: {
+    size: { type: String, default: '' },
+    thickness: { type: String, default: '' },
+    length: { type: String, default: '' },
+    width: { type: String, default: '' },
+    height: { type: String, default: '' },
+    weight: { type: String, default: '' },
+    finish: { type: String, default: '' },
+    colour: { type: String, default: '' },
+    pattern: { type: String, default: '' },
+    material: { type: String, default: '' },
+    grade: {
+      type: String,
+      enum: ['residential', 'commercial', 'industrial'],
+      default: 'residential',
+      index: true
+    },
+    waterproof: { type: Boolean, default: false },
+    fireProof: { type: Boolean, default: false },
+    antiSlip: { type: Boolean, default: false },
+    dustProof: { type: Boolean, default: false },
+    ecoFriendly: { type: Boolean, default: false },
+    sustainableMaterial: { type: Boolean, default: false },
+    warranty: { type: String, default: '' },
+    fireRating: { type: String, default: '' },
+    waterproofRating: { type: String, default: '' },
+    requiresProfessionalInstallation: { type: Boolean, default: false },
+    installationCost: { type: Number, default: 0 },
+    maintenanceRequirements: { type: String, default: '' },
+    sku: { type: String, default: '' },
+    model: { type: String, default: '' },
+    Brand: { type: String, default: '' }
+  },
+  // Project applications
+  projectApplication: [{
+    type: String,
+    enum: ['home', 'office', 'retail', 'hotel', 'restaurant', 'hospital', 'school', 'corporate', 'industrial', 'institutional']
+  }],
+  // Bulk discount info
+  bulkDiscount: {
+    enabled: { type: Boolean, default: false },
+    minimumQuantity: { type: Number, default: 0 },
+    discountPercentage: { type: Number, default: 0 },
+    bulkPrice: { type: Number, default: 0 }
+  },
+  // New arrival date for filtering
+  newArrivalDate: {
+    type: Date,
+    default: Date.now,
+    index: true
+  },
+  // Availability by region
+  availabilityByRegion: [{
+    region: String,
+    available: Boolean,
+    deliveryDays: Number,
+    inStock: Boolean
+  }],
+  // Professional grade indicator
+  professionalGrade: {
+    type: Boolean,
+    default: false
+  },
+  // Delivery options selected by vendor at listing time
+  deliveryOptions: {
+    availableDeliveryDays: [{ type: String }],
+    deliveryTypes: [{ type: String }],
+    freeDeliveryEligibility: [{ type: String }]
+  },
+  // Payment options accepted for this product
+  paymentOptions: [{ type: String }],
   dynamicAttributes: {
     type: Map,
     of: mongoose.Schema.Types.Mixed,
@@ -248,6 +327,16 @@ ProductSchema.index({ category: 1, isApproved: 1, isActive: 1 });
 ProductSchema.index({ subcategory: 1, isApproved: 1, isActive: 1 });
 ProductSchema.index({ brand: 1, isApproved: 1, isActive: 1 });
 ProductSchema.index({ price: 1, isApproved: 1, isActive: 1 });
+ProductSchema.index({ stock: 1 });
+ProductSchema.index({ 'specifications.grade': 1 });
+ProductSchema.index({ projectApplication: 1 });
+ProductSchema.index({ newArrivalDate: -1 });
+ProductSchema.index({ price: 1, averageRating: -1 });
+ProductSchema.index({ seller: 1, stock: 1 });
+ProductSchema.index({ 'deliveryOptions.availableDeliveryDays': 1 });
+ProductSchema.index({ 'deliveryOptions.deliveryTypes': 1 });
+ProductSchema.index({ 'specifications.material': 1 });
+ProductSchema.index({ 'specifications.finish': 1 });
 
 ProductSchema.post('save', function(doc) {
   try {

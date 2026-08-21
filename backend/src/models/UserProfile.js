@@ -19,6 +19,46 @@ const UserProfileSchema = new mongoose.Schema({
     typical: { type: Number, default: 50000 }
   },
 
+  // User location with geospatial coordinates for distance-based filtering
+  location: {
+    address: { type: String, default: '' },
+    city: { type: String, default: '' },
+    state: { type: String, default: '' },
+    coordinates: {
+      type: {
+        type: String,
+        enum: ['Point'],
+        default: 'Point'
+      },
+      coordinates: {
+        type: [Number],
+        validate: {
+          validator: function(v) {
+            return !v || (v && v.length === 2);
+          },
+          message: 'Coordinates must be [longitude, latitude]'
+        }
+      }
+    }
+  },
+
+  // Saved filter searches
+  savedFilters: [{
+    name: { type: String, default: '' },
+    filters: { type: mongoose.Schema.Types.Mixed, default: {} },
+    createdAt: { type: Date, default: Date.now }
+  }],
+
+  // Filter preferences
+  filterPreferences: {
+    preferredDeliveryDays: [{ type: String }],
+    preferredVendorType: [{ type: String }],
+    preferredPriceRange: {
+      min: { type: Number, default: 0 },
+      max: { type: Number, default: 500000 }
+    }
+  },
+
   // Design Profile from Quiz (Req #4)
   designProfile: {
     quizId: { type: mongoose.Schema.Types.ObjectId, ref: 'UserQuizResult' },
@@ -87,5 +127,6 @@ const UserProfileSchema = new mongoose.Schema({
 UserProfileSchema.index({ stylePreferences: 1 });
 UserProfileSchema.index({ 'budgetRange.min': 1, 'budgetRange.max': 1 });
 UserProfileSchema.index({ lastActiveAt: -1 });
+UserProfileSchema.index({ 'location.coordinates': '2dsphere' });
 
 module.exports = mongoose.model('UserProfile', UserProfileSchema);

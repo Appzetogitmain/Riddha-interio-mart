@@ -19,11 +19,26 @@ import { FiMoreVertical } from "react-icons/fi";
 import api from "../../../shared/utils/api";
 import { toast } from "react-hot-toast";
 
+const VERIFICATION_OPTIONS = [
+  { value: 'unverified', label: 'Unverified' },
+  { value: 'verified', label: 'Verified' },
+  { value: 'manufacturer', label: 'Manufacturer' },
+  { value: 'authorized_distributor', label: 'Authorized Distributor' },
+  { value: 'dealer', label: 'Dealer' },
+  { value: 'wholesaler', label: 'Wholesaler' },
+  { value: 'local_supplier', label: 'Local Supplier' },
+  { value: 'premium_vendor', label: 'Premium Vendor' },
+  { value: 'project_supplier', label: 'Project Supplier' }
+];
+
+const SELLERS_PER_PAGE = 10;
+
 const ManageSellerListPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [sellers, setSellers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeMenu, setActiveMenu] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
   
   // 📱 Interactive Mobile states matching mock reference
   const [selectedSeller, setSelectedSeller] = useState(null);
@@ -111,12 +126,37 @@ const ManageSellerListPage = () => {
     setActiveMenu(null);
   };
 
+  const handleVerificationChange = async (sellerId, verificationStatus) => {
+    const prevSellers = sellers;
+    // Optimistic update so the dropdown reflects the choice immediately
+    setSellers((prev) => prev.map((s) => (s._id === sellerId ? { ...s, verificationStatus } : s)));
+    try {
+      await api.patch(`/admin/sellers/${sellerId}/verify`, { verificationStatus });
+      toast.success('Vendor verification updated');
+    } catch (err) {
+      setSellers(prevSellers);
+      toast.error('Failed to update verification status');
+    }
+  };
+
   const filteredSellers = sellers.filter(
     (seller) =>
       seller.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       seller.shopName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       seller.email.toLowerCase().includes(searchTerm.toLowerCase()),
   );
+
+  const totalPages = Math.max(1, Math.ceil(filteredSellers.length / SELLERS_PER_PAGE));
+  const paginatedSellers = filteredSellers.slice(
+    (currentPage - 1) * SELLERS_PER_PAGE,
+    currentPage * SELLERS_PER_PAGE
+  );
+
+  // Reset to page 1 whenever the search narrows/widens the result set, so the user
+  // never lands on a page that no longer has any rows.
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
 
   // 📱 MOBILE VIEW: User Details (Left Phone View)
   if (selectedUser) {
@@ -536,6 +576,9 @@ const ManageSellerListPage = () => {
                     <th className="px-6 py-4 text-[10px] font-black text-warm-sand uppercase tracking-widest">
                       Status
                     </th>
+                    <th className="px-6 py-4 text-[10px] font-black text-warm-sand uppercase tracking-widest">
+                      Verification
+                    </th>
                     <th className="px-6 py-4 text-[10px] font-black text-warm-sand uppercase tracking-widest text-right">
                       Actions
                     </th>
@@ -544,13 +587,13 @@ const ManageSellerListPage = () => {
                 <tbody className="divide-y divide-soft-oatmeal/50">
                   {filteredSellers.length === 0 ? (
                     <tr>
-                      <td colSpan="9" className="px-6 py-20 text-center text-warm-sand font-bold uppercase tracking-widest italic text-sm">
+                      <td colSpan="10" className="px-6 py-20 text-center text-warm-sand font-bold uppercase tracking-widest italic text-sm">
                         No sellers found.
                       </td>
                     </tr>
                   ) : (
-                    filteredSellers.map((seller, idx) => {
-                      const isLastRows = filteredSellers.length > 2 && idx >= filteredSellers.length - 2;
+                    paginatedSellers.map((seller, idx) => {
+                      const isLastRows = paginatedSellers.length > 2 && idx >= paginatedSellers.length - 2;
                       return (
                         <tr
                         key={seller._id}
@@ -619,6 +662,21 @@ const ManageSellerListPage = () => {
                             {seller.status}
                           </span>
                         </td>
+                        <td className="px-6 py-4">
+                          <select
+                            value={seller.verificationStatus || 'unverified'}
+                            onChange={(e) => handleVerificationChange(seller._id, e.target.value)}
+                            className={`text-[11px] font-bold uppercase tracking-wide px-2.5 py-1.5 rounded-lg border focus:outline-none focus:ring-2 focus:ring-warm-sand/20 cursor-pointer ${
+                              (seller.verificationStatus || 'unverified') === 'unverified'
+                                ? 'text-slate-500 bg-slate-50 border-slate-200'
+                                : 'text-[#189D91] bg-[#189D91]/10 border-[#189D91]/20'
+                            }`}
+                          >
+                            {VERIFICATION_OPTIONS.map((opt) => (
+                              <option key={opt.value} value={opt.value}>{opt.label}</option>
+                            ))}
+                          </select>
+                        </td>
                         <td className="px-6 py-4 text-right relative">
                           <button 
                             onClick={() => setActiveMenu(activeMenu === seller._id ? null : seller._id)}
@@ -684,6 +742,58 @@ const ManageSellerListPage = () => {
             </div>
           )}
         </div>
+
+        {/* Pagination */}
+        {!loading && filteredSellers.length > 0 && (
+          <div className="flex items-center justify-between bg-white px-6 py-4 rounded-2xl border border-soft-oatmeal shadow-sm">
+            <p className="text-xs font-bold text-deep-espresso/60">
+              Showing {(currentPage - 1) * SELLERS_PER_PAGE + 1}
+              –{Math.min(currentPage * SELLERS_PER_PAGE, filteredSellers.length)} of {filteredSellers.length} sellers
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="px-4 py-2 rounded-xl border border-soft-oatmeal text-xs font-bold text-deep-espresso disabled:opacity-40 disabled:cursor-not-allowed hover:bg-soft-oatmeal/20 transition-colors"
+              >
+                Previous
+              </button>
+              <div className="flex items-center gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter((p) => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
+                  .reduce((acc, p, i, arr) => {
+                    if (i > 0 && p - arr[i - 1] > 1) acc.push('...');
+                    acc.push(p);
+                    return acc;
+                  }, [])
+                  .map((p, i) =>
+                    p === '...' ? (
+                      <span key={`ellipsis-${i}`} className="px-2 text-xs font-bold text-deep-espresso/40">…</span>
+                    ) : (
+                      <button
+                        key={p}
+                        onClick={() => setCurrentPage(p)}
+                        className={`w-8 h-8 rounded-lg text-xs font-bold transition-colors ${
+                          p === currentPage
+                            ? 'bg-[#189D91] text-white shadow-sm'
+                            : 'text-deep-espresso/70 hover:bg-soft-oatmeal/20'
+                        }`}
+                      >
+                        {p}
+                      </button>
+                    )
+                  )}
+              </div>
+              <button
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="px-4 py-2 rounded-xl border border-soft-oatmeal text-xs font-bold text-deep-espresso disabled:opacity-40 disabled:cursor-not-allowed hover:bg-soft-oatmeal/20 transition-colors"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* 📱 MOBILE VIEW: Seller Management list */}
@@ -727,7 +837,7 @@ const ManageSellerListPage = () => {
                 <p className="text-slate-400 text-xs font-semibold">Try modifying search tags.</p>
               </div>
             ) : (
-              filteredSellers.map((seller) => (
+              paginatedSellers.map((seller) => (
                 <div key={seller._id} className="bg-white rounded-2xl border border-slate-150 shadow-sm overflow-hidden flex flex-col">
                   {/* Soft oatmeal header */}
                   <div className="bg-soft-oatmeal/35 px-4 py-2 border-b border-soft-oatmeal/70 flex justify-between items-center">
@@ -770,6 +880,25 @@ const ManageSellerListPage = () => {
                     </div>
                   </div>
 
+                  {/* Vendor Verification */}
+                  <div className="px-4 pb-3 flex items-center justify-between gap-2">
+                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Verification</span>
+                    <select
+                      value={seller.verificationStatus || 'unverified'}
+                      onChange={(e) => handleVerificationChange(seller._id, e.target.value)}
+                      onClick={(e) => e.stopPropagation()}
+                      className={`text-[10px] font-bold uppercase tracking-wide px-2 py-1.5 rounded-lg border focus:outline-none ${
+                        (seller.verificationStatus || 'unverified') === 'unverified'
+                          ? 'text-slate-500 bg-slate-50 border-slate-200'
+                          : 'text-[#189D91] bg-[#189D91]/10 border-[#189D91]/20'
+                      }`}
+                    >
+                      {VERIFICATION_OPTIONS.map((opt) => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))}
+                    </select>
+                  </div>
+
                   {/* Update Status Actions */}
                   <div className="px-4 pb-4 pt-1 flex gap-2">
                     <button 
@@ -807,6 +936,29 @@ const ManageSellerListPage = () => {
               ))
             )}
           </div>
+
+          {/* Pagination */}
+          {!loading && filteredSellers.length > 0 && (
+            <div className="flex items-center justify-between gap-3 pt-2">
+              <button
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="px-4 py-2.5 rounded-xl border border-slate-200 text-[10px] font-black uppercase tracking-wider text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Prev
+              </button>
+              <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="px-4 py-2.5 rounded-xl border border-slate-200 text-[10px] font-black uppercase tracking-wider text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Bottom navigation tab mockup */}

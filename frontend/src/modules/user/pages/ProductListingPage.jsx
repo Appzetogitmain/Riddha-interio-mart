@@ -2,6 +2,8 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import ProductCard from '../components/ProductCard';
+import FilterPanel from '../components/FilterPanel';
+import AppliedFilters from '../components/AppliedFilters';
 import { categories } from '../data/categories';
 import { FiFilter, FiChevronDown, FiX } from 'react-icons/fi';
 import api from '../../../shared/utils/api';
@@ -14,33 +16,94 @@ const ProductListingPage = () => {
   const [sortBy, setSortBy] = useState('featured');
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [filterOptions, setFilterOptions] = useState(null);
+  const [filterLoading, setFilterLoading] = useState(false);
+
+  // Filter state from URL params
+  const [filters, setFilters] = useState({
+    minPrice: searchParams.get('minPrice') ? Number(searchParams.get('minPrice')) : undefined,
+    maxPrice: searchParams.get('maxPrice') ? Number(searchParams.get('maxPrice')) : undefined,
+    stock: searchParams.get('stock') || undefined,
+    minRating: searchParams.get('minRating') ? Number(searchParams.get('minRating')) : undefined,
+    userLat: searchParams.get('userLat') ? Number(searchParams.get('userLat')) : undefined,
+    userLon: searchParams.get('userLon') ? Number(searchParams.get('userLon')) : undefined,
+    distance: searchParams.get('distance') || undefined,
+    region: searchParams.get('region') || undefined,
+    verifiedOnly: searchParams.get('verifiedOnly') || undefined,
+    verificationStatus: searchParams.get('verificationStatus') || undefined,
+    deliveryDay: searchParams.get('deliveryDay') || undefined,
+    deliveryType: searchParams.get('deliveryType') || undefined,
+    freeDelivery: searchParams.get('freeDelivery') || undefined,
+    newArrivalDays: searchParams.get('newArrivalDays') || undefined,
+    offerType: searchParams.get('offerType') || undefined,
+    grade: searchParams.get('grade') || undefined,
+    ecoFriendly: searchParams.get('ecoFriendly') || undefined,
+    waterproof: searchParams.get('waterproof') || undefined
+  });
 
   const activeCategory = searchParams.get('category') || 'all';
   const searchQuery = searchParams.get('search') || '';
-  const activeOfferType = searchParams.get('offerType') || 'all';
 
+  // Fetch filter options on mount
+  useEffect(() => {
+    const fetchFilterOptions = async () => {
+      try {
+        const res = await api.get('/filters/options');
+        if (res.data && res.data.data) {
+          setFilterOptions(res.data.data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch filter options:', err);
+      }
+    };
+    fetchFilterOptions();
+  }, []);
+
+  // Fetch products with filters
   useEffect(() => {
     window.scrollTo(0, 0);
     const fetchProducts = async () => {
       try {
         setLoading(true);
         const params = {};
-        if (activeOfferType && activeOfferType !== 'all') {
-          params.offerType = activeOfferType === 'any' ? 'any' : activeOfferType;
-        }
-        const res = await api.get('/products', { params });
-        setProducts(res.data.data);
+
+        // Add all active filters to request
+        if (filters.minPrice !== undefined) params.minPrice = filters.minPrice;
+        if (filters.maxPrice !== undefined) params.maxPrice = filters.maxPrice;
+        if (filters.stock) params.stock = filters.stock;
+        if (filters.minRating !== undefined) params.minRating = filters.minRating;
+        if (filters.userLat !== undefined) params.userLat = filters.userLat;
+        if (filters.userLon !== undefined) params.userLon = filters.userLon;
+        if (filters.distance) params.distance = filters.distance;
+        if (filters.region) params.region = filters.region;
+        if (filters.verifiedOnly) params.verifiedOnly = filters.verifiedOnly;
+        if (filters.verificationStatus) params.verificationStatus = filters.verificationStatus;
+        if (filters.deliveryDay) params.deliveryDay = filters.deliveryDay;
+        if (filters.deliveryType) params.deliveryType = filters.deliveryType;
+        if (filters.freeDelivery) params.freeDelivery = filters.freeDelivery;
+        if (filters.newArrivalDays) params.newArrivalDays = filters.newArrivalDays;
+        if (filters.offerType) params.offerType = filters.offerType;
+        if (filters.grade) params.grade = filters.grade;
+        if (filters.ecoFriendly) params.ecoFriendly = filters.ecoFriendly;
+        if (filters.waterproof) params.waterproof = filters.waterproof;
+
+        // Use new filter endpoint if any filters are active, otherwise use standard products endpoint
+        const endpoint = Object.keys(params).length > 0 ? '/filters/search' : '/products';
+        const res = await api.get(endpoint, { params });
+        setProducts(res.data.data || []);
       } catch (err) {
         console.error('Failed to fetch products:', err);
+        setProducts([]);
       } finally {
         setLoading(false);
       }
     };
     fetchProducts();
-  }, [activeOfferType]);
+  }, [filters]);
 
   const filteredProducts = useMemo(() => {
     let result = [...products];
+
     if (activeCategory !== 'all') {
       const categoryObj = categories.find(c => c.slug === activeCategory);
       const categoryName = categoryObj ? categoryObj.name : activeCategory;
@@ -52,8 +115,8 @@ const ProductListingPage = () => {
 
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
-      result = result.filter(p => 
-        p.name.toLowerCase().includes(q) || 
+      result = result.filter(p =>
+        p.name.toLowerCase().includes(q) ||
         p.category.toLowerCase().includes(q) ||
         (p.description && p.description.toLowerCase().includes(q))
       );
@@ -69,7 +132,7 @@ const ProductListingPage = () => {
     if (sortBy === 'price-high') result.sort((a, b) => getEffectivePrice(b) - getEffectivePrice(a));
 
     return result;
-  }, [activeCategory, sortBy, products]);
+  }, [activeCategory, sortBy, products, searchQuery]);
 
   const handleCategoryChange = (slug) => {
     if (slug === 'all') {
@@ -80,30 +143,70 @@ const ProductListingPage = () => {
     setSearchParams(searchParams);
   };
 
-  const handleOfferTypeChange = (type) => {
-    if (type === 'all') {
-      searchParams.delete('offerType');
-    } else {
-      searchParams.set('offerType', type);
-    }
-    setSearchParams(searchParams);
+  const handleFiltersChange = (newFilters) => {
+    const params = new URLSearchParams(searchParams);
+
+    // Update URL params with new filters
+    Object.entries(newFilters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        params.set(key, value);
+      } else {
+        params.delete(key);
+      }
+    });
+
+    setFilters(newFilters);
+    setSearchParams(params);
+  };
+
+  const handleRemoveFilter = (filterNames) => {
+    const names = Array.isArray(filterNames) ? filterNames : [filterNames];
+    const newFilters = { ...filters };
+    names.forEach(name => {
+      delete newFilters[name];
+    });
+    handleFiltersChange(newFilters);
+  };
+
+  const handleClearAllFilters = () => {
+    const newFilters = {
+      minPrice: undefined,
+      maxPrice: undefined,
+      stock: undefined,
+      minRating: undefined,
+      userLat: undefined,
+      userLon: undefined,
+      distance: undefined,
+      region: undefined,
+      verifiedOnly: undefined,
+      verificationStatus: undefined,
+      deliveryDay: undefined,
+      deliveryType: undefined,
+      freeDelivery: undefined,
+      newArrivalDays: undefined,
+      offerType: undefined,
+      grade: undefined,
+      ecoFriendly: undefined,
+      waterproof: undefined
+    };
+    handleFiltersChange(newFilters);
   };
 
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-2 md:py-16"
+      className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-2 md:py-6"
     >
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 md:mb-16 gap-4 md:gap-8"
+        className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 md:mb-6 gap-4 md:gap-8"
       >
         <div className="space-y-1">
-          <h1 className="text-3xl md:text-5xl font-display font-semibold tracking-tight">Our Collection</h1>
-          <p className="text-deep-espresso/70 text-sm md:text-lg font-normal">
+          <h1 className="text-xl md:text-2xl font-display font-semibold tracking-tight">Our Collection</h1>
+          <p className="text-deep-espresso/70 text-sm md:text-base font-normal">
             {searchQuery ? `Search results for "${searchQuery}"` : `Showing ${filteredProducts.length} premium pieces for your dream home.`}
           </p>
         </div>
@@ -131,91 +234,28 @@ const ProductListingPage = () => {
               <option value="featured">Featured Recommendations</option>
               <option value="price-low">Price: Low to High</option>
               <option value="price-high">Price: High to Low</option>
-
             </select>
             <FiChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400" />
           </div>
         </div>
       </motion.div>
 
+      {/* Applied Filters */}
+      <AppliedFilters
+        filters={filters}
+        onRemoveFilter={handleRemoveFilter}
+        onClearAll={handleClearAllFilters}
+      />
+
       <div className="flex gap-16 relative">
-        {/* Sidebar - Desktop */}
-        <aside className="hidden md:block w-72 space-y-12 flex-shrink-0 sticky top-32 h-fit">
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            <h3 className="text-[11px] font-semibold text-deep-espresso flex items-center mb-8 uppercase tracking-wider">
-              <span className="h-px w-6 bg-warm-sand mr-3"></span>
-              Categories
-            </h3>
-            <div className="space-y-3">
-              <button
-                onClick={() => handleCategoryChange('all')}
-                className={`flex items-center justify-between w-full p-4 rounded-2xl transition-all group ${activeCategory === 'all' ? 'bg-[#189D91] text-white font-semibold shadow-lg shadow-[#189D91]/20' : 'text-deep-espresso/60 hover:bg-soft-oatmeal/10 hover:text-deep-espresso'}`}
-              >
-                <span className="text-sm font-medium group-hover:translate-x-1 transition-transform">All Collections</span>
-                <span className={`text-[10px] px-2.5 py-1 rounded-full font-bold ${activeCategory === 'all' ? 'bg-white/20' : 'bg-soft-oatmeal/20'}`}>{products.length}</span>
-              </button>
-              {categories.map(cat => (
-                <button
-                  key={cat.id}
-                  onClick={() => handleCategoryChange(cat.slug)}
-                  className={`flex items-center justify-between w-full p-4 rounded-2xl transition-all group ${activeCategory === cat.slug ? 'bg-[#189D91] text-white font-semibold shadow-lg shadow-[#189D91]/20' : 'text-deep-espresso/60 hover:bg-soft-oatmeal/10 hover:text-deep-espresso'}`}
-                >
-                  <span className="text-sm font-medium group-hover:translate-x-1 transition-transform">{cat.name}</span>
-                  <span className={`text-[10px] px-2.5 py-1 rounded-full font-bold ${activeCategory === cat.slug ? 'bg-white/20' : 'bg-soft-oatmeal/20'}`}>{cat.productCount}</span>
-                </button>
-              ))}
-            </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.3 }}
-          >
-            <h3 className="text-[11px] font-semibold text-deep-espresso flex items-center mb-8 uppercase tracking-wider">
-              <span className="h-px w-6 bg-warm-sand mr-3"></span>
-              Price Range
-            </h3>
-            <div className="px-2 space-y-4">
-              <input type="range" className="w-full h-1.5 bg-soft-oatmeal rounded-full appearance-none cursor-pointer accent-warm-sand" />
-              <div className="flex justify-between text-[10px] text-gray-400 font-semibold uppercase tracking-wide">
-                <span>₹0</span>
-                <span>₹10,000+</span>
-              </div>
-            </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.4 }}
-          >
-            <h3 className="text-[11px] font-semibold text-deep-espresso flex items-center mb-8 uppercase tracking-wider">
-              <span className="h-px w-6 bg-warm-sand mr-3"></span>
-              Deals & Offers
-            </h3>
-            <div className="space-y-3">
-              <button
-                onClick={() => handleOfferTypeChange('all')}
-                className={`flex items-center justify-between w-full p-4 rounded-2xl transition-all group ${activeOfferType === 'all' ? 'bg-[#189D91] text-white font-semibold shadow-lg shadow-[#189D91]/20' : 'text-deep-espresso/60 hover:bg-soft-oatmeal/10 hover:text-deep-espresso'}`}
-              >
-                <span className="text-sm font-medium group-hover:translate-x-1 transition-transform">All Offers</span>
-              </button>
-              {OFFER_TYPES.map(offer => (
-                <button
-                  key={offer.slug}
-                  onClick={() => handleOfferTypeChange(offer.slug)}
-                  className={`flex items-center justify-between w-full p-4 rounded-2xl transition-all group ${activeOfferType === offer.slug ? 'bg-[#189D91] text-white font-semibold shadow-lg shadow-[#189D91]/20' : 'text-deep-espresso/60 hover:bg-soft-oatmeal/10 hover:text-deep-espresso'}`}
-                >
-                  <span className="text-sm font-medium group-hover:translate-x-1 transition-transform">{offer.label}</span>
-                </button>
-              ))}
-            </div>
-          </motion.div>
+        {/* Sidebar - Desktop (Updated with FilterPanel) */}
+        <aside className="hidden md:block w-72 flex-shrink-0 sticky top-32 max-h-[calc(100vh-9rem)] overflow-y-auto pr-2">
+          <FilterPanel
+            filters={filters}
+            onFiltersChange={handleFiltersChange}
+            filterOptions={filterOptions}
+            isLoading={filterLoading}
+          />
         </aside>
 
         {/* Product Grid */}
@@ -228,7 +268,7 @@ const ProductListingPage = () => {
             <AnimatePresence mode="wait">
               {filteredProducts.length > 0 ? (
                 <motion.div
-                  key={activeCategory}
+                  key="products"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
@@ -254,7 +294,7 @@ const ProductListingPage = () => {
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    onClick={() => handleCategoryChange('all')}
+                    onClick={handleClearAllFilters}
                     className="mt-10 bg-[#189D91] hover:bg-[#14847a] text-white px-10 py-4 rounded-xl font-bold text-sm shadow-md shadow-[#189D91]/15 transition-all"
                   >
                     Reset all filters
@@ -266,7 +306,7 @@ const ProductListingPage = () => {
         </div>
       </div>
 
-      {/* Mobile Sidebar Overlay */}
+      {/* Mobile Sidebar Overlay (Updated with FilterPanel) */}
       <AnimatePresence>
         {isSidebarOpen && (
           <motion.div
@@ -292,38 +332,16 @@ const ProductListingPage = () => {
                   <FiX className="h-6 w-6" />
                 </motion.button>
               </div>
-              <div className="p-8 space-y-12 overflow-y-auto flex-1">
-                <div>
-                  <h4 className="text-xs uppercase tracking-[0.3em] font-black text-warm-sand mb-6">Collections</h4>
-                  <div className="grid grid-cols-2 gap-3">
-                    {['all', ...categories.map(c => c.slug)].map(slug => (
-                      <button
-                        key={slug}
-                        onClick={() => { handleCategoryChange(slug); setIsSidebarOpen(false); }}
-                        className={`px-5 py-4 rounded-[1.25rem] border text-xs font-black uppercase tracking-widest transition-all ${activeCategory === slug ? 'bg-[#189D91] border-[#189D91] text-white shadow-lg' : 'border-soft-oatmeal/40 text-deep-espresso hover:bg-soft-oatmeal/10'}`}
-                      >
-                        {slug}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <h4 className="text-xs uppercase tracking-[0.3em] font-black text-warm-sand mb-6">Deals & Offers</h4>
-                  <div className="grid grid-cols-2 gap-3">
-                    {['all', ...OFFER_TYPES.map(o => o.slug)].map(slug => (
-                      <button
-                        key={slug}
-                        onClick={() => { handleOfferTypeChange(slug === 'all' ? 'all' : slug); setIsSidebarOpen(false); }}
-                        className={`px-5 py-4 rounded-[1.25rem] border text-xs font-black uppercase tracking-widest transition-all ${activeOfferType === slug ? 'bg-[#189D91] border-[#189D91] text-white shadow-lg' : 'border-soft-oatmeal/40 text-deep-espresso hover:bg-soft-oatmeal/10'}`}
-                      >
-                        {slug}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-              <div className="p-8 border-t border-soft-oatmeal/20">
-                <Button className="w-full h-16 rounded-full text-lg shadow-2xl" onClick={() => setIsSidebarOpen(false)}>Apply Filters</Button>
+              <div className="p-8 space-y-6 overflow-y-auto flex-1">
+                <FilterPanel
+                  filters={filters}
+                  onFiltersChange={(newFilters) => {
+                    handleFiltersChange(newFilters);
+                    setIsSidebarOpen(false);
+                  }}
+                  filterOptions={filterOptions}
+                  isLoading={filterLoading}
+                />
               </div>
             </motion.div>
           </motion.div>

@@ -26,6 +26,63 @@ const SellerSchema = new mongoose.Schema({
   phone: {
     type: String
   },
+  // Vendor location with geospatial coordinates for distance-based filtering
+  location: {
+    address: { type: String, default: '' },
+    city: { type: String, default: '' },
+    state: { type: String, default: '' },
+    zipCode: { type: String, default: '' },
+    country: { type: String, default: 'India' },
+    coordinates: {
+      type: {
+        type: String,
+        enum: ['Point'],
+        default: 'Point'
+      },
+      coordinates: {
+        type: [Number],
+        default: [88.3639, 22.5726],
+        validate: {
+          validator: function(v) {
+            return v && v.length === 2;
+          },
+          message: 'Coordinates must be [longitude, latitude]'
+        }
+      }
+    }
+  },
+  // Region for location-based filtering
+  region: {
+    type: String,
+    enum: ['kolkata', 'west_bengal', 'east_india', 'pan_india'],
+    default: 'pan_india'
+  },
+  // Vendor verification status set by admin
+  verificationStatus: {
+    type: String,
+    enum: [
+      'unverified',
+      'verified',
+      'manufacturer',
+      'authorized_distributor',
+      'dealer',
+      'wholesaler',
+      'local_supplier',
+      'premium_vendor',
+      'project_supplier'
+    ],
+    default: 'unverified'
+  },
+  // Delivery capabilities for this vendor
+  deliveryCapabilities: {
+    sameDay: { type: Boolean, default: false },
+    nextDay: { type: Boolean, default: false },
+    standardDelivery: { type: Boolean, default: true },
+    bulkDelivery: { type: Boolean, default: false },
+    siteDelivery: { type: Boolean, default: false },
+    hyperlocal: { type: Boolean, default: false },
+    express: { type: Boolean, default: false }
+  },
   gstNumber: {
     type: String,
     default: ""
@@ -139,6 +196,9 @@ SellerSchema.methods.matchPassword = async function(enteredPassword) {
 };
 
 SellerSchema.index({ isVerified: 1, createdAt: -1 });
+SellerSchema.index({ 'location.coordinates': '2dsphere' });
+SellerSchema.index({ region: 1 });
+SellerSchema.index({ verificationStatus: 1 });
 
 SellerSchema.post('save', function(doc) {
   try {

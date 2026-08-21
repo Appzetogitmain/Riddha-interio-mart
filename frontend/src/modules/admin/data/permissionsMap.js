@@ -44,6 +44,7 @@ export const permissionsMap = {
     'Top Brands': 'content',
     'Featured Highlights': 'content',
     'Manage T&C': 'content',
+    'Offers & Deals': 'content',
     'Bulk Orders': 'orders',
     'Settings': 'settings',
     'Product Reviews': 'settings',

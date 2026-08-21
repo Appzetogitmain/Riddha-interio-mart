@@ -6,6 +6,7 @@ import { categories } from '../data/categories';
 import { FiFilter, FiChevronDown, FiX } from 'react-icons/fi';
 import api from '../../../shared/utils/api';
 import Button from '../../../shared/components/Button';
+import { OFFER_TYPES } from '../../../shared/constants/offerTypes';
 
 const ProductListingPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -16,13 +17,18 @@ const ProductListingPage = () => {
 
   const activeCategory = searchParams.get('category') || 'all';
   const searchQuery = searchParams.get('search') || '';
+  const activeOfferType = searchParams.get('offerType') || 'all';
 
   useEffect(() => {
     window.scrollTo(0, 0);
     const fetchProducts = async () => {
       try {
         setLoading(true);
-        const res = await api.get('/products');
+        const params = {};
+        if (activeOfferType && activeOfferType !== 'all') {
+          params.offerType = activeOfferType === 'any' ? 'any' : activeOfferType;
+        }
+        const res = await api.get('/products', { params });
         setProducts(res.data.data);
       } catch (err) {
         console.error('Failed to fetch products:', err);
@@ -31,7 +37,7 @@ const ProductListingPage = () => {
       }
     };
     fetchProducts();
-  }, []);
+  }, [activeOfferType]);
 
   const filteredProducts = useMemo(() => {
     let result = [...products];
@@ -70,6 +76,15 @@ const ProductListingPage = () => {
       searchParams.delete('category');
     } else {
       searchParams.set('category', slug);
+    }
+    setSearchParams(searchParams);
+  };
+
+  const handleOfferTypeChange = (type) => {
+    if (type === 'all') {
+      searchParams.delete('offerType');
+    } else {
+      searchParams.set('offerType', type);
     }
     setSearchParams(searchParams);
   };
@@ -173,6 +188,34 @@ const ProductListingPage = () => {
               </div>
             </div>
           </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.4 }}
+          >
+            <h3 className="text-[11px] font-semibold text-deep-espresso flex items-center mb-8 uppercase tracking-wider">
+              <span className="h-px w-6 bg-warm-sand mr-3"></span>
+              Deals & Offers
+            </h3>
+            <div className="space-y-3">
+              <button
+                onClick={() => handleOfferTypeChange('all')}
+                className={`flex items-center justify-between w-full p-4 rounded-2xl transition-all group ${activeOfferType === 'all' ? 'bg-[#189D91] text-white font-semibold shadow-lg shadow-[#189D91]/20' : 'text-deep-espresso/60 hover:bg-soft-oatmeal/10 hover:text-deep-espresso'}`}
+              >
+                <span className="text-sm font-medium group-hover:translate-x-1 transition-transform">All Offers</span>
+              </button>
+              {OFFER_TYPES.map(offer => (
+                <button
+                  key={offer.slug}
+                  onClick={() => handleOfferTypeChange(offer.slug)}
+                  className={`flex items-center justify-between w-full p-4 rounded-2xl transition-all group ${activeOfferType === offer.slug ? 'bg-[#189D91] text-white font-semibold shadow-lg shadow-[#189D91]/20' : 'text-deep-espresso/60 hover:bg-soft-oatmeal/10 hover:text-deep-espresso'}`}
+                >
+                  <span className="text-sm font-medium group-hover:translate-x-1 transition-transform">{offer.label}</span>
+                </button>
+              ))}
+            </div>
+          </motion.div>
         </aside>
 
         {/* Product Grid */}
@@ -258,6 +301,20 @@ const ProductListingPage = () => {
                         key={slug}
                         onClick={() => { handleCategoryChange(slug); setIsSidebarOpen(false); }}
                         className={`px-5 py-4 rounded-[1.25rem] border text-xs font-black uppercase tracking-widest transition-all ${activeCategory === slug ? 'bg-[#189D91] border-[#189D91] text-white shadow-lg' : 'border-soft-oatmeal/40 text-deep-espresso hover:bg-soft-oatmeal/10'}`}
+                      >
+                        {slug}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <h4 className="text-xs uppercase tracking-[0.3em] font-black text-warm-sand mb-6">Deals & Offers</h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    {['all', ...OFFER_TYPES.map(o => o.slug)].map(slug => (
+                      <button
+                        key={slug}
+                        onClick={() => { handleOfferTypeChange(slug === 'all' ? 'all' : slug); setIsSidebarOpen(false); }}
+                        className={`px-5 py-4 rounded-[1.25rem] border text-xs font-black uppercase tracking-widest transition-all ${activeOfferType === slug ? 'bg-[#189D91] border-[#189D91] text-white shadow-lg' : 'border-soft-oatmeal/40 text-deep-espresso hover:bg-soft-oatmeal/10'}`}
                       >
                         {slug}
                       </button>

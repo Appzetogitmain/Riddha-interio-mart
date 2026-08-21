@@ -197,7 +197,19 @@ exports.getProducts = async (req, res, next) => {
       }
     }
 
-    // 7. Paginate results
+    // 7. Offer Type Filter (Deals & Discounts)
+    if (req.query.offerType && req.query.offerType !== 'all') {
+      const Offer = require('../models/Offer');
+      const now = new Date();
+      const offerQuery = { isActive: true, approvalStatus: 'approved', startDate: { $lte: now }, endDate: { $gte: now } };
+      if (req.query.offerType !== 'any') {
+        offerQuery.type = req.query.offerType;
+      }
+      const offerProductIds = await Offer.find(offerQuery).distinct('products');
+      filter._id = { $in: offerProductIds };
+    }
+
+    // 8. Paginate results
     const populateOptions = [
       { path: 'seller', select: 'fullName shopName' },
       { path: 'brand', select: 'name logo' },
@@ -206,6 +218,11 @@ exports.getProducts = async (req, res, next) => {
 
     console.log("FILTER BUILT FOR PRODUCTS QUERY:", JSON.stringify(filter, null, 2));
     const result = await paginate(Product, filter, req, populateOptions);
+
+    // Attach offer pricing to products
+    if (result.data && result.data.length > 0) {
+      await attachOfferPricing(result.data);
+    }
 
     // Apply ranking sort based on Levenshtein distances if fuzzy regex fallback is active
     if (isFuzzyFallbackUsed && req.query.search) {
@@ -550,6 +567,9 @@ exports.getProduct = async (req, res, next) => {
       product.categoryId = product.category._id;
       product.category = product.category.name;
     }
+
+    // Attach offer pricing
+    await attachOfferPricing(product);
 
     res.status(200).json({ success: true, cached, data: product });
   } catch (error) {
@@ -929,6 +949,47 @@ exports.generateHSNCodeHandler = async (req, res, next) => {
     res.status(500).json({ success: false, error: 'AI Service Error: ' + error.message });
   }
 };
+
+// Helper function to attach offer pricing to products
+async function attachOfferPricing(products) {
+  try {
+    const Offer = require('../models/Offer');
+    const { pickBestOffer } = require('../utils/offerPricing');
+
+    const list = Array.isArray(products) ? products : [products];
+    const ids = list.map(p => p._id);
+    const now = new Date();
+
+    const offers = await Offer.find({
+      products: { $in: ids },
+      isActive: true,
+      approvalStatus: 'approved',
+      startDate: { $lte: now },
+      endDate: { $gte: now }
+    }).lean();
+
+    for (const product of list) {
+      const applicable = offers.filter(o =>
+        o.products.some(id => id.toString() === product._id.toString())
+      );
+
+      if (!applicable.length) continue;
+
+      const best = pickBestOffer(product.price, applicable);
+      if (best && best.price < (product.discountPrice || product.price)) {
+        product.discountPrice = Math.round(best.price);
+        product.appliedOffer = {
+          id: best.offer._id,
+          type: best.offer.type,
+          title: best.offer.title
+        };
+      }
+    }
+  } catch (err) {
+    console.error('Error attaching offer pricing:', err);
+  }
+  return products;
+}
 
 // @desc    Generate Product description, sku, hsn, keywords using AI
 // @route   POST /api/products/generate-content

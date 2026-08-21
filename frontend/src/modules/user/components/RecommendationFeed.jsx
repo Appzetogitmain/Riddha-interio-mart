@@ -137,18 +137,18 @@ const RecommendationFeed = () => {
 
         {/* Trending Spotlight Banner */}
         {trending.length > 0 && (
-          <div className="mt-12 p-6 bg-linear-to-r from-emerald-950 via-gray-900 to-emerald-900 rounded-3xl text-white shadow-xl relative overflow-hidden">
-            <div className="absolute right-0 top-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-            
+          <div className="mt-12 p-6 rounded-3xl text-white shadow-xl relative overflow-hidden" style={{backgroundColor: 'rgb(41 161 153)'}}>
+            <div className="absolute right-0 top-0 w-96 h-96 bg-cyan-400/10 rounded-full blur-3xl pointer-events-none" />
+
             <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6">
               <div>
-                <span className="px-3 py-1 bg-emerald-500/20 text-emerald-300 rounded-full text-xs font-semibold uppercase tracking-wider">
+                <span className="px-3 py-1 bg-cyan-400/20 text-cyan-300 rounded-full text-xs font-semibold uppercase tracking-wider">
                   Spotlight
                 </span>
-                <h3 className="text-xl font-bold mt-2">Popular Design Trends in Riddha Mart</h3>
+                <h3 className="text-xl font-bold mt-2 text-white">Popular Design Trends in Riddha Mart</h3>
                 <p className="text-xs text-gray-300 mt-1">High-demand items trending in contemporary interior projects.</p>
               </div>
-              <a href="/products" className="inline-flex items-center gap-2 text-xs font-semibold text-emerald-400 hover:text-emerald-300">
+              <a href="/products" className="inline-flex items-center gap-2 text-xs font-semibold text-cyan-400 hover:text-cyan-300">
                 <span>Explore All Trending</span>
                 <ArrowRight className="w-4 h-4" />
               </a>
@@ -156,10 +156,10 @@ const RecommendationFeed = () => {
 
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
               {trending.slice(0, 6).map(t => (
-                <div key={t.id || t._id} className="bg-white/10 backdrop-blur-md p-2.5 rounded-xl border border-white/10 hover:border-emerald-400/50 transition-all">
+                <div key={t.id || t._id} className="bg-white/10 backdrop-blur-md p-2.5 rounded-xl border border-white/10 hover:border-cyan-400/50 transition-all">
                   <img src={t.image} alt={t.name} className="w-full h-24 object-cover rounded-lg mb-2" />
                   <h4 className="text-xs font-semibold text-white truncate">{t.name}</h4>
-                  <p className="text-xs font-bold text-emerald-400 mt-0.5">₹{t.price?.toLocaleString()}</p>
+                  <p className="text-xs font-bold text-cyan-400 mt-0.5">₹{t.price?.toLocaleString()}</p>
                 </div>
               ))}
             </div>

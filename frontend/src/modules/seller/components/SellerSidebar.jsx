@@ -22,11 +22,13 @@ import {
   Search,
   Truck,
   ShoppingBag,
-  Sparkles
+  Sparkles,
+  Percent
 } from "lucide-react";
 import { useUser } from "../../user/data/UserContext";
 import api from "../../../shared/utils/api";
 import logo from "../../../assets/transparent_logo.png";
+import { OFFER_TYPES } from "../../../shared/constants/offerTypes";
 
 const menuItems = [
   { path: "/seller/dashboard", icon: LayoutDashboard, label: "Dashboard" },
@@ -57,15 +59,24 @@ const menuItems = [
   { path: "/seller/reports/sales", icon: BarChart3, label: "Analytics" },
   { path: "/seller/wallet", icon: Wallet, label: "Wallet" },
   { path: "/seller/reviews", icon: Star, label: "Reviews" },
-  { 
-    label: "Marketing", 
-    icon: Megaphone, 
+  {
+    label: "Marketing",
+    icon: Megaphone,
     path: "/seller/marketing",
     children: [
       { path: "/seller/marketing", label: "Marketing Overview" },
       { path: "/seller/content-generator", label: "AI Copywriting Studio" },
       { path: "/seller/advertisement-plans", label: "Advertisement Plans" },
       { path: "/seller/my-advertisements", label: "My Advertisements" },
+    ]
+  },
+  {
+    label: "Deals & Discounts",
+    icon: Percent,
+    path: "/seller/offers",
+    children: [
+      { path: "/seller/offers", label: "All Offers" },
+      ...OFFER_TYPES.map(t => ({ path: `/seller/offers/type/${t.slug}`, label: t.label }))
     ]
   },
   { path: "/seller/notifications", icon: Bell, label: "Notifications" },

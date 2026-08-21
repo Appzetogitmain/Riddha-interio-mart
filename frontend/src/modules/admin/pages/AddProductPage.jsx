@@ -7,6 +7,8 @@ import { toast } from 'react-hot-toast';
 import BulkUploadModal from '../components/BulkUploadModal';
 import { FiUploadCloud } from 'react-icons/fi';
 import AIContentPanel from '../../../shared/components/AIContentPanel';
+import DeliveryOptionsForm from '../../seller/components/DeliveryOptionsForm';
+import PaymentOptionsForm from '../../seller/components/PaymentOptionsForm';
 
 const AddProductPage = () => {
   const navigate = useNavigate();
@@ -44,7 +46,13 @@ const AddProductPage = () => {
     videoUrl: '',
     targetCustomer: 'both',
     gstRate: '',
-    seoKeywords: []
+    seoKeywords: [],
+    deliveryOptions: {
+      availableDeliveryDays: [],
+      deliveryTypes: [],
+      freeDeliveryEligibility: []
+    },
+    paymentOptions: []
   });
 
   // SKU availability tracking state for master catalog
@@ -383,7 +391,7 @@ const AddProductPage = () => {
 
   return (
     <PageWrapper>
-      <div className="max-w-4xl mx-auto space-y-8">
+      <div className="max-w-7xl mx-auto space-y-8">
         <button 
           onClick={() => navigate('/admin/catalog')}
           className="flex items-center gap-2 text-warm-sand font-bold hover:text-deep-espresso transition-colors group text-xs md:text-sm"
@@ -526,7 +534,10 @@ const AddProductPage = () => {
                        )}
                     </div>
                  </div>
-                 
+              </div>
+
+              {/* AI Content */}
+              <div className="bg-white rounded-3xl md:rounded-[32px] border border-soft-oatmeal shadow-xl p-6 md:p-8 lg:p-12">
                  <div className="pt-4 border-t border-soft-oatmeal/30">
                    <AIContentPanel
                      formData={formData}
@@ -574,10 +585,10 @@ const AddProductPage = () => {
                      theme="admin"
                    />
                  </div>
-             </div>
+              </div>
 
-             {/* Right: Detailed Fields */}
-             <div className="xl:col-span-2 p-6 md:p-10 lg:p-12 space-y-8">
+              {/* Right: Detailed Fields */}
+              <div className="xl:col-span-2 p-6 md:p-10 lg:p-12 space-y-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                    <div className="space-y-2">
                       <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest flex items-center gap-2">
@@ -917,6 +928,13 @@ const AddProductPage = () => {
                    </div>
                  )}
 
+              {/* Delivery & Payment Options */}
+              <div className="space-y-6 pt-6 border-t border-soft-oatmeal/50">
+                <DeliveryOptionsForm formData={formData} handleFieldChange={(field, value) => setFormData({...formData, [field]: value})} />
+                <PaymentOptionsForm formData={formData} handleFieldChange={(field, value) => setFormData({...formData, [field]: value})} />
+              </div>
+
+              {/* Material & Dimensions */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-soft-oatmeal/50">
                    <div className="space-y-2">
                       <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest">Material</label>
@@ -947,7 +965,7 @@ const AddProductPage = () => {
                    </div>
                 </div>
 
-                <div className="pt-6 flex justify-end">
+              <div className="pt-6 flex justify-end">
                    <button 
                      type="submit"
                      disabled={submitting}
@@ -961,8 +979,8 @@ const AddProductPage = () => {
                       {submitting ? 'Saving...' : 'Save Product'}
                    </button>
                 </div>
-             </div>
-          </div>
+              </div>
+            </div>
         </form>
       </div>
     </PageWrapper>

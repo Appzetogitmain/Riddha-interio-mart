@@ -5,6 +5,7 @@ import { useUser } from "../../user/data/UserContext";
 import api from "../../../shared/utils/api";
 import { useRBAC } from "../data/RBACContext";
 import { permissionsMap } from "../data/permissionsMap";
+import { OFFER_TYPES } from "../../../shared/constants/offerTypes";
 import {
   FiLayout,
   FiBox,
@@ -274,6 +275,20 @@ const menuGroups = [
         ],
       },
       { path: "/admin/terms", icon: FiClipboard, label: "Manage T&C" },
+    ],
+  },
+  {
+    title: "Deals & Discounts",
+    items: [
+      {
+        label: "Offers & Deals",
+        icon: FiPercent,
+        path: "/admin/offers",
+        children: [
+          { path: "/admin/offers", icon: FiGrid, label: "All Offers" },
+          ...OFFER_TYPES.map(t => ({ path: `/admin/offers/type/${t.slug}`, icon: FiTag, label: t.label }))
+        ]
+      }
     ],
   },
   {

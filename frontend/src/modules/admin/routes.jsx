@@ -16,6 +16,8 @@ const ManageFavouriteCategories = React.lazy(() => import('./pages/ManageFavouri
 const ManageCategoryGrid = React.lazy(() => import('./pages/ManageCategoryGrid'));
 const ManageBrands = React.lazy(() => import('./pages/ManageBrands'));
 const ManageAdvertisementPlans = React.lazy(() => import('./pages/ManageAdvertisementPlans'));
+const OffersListPage = React.lazy(() => import('./pages/OffersListPage'));
+const OfferFormPage = React.lazy(() => import('./pages/OfferFormPage'));
 const BundleManagementPage = React.lazy(() => import('./pages/BundleManagementPage'));
 const JourneyAnalyticsDashboard = React.lazy(() => import('./pages/JourneyAnalyticsDashboard'));
 const LoginPage = React.lazy(() => import('../user/pages/LoginPage'));
@@ -154,6 +156,10 @@ const AdminRoutes = () => {
             <Route path="/manage-brands/add" element={<AddBrandPage />} />
             <Route path="/manage-bundles" element={<BundleManagementPage />} />
             <Route path="/manage-advertisements" element={<ManageAdvertisementPlans />} />
+            <Route path="/offers" element={<OffersListPage />} />
+            <Route path="/offers/type/:typeSlug" element={<OffersListPage />} />
+            <Route path="/offers/add" element={<OfferFormPage />} />
+            <Route path="/offers/edit/:id" element={<OfferFormPage />} />
             <Route path="/manage-grid" element={<ManageCategoryGrid />} />
             <Route path="/manage-grid/add" element={<AddCategoryGridItemPage />} />
             <Route path="/terms" element={<ManageTerms />} />

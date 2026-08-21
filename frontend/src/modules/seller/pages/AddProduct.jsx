@@ -33,6 +33,8 @@ import {
 import api from "../../../shared/utils/api";
 import ProductVariantsEditor from "../components/ProductVariantsEditor";
 import AIContentPanel from "../../../shared/components/AIContentPanel";
+import DeliveryOptionsForm from "../components/DeliveryOptionsForm";
+import PaymentOptionsForm from "../components/PaymentOptionsForm";
 
 const AddProduct = () => {
   const navigate = useNavigate();
@@ -97,6 +99,12 @@ const AddProduct = () => {
     b2bPrice: "",
     b2bMinQty: "",
     seoKeywords: [],
+    deliveryOptions: {
+      availableDeliveryDays: [],
+      deliveryTypes: [],
+      freeDeliveryEligibility: []
+    },
+    paymentOptions: []
   });
 
   useEffect(() => {
@@ -1002,6 +1010,14 @@ const AddProduct = () => {
                         </div>
                       )}
                     </div>
+                  </div>
+
+                  {/* Delivery Options */}
+                  <DeliveryOptionsForm formData={formData} handleFieldChange={handleFieldChange} />
+
+                  {/* Payment Options */}
+                  <div className="bg-white rounded-[2.5rem] border border-slate-200 p-10 shadow-sm">
+                    <PaymentOptionsForm formData={formData} handleFieldChange={handleFieldChange} />
                   </div>
 
                   {/* Specifications */}

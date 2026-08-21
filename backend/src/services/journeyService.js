@@ -39,7 +39,7 @@ class JourneyService {
 
   _cacheKey(kind, parts) {
     const hash = crypto.createHash('sha1').update(JSON.stringify(parts)).digest('hex').slice(0, 16);
-    return journey::;
+    return `journey:${kind}:${hash}`;
   }
 
   /**
@@ -68,7 +68,7 @@ class JourneyService {
           return shaped;
         })
         .catch((err) => {
-          console.warn([JOURNEY]  failed: );
+          console.warn(`[JOURNEY] ${label} failed: ${err.message}`);
           return null;
         })
         .finally(() => this._inflight.delete(cacheKey));

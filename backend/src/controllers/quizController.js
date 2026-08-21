@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const Product = require('../models/Product');
 const UserQuizResult = require('../models/UserQuizResult');
-const geminiProfileService = require('../services/geminiProfileService');
+const profileService = require('../services/profileService');
 const geminiDesignService = require('../services/geminiDesignService');
 const geminiRecommendationService = require('../services/geminiRecommendationService');
 const geminiMoodBoardService = require('../services/geminiMoodBoardService');
@@ -94,8 +94,8 @@ exports.submitQuiz = async (req, res) => {
     ];
 
     const [personality, narrative, suggestions, moodBoardContent] = await Promise.all([
-      geminiProfileService.generateDesignerPersonality(designProfile, userId),
-      geminiProfileService.generateProfileNarrative(designProfile, userId),
+      profileService.generateDesignerPersonality(designProfile, userId),
+      profileService.generateProfileNarrative(designProfile, userId),
       geminiDesignService.generateSuggestions(designProfile, userId),
       geminiMoodBoardService.generateMoodBoardContent(designProfile, moodBoardThemes, userId)
     ]);

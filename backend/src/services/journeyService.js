@@ -1,264 +1,385 @@
-const Order = require('../models/Order');
-const Cart = require('../models/Cart');
-const UserProfile = require('../models/UserProfile');
-const UserQuizResult = require('../models/UserQuizResult');
-const Project = require('../models/Project');
-const Quotation = require('../models/Quotation');
-const UserJourney = require('../models/UserJourney');
-const {
-  STAGES,
-  SEQUENCES,
-  FEATURES,
-  getFeature,
-  getFeaturesForPersona
-} = require('../utils/journeyRegistry');
+﻿const crypto = require('crypto');
+const openaiClient = require('./openaiService');
+const OpenAIErrorHandler = require('../utils/openaiErrorHandler');
+const OpenAIUsageTracker = require('./openaiUsageTracker');
+const cacheService = require('./cacheService');
+const { FALLBACKS } = require('../utils/geminiErrorHandler');
+const { FEATURES, getFeaturesForPersona } = require('../utils/journeyRegistry');
+
+// Journey guidance is a UI enhancement sitting in front of a deterministic
+// next-step calculation, so a slow model answer is worse than an instant
+// fallback. OpenAI here typically takes 5-20s — far past the sub-2s budget the
+// journey UI needs — so we use stale-while-revalidate: give the caller the
+// deterministic answer immediately and let the model warm the cache for the
+// next view. Callers therefore see fast responses always, and AI-quality
+// guidance from the second request onward.
+const GUIDANCE_WAIT_MS = Number(process.env.JOURNEY_GUIDANCE_WAIT_MS || 1200);
+const GUIDANCE_TTL_SECONDS = 300;
+const HELP_TTL_SECONDS = 900;
 
 /**
- * Journey orchestration core (Requirement #17).
+ * OpenAI-backed journey guidance (Requirement #17).
  *
- * Stage is *derived from real data* the other requirements already write
- * (orders, carts, quiz results, projects, quotations) rather than being a
- * separate counter that can drift out of sync.
+ * Every method degrades to a deterministic fallback so the journey UI keeps
+ * working when OPENAI_API_KEY is unset, the API is slow, or it is unavailable —
+ * guidance is an enhancement, never a hard dependency.
  */
-
-const personaFor = (user) => {
-  if (!user) return 'customer';
-  if (user.role === 'admin') return 'admin';
-  if (user.role === 'seller') return 'seller';
-  if (user.userType === 'enterpriser') return 'enterpriser';
-  return 'customer';
-};
-
-/**
- * Gathers the cross-feature signals used for both stage inference and AI guidance.
- * All lookups are guarded so a missing/empty collection never breaks the journey.
- */
-async function collectSignals(userId) {
-  if (!userId) {
-    return { hasQuiz: false, cartCount: 0, cartValue: 0, orderCount: 0, activeOrderCount: 0, deliveredOrderCount: 0, projectCount: 0, quotationCount: 0, cartItems: [] };
+class JourneyService {
+  /** Compact catalogue of features the given persona is allowed to be pointed at. */
+  _featureMenu(persona, exclude = []) {
+    return getFeaturesForPersona(persona)
+      .filter((f) => !exclude.includes(f.id))
+      .map((f) => ({
+        id: f.id,
+        name: f.label,
+        whatItDoes: f.blurb,
+        stage: f.stage
+      }));
   }
 
-  const safe = (p, fallback) => p.catch(() => fallback);
-
-  const [quiz, cart, orders, projectCount, quotationCount] = await Promise.all([
-    safe(UserQuizResult.findOne({ userId }).sort({ createdAt: -1 }).lean(), null),
-    safe(Cart.findOne({ user: userId }).populate('items.product', 'name price').lean(), null),
-    safe(Order.find({ user: userId }).select('status isDelivered totalPrice createdAt').lean(), []),
-    safe(Project.countDocuments({ userId }), 0),
-    safe(Quotation.countDocuments({ userId }), 0)
-  ]);
-
-  const cartLines = (cart?.items || []).filter((i) => i.product);
-  const cartValue = cartLines.reduce((sum, i) => sum + ((i.product?.price || 0) * (i.quantity || 1)), 0);
-
-  const deliveredOrderCount = orders.filter((o) => o.isDelivered || o.status === 'Delivered').length;
-  const activeOrderCount = orders.filter(
-    (o) => !o.isDelivered && !['Delivered', 'Cancelled'].includes(o.status)
-  ).length;
-
-  return {
-    hasQuiz: Boolean(quiz),
-    quizProfile: quiz?.designProfile || null,
-    cartCount: cartLines.length,
-    cartValue,
-    cartItems: cartLines.map((i) => i.product?.name).filter(Boolean),
-    orderCount: orders.length,
-    activeOrderCount,
-    deliveredOrderCount,
-    projectCount,
-    quotationCount
-  };
-}
-
-/**
- * Derives the user's current journey stage from what they've actually done.
- * Ordered most-advanced-first so the furthest signal wins.
- */
-function inferStage(signals, persona) {
-  if (persona === 'seller' || persona === 'enterpriser') {
-    if (signals.activeOrderCount > 0) return 'fulfillment';
-    if (signals.quotationCount > 0) return 'decision';
-    if (signals.projectCount > 0) return 'inspiration';
-    return 'discovery';
+  _cacheKey(kind, parts) {
+    const hash = crypto.createHash('sha1').update(JSON.stringify(parts)).digest('hex').slice(0, 16);
+    return journey::;
   }
 
-  if (signals.deliveredOrderCount > 0 && signals.activeOrderCount === 0) return 'post-purchase';
-  if (signals.activeOrderCount > 0) return 'fulfillment';
-  if (signals.cartCount > 0) return 'decision';
-  if (signals.hasQuiz) return 'inspiration';
-  return 'discovery';
-}
+  /**
+   * Stale-while-revalidate around an OpenAI call.
+   *
+   * Returns the cached value if present. Otherwise waits only a short beat for
+   * the model; if it hasn't answered by then the request returns null (the
+   * caller serves its deterministic fallback) while the call continues in the
+   * background and populates the cache for subsequent requests.
+   *
+   * 	ransform shapes/validates the raw model output before it is cached.
+   */
+  async _cachedOrBackfill({ cacheKey, buildCall, transform, ttl, label }) {
+    const cached = cacheService.get(cacheKey);
+    if (cached) return cached;
 
-/**
- * Which registry features has this user demonstrably engaged with?
- * Combines hard evidence (quiz taken, order placed) with recorded journey steps.
- */
-function completedFeatureIds(signals, journey) {
-  const done = new Set();
-  if (signals.hasQuiz) done.add('req-4');
-  if (signals.cartCount > 0) done.add('req-1');
-  if (signals.orderCount > 0) done.add('req-13');
-  if (signals.projectCount > 0) { done.add('req-8'); done.add('req-9'); }
-  if (signals.quotationCount > 0) done.add('req-12');
+    // Collapse concurrent misses onto a single in-flight model call.
+    if (!this._inflight) this._inflight = new Map();
+    let call = this._inflight.get(cacheKey);
 
-  for (const step of journey?.stepsCompleted || []) {
-    if (step.feature) done.add(step.feature);
-  }
-  return done;
-}
+    if (!call) {
+      call = buildCall()
+        .then((raw) => {
+          const shaped = transform(raw);
+          if (shaped) cacheService.set(cacheKey, shaped, ttl);
+          return shaped;
+        })
+        .catch((err) => {
+          console.warn([JOURNEY]  failed: );
+          return null;
+        })
+        .finally(() => this._inflight.delete(cacheKey));
 
-/**
- * Deterministic "what next" from the persona's reference sequence — the floor
- * beneath the AI guidance layer, and what we serve when Gemini is unavailable.
- */
-function nextFeatureFor(persona, done) {
-  const sequence = SEQUENCES[persona] || SEQUENCES.customer;
-  const nextId = sequence.find((id) => !done.has(id));
-  return nextId ? getFeature(nextId) : null;
-}
+      this._inflight.set(cacheKey, call);
+    }
 
-function computeProgress(persona, done) {
-  const sequence = SEQUENCES[persona] || SEQUENCES.customer;
-  if (!sequence.length) return 100;
-  const hit = sequence.filter((id) => done.has(id)).length;
-  return Math.round((hit / sequence.length) * 100);
-}
+    let timer;
+    const wait = new Promise((resolve) => {
+      timer = setTimeout(() => resolve(null), GUIDANCE_WAIT_MS);
+    });
 
-function formatDuration(ms) {
-  if (!ms || ms < 0) return '0 mins';
-  const mins = Math.floor(ms / 60000);
-  if (mins < 60) return `${mins} min${mins === 1 ? '' : 's'}`;
-  const hours = Math.floor(mins / 60);
-  const rem = mins % 60;
-  if (hours < 24) return `${hours} hour${hours === 1 ? '' : 's'}${rem ? ` ${rem} mins` : ''}`;
-  const days = Math.floor(hours / 24);
-  return `${days} day${days === 1 ? '' : 's'}`;
-}
-
-/**
- * Finds the user's live journey, or opens one. Anonymous users are keyed by
- * sessionId; on login the session's journey is claimed by the user id so
- * pre-auth activity isn't lost.
- */
-async function getOrCreateJourney({ userId, sessionId, persona, device, referrer }) {
-  if (!sessionId && !userId) return null;
-
-  let journey = null;
-
-  if (userId) {
-    journey = await UserJourney.findOne({ user: userId, status: 'in-progress' }).sort({ createdAt: -1 });
-  }
-  if (!journey && sessionId) {
-    journey = await UserJourney.findOne({ sessionId, status: 'in-progress' }).sort({ createdAt: -1 });
-    // Claim an anonymous journey once the visitor logs in.
-    if (journey && userId && !journey.user) {
-      journey.user = userId;
+    try {
+      // Whoever finishes first wins; a late model answer still lands in the cache.
+      return await Promise.race([call, wait]);
+    } finally {
+      clearTimeout(timer);
     }
   }
 
-  if (!journey) {
-    journey = new UserJourney({
-      user: userId || null,
-      sessionId: sessionId || `user-${userId}`,
-      persona: persona || 'customer',
-      device: device || 'desktop',
-      referrer: referrer || ''
-    });
-  }
+  /**
+   * OPENAI PROMPT 1 — Next step guidance.
+   * Decides where the user is and what they should do next.
+   */
+  async getNextStepGuidance(context = {}) {
+    const {
+      persona = 'customer',
+      stage = 'discovery',
+      currentPage = '/',
+      recentSteps = [],
+      profile = {},
+      signals = {},
+      device = 'desktop',
+      completedFeatures = [],
+      userId = null
+    } = context;
 
-  if (persona) journey.persona = persona;
-  return journey;
+    const cacheKey = this._cacheKey('guidance', { persona, stage, currentPage, completedFeatures, cart: signals.cartCount ?? 0 });
+
+    const prompt = 
+You are guiding a shopper on an Indian interior design & building-materials marketplace.
+
+User context:
+- Persona: 
+- Detected journey stage: 
+- Current page: 
+- Device: 
+- Recent actions: 
+- Style preferences: 
+- Budget range: ₹ - ₹
+- Has completed design quiz: 
+- Items in cart: 
+- Past orders: 
+- Active projects: 
+
+- Features they have ALREADY used (never suggest these again): 
+
+Features you may point them to (use the exact id):
+
+
+Decide the single most useful next step. Prioritise the user's own goal, not our
+feature list. If they are mid-purchase, do not distract them with exploration
+features. Be helpful, never pushy.
+
+Respond ONLY with JSON:
+{
+  "currentStage": "discovery|inspiration|decision|purchase|fulfillment|post-purchase",
+  "nextRecommendedStep": "one short sentence telling them what to do",
+  "suggestedFeature": "req-N or null",
+  "suggestedCTA": "2-4 word button label",
+  "helpMessage": "one friendly supporting sentence",
+  "urgency": "low|medium|high"
 }
+;
 
-/**
- * Full journey status for a user — the payload behind /api/journey/user-status.
- */
-async function buildStatus({ user, sessionId, device, referrer }) {
-  const userId = user?._id || null;
-  const persona = personaFor(user);
+    const fallback = { ...FALLBACKS.journeyGuidance, currentStage: stage, suggestedFeature: null };
 
-  const [signals, profile] = await Promise.all([
-    collectSignals(userId),
-    userId ? UserProfile.findOne({ userId }).lean().catch(() => null) : null
-  ]);
+    try {
+      const guidance = await this._cachedOrBackfill({
+        cacheKey,
+        buildCall: async () => {
+          const response = await openaiClient.generateText(prompt, {
+            modelType: 'general',
+            expectJson: true,
+            temperature: 0.7,
+            maxTokens: 500
+          });
 
-  const journey = await getOrCreateJourney({ userId, sessionId, persona, device, referrer });
-  const stage = inferStage(signals, persona);
+          await OpenAIUsageTracker.trackUsage(
+            {
+              inputTokens: response.inputTokens,
+              outputTokens: response.outputTokens,
+              totalTokens: response.totalTokens,
+            },
+            'journeyGuidance',
+            userId,
+            '/api/journey/next-suggestion',
+            response.model
+          );
 
-  if (journey) {
-    journey.currentStage = stage;
-    journey.lastActiveAt = new Date();
-    await journey.save().catch(() => {});
+          return JSON.parse(response.text);
+        },
+        transform: (raw) => (raw ? this._sanitizeGuidance(raw, persona, stage, completedFeatures) : null),
+        ttl: GUIDANCE_TTL_SECONDS,
+        label: 'next-step guidance'
+      });
+
+      return guidance || fallback;
+    } catch (err) {
+      const errorInfo = OpenAIErrorHandler.handleError(err, {
+        service: 'JourneyService',
+        method: 'getNextStepGuidance'
+      });
+      console.error('[JOURNEY GUIDANCE ERROR]', errorInfo.message);
+      return fallback;
+    }
   }
 
-  const done = completedFeatureIds(signals, journey);
-  const sequence = SEQUENCES[persona] || SEQUENCES.customer;
+  /**
+   * OPENAI PROMPT 2 — Contextual help for the page the user is on.
+   */
+  async getContextualHelp(context = {}) {
+    const {
+      page = '/',
+      issue = '',
+      persona = 'customer',
+      stage = 'discovery',
+      userId = null
+    } = context;
 
-  const steps = sequence.map((id) => {
-    const feature = getFeature(id);
+    const cacheKey = this._cacheKey('help', { page, issue, persona, stage });
+
+    const prompt = 
+A user on an interior design marketplace needs help.
+
+- Page they are on: 
+- Persona: 
+- Journey stage: 
+- What they said is wrong / what they're trying to do: 
+
+Available features (use the exact id if you reference one):
+
+
+Write concise, friendly, practical help. No marketing language.
+
+Respond ONLY with JSON:
+{
+  "help": "1-2 sentence explanation",
+  "steps": ["short step", "short step", "short step"],
+  "suggestedFeature": "req-N or null"
+}
+;
+
+    try {
+      const help = await this._cachedOrBackfill({
+        cacheKey,
+        buildCall: async () => {
+          const response = await openaiClient.generateText(prompt, {
+            modelType: 'general',
+            expectJson: true,
+            temperature: 0.7,
+            maxTokens: 400
+          });
+
+          await OpenAIUsageTracker.trackUsage(
+            {
+              inputTokens: response.inputTokens,
+              outputTokens: response.outputTokens,
+              totalTokens: response.totalTokens,
+            },
+            'journeyContextHelp',
+            userId,
+            '/api/journey/context-help',
+            response.model
+          );
+
+          return JSON.parse(response.text);
+        },
+        transform: (raw) => {
+          if (!raw) return null;
+          const feature = FEATURES[raw?.suggestedFeature] || null;
+          return {
+            help: raw?.help || FALLBACKS.journeyContextHelp.help,
+            steps: Array.isArray(raw?.steps) ? raw.steps.slice(0, 5) : FALLBACKS.journeyContextHelp.steps,
+            suggestedFeature: feature ? { ...feature } : null
+          };
+        },
+        ttl: HELP_TTL_SECONDS,
+        label: 'contextual help'
+      });
+
+      return help || { ...FALLBACKS.journeyContextHelp };
+    } catch (err) {
+      const errorInfo = OpenAIErrorHandler.handleError(err, {
+        service: 'JourneyService',
+        method: 'getContextualHelp'
+      });
+      console.error('[JOURNEY HELP ERROR]', errorInfo.message);
+      return { ...FALLBACKS.journeyContextHelp };
+    }
+  }
+
+  /**
+   * OPENAI PROMPT 3 — Intelligent upsell / cross-sell, but only when it genuinely fits.
+   */
+  async getIntelligentSuggestion(context = {}) {
+    const {
+      persona = 'customer',
+      stage = 'discovery',
+      profile = {},
+      cartItems = [],
+      signals = {},
+      userId = null
+    } = context;
+
+    // Nothing in the cart means nothing to complement — skip the model entirely.
+    if (!cartItems.length) return { ...FALLBACKS.journeyUpsell };
+
+    const cacheKey = this._cacheKey('upsell', { persona, stage, cartItems, cartValue: signals.cartValue ?? 0 });
+
+    const prompt = 
+Decide whether to make ONE additional suggestion to a shopper. It is completely
+acceptable — and often correct — to suggest nothing.
+
+- Persona: 
+- Journey stage: 
+- Style preferences: 
+- Budget range: ₹ - ₹
+- Items currently in cart: 
+- Cart value: ₹
+- Past orders: 
+
+Only suggest if there is a genuine fit (a true complement, a worthwhile upgrade,
+a bundle that saves money, or design help they'd clearly benefit from).
+Do not invent products. Do not upsell someone with an empty cart.
+
+Respond ONLY with JSON:
+{
+  "shouldSuggest": true or false,
+  "suggestion": "what to suggest, one sentence",
+  "reasoning": "why this genuinely fits them",
+  "cta": "2-4 word button label"
+}
+;
+
+    try {
+      const suggestion = await this._cachedOrBackfill({
+        cacheKey,
+        buildCall: async () => {
+          const response = await openaiClient.generateText(prompt, {
+            modelType: 'general',
+            expectJson: true,
+            temperature: 0.7,
+            maxTokens: 400
+          });
+
+          await OpenAIUsageTracker.trackUsage(
+            {
+              inputTokens: response.inputTokens,
+              outputTokens: response.outputTokens,
+              totalTokens: response.totalTokens,
+            },
+            'journeyUpsell',
+            userId,
+            '/api/journey/next-suggestion',
+            response.model
+          );
+
+          return JSON.parse(response.text);
+        },
+        transform: (raw) => (raw ? {
+          shouldSuggest: Boolean(raw?.shouldSuggest),
+          suggestion: raw?.suggestion || '',
+          reasoning: raw?.reasoning || '',
+          cta: raw?.cta || 'View suggestion'
+        } : null),
+        ttl: 180,
+        label: 'intelligent upsell'
+      });
+
+      return suggestion || { ...FALLBACKS.journeyUpsell };
+    } catch (err) {
+      const errorInfo = OpenAIErrorHandler.handleError(err, {
+        service: 'JourneyService',
+        method: 'getIntelligentSuggestion'
+      });
+      console.error('[JOURNEY UPSELL ERROR]', errorInfo.message);
+      return { ...FALLBACKS.journeyUpsell };
+    }
+  }
+
+  /**
+   * Guards against the model inventing feature ids/stages, pointing a persona at
+   * a feature they can't use, or re-suggesting something already completed.
+   */
+  _sanitizeGuidance(result, persona, fallbackStage, completedFeatures = []) {
+    const validStages = ['discovery', 'inspiration', 'decision', 'purchase', 'fulfillment', 'post-purchase'];
+    const feature = FEATURES[result?.suggestedFeature];
+    const usable = feature
+      && feature.personas.includes(persona)
+      && !completedFeatures.includes(feature.id);
+
     return {
-      featureId: id,
-      label: feature?.label || id,
-      route: feature?.route || '/',
-      stage: feature?.stage,
-      completed: done.has(id)
+      currentStage: validStages.includes(result?.currentStage) ? result.currentStage : fallbackStage,
+      nextRecommendedStep: result?.nextRecommendedStep || FALLBACKS.journeyGuidance.nextRecommendedStep,
+      suggestedFeature: usable ? { ...feature } : null,
+      suggestedCTA: result?.suggestedCTA || FALLBACKS.journeyGuidance.suggestedCTA,
+      helpMessage: result?.helpMessage || FALLBACKS.journeyGuidance.helpMessage,
+      urgency: ['low', 'medium', 'high'].includes(result?.urgency) ? result.urgency : 'low'
     };
-  });
-
-  const nextFeature = nextFeatureFor(persona, done);
-  const startedAt = journey?.startedAt || new Date();
-
-  return {
-    journeyId: journey?._id || null,
-    persona,
-    stage,
-    stages: STAGES,
-    progress: computeProgress(persona, done),
-    steps,
-    completedSteps: steps.filter((s) => s.completed),
-    nextStep: nextFeature
-      ? { featureId: nextFeature.id, label: nextFeature.label, route: nextFeature.route, blurb: nextFeature.blurb }
-      : null,
-    timeInJourney: formatDuration(Date.now() - new Date(startedAt).getTime()),
-    signals: {
-      hasQuiz: signals.hasQuiz,
-      cartCount: signals.cartCount,
-      cartValue: signals.cartValue,
-      orderCount: signals.orderCount,
-      activeOrderCount: signals.activeOrderCount,
-      projectCount: signals.projectCount,
-      quotationCount: signals.quotationCount
-    },
-    profile: profile
-      ? { stylePreferences: profile.stylePreferences || [], budgetRange: profile.budgetRange || {} }
-      : { stylePreferences: [], budgetRange: {} }
-  };
+  }
 }
 
-/**
- * Features worth surfacing to this persona right now — the ones they haven't
- * used yet, nearest to their current stage first.
- */
-function recommendFeatures(persona, done, stage, limit = 3) {
-  const stageOrder = STAGES.indexOf(stage);
-  return getFeaturesForPersona(persona)
-    .filter((f) => !done.has(f.id))
-    .map((f) => ({ ...f, distance: Math.abs(STAGES.indexOf(f.stage) - stageOrder) }))
-    .sort((a, b) => a.distance - b.distance)
-    .slice(0, limit)
-    .map(({ distance, ...f }) => f);
-}
-
-module.exports = {
-  personaFor,
-  collectSignals,
-  inferStage,
-  completedFeatureIds,
-  nextFeatureFor,
-  computeProgress,
-  formatDuration,
-  getOrCreateJourney,
-  buildStatus,
-  recommendFeatures,
-  FEATURES
-};
+module.exports = new JourneyService();

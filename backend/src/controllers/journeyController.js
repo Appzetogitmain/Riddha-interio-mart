@@ -1,7 +1,6 @@
 const UserJourney = require('../models/UserJourney');
 const FeatureSequence = require('../models/FeatureSequence');
 const UserProfile = require('../models/UserProfile');
-const geminiJourneyService = require('../services/geminiJourneyService');
 const journeyService = require('../services/journeyService');
 const {
   STAGES,
@@ -62,7 +61,7 @@ exports.getNextSuggestion = async (req, res) => {
     const recentSteps = journeyDoc?.stepsCompleted?.slice(-5)?.map((s) => s.step) || [];
     const completedFeatures = [...journeyService.completedFeatureIds(signals, journeyDoc)];
 
-    const guidance = await geminiJourneyService.getNextStepGuidance({
+    const guidance = await journeyService.getNextStepGuidance({
       persona: status.persona,
       stage: status.stage,
       currentPage,
@@ -80,7 +79,7 @@ exports.getNextSuggestion = async (req, res) => {
 
     let upsell = null;
     if (includeUpsell) {
-      upsell = await geminiJourneyService.getIntelligentSuggestion({
+      upsell = await journeyService.getIntelligentSuggestion({
         persona: status.persona,
         stage: status.stage,
         profile: status.profile,
@@ -303,7 +302,7 @@ exports.getContextHelp = async (req, res) => {
     const signals = await journeyService.collectSignals(req.user?._id || null);
     const stage = journeyService.inferStage(signals, persona);
 
-    const help = await geminiJourneyService.getContextualHelp({
+    const help = await journeyService.getContextualHelp({
       page,
       issue,
       persona,

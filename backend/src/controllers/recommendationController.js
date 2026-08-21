@@ -3,7 +3,7 @@ const Product = require('../models/Product');
 const UserProfile = require('../models/UserProfile');
 const RecommendationEvent = require('../models/RecommendationEvent');
 const RecommendationHistory = require('../models/RecommendationHistory');
-const geminiRecommendationService = require('../services/geminiRecommendationService');
+const recommendationService = require('../services/recommendationService');
 const {
   getPersonalizedForUser,
   getTrendingProducts,
@@ -157,7 +157,7 @@ exports.getBundles = async (req, res) => {
       budgetRange: { max: parseInt(budget, 10) || 150000 }
     };
 
-    const bundleData = await geminiRecommendationService.createRoomBundles(userProfile, roomType, userId);
+    const bundleData = await recommendationService.createRoomBundles(userProfile, roomType, userId);
 
     return res.json({
       success: true,
@@ -313,7 +313,7 @@ exports.getExplanation = async (req, res) => {
       userProfile = await UserProfile.findOne({ userId }).lean();
     }
 
-    const explanation = await geminiRecommendationService.generateRecommendationReason(product, userProfile, userId);
+    const explanation = await recommendationService.generateRecommendationReason(product, userProfile, userId);
 
     return res.json({
       success: true,

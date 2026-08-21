@@ -1,7 +1,7 @@
 const openaiClient = require('./openaiService');
 const OpenAIErrorHandler = require('../utils/openaiErrorHandler');
 const OpenAIUsageTracker = require('./openaiUsageTracker');
-const GEMINI_PROMPTS = require('../utils/geminiPrompts');
+const AI_PROMPTS = require('../utils/aiPrompts');
 
 class DesignSuggestionEngine {
   /**
@@ -65,7 +65,7 @@ class DesignSuggestionEngine {
   }
 
   async generateStyleSuggestion(profile, userId) {
-    const prompt = GEMINI_PROMPTS.styleSuggestion(profile);
+    const prompt = AI_PROMPTS.styleSuggestion(profile);
     try {
       const response = await openaiClient.generateText(prompt, {
         modelType: 'general',
@@ -99,7 +99,7 @@ class DesignSuggestionEngine {
   }
 
   async generateBudgetSuggestion(profile, userId) {
-    const prompt = GEMINI_PROMPTS.budgetSuggestion(profile);
+    const prompt = AI_PROMPTS.budgetSuggestion(profile);
     try {
       const response = await openaiClient.generateText(prompt, {
         modelType: 'general',
@@ -133,7 +133,7 @@ class DesignSuggestionEngine {
   }
 
   async generateBoldSuggestion(profile, userId) {
-    const prompt = GEMINI_PROMPTS.boldSuggestion(profile);
+    const prompt = AI_PROMPTS.boldSuggestion(profile);
     try {
       const response = await openaiClient.generateText(prompt, {
         modelType: 'general',
@@ -167,7 +167,7 @@ class DesignSuggestionEngine {
   }
 
   async generateClassicSuggestion(profile, userId) {
-    const prompt = GEMINI_PROMPTS.classicSuggestion(profile);
+    const prompt = AI_PROMPTS.classicSuggestion(profile);
     try {
       const response = await openaiClient.generateText(prompt, {
         modelType: 'general',

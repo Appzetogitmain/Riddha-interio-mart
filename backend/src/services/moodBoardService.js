@@ -1,7 +1,7 @@
 const openaiClient = require('./openaiService');
 const OpenAIErrorHandler = require('../utils/openaiErrorHandler');
 const OpenAIUsageTracker = require('./openaiUsageTracker');
-const GEMINI_PROMPTS = require('../utils/geminiPrompts');
+const AI_PROMPTS = require('../utils/aiPrompts');
 
 class MoodBoardService {
   /**
@@ -12,10 +12,10 @@ class MoodBoardService {
    */
   async generateMoodBoardContent(designProfile, themes = ['Natural textures', 'Harmonious lighting'], userId = null) {
     try {
-      const narrativePrompt = GEMINI_PROMPTS.moodBoardNarrative(designProfile, themes);
+      const narrativePrompt = AI_PROMPTS.moodBoardNarrative(designProfile, themes);
       const narrative = await this.generateNarrative(narrativePrompt, userId);
 
-      const inspirationPrompt = GEMINI_PROMPTS.inspirationPoints(designProfile);
+      const inspirationPrompt = AI_PROMPTS.inspirationPoints(designProfile);
       const inspiration = await this.generateInspiration(inspirationPrompt, userId);
 
       return {

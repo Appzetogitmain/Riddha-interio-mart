@@ -1,11 +1,12 @@
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const openaiClient = require('./openaiService');
+const OpenAIErrorHandler = require('../utils/openaiErrorHandler');
+const OpenAIUsageTracker = require('./openaiUsageTracker');
 const Product = require('../models/Product');
 const Order = require('../models/Order');
 const Category = require('../models/Category');
 const Brand = require('../models/Brand');
 const ChatConversation = require('../models/ChatConversation');
 const AiSupportRequest = require('../models/AiSupportRequest');
-const geminiUsageTracker = require('./geminiUsageTracker');
 
 const SYSTEM_PROMPT = `You are "Riddha Design AI", the helpful, friendly, and expert shopping & interior design assistant for Riddha Mart.
 You help customers with interior design suggestions, product queries, order tracking, and general help.
@@ -98,18 +99,7 @@ function sanitizeImageUrl(url) {
 
 class AssistantService {
   constructor() {
-    this.apiKey = process.env.GEMINI_API_KEY;
-    this.modelName = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
-
-    if (this.apiKey) {
-      this.genAI = new GoogleGenerativeAI(this.apiKey);
-      this.model = this.genAI.getGenerativeModel({
-        model: this.modelName,
-        systemInstruction: SYSTEM_PROMPT
-      });
-    } else {
-      console.warn('[ASSISTANT SERVICE WARNING] GEMINI_API_KEY is not defined in environment variables. Assistant will fall back to local templates.');
-    }
+    // OpenAI client is initialized on-demand via openaiService
   }
 
   /**
@@ -383,20 +373,6 @@ class AssistantService {
    * Main chat loop coordinator
    */
   async getAiResponse(conversation, userMessage, userId) {
-    if (!this.apiKey || !this.model) {
-      // Return a clean fallback local JSON structure if Gemini is offline/unconfigured
-      return {
-        message: "Hi! I am currently operating in fallback mode. I'd love to help you find sofas, tiles, or track orders. Please try again when the Gemini API is fully initialized.",
-        products: [],
-        orders: [],
-        actions: [
-          { type: 'LOGIN', label: 'Login to Account', payload: {} },
-          { type: 'CONTACT_SUPPORT', label: 'Contact Support', payload: {} }
-        ],
-        handover: null
-      };
-    }
-
     // Append the user's new message to the database first
     conversation.messages.push({
       role: 'user',
@@ -411,20 +387,17 @@ class AssistantService {
     while (loopCount < maxLoops) {
       loopCount++;
 
-      // Map roles for Gemini API: Gemini requires 'user' or 'model'
+      // Convert conversation history to OpenAI format (role: 'user' | 'assistant' | 'system')
       const rawHistory = conversation.messages.slice(-12).map(m => {
-        let role = 'user';
-        if (m.role === 'assistant') role = 'model';
-        else role = 'user'; // 'user' and 'system' (tool outputs) mapped to 'user'
-
         let text = m.content || '';
         if (text.length > 3000) {
           text = text.substring(0, 3000) + '\n...[content truncated for token limits]';
         }
 
+        // Map roles: 'system' and 'user' remain as-is, 'assistant' stays as 'assistant'
         return {
-          role,
-          parts: [{ text }]
+          role: m.role === 'system' ? 'user' : m.role,
+          content: text
         };
       });
 
@@ -432,32 +405,28 @@ class AssistantService {
       const conversationHistory = [];
       for (const item of rawHistory) {
         if (conversationHistory.length > 0 && conversationHistory[conversationHistory.length - 1].role === item.role) {
-          conversationHistory[conversationHistory.length - 1].parts[0].text += `\n\n${item.parts[0].text}`;
+          conversationHistory[conversationHistory.length - 1].content += `\n\n${item.content}`;
         } else {
           conversationHistory.push(item);
         }
       }
 
-      // Build contents for Gemini API (systemInstruction is set at model level)
-      const contents = [...conversationHistory];
+      // Build messages for OpenAI API
+      const messages = [
+        { role: 'system', content: SYSTEM_PROMPT },
+        ...conversationHistory
+      ];
 
-      // Ensure the contents array starts with a 'user' turn
-      if (contents.length > 0 && contents[0].role !== 'user') {
-        contents.unshift({
-          role: 'user',
-          parts: [{ text: "Hello" }]
-        });
-      }
-
+      // Ensure the messages array has proper alternation (system is OK, then user/assistant should alternate)
       // If reaching the final allowed loop iteration, instruct model to finalize JSON without further tool calls
-      if (loopCount === maxLoops && contents.length > 0) {
-        const lastTurn = contents[contents.length - 1];
-        if (lastTurn.role === 'user') {
-          lastTurn.parts[0].text += "\n\nSYSTEM INSTRUCTION: You must now provide your final response to the user in JSON format with toolCall set to null.";
+      if (loopCount === maxLoops && messages.length > 0) {
+        const lastMsg = messages[messages.length - 1];
+        if (lastMsg.role === 'user') {
+          lastMsg.content += "\n\nSYSTEM INSTRUCTION: You must now provide your final response to the user in JSON format with toolCall set to null.";
         } else {
-          contents.push({
+          messages.push({
             role: 'user',
-            parts: [{ text: "SYSTEM INSTRUCTION: You must now provide your final response to the user in JSON format with toolCall set to null." }]
+            content: "SYSTEM INSTRUCTION: You must now provide your final response to the user in JSON format with toolCall set to null."
           });
         }
       }
@@ -465,49 +434,46 @@ class AssistantService {
       let responseText = '';
       let inputTokens = 0;
       let outputTokens = 0;
+      let model = '';
 
       let apiAttempts = 0;
       while (apiAttempts < 2) {
         apiAttempts++;
         try {
-          // Count input tokens
-          try {
-            const inputCount = await this.model.countTokens(JSON.stringify(contents));
-            inputTokens = inputCount.totalTokens;
-          } catch (e) {
-            inputTokens = Math.ceil(JSON.stringify(contents).length / 4);
-          }
-
-          // Call Gemini
-          const result = await this.model.generateContent({
-            contents,
-            generationConfig: { responseMimeType: "application/json" }
+          // Call OpenAI
+          const response = await openaiClient.generateWithHistory(messages, {
+            modelType: 'general',
+            expectJson: true,
+            temperature: 0.7,
+            maxTokens: 2000
           });
-          const response = await result.response;
-          responseText = response.text();
 
-          // Count output tokens
-          try {
-            const outputCount = await this.model.countTokens(responseText);
-            outputTokens = outputCount.totalTokens;
-          } catch (e) {
-            outputTokens = Math.ceil(responseText.length / 4);
-          }
+          responseText = response.text;
+          inputTokens = response.inputTokens;
+          outputTokens = response.outputTokens;
+          model = response.model;
 
-          // Track Gemini API usage
-          geminiUsageTracker.trackCall({
+          // Track OpenAI API usage
+          await OpenAIUsageTracker.trackUsage(
+            {
+              inputTokens,
+              outputTokens,
+              totalTokens: inputTokens + outputTokens,
+            },
+            'assistant_chat',
             userId,
-            requirement: 'assistant_chat',
-            endpoint: '/api/assistant/chat',
-            prompt: JSON.stringify(contents),
-            response: responseText,
-            inputTokens,
-            outputTokens
-          }).catch(err => console.error('[Tracker] Call track error:', err.message));
+            '/api/assistant/chat',
+            model
+          ).catch(err => console.error('[Tracker] Call track error:', err.message));
 
           if (responseText) break;
         } catch (err) {
-          console.error(`[Assistant Service] Gemini API Call Attempt ${apiAttempts} Failed:`, err.message);
+          const errorInfo = OpenAIErrorHandler.handleError(err, {
+            service: 'AssistantService',
+            method: 'getAiResponse',
+            attempt: apiAttempts
+          });
+          console.error(`[Assistant Service] OpenAI API Call Attempt ${apiAttempts} Failed:`, errorInfo.message);
           if (apiAttempts >= 2) {
             return {
               message: "How can I assist you with your space design, products, or order status today?",

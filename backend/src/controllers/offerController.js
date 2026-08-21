@@ -1,7 +1,7 @@
 const Offer = require('../models/Offer');
 const Product = require('../models/Product');
 const OFFER_TYPES = require('../constants/offerTypes');
-const { paginate } = require('../utils/paginate');
+const paginate = require('../utils/paginate');
 
 exports.createOffer = async (req, res, next) => {
   try {

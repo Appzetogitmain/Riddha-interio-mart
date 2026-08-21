@@ -108,26 +108,26 @@ class JourneyService {
 
     const cacheKey = this._cacheKey('guidance', { persona, stage, currentPage, completedFeatures, cart: signals.cartCount ?? 0 });
 
-    const prompt = 
+    const prompt = `
 You are guiding a shopper on an Indian interior design & building-materials marketplace.
 
 User context:
-- Persona: 
-- Detected journey stage: 
-- Current page: 
-- Device: 
-- Recent actions: 
-- Style preferences: 
-- Budget range: ₹ - ₹
-- Has completed design quiz: 
-- Items in cart: 
-- Past orders: 
-- Active projects: 
+- Persona: ${persona}
+- Detected journey stage: ${stage}
+- Current page: ${currentPage}
+- Device: ${device}
+- Recent actions: ${recentSteps.length ? recentSteps.join(', ') : 'none yet'}
+- Style preferences: ${(profile.stylePreferences || []).join(', ') || 'unknown'}
+- Budget range: ₹${profile.budgetRange?.min ?? 0} - ₹${profile.budgetRange?.max ?? 'open'}
+- Has completed design quiz: ${signals.hasQuiz ? 'yes' : 'no'}
+- Items in cart: ${signals.cartCount ?? 0}
+- Past orders: ${signals.orderCount ?? 0}
+- Active projects: ${signals.projectCount ?? 0}
 
-- Features they have ALREADY used (never suggest these again): 
+- Features they have ALREADY used (never suggest these again): ${completedFeatures.length ? completedFeatures.join(', ') : 'none'}
 
 Features you may point them to (use the exact id):
-
+${JSON.stringify(this._featureMenu(persona, completedFeatures), null, 2)}
 
 Decide the single most useful next step. Prioritise the user's own goal, not our
 feature list. If they are mid-purchase, do not distract them with exploration
@@ -142,7 +142,7 @@ Respond ONLY with JSON:
   "helpMessage": "one friendly supporting sentence",
   "urgency": "low|medium|high"
 }
-;
+`;
 
     const fallback = { ...FALLBACKS.journeyGuidance, currentStage: stage, suggestedFeature: null };
 
@@ -201,16 +201,16 @@ Respond ONLY with JSON:
 
     const cacheKey = this._cacheKey('help', { page, issue, persona, stage });
 
-    const prompt = 
+    const prompt = `
 A user on an interior design marketplace needs help.
 
-- Page they are on: 
-- Persona: 
-- Journey stage: 
-- What they said is wrong / what they're trying to do: 
+- Page they are on: ${page}
+- Persona: ${persona}
+- Journey stage: ${stage}
+- What they said is wrong / what they're trying to do: ${issue || 'not specified'}
 
 Available features (use the exact id if you reference one):
-
+${JSON.stringify(this._featureMenu(persona), null, 2)}
 
 Write concise, friendly, practical help. No marketing language.
 
@@ -220,7 +220,7 @@ Respond ONLY with JSON:
   "steps": ["short step", "short step", "short step"],
   "suggestedFeature": "req-N or null"
 }
-;
+`;
 
     try {
       const help = await this._cachedOrBackfill({
@@ -289,17 +289,17 @@ Respond ONLY with JSON:
 
     const cacheKey = this._cacheKey('upsell', { persona, stage, cartItems, cartValue: signals.cartValue ?? 0 });
 
-    const prompt = 
+    const prompt = `
 Decide whether to make ONE additional suggestion to a shopper. It is completely
 acceptable — and often correct — to suggest nothing.
 
-- Persona: 
-- Journey stage: 
-- Style preferences: 
-- Budget range: ₹ - ₹
-- Items currently in cart: 
-- Cart value: ₹
-- Past orders: 
+- Persona: ${persona}
+- Journey stage: ${stage}
+- Style preferences: ${(profile.stylePreferences || []).join(', ') || 'unknown'}
+- Budget range: ₹${profile.budgetRange?.min ?? 0} - ₹${profile.budgetRange?.max ?? 'open'}
+- Items currently in cart: ${cartItems.length ? cartItems.join(', ') : 'empty'}
+- Cart value: ₹${signals.cartValue ?? 0}
+- Past orders: ${signals.orderCount ?? 0}
 
 Only suggest if there is a genuine fit (a true complement, a worthwhile upgrade,
 a bundle that saves money, or design help they'd clearly benefit from).
@@ -312,7 +312,7 @@ Respond ONLY with JSON:
   "reasoning": "why this genuinely fits them",
   "cta": "2-4 word button label"
 }
-;
+`;
 
     try {
       const suggestion = await this._cachedOrBackfill({

@@ -13,7 +13,10 @@ import {
   LuPhone,
   LuCreditCard,
   LuPrinter,
-  LuChevronDown
+  LuChevronDown,
+  LuImage,
+  LuVideo,
+  LuUserCog
 } from 'react-icons/lu';
 import { FiCheckCircle } from 'react-icons/fi';
 import api from '../../../shared/utils/api';
@@ -116,6 +119,22 @@ const OrderDetailPage = () => {
     "Out For Delivery": 'bg-orange-100 text-orange-700 border-orange-200',
     Delivered: 'bg-green-100 text-green-700 border-green-200',
     Cancelled: 'bg-red-100 text-red-700 border-red-200',
+  };
+
+  const deliveryStatusColors = {
+    None: 'bg-gray-100 text-gray-500 border-gray-200',
+    Pending: 'bg-yellow-100 text-yellow-700 border-yellow-200',
+    Accepted: 'bg-blue-100 text-blue-700 border-blue-200',
+    Picked: 'bg-indigo-100 text-indigo-700 border-indigo-200',
+    'Out for Delivery': 'bg-orange-100 text-orange-700 border-orange-200',
+    Delivered: 'bg-green-100 text-green-700 border-green-200',
+    Rejected: 'bg-red-100 text-red-700 border-red-200',
+  };
+
+  const deliveryTypeLabels = {
+    'in-app': 'In-App Delivery Partner',
+    'seller-managed': 'Self-Managed (Seller)',
+    shiprocket: 'Shiprocket'
   };
 
   if (loading) {
@@ -322,6 +341,57 @@ const OrderDetailPage = () => {
                 </p>
               </div>
             </div>
+
+            {/* Delivery Proof */}
+            {(order.pickupProofImages?.length > 0 || order.pickupProofVideo || order.deliveryProofImages?.length > 0) && (
+              <div className="bg-white rounded-2xl border border-soft-oatmeal overflow-hidden shadow-sm">
+                <div className="px-6 py-4 border-b border-soft-oatmeal bg-soft-oatmeal/10 flex items-center gap-2">
+                  <LuImage className="text-warm-sand" size={18} />
+                  <h3 className="font-bold text-deep-espresso">Delivery Proof</h3>
+                  {order.deliveryType === 'seller-managed' && (
+                    <span className="ml-1 px-2 py-0.5 bg-purple-100 text-purple-700 text-[9px] font-black uppercase tracking-widest rounded border border-purple-200">
+                      Uploaded by Seller
+                    </span>
+                  )}
+                </div>
+                <div className="p-6 space-y-6">
+                  {order.pickupProofImages?.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-xs font-bold text-warm-sand uppercase tracking-wider">Pickup Proof Images</p>
+                      <div className="flex flex-wrap gap-3">
+                        {order.pickupProofImages.map((img, idx) => (
+                          <a key={idx} href={img} target="_blank" rel="noopener noreferrer" className="block w-24 h-24 rounded-xl overflow-hidden border border-soft-oatmeal hover:opacity-80 transition-opacity">
+                            <img src={img} alt={`Pickup proof ${idx + 1}`} className="w-full h-full object-cover" />
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {order.pickupProofVideo && (
+                    <div className="space-y-2">
+                      <p className="text-xs font-bold text-warm-sand uppercase tracking-wider flex items-center gap-1.5">
+                        <LuVideo size={14} /> Pickup Proof Video
+                      </p>
+                      <video src={order.pickupProofVideo} controls className="w-full max-w-md rounded-xl border border-soft-oatmeal" />
+                    </div>
+                  )}
+
+                  {order.deliveryProofImages?.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-xs font-bold text-warm-sand uppercase tracking-wider">Delivery Proof Images</p>
+                      <div className="flex flex-wrap gap-3">
+                        {order.deliveryProofImages.map((img, idx) => (
+                          <a key={idx} href={img} target="_blank" rel="noopener noreferrer" className="block w-24 h-24 rounded-xl overflow-hidden border border-soft-oatmeal hover:opacity-80 transition-opacity">
+                            <img src={img} alt={`Delivery proof ${idx + 1}`} className="w-full h-full object-cover" />
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Sidebar (1/3) */}
@@ -374,6 +444,63 @@ const OrderDetailPage = () => {
                 </div>
               </div>
             )}
+
+            {/* Delivery Details */}
+            <div className="bg-white p-6 rounded-2xl border border-soft-oatmeal shadow-sm space-y-4">
+              <div className="flex items-center gap-2 text-deep-espresso border-b border-soft-oatmeal pb-3">
+                <LuTruck className="text-warm-sand" size={18} />
+                <h3 className="font-bold">Delivery Details</h3>
+              </div>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-warm-sand">Delivery Type:</span>
+                  <span className="font-bold text-deep-espresso">{deliveryTypeLabels[order.deliveryType] || 'Not Set'}</span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-warm-sand">Delivery Status:</span>
+                  <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border ${deliveryStatusColors[order.deliveryStatus] || 'bg-gray-100 text-gray-500 border-gray-200'}`}>
+                    {order.deliveryStatus || 'None'}
+                  </span>
+                </div>
+
+                {order.deliveryType === 'in-app' && order.deliveryBoy && (
+                  <div className="flex items-center gap-3 p-3 bg-soft-oatmeal/10 rounded-xl mt-2">
+                    <div className="w-9 h-9 rounded-full bg-[var(--color-primary)] flex items-center justify-center text-white font-black shrink-0">
+                      {(order.deliveryBoy.fullName || "D").charAt(0)}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-bold text-deep-espresso text-sm truncate">{order.deliveryBoy.fullName}</p>
+                      <p className="text-[10px] text-warm-sand font-medium truncate">
+                        {order.deliveryBoy.phone || 'N/A'}{order.deliveryBoy.vehicleType && ` · ${order.deliveryBoy.vehicleType}`}{order.deliveryBoy.vehicleNumber && ` (${order.deliveryBoy.vehicleNumber})`}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {order.deliveryType === 'seller-managed' && (
+                  order.assignedStaff ? (
+                    <div className="flex items-center gap-3 p-3 bg-soft-oatmeal/10 rounded-xl mt-2">
+                      <div className="w-9 h-9 rounded-full bg-purple-600 flex items-center justify-center text-white font-black shrink-0">
+                        <LuUserCog size={16} />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-bold text-deep-espresso text-sm truncate">{order.assignedStaff.name}</p>
+                        <p className="text-[10px] text-warm-sand font-medium truncate">
+                          {order.assignedStaff.phone || 'N/A'}{order.assignedStaff.vehicleNumber && ` · ${order.assignedStaff.vehicleNumber}`}
+                        </p>
+                        <p className="text-[9px] text-purple-600 font-bold uppercase tracking-widest mt-0.5">Seller's Staff</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-[10px] text-warm-sand italic">Seller is managing this delivery directly — no staff member on file.</p>
+                  )
+                )}
+
+                {order.deliveryType !== 'seller-managed' && !order.deliveryBoy && (
+                  <p className="text-[10px] text-warm-sand italic">No delivery partner assigned yet.</p>
+                )}
+              </div>
+            </div>
 
             {/* Seller Invoice (Bill A) Card */}
             <div className="bg-white p-6 rounded-2xl border border-soft-oatmeal shadow-sm space-y-4">

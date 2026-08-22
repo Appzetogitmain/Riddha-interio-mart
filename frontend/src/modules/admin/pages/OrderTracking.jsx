@@ -1,16 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import PageWrapper from '../components/PageWrapper';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-hot-toast';
-import { 
+import {
   LuMapPin, LuSearch, LuTruck, LuPackage, LuCircleCheck, LuNavigation, LuX, LuExternalLink,
-  LuRefreshCw, LuWifi, LuWifiOff, LuClock
+  LuRefreshCw, LuWifi, LuWifiOff, LuClock, LuFileText
 } from 'react-icons/lu';
 import api from '../../../shared/utils/api';
 
 const POLL_INTERVAL = 15000; // 15 seconds
 
 const OrderTracking = () => {
+  const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -165,9 +167,10 @@ const OrderTracking = () => {
               })();
 
               return (
-                <div 
-                  key={order._id} 
-                  className="bg-white rounded-xl p-4 border border-slate-200/80 shadow-sm hover:border-[var(--color-primary)] hover:shadow-md transition-all duration-300 group flex flex-col justify-between"
+                <div
+                  key={order._id}
+                  onClick={() => navigate(`/admin/orders/view/${order._id}`)}
+                  className="bg-white rounded-xl p-4 border border-slate-200/80 shadow-sm hover:border-[var(--color-primary)] hover:shadow-md transition-all duration-300 group flex flex-col justify-between cursor-pointer"
                 >
                   <div>
                     {/* Card Header */}
@@ -224,13 +227,22 @@ const OrderTracking = () => {
                       {hasLiveGps ? 'Live GPS Available' : 'GPS Unavailable · Address Only'}
                     </div>
 
-                    <button 
-                      onClick={() => handleOpenMap(order)}
-                      className="w-full py-2 bg-[var(--color-primary)] hover:opacity-90 text-white rounded-lg font-bold text-[10px] uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-[0.98]"
-                    >
-                      <LuMapPin size={13} />
-                      {hasLiveGps ? 'View Live Location' : 'View Destination Map'}
-                    </button>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleOpenMap(order); }}
+                        className="w-full py-2 bg-[var(--color-primary)] hover:opacity-90 text-white rounded-lg font-bold text-[10px] uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-[0.98]"
+                      >
+                        <LuMapPin size={13} />
+                        {hasLiveGps ? 'Live Map' : 'Map'}
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); navigate(`/admin/orders/view/${order._id}`); }}
+                        className="w-full py-2 bg-white border border-slate-200 hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] text-slate-600 rounded-lg font-bold text-[10px] uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-[0.98]"
+                      >
+                        <LuFileText size={13} />
+                        Full Details
+                      </button>
+                    </div>
                   </div>
                 </div>
               );

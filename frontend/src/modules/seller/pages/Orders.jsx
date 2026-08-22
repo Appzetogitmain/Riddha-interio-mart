@@ -21,7 +21,8 @@ import {
   Activity,
   RefreshCw,
   Plus,
-  Car
+  Car,
+  Upload
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import api from "../../../shared/utils/api";
@@ -44,7 +45,8 @@ const Orders = () => {
   const [loadingStaff, setLoadingStaff] = useState(false);
   const [showAddStaffForm, setShowAddStaffForm] = useState(false);
   const [savingStaff, setSavingStaff] = useState(false);
-  const [newStaff, setNewStaff] = useState({ name: '', phone: '', vehicleNumber: '', drivingLicense: '' });
+  const [newStaff, setNewStaff] = useState({ name: '', phone: '', vehicleNumber: '', drivingLicense: '', drivingLicenseImage: '' });
+  const [uploadingLicense, setUploadingLicense] = useState(false);
   const [activeTab, setActiveTab] = useState('All');
   const [expandedOrderId, setExpandedOrderId] = useState(null);
   const [showRangeModal, setShowRangeModal] = useState(false);
@@ -122,11 +124,28 @@ const Orders = () => {
     }
   };
 
+  // Quietly re-pulls the list without the full-page spinner, for background
+  // updates (e.g. a new order arriving) where a page-reload-like flash would
+  // be jarring — just the table contents update in place.
+  const fetchOrdersSilently = async () => {
+    try {
+      const { data } = await api.get('/orders');
+      if (data.success) {
+        setOrders(data.data || []);
+      }
+    } catch (err) {
+      console.error('Failed to refresh orders:', err);
+    }
+  };
+
   useEffect(() => {
     fetchOrders();
     fetchAvailableDeliveryBoys();
-    
-    const onNewOrder = () => fetchOrders();
+
+    const onNewOrder = () => {
+      fetchOrdersSilently();
+      toast.success('New order received!');
+    };
     window.addEventListener('seller:new-order', onNewOrder);
     return () => window.removeEventListener('seller:new-order', onNewOrder);
   }, []);
@@ -194,6 +213,26 @@ const Orders = () => {
     }
   };
 
+  const handleLicenseImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploadingLicense(true);
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      const res = await api.post('/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+      if (res.data.success) {
+        setNewStaff((prev) => ({ ...prev, drivingLicenseImage: res.data.url }));
+        toast.success('License image uploaded');
+      }
+    } catch (err) {
+      console.error('Failed to upload license image:', err);
+      toast.error('Failed to upload license image.');
+    } finally {
+      setUploadingLicense(false);
+    }
+  };
+
   const handleAddStaff = async () => {
     if (!newStaff.name.trim() || !newStaff.phone.trim()) return;
     setSavingStaff(true);
@@ -201,7 +240,7 @@ const Orders = () => {
       const res = await api.post('/seller/staff', newStaff);
       if (res.data.success) {
         setStaffList((prev) => [res.data.data, ...prev]);
-        setNewStaff({ name: '', phone: '', vehicleNumber: '', drivingLicense: '' });
+        setNewStaff({ name: '', phone: '', vehicleNumber: '', drivingLicense: '', drivingLicenseImage: '' });
         setShowAddStaffForm(false);
       }
     } catch (err) {
@@ -391,9 +430,11 @@ const Orders = () => {
                   <thead className="bg-slate-50/50 border-b border-slate-100">
                     <tr>
                       <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Order ID</th>
+                      <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Items Ordered</th>
                       <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Customer</th>
                       <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Revenue</th>
                       <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
+                      <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Delivery Type</th>
                       <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Actions</th>
                     </tr>
                   </thead>
@@ -410,6 +451,14 @@ const Orders = () => {
                               <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest mt-1">{new Date(order.createdAt).toLocaleDateString('en-GB')}</p>
                             </div>
                           </div>
+                        </td>
+                        <td className="px-6 py-3.5 max-w-[200px]">
+                          <p className="text-xs font-bold text-slate-800 truncate" title={order.orderItems?.map(i => i.name).join(', ')}>
+                            {order.orderItems?.[0]?.name || '—'}
+                          </p>
+                          {order.orderItems?.length > 1 && (
+                            <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest mt-0.5">+{order.orderItems.length - 1} more item{order.orderItems.length - 1 > 1 ? 's' : ''}</p>
+                          )}
                         </td>
                         <td className="px-6 py-3.5">
                           <div className="flex items-center gap-2.5">
@@ -430,6 +479,14 @@ const Orders = () => {
                           <span className={`px-2.5 py-1 rounded-lg border text-[9px] font-black uppercase tracking-widest inline-flex items-center gap-1.5 ${getStatusStyles(order.status)}`}>
                             <div className="w-1 h-1 rounded-full bg-current" />
                             {order.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-3.5">
+                          <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">
+                            {order.deliveryType === 'seller-managed' ? 'Self-Managed'
+                              : order.deliveryType === 'shiprocket' ? 'Shiprocket'
+                              : order.deliveryType === 'in-app' ? 'In-App Partner'
+                              : '—'}
                           </span>
                         </td>
                         <td className="px-6 py-3.5 text-right">
@@ -650,11 +707,40 @@ const Orders = () => {
                               />
                               <input
                                 type="text"
-                                placeholder="Driving License (optional)"
+                                placeholder="Driving License Number (optional)"
                                 value={newStaff.drivingLicense}
                                 onChange={(e) => setNewStaff({ ...newStaff, drivingLicense: e.target.value })}
                                 className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-semibold focus:outline-none focus:border-seller-primary/50"
                               />
+
+                              <div>
+                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1.5">Driving License Photo (optional)</label>
+                                {newStaff.drivingLicenseImage ? (
+                                  <div className="relative w-full h-32 rounded-xl border border-slate-200 overflow-hidden bg-slate-100">
+                                    <img src={newStaff.drivingLicenseImage} alt="Driving license" className="w-full h-full object-cover" />
+                                    <button
+                                      type="button"
+                                      onClick={() => setNewStaff((prev) => ({ ...prev, drivingLicenseImage: '' }))}
+                                      className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                                    >
+                                      <X size={12} />
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <label className="w-full h-24 rounded-xl border-2 border-dashed border-slate-200 hover:border-seller-primary/50 flex flex-col items-center justify-center cursor-pointer text-slate-400 hover:text-seller-primary transition-all gap-1">
+                                    {uploadingLicense ? (
+                                      <span className="text-[10px] font-bold uppercase tracking-widest">Uploading...</span>
+                                    ) : (
+                                      <>
+                                        <Upload size={18} />
+                                        <span className="text-[10px] font-bold uppercase tracking-widest">Upload License Photo</span>
+                                      </>
+                                    )}
+                                    <input type="file" accept="image/*" className="hidden" onChange={handleLicenseImageUpload} disabled={uploadingLicense} />
+                                  </label>
+                                )}
+                              </div>
+
                               <div className="flex gap-2 pt-1">
                                 <button
                                   onClick={() => setShowAddStaffForm(false)}

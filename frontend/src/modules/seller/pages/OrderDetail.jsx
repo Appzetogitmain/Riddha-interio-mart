@@ -104,8 +104,7 @@ const OrderDetail = () => {
     }
   };
 
-  const submitProof = async ({ images, video }) => {
-    setIsProofModalOpen(false);
+  const submitProof = async ({ images, video, otp }) => {
     setUpdating(true);
     try {
       const payload = { status: proofTargetStatus };
@@ -115,13 +114,17 @@ const OrderDetail = () => {
       }
       if (proofTargetStatus === 'Delivered') {
         payload.deliveryProofImages = images;
+        payload.otp = otp;
       }
-      
+
       await api.put(`/orders/${id}/seller-delivery-status`, payload);
       await fetchOrderDetail();
       toast.success(`Delivery marked as ${proofTargetStatus}`);
+      // Only close on success — keep the modal open on failure (e.g. wrong OTP)
+      // so the seller can retry without re-uploading proof images.
+      setIsProofModalOpen(false);
     } catch (err) {
-      toast.error(err?.response?.data?.message || 'Failed to submit proof');
+      toast.error(err?.response?.data?.error || err?.response?.data?.message || 'Failed to submit proof');
     } finally {
       setUpdating(false);
     }
@@ -463,7 +466,17 @@ const OrderDetail = () => {
               <div className="bg-white rounded-2xl border border-slate-100 px-4 py-4">
                 <p className="text-xs font-black text-slate-700 uppercase tracking-widest mb-3">Self Delivery Updates</p>
                 <div className="space-y-2">
-                  {order.deliveryStatus !== 'Out for Delivery' && order.deliveryStatus !== 'Delivered' && (
+                  {!['Picked', 'Out for Delivery', 'Delivered'].includes(order.deliveryStatus) && (
+                    <button
+                      disabled={updating}
+                      onClick={() => handleDeliveryStatusUpdate('Picked')}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all bg-amber-600 text-white hover:bg-amber-700 disabled:opacity-50"
+                    >
+                      {updating ? <LuRefreshCw size={13} className="animate-spin" /> : <LuPackage size={13} />}
+                      Mark Picked (Upload Pickup Photos)
+                    </button>
+                  )}
+                  {order.deliveryStatus === 'Picked' && (
                     <button
                       disabled={updating}
                       onClick={() => handleDeliveryStatusUpdate('Out for Delivery')}
@@ -473,14 +486,14 @@ const OrderDetail = () => {
                       Mark Out for Delivery
                     </button>
                   )}
-                  {order.deliveryStatus !== 'Delivered' && (
+                  {order.deliveryStatus === 'Out for Delivery' && (
                     <button
                       disabled={updating}
                       onClick={() => handleDeliveryStatusUpdate('Delivered')}
                       className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
                     >
                       {updating ? <LuRefreshCw size={13} className="animate-spin" /> : <LuCheck size={13} />}
-                      Mark Delivered
+                      Mark Delivered (Enter OTP)
                     </button>
                   )}
                 </div>
@@ -560,12 +573,13 @@ const OrderDetail = () => {
         </div>
       </div>
       
-      <ProofUploadModal
-        isOpen={isProofModalOpen}
-        onClose={() => setIsProofModalOpen(false)}
-        onSubmit={submitProof}
-        isPickup={isPickupProof}
-      />
+      {isProofModalOpen && (
+        <ProofUploadModal
+          onClose={() => setIsProofModalOpen(false)}
+          onSubmit={submitProof}
+          isPickup={isPickupProof}
+        />
+      )}
     </PageWrapper>
   );
 };

@@ -4,9 +4,12 @@ import { FiX, FiUploadCloud, FiVideo } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import api from '../../../shared/utils/api';
 
-const ProofUploadModal = ({ isOpen, onClose, onSubmit, isPickup }) => {
+// Rendered conditionally by the parent (`{isProofModalOpen && <ProofUploadModal ... />}`)
+// so each open is a genuinely fresh mount — form state doesn't need manual resetting.
+const ProofUploadModal = ({ onClose, onSubmit, isPickup }) => {
   const [images, setImages] = useState([]);
   const [video, setVideo] = useState(null);
+  const [otp, setOtp] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleImageUpload = async (e) => {
@@ -37,7 +40,7 @@ const ProofUploadModal = ({ isOpen, onClose, onSubmit, isPickup }) => {
     toast.loading('Uploading video...', { id: 'vid_upload' });
     const formData = new FormData();
     try {
-      formData.append('image', file); 
+      formData.append('image', file);
       const res = await api.post('/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
       if (res.data.success) {
         setVideo(res.data.url);
@@ -54,12 +57,14 @@ const ProofUploadModal = ({ isOpen, onClose, onSubmit, isPickup }) => {
       toast.error('At least 1 image is required for proof');
       return;
     }
+    if (!isPickup && otp.trim().length !== 4) {
+      toast.error('Please enter the 4-digit delivery OTP shared by the customer');
+      return;
+    }
     setIsSubmitting(true);
-    await onSubmit({ images, video });
+    await onSubmit({ images, video, otp });
     setIsSubmitting(false);
   };
-
-  if (!isOpen) return null;
 
   return (
     <AnimatePresence>
@@ -69,7 +74,7 @@ const ProofUploadModal = ({ isOpen, onClose, onSubmit, isPickup }) => {
             <h2 className="text-xl font-bold">{isPickup ? 'Pickup Proof' : 'Delivery Proof'}</h2>
             <button onClick={onClose}><FiX size={24} /></button>
           </div>
-          
+
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label className="block text-sm font-bold mb-2">Upload Images (Max 5)</label>
@@ -104,6 +109,22 @@ const ProofUploadModal = ({ isOpen, onClose, onSubmit, isPickup }) => {
                     <input type="file" accept="video/*" className="hidden" onChange={handleVideoUpload} />
                   </label>
                 )}
+              </div>
+            )}
+
+            {!isPickup && (
+              <div>
+                <label className="block text-sm font-bold mb-2">Delivery OTP</label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={4}
+                  placeholder="Enter 4-digit OTP"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                  className="w-full px-4 py-3 rounded-lg border border-slate-300 text-center text-lg font-black tracking-[0.4em] focus:outline-none focus:border-seller-primary"
+                />
+                <p className="text-[10px] text-slate-400 mt-1.5">The customer was emailed this OTP when the order was marked "Out for Delivery" — ask them for it to confirm the handover.</p>
               </div>
             )}
 

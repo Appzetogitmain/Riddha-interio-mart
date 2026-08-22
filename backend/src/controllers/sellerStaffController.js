@@ -17,7 +17,7 @@ exports.getStaff = async (req, res) => {
 // @access  Private/Seller
 exports.createStaff = async (req, res) => {
   try {
-    const { name, phone, vehicleNumber, drivingLicense } = req.body;
+    const { name, phone, vehicleNumber, drivingLicense, drivingLicenseImage } = req.body;
 
     if (!name || !name.trim()) {
       return res.status(400).json({ success: false, error: 'Staff name is required' });
@@ -31,7 +31,8 @@ exports.createStaff = async (req, res) => {
       name: name.trim(),
       phone: phone.trim(),
       vehicleNumber: (vehicleNumber || '').trim(),
-      drivingLicense: (drivingLicense || '').trim()
+      drivingLicense: (drivingLicense || '').trim(),
+      drivingLicenseImage: (drivingLicenseImage || '').trim()
     });
 
     res.status(201).json({ success: true, data: staff });

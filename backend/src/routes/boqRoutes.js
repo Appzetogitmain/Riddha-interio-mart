@@ -24,9 +24,17 @@ const {
 } = require('../controllers/boqController');
 
 const storage = multer.memoryStorage();
+const ALLOWED_DRAWING_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
 const upload = multer({
   storage,
-  limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+  fileFilter: (req, file, cb) => {
+    if (ALLOWED_DRAWING_TYPES.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Please upload a JPG, PNG, WEBP image or a PDF file.'));
+    }
+  }
 });
 
 router.use(protect);

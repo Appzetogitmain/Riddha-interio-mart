@@ -43,7 +43,7 @@ export const boqService = {
     return res.data;
   },
 
-  // Upload Drawing/Sketch Image for Gemini AI Extraction
+  // Upload Drawing/Sketch (Image or PDF) for AI Extraction
   extractFromDrawing: async (formData) => {
     const res = await api.post('/boqs/upload-drawing', formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
@@ -57,7 +57,7 @@ export const boqService = {
     return res.data;
   },
 
-  // Enhance Item Description with Gemini
+  // Enhance Item Description with AI
   enhanceItemDescription: async (boqId, itemId) => {
     const res = await api.post(`/boqs/${boqId}/items/${itemId}/enhance-description`);
     return res.data;

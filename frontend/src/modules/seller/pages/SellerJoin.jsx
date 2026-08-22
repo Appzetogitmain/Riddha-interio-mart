@@ -57,7 +57,7 @@ const SellerJoin = () => {
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
-      <div className="relative bg-[#004D40] py-10 md:py-32 overflow-hidden">
+      <div className="relative bg-[#28a399] py-10 md:py-32 overflow-hidden">
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full translate-x-1/2 -translate-y-1/2 blur-3xl" />
           <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#189D91] rounded-full -translate-x-1/2 translate-y-1/2 blur-3xl" />
@@ -85,7 +85,7 @@ const SellerJoin = () => {
               <div className="pt-6 flex flex-col sm:flex-row gap-4">
                 <Link
                   to="/seller/signup"
-                  className="px-10 py-5 bg-[#189D91] text-white rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-white hover:text-[#004D40] transition-all shadow-xl shadow-black/20 flex items-center justify-center gap-3"
+                  className="px-10 py-5 bg-[#189D91] text-white rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-white hover:text-[#28a399] transition-all shadow-xl shadow-black/20 flex items-center justify-center gap-3"
                 >
                   Start Selling Now <FiArrowRight />
                 </Link>
@@ -208,7 +208,7 @@ const SellerJoin = () => {
                 <div className="mt-12">
                   <Link
                     to="/seller/signup"
-                    className="w-full py-5 bg-[#004D40] text-white rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-[#003d33] transition-all flex items-center justify-center gap-3"
+                    className="w-full py-5 bg-[#28a399] text-white rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-[#003d33] transition-all flex items-center justify-center gap-3"
                   >
                     Create Seller Account <FiArrowRight />
                   </Link>
@@ -222,7 +222,7 @@ const SellerJoin = () => {
 
       {/* CTA Section */}
       <div className="max-w-7xl mx-auto px-6 py-24 md:py-32">
-        <div className="bg-[#004D40] rounded-[48px] p-12 md:p-24 text-center relative overflow-hidden shadow-2xl">
+        <div className="bg-[#28a399] rounded-[48px] p-12 md:p-24 text-center relative overflow-hidden shadow-2xl">
           <div className="relative z-10 space-y-8">
             <h2 className="text-3xl md:text-6xl font-black text-white leading-tight">
               Ready to take your <br /> business to the next level?
@@ -233,7 +233,7 @@ const SellerJoin = () => {
             </p>
             <Link
               to="/seller/signup"
-              className="inline-flex px-12 py-5 bg-[#189D91] text-white rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-white hover:text-[#004D40] transition-all shadow-2xl flex items-center justify-center gap-3"
+              className="inline-flex px-12 py-5 bg-[#189D91] text-white rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-white hover:text-[#28a399] transition-all shadow-2xl flex items-center justify-center gap-3"
             >
               Get Started for Free <FiArrowRight />
             </Link>

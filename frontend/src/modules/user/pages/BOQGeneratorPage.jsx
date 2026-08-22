@@ -170,13 +170,13 @@ const BOQGeneratorPage = () => {
   const handleDrawingUpload = async (e) => {
     e.preventDefault();
     if (!drawingFile) {
-      toast.error('Please select a drawing image file first.');
+      toast.error('Please select a drawing image or PDF file first.');
       return;
     }
 
     setExtractingDrawing(true);
     try {
-      toast.loading('Gemini AI extracting items from drawing image...', { id: 'boq-vision-toast' });
+      toast.loading('AI extracting items from drawing...', { id: 'boq-vision-toast' });
       const formData = new FormData();
       formData.append('drawing', drawingFile);
 
@@ -200,7 +200,7 @@ const BOQGeneratorPage = () => {
     }
 
     try {
-      toast.loading('Gemini AI generating BOQ from brief...', { id: 'boq-brief-toast' });
+      toast.loading('AI generating BOQ from brief...', { id: 'boq-brief-toast' });
       const res = await boqService.generateFromBrief(selectedBriefId);
       if (res.success && res.data) {
         toast.success('BOQ generated from Client Brief!', { id: 'boq-brief-toast' });
@@ -319,7 +319,7 @@ const BOQGeneratorPage = () => {
             </div>
             <h1 className="text-2xl sm:text-4xl font-display font-black text-white tracking-tight">{currentBOQ?.boqName || 'Bill of Quantities'}</h1>
             <p className="text-slate-200 text-xs sm:text-sm max-w-2xl leading-relaxed">
-              Convert project requirements into detailed, professional shopping lists via manual entry, Gemini Vision drawing image extraction, or 1-click Client Brief auto-generation.
+              Convert project requirements into detailed, professional shopping lists via manual entry, AI Vision drawing extraction, or 1-click Client Brief auto-generation.
             </p>
           </div>
 
@@ -381,7 +381,7 @@ const BOQGeneratorPage = () => {
             { id: 'manual', label: '+ Add Item Manually', icon: FiPlus },
             { id: 'drawing', label: 'Upload Drawing / Sketch', icon: FiUploadCloud },
             { id: 'brief', label: 'Auto-Generate from Brief', icon: FiFileText },
-            { id: 'ai', label: 'Gemini AI Analysis', icon: LuBrain }
+            { id: 'ai', label: 'AI Analysis', icon: LuBrain }
           ].map(tab => (
             <button
               key={tab.id}
@@ -679,7 +679,7 @@ const BOQGeneratorPage = () => {
             <div className="max-w-2xl mx-auto space-y-6">
               <div>
                 <h3 className="text-lg font-bold text-slate-900 font-display">Upload Drawing or Sketch for AI Extraction</h3>
-                <p className="text-xs text-slate-500">Gemini Vision AI will analyze your floorplan drawing sketch image and extract furniture, lighting, and material quantities into a BOQ list.</p>
+                <p className="text-xs text-slate-500">AI Vision will analyze your floorplan drawing sketch (image or PDF) and extract furniture, lighting, and material quantities into a BOQ list.</p>
               </div>
 
               <form onSubmit={handleDrawingUpload} className="space-y-5">
@@ -690,14 +690,20 @@ const BOQGeneratorPage = () => {
                   <input
                     ref={fileInputRef}
                     type="file"
-                    accept="image/*"
+                    accept="image/jpeg,image/png,image/webp,application/pdf"
                     onChange={handleFileChange}
                     className="hidden"
                   />
 
                   {previewUrl ? (
                     <div className="space-y-3">
-                      <img src={previewUrl} alt="Drawing Preview" className="max-h-64 mx-auto rounded-2xl shadow-md object-contain border border-slate-200" />
+                      {drawingFile?.type === 'application/pdf' ? (
+                        <div className="w-24 h-24 mx-auto rounded-2xl bg-white border border-slate-200 shadow-md flex items-center justify-center">
+                          <FiFile className="h-10 w-10 text-amber-600" />
+                        </div>
+                      ) : (
+                        <img src={previewUrl} alt="Drawing Preview" className="max-h-64 mx-auto rounded-2xl shadow-md object-contain border border-slate-200" />
+                      )}
                       <div className="flex items-center justify-center space-x-2 text-xs text-amber-900 font-bold">
                         <FiFolder className="text-amber-600" />
                         <span>{drawingFile?.name}</span>
@@ -711,7 +717,7 @@ const BOQGeneratorPage = () => {
                       </div>
                       <div>
                         <p className="text-sm font-bold text-slate-900">Click or drag & drop interior sketch drawing here</p>
-                        <p className="text-[11px] text-slate-500 mt-1">Supports JPG, PNG, WEBP images up to 10MB</p>
+                        <p className="text-[11px] text-slate-500 mt-1">Supports JPG, PNG, WEBP images or PDF files up to 10MB</p>
                       </div>
                       <button
                         type="button"
@@ -730,7 +736,7 @@ const BOQGeneratorPage = () => {
                     className="w-full sm:w-auto px-8 py-3.5 bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 hover:from-amber-400 hover:to-amber-600 text-deep-espresso font-black text-xs uppercase tracking-wider rounded-2xl shadow-xl shadow-amber-500/20 inline-flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                   >
                     <LuSparkles className="text-base text-deep-espresso" />
-                    <span>{extractingDrawing ? 'Gemini AI Extracting Items...' : 'Extract Items from Sketch Image'}</span>
+                    <span>{extractingDrawing ? 'AI Extracting Items...' : 'Extract Items from Sketch'}</span>
                   </button>
                 </div>
               </form>
@@ -780,11 +786,11 @@ const BOQGeneratorPage = () => {
             </div>
           )}
 
-          {/* TAB 5: GEMINI AI ANALYSIS & OPTIMIZATIONS */}
+          {/* TAB 5: AI ANALYSIS & OPTIMIZATIONS */}
           {activeTab === 'ai' && (
             <div className="space-y-6">
               <div>
-                <h3 className="text-lg font-bold text-slate-900 font-display">Gemini AI BOQ Insights & Completeness Analysis</h3>
+                <h3 className="text-lg font-bold text-slate-900 font-display">AI BOQ Insights & Completeness Analysis</h3>
                 <p className="text-xs text-slate-500">AI analysis of missing essential items, completeness scoring, and cost optimization recommendations.</p>
               </div>
 
@@ -821,7 +827,7 @@ const BOQGeneratorPage = () => {
 
                 {/* Cost Optimizations */}
                 <div className="p-6 bg-emerald-50/70 border border-emerald-200 rounded-2xl space-y-4">
-                  <span className="font-bold text-emerald-900 text-sm block">Gemini Cost Optimizations</span>
+                  <span className="font-bold text-emerald-900 text-sm block">AI Cost Optimizations</span>
                   <div className="space-y-3 text-xs">
                     <div className="p-3 bg-white border border-emerald-200 rounded-xl space-y-1">
                       <p className="font-semibold text-emerald-900">Source lighting fixtures in pre-bundled sets from Riddha Preferred Vendors</p>

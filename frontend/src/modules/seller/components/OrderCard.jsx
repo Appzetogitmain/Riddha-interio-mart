@@ -1,8 +1,8 @@
 import React from 'react';
-import { FiMapPin, FiClock, FiChevronRight, FiTruck } from 'react-icons/fi';
+import { FiMapPin, FiClock, FiChevronRight, FiTruck, FiUser } from 'react-icons/fi';
 import { motion } from 'framer-motion';
 
-const OrderCard = ({ order, onClick, onAssign }) => {
+const OrderCard = ({ order, onClick, onAssign, onAssignMember }) => {
   const getStatusStyle = (status) => {
     switch (status) {
       case "Pending": return "text-amber-600 bg-amber-50 border-amber-100";
@@ -13,7 +13,8 @@ const OrderCard = ({ order, onClick, onAssign }) => {
     }
   };
 
-  const canAssign = order.status === 'Processing' && !order.deliveryBoy;
+  const canAssign = order.status === 'Processing' && order.deliveryStatus === 'None';
+  const isSellerManaged = order.deliveryType === 'seller-managed' && order.deliveryStatus !== 'None';
 
   return (
     <motion.div
@@ -81,6 +82,16 @@ const OrderCard = ({ order, onClick, onAssign }) => {
             </span>
           </div>
         )}
+
+        {/* Self-managed row */}
+        {isSellerManaged && (
+          <div className={`flex items-center gap-2 rounded-xl px-3 py-2 border ${order.assignedStaff ? 'bg-slate-50 border-slate-200' : 'bg-amber-50 border-amber-100'}`}>
+            <FiUser size={12} className={`shrink-0 ${order.assignedStaff ? 'text-slate-500' : 'text-amber-600'}`} />
+            <p className={`text-[10px] font-bold truncate ${order.assignedStaff ? 'text-slate-600' : 'text-amber-700'}`}>
+              {order.assignedStaff ? order.assignedStaff.name : 'Self-Managed — no staff assigned'}
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Assign button — shown at card bottom if applicable */}
@@ -91,6 +102,16 @@ const OrderCard = ({ order, onClick, onAssign }) => {
         >
           <FiTruck size={12} />
           Assign Delivery Partner
+        </button>
+      )}
+
+      {isSellerManaged && !order.assignedStaff && onAssignMember && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onAssignMember(order); }}
+          className="w-full flex items-center justify-center gap-2 py-2.5 bg-amber-50 border-t border-amber-100 text-amber-600 text-[10px] font-black uppercase tracking-widest hover:bg-amber-500 hover:text-white transition-all"
+        >
+          <FiUser size={12} />
+          Assign Member
         </button>
       )}
     </motion.div>

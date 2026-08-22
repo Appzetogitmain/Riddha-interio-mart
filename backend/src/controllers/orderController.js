@@ -464,7 +464,8 @@ exports.getOrderById = async (req, res) => {
     const order = await Order.findById(req.params.id)
       .populate('user', 'fullName email')
       .populate('seller', 'fullName shopName email phone shopAddress')
-      .populate('deliveryBoy', 'fullName email phone avatar vehicleType vehicleNumber');
+      .populate('deliveryBoy', 'fullName email phone avatar vehicleType vehicleNumber')
+      .populate('assignedStaff', 'name phone vehicleNumber');
 
     if (order) {
       res.status(200).json({
@@ -592,7 +593,8 @@ exports.getOrders = async (req, res) => {
           return doc;
         }
       },
-      { path: 'deliveryBoy', select: 'fullName email phone' }
+      { path: 'deliveryBoy', select: 'fullName email phone' },
+      { path: 'assignedStaff', select: 'name phone vehicleNumber' }
     ];
 
     const result = await paginate(Order, query, req, populateOptions);

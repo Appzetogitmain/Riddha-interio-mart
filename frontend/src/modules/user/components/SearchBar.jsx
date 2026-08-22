@@ -50,7 +50,7 @@ const SearchBar = ({ className = '', variant = 'standard' }) => {
             </div>
           </>
         ) : variant === 'premium' ? (
-          <div className="flex w-full items-center bg-[#F8FAFC] border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md focus-within:bg-white focus-within:border-[#004D40]/30 transition-all duration-300 relative h-11">
+          <div className="flex w-full items-center bg-[#F8FAFC] border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md focus-within:bg-white focus-within:border-[#28a399]/30 transition-all duration-300 relative h-11">
             <div className="flex-1 relative flex items-center h-full">
               {/* Mobile Search Icon */}
               <div className="md:hidden pl-4 pr-1">
@@ -66,21 +66,21 @@ const SearchBar = ({ className = '', variant = 'standard' }) => {
               <div className="absolute inset-y-0 right-3 flex items-center gap-2.5">
                 <button
                   onClick={(e) => handleAction(e, 'image')}
-                  className="p-1.5 text-gray-400 md:text-gray-500 hover:text-[#004D40] transition-colors"
+                  className="p-1.5 text-gray-400 md:text-gray-500 hover:text-[#28a399] transition-colors"
                   title="Search by image"
                 >
                   <FiCamera className="h-4 w-4 md:h-5 md:w-5" />
                 </button>
                 <button
                   onClick={(e) => handleAction(e, 'voice')}
-                  className="p-1.5 text-gray-400 md:text-gray-500 hover:text-[#004D40] transition-colors"
+                  className="p-1.5 text-gray-400 md:text-gray-500 hover:text-[#28a399] transition-colors"
                   title="Search by voice"
                 >
                   <FiMic className="h-4 w-4 md:h-5 md:w-5" />
                 </button>
               </div>
             </div>
-            <button className="hidden md:flex bg-[#004D40] hover:bg-[#003d33] text-white px-5 h-full transition-colors items-center justify-center rounded-r-xl border-l border-gray-200">
+            <button className="hidden md:flex bg-[#28a399] hover:bg-[#003d33] text-white px-5 h-full transition-colors items-center justify-center rounded-r-xl border-l border-gray-200">
               <FiSearch className="h-5 w-5" />
             </button>
           </div>

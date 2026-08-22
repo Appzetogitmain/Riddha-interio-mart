@@ -99,7 +99,7 @@ const ContractorRegistration = () => {
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
-      <div className="relative bg-[#004D40] py-10 md:py-24 overflow-hidden">
+      <div className="relative bg-[#28a399] py-10 md:py-24 overflow-hidden">
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-0 left-0 w-64 h-64 bg-white rounded-full -translate-x-1/2 -translate-y-1/2 blur-3xl" />
           <div className="absolute bottom-0 right-0 w-96 h-96 bg-[#189D91] rounded-full translate-x-1/3 translate-y-1/3 blur-3xl" />
@@ -284,7 +284,7 @@ const ContractorRegistration = () => {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full py-4 bg-[#004D40] text-white rounded-2xl font-black uppercase tracking-[0.2em] hover:bg-[#003d33] transition-all shadow-xl shadow-[#004D40]/10 flex items-center justify-center gap-3 group"
+                    className="w-full py-4 bg-[#28a399] text-white rounded-2xl font-black uppercase tracking-[0.2em] hover:bg-[#003d33] transition-all shadow-xl shadow-[#28a399]/10 flex items-center justify-center gap-3 group"
                   >
                     {isSubmitting ? (
                       "Processing..."

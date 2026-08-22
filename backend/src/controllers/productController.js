@@ -289,6 +289,264 @@ exports.getProducts = async (req, res, next) => {
   }
 };
 
+// In-memory cache for parsed smart-search queries (normalized query -> parsed filters)
+const smartSearchCache = new Map();
+const SMART_SEARCH_CACHE_LIMIT = 300;
+
+function keywordFieldClause(term) {
+  const regex = new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+  return {
+    $or: [
+      { name: regex },
+      { description: regex },
+      { 'specifications.material': regex },
+      { 'specifications.colour': regex },
+      { 'specifications.finish': regex },
+      { 'specifications.pattern': regex }
+    ]
+  };
+}
+
+function humanizeSmartSearchValue(value) {
+  return String(value).replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
+function buildSmartSearchChips(parsed) {
+  const chips = [];
+  if (parsed.projectApplication) chips.push({ key: 'projectApplication', label: humanizeSmartSearchValue(parsed.projectApplication), value: parsed.projectApplication });
+  if (parsed.grade) chips.push({ key: 'grade', label: humanizeSmartSearchValue(parsed.grade), value: parsed.grade });
+  if (parsed.stock) chips.push({ key: 'stock', label: humanizeSmartSearchValue(parsed.stock), value: parsed.stock });
+  if (parsed.region) chips.push({ key: 'region', label: humanizeSmartSearchValue(parsed.region), value: parsed.region });
+  if (parsed.minRating) chips.push({ key: 'minRating', label: `${parsed.minRating}+ Stars`, value: parsed.minRating });
+  if (parsed.maxPrice) chips.push({ key: 'maxPrice', label: `Under ₹${Number(parsed.maxPrice).toLocaleString('en-IN')}`, value: parsed.maxPrice });
+  if (parsed.minPrice) chips.push({ key: 'minPrice', label: `Above ₹${Number(parsed.minPrice).toLocaleString('en-IN')}`, value: parsed.minPrice });
+  if (parsed.antiSlip) chips.push({ key: 'antiSlip', label: 'Anti-Skid', value: true });
+  if (parsed.waterproof) chips.push({ key: 'waterproof', label: 'Waterproof', value: true });
+  if (parsed.fireProof) chips.push({ key: 'fireProof', label: 'Fire-Resistant', value: true });
+  if (parsed.ecoFriendly) chips.push({ key: 'ecoFriendly', label: 'Eco-Friendly', value: true });
+  (parsed.keywords || []).forEach((kw) => {
+    const term = String(kw || '').trim();
+    if (term) chips.push({ key: `keyword:${term}`, label: humanizeSmartSearchValue(term), value: term });
+  });
+  return chips;
+}
+
+function buildSmartSearchInterpretation(parsed) {
+  const parts = [];
+  if (parsed.keywords?.length) parts.push(parsed.keywords.slice(0, 4).map(humanizeSmartSearchValue).join(', '));
+  if (parsed.projectApplication) parts.push(humanizeSmartSearchValue(parsed.projectApplication));
+  if (parsed.maxPrice) parts.push(`Under ₹${Number(parsed.maxPrice).toLocaleString('en-IN')}`);
+  else if (parsed.minPrice) parts.push(`Above ₹${Number(parsed.minPrice).toLocaleString('en-IN')}`);
+  if (parsed.minRating) parts.push(`${parsed.minRating}+ Stars`);
+  if (parsed.region) parts.push(humanizeSmartSearchValue(parsed.region));
+  return parts.join(' · ');
+}
+
+// @desc    Natural-language product search. Parses a free-text query (e.g.
+//          "white marble for luxury reception under Rs 250/sq.ft") into
+//          structured filters via OpenAI. Pass `filters` (a previously
+//          returned parsedFilters object, JSON-encoded) instead of `search`
+//          to re-run with an adjusted filter set (chip removal) without
+//          re-invoking OpenAI.
+// @route   GET /api/products/smart-search
+// @access  Public
+exports.smartSearch = async (req, res, next) => {
+  try {
+    const searchService = require('../services/searchService');
+    const filterService = require('../services/filterService');
+
+    const rawQuery = (req.query.search || '').trim();
+    let parsedFilters = null;
+    let usedAi = false;
+    let fuzzyFallback = false;
+
+    if (req.query.filters) {
+      try {
+        parsedFilters = JSON.parse(req.query.filters);
+      } catch (e) {
+        parsedFilters = null;
+      }
+    }
+
+    if (!parsedFilters && rawQuery) {
+      const cacheKey = rawQuery.toLowerCase();
+      if (smartSearchCache.has(cacheKey)) {
+        parsedFilters = smartSearchCache.get(cacheKey);
+        usedAi = true;
+      } else if (process.env.OPENAI_API_KEY) {
+        try {
+          const openaiClient = require('../services/openaiService');
+          const OpenAIErrorHandler = require('../utils/openaiErrorHandler');
+          const OpenAIUsageTracker = require('../services/openaiUsageTracker');
+
+          const filterOptions = await filterService.getFilterOptions();
+          const projectApplications = filterOptions.projectApplication.options.map(o => o.value);
+          const grades = filterOptions.grade.options.map(o => o.value);
+          const stockStatuses = filterOptions.availability.options.map(o => o.value);
+          const regions = filterOptions.region.options.map(o => o.value);
+
+          const systemPrompt = `You are a search-query parser for "Riddha Interior Mart", an e-commerce platform selling marble, tiles, furniture, lighting, sanitaryware, and building materials. Convert the shopper's free-text search into strict JSON describing what they want. Only use these exact enum values where applicable — never invent new ones:
+- projectApplication: one of ${JSON.stringify(projectApplications)} or null
+- grade: one of ${JSON.stringify(grades)} or null
+- stock: one of ${JSON.stringify(stockStatuses)} or null (only set if the shopper explicitly asks about availability, e.g. "in stock", "ready to ship")
+- region: one of ${JSON.stringify(regions)} or null (only set if a place name is mentioned)
+
+Return exactly this JSON shape:
+{
+  "minPrice": number|null,
+  "maxPrice": number|null,
+  "minRating": number|null,
+  "projectApplication": string|null,
+  "grade": string|null,
+  "stock": string|null,
+  "region": string|null,
+  "antiSlip": boolean,
+  "waterproof": boolean,
+  "fireProof": boolean,
+  "ecoFriendly": boolean,
+  "keywords": string[]
+}
+Rules:
+- "keywords" holds every remaining descriptive term (product type, material, colour, finish, size/dimensions, pattern, style) lowercased, e.g. "white marble 600x600" -> ["marble","white","600x600"]. Never drop the shopper's core product intent from keywords.
+- Prices are in Indian Rupees. "under X"/"below X" -> maxPrice. "above X"/"over X" -> minPrice. Ignore unit suffixes like "/sq.ft", just use the number.
+- Only set antiSlip/waterproof/fireProof/ecoFriendly to true when the text implies it (e.g. "anti-skid"/"non-slip" -> antiSlip, "waterproof"/"water resistant" -> waterproof, "fireproof"/"fire rated" -> fireProof, "eco-friendly"/"sustainable" -> ecoFriendly). Otherwise false.
+- Respond with ONLY the JSON object, no other text.`;
+
+          const result = await OpenAIErrorHandler.callWithRetry(
+            () => openaiClient.generateText(rawQuery, {
+              systemPrompt,
+              modelType: 'general',
+              expectJson: true,
+              temperature: 0.2,
+              maxTokens: 400
+            }),
+            2
+          );
+
+          OpenAIUsageTracker.trackUsage(result, 'smart-search', req.user ? req.user.id : null, '/api/products/smart-search', result.model);
+
+          parsedFilters = JSON.parse(result.text.replace(/```json|```/g, '').trim());
+          usedAi = true;
+
+          if (smartSearchCache.size >= SMART_SEARCH_CACHE_LIMIT) {
+            smartSearchCache.delete(smartSearchCache.keys().next().value);
+          }
+          smartSearchCache.set(cacheKey, parsedFilters);
+        } catch (aiErr) {
+          console.error('[Smart Search] OpenAI parse failed, falling back to fuzzy search:', aiErr.message);
+          parsedFilters = null;
+        }
+      }
+    }
+
+    if (rawQuery) {
+      searchService.logSearch(req.user ? req.user.id : null, rawQuery);
+    }
+
+    // Base visibility filter — mirrors getProducts' default (non-admin) protections
+    const filter = { isActive: true, isApproved: true, isBundle: { $ne: true } };
+    const unverifiedSellers = await Seller.find({ isVerified: { $ne: true } }).select('_id');
+    const unverifiedIdSet = new Set(unverifiedSellers.map(s => String(s._id)));
+    filter.seller = { $nin: unverifiedSellers.map(s => s._id) };
+
+    let keywordTerms = [];
+
+    if (parsedFilters) {
+      Object.assign(filter, filterService.buildFilterQuery({
+        minPrice: parsedFilters.minPrice,
+        maxPrice: parsedFilters.maxPrice,
+        minRating: parsedFilters.minRating,
+        grade: parsedFilters.grade,
+        stock: parsedFilters.stock,
+        projectApplication: parsedFilters.projectApplication,
+        ecoFriendly: parsedFilters.ecoFriendly,
+        waterproof: parsedFilters.waterproof
+      }));
+      // buildFilterQuery re-asserts isActive/isApproved but knows nothing about
+      // seller verification — restore our exclusion after merging its output.
+      filter.seller = { $nin: unverifiedSellers.map(s => s._id) };
+
+      if (parsedFilters.antiSlip) filter['specifications.antiSlip'] = true;
+      if (parsedFilters.fireProof) filter['specifications.fireProof'] = true;
+
+      if (parsedFilters.region) {
+        const sellerIds = await filterService.resolveSellerIds({ region: parsedFilters.region });
+        if (sellerIds) {
+          filter.seller = { $in: sellerIds.filter(id => !unverifiedIdSet.has(String(id))) };
+        }
+      }
+
+      keywordTerms = (parsedFilters.keywords || []).map(kw => String(kw).trim()).filter(Boolean);
+      if (keywordTerms.length > 0) {
+        // AND the keywords together (each must match *somewhere*, any field) —
+        // OR-ing every keyword/field pair together let a single generic word
+        // like "marble" pull in results that ignored a more specific term like
+        // "italian" entirely. If this strict match comes back empty, retry once
+        // with the old loose OR behavior below so a real term isn't a dead end.
+        filter.$and = keywordTerms.map(term => keywordFieldClause(term));
+      }
+    } else if (rawQuery) {
+      // No AI available / parse failed — plain fuzzy fallback (same approach as getProducts)
+      fuzzyFallback = true;
+      const fuzzyPatterns = searchService.getFuzzyRegex(rawQuery);
+      filter.$or = [
+        { name: { $all: fuzzyPatterns } },
+        { description: { $all: fuzzyPatterns } }
+      ];
+    }
+
+    const populateOptions = [
+      { path: 'seller', select: 'fullName shopName' },
+      { path: 'brand', select: 'name logo' },
+      { path: 'category', select: 'name' }
+    ];
+
+    let result = await paginate(Product, filter, req, populateOptions);
+    let relaxedMatch = false;
+
+    // Strict AND-of-keywords came back empty — relax to the old OR-across-everything
+    // behavior once, rather than leaving a real search term as a dead end.
+    if (result.totalResults === 0 && keywordTerms.length > 1) {
+      const relaxedFilter = { ...filter };
+      delete relaxedFilter.$and;
+      relaxedFilter.$or = keywordTerms.flatMap(term => keywordFieldClause(term).$or);
+      result = await paginate(Product, relaxedFilter, req, populateOptions);
+      relaxedMatch = result.totalResults > 0;
+    }
+
+    if (result.data && result.data.length > 0) {
+      await attachOfferPricing(result.data);
+    }
+
+    const formattedData = result.data.map(p => {
+      const pObj = p.toObject ? p.toObject() : { ...p };
+      if (pObj.category && typeof pObj.category === 'object') {
+        pObj.categoryId = pObj.category._id;
+        pObj.category = pObj.category.name;
+      }
+      return pObj;
+    });
+
+    res.status(200).json({
+      success: true,
+      data: formattedData,
+      count: formattedData.length,
+      totalResults: result.totalResults,
+      totalPages: result.totalPages,
+      page: result.page,
+      limit: result.limit,
+      usedAi,
+      fuzzyFallback,
+      relaxedMatch,
+      parsedFilters,
+      chips: parsedFilters ? buildSmartSearchChips(parsedFilters) : [],
+      interpretation: parsedFilters ? buildSmartSearchInterpretation(parsedFilters) : ''
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // @desc    Get autocomplete recommendations, recent queries and trending terms
 // @route   GET /api/products/search/suggestions
 // @access  Public (Optional auth)

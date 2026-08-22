@@ -238,6 +238,18 @@ exports.deleteBOQItem = async (req, res, next) => {
   }
 };
 
+// Rasterizes page 1 of an uploaded PDF into a PNG buffer so it can flow through
+// the same OpenAI vision pipeline used for JPG/PNG/WEBP drawing uploads.
+async function rasterizePdfFirstPage(buffer) {
+  const { pdf } = await import('pdf-to-img');
+  const document = await pdf(buffer, { scale: 2.0 });
+  try {
+    return await document.getPage(1);
+  } finally {
+    await document.destroy();
+  }
+}
+
 // 8. AI Vision Drawing Upload & Extraction
 exports.extractFromDrawing = async (req, res, next) => {
   try {
@@ -246,8 +258,19 @@ exports.extractFromDrawing = async (req, res, next) => {
     let mimeType = 'image/jpeg';
 
     if (req.file) {
-      base64Image = req.file.buffer.toString('base64');
-      mimeType = req.file.mimetype;
+      if (req.file.mimetype === 'application/pdf') {
+        try {
+          const pageBuffer = await rasterizePdfFirstPage(req.file.buffer);
+          base64Image = pageBuffer.toString('base64');
+          mimeType = 'image/png';
+        } catch (pdfErr) {
+          console.error('[BOQ Drawing PDF Conversion Error]', pdfErr.message);
+          return res.status(400).json({ success: false, message: 'Could not read that PDF. Please make sure it is not corrupted or password-protected, or upload an image instead.' });
+        }
+      } else {
+        base64Image = req.file.buffer.toString('base64');
+        mimeType = req.file.mimetype;
+      }
     }
 
     const extractedItems = await boqService.extractItemsFromDrawing(base64Image, mimeType, userId);
@@ -263,7 +286,7 @@ exports.extractFromDrawing = async (req, res, next) => {
       items: extractedItems,
       summary,
       sourceData: {
-        extractionNotes: 'AI extracted items from drawing sketch image via Gemini Vision'
+        extractionNotes: 'AI extracted items from drawing sketch via AI Vision'
       },
       aiAnalysis: {
         missingItems: analysis.missingItems || [],

@@ -58,7 +58,7 @@ const TrustBar = () => {
         </div>
 
         {/* Right Section: Help Bar */}
-        <div className="bg-gradient-to-r from-[#004D40] to-[#189D91] rounded-2xl p-3 px-6 flex items-center gap-6 shadow-md border border-[#004D40]/20">
+        <div className="bg-gradient-to-r from-[#28a399] to-[#189D91] rounded-2xl p-3 px-6 flex items-center gap-6 shadow-md border border-[#28a399]/20">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-full bg-white/10 backdrop-blur-sm">
               <LuHeadphones className="w-5 h-5 text-white" />

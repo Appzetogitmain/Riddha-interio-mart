@@ -11,7 +11,8 @@ const {
   getSearchSuggestions,
   checkProductSku,
   generateHSNCodeHandler,
-  generateProductContentHandler
+  generateProductContentHandler,
+  smartSearch
 } = require('../controllers/productController');
 const { protect, authorize, tryProtect } = require('../middleware/auth');
 const { check } = require('express-validator');
@@ -51,6 +52,7 @@ router.post('/ai-room-visualize', uploadMemory.single('image'), aiRoomVisualize)
 router.post('/ai-mood-board', generateAiMoodBoard);
 
 router.get('/search/suggestions', tryProtect, getSearchSuggestions);
+router.get('/smart-search', tryProtect, smartSearch);
 
 router.post('/bulk', protect, authorize('seller', 'admin'), require('../controllers/productController').createBulkProducts);
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion as Motion } from 'framer-motion';
 import Banner from '../components/Banner';
 import OfferBanner from '../components/OfferBanner';
@@ -17,7 +17,9 @@ import ShopByCategory from '../components/ShopByCategory';
 import { LuChevronRight } from 'react-icons/lu';
 import WhatsAppFloat from '../components/WhatsAppFloat';
 
-const SectionGrid = ({ products, loading, containerVariants }) => {
+const SectionGrid = ({ products, loading, containerVariants, autoSlide = false }) => {
+  const scrollRef = useRef(null);
+
   const getProductImage = (p) =>
     p?.image ||
     p?.images?.[0] ||
@@ -30,11 +32,30 @@ const SectionGrid = ({ products, loading, containerVariants }) => {
     return `₹${number.toLocaleString('en-IN')}`;
   };
 
+  // Auto-slide, when enabled
+  useEffect(() => {
+    if (!autoSlide || loading || products.length <= 3) return;
+    const timer = setInterval(() => {
+      const el = scrollRef.current;
+      if (!el) return;
+      const card = el.querySelector('[data-arrival-card]');
+      const amount = card ? card.offsetWidth + 16 : el.clientWidth * 0.5;
+      const atEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 4;
+      if (atEnd) {
+        el.scrollTo({ left: 0, behavior: 'smooth' });
+      } else {
+        el.scrollBy({ left: amount, behavior: 'smooth' });
+      }
+    }, 3500);
+    return () => clearInterval(timer);
+  }, [autoSlide, loading, products.length]);
+
   return (
     <div className="relative">
       {/* Fade edge on right */}
       <div className="pointer-events-none absolute right-0 top-0 h-full w-12 bg-gradient-to-l from-white to-transparent z-10" />
       <Motion.div
+        ref={scrollRef}
         variants={containerVariants}
         initial="hidden"
         animate="visible"
@@ -79,6 +100,7 @@ const SectionGrid = ({ products, loading, containerVariants }) => {
           return (
             <Motion.div
               key={productId}
+              data-arrival-card
               variants={{
                 hidden: { opacity: 0, y: 15 },
                 visible: { opacity: 1, y: 0 }
@@ -251,7 +273,10 @@ const HomePage = () => {
       {/* Designer Favorites / Favourite Categories Section */}
       <FavouriteCategories />
 
-      {/* New Season Arrivals Section */}
+      {/* AI Recommendation Engine Feed (the product slider) */}
+      <RecommendationFeed />
+
+      {/* New Season Arrivals Section — shown after the product slider, same auto-slide carousel */}
       <section className="bg-white py-4 md:py-8 border-t border-gray-50">
         <div className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-12">
 
@@ -266,15 +291,12 @@ const HomePage = () => {
             </Link>
           </div>
 
-          <SectionGrid products={newArrivals} loading={loading} containerVariants={containerVariants} />
+          <SectionGrid products={newArrivals} loading={loading} containerVariants={containerVariants} autoSlide />
         </div>
       </section>
 
-
-
-
-      {/* AI Recommendation Engine Feed */}
-      <RecommendationFeed />
+      {/* Top Brands Section — shown right after New Season Arrivals, also an auto-slide carousel */}
+      <TopBrands />
 
       {/* Trust & Help Bar (Now below ShopByCategory) */}
       <TrustBar />
@@ -285,9 +307,6 @@ const HomePage = () => {
 
       {/* Admin-Created Custom Sections */}
       <DynamicSections />
-
-      {/* Top Brands Section */}
-      <TopBrands />
 
       {/* WhatsApp Floating Button */}
       <WhatsAppFloat number={whatsappNumber} />

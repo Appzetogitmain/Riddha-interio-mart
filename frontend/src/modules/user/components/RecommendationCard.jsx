@@ -42,9 +42,9 @@ const RecommendationCard = ({ item, onExplain, onTrack }) => {
       onClick={handleCardClick}
       className="group relative bg-white border border-gray-100 rounded-2xl p-3 shadow-xs hover:shadow-xl transition-all duration-300 flex flex-col justify-between hover:-translate-y-1 cursor-pointer"
     >
-      {/* AI Recommendation Badge */}
-      <div className="absolute top-4 left-4 z-10 flex items-center gap-1.5 px-3 py-1 bg-emerald-950 text-white text-[11px] font-bold rounded-full shadow-md border border-emerald-700/50">
-        <Sparkles className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
+      {/* AI Recommendation Badge — logo blue (better contrast with white text than the logo's yellow) */}
+      <div className="absolute top-4 left-4 z-10 flex items-center gap-1.5 px-3 py-1 bg-[#2E3192] text-white text-[11px] font-bold rounded-full shadow-md border border-[#2E3192]/60">
+        <Sparkles className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
         <span className="truncate max-w-[140px]">{reason}</span>
       </div>
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Sparkles, TrendingUp, Compass, Flame, ArrowRight, RefreshCw } from 'lucide-react';
 import RecommendationCard from './RecommendationCard';
 import RecommendationExplanationModal from './RecommendationExplanationModal';
@@ -11,11 +11,30 @@ const RecommendationFeed = () => {
   const [activeTab, setActiveTab] = useState('personalized');
   const [selectedItem, setSelectedItem] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const carouselRef = useRef(null);
 
   useEffect(() => {
     fetchRecommendations();
     fetchTrending();
   }, []);
+
+  // Auto-slide the recommendations carousel
+  useEffect(() => {
+    if (recommendations.length <= 2) return;
+    const timer = setInterval(() => {
+      const el = carouselRef.current;
+      if (!el) return;
+      const card = el.querySelector('[data-rec-card]');
+      const amount = card ? card.offsetWidth + 24 : el.clientWidth * 0.8;
+      const atEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 4;
+      if (atEnd) {
+        el.scrollTo({ left: 0, behavior: 'smooth' });
+      } else {
+        el.scrollBy({ left: amount, behavior: 'smooth' });
+      }
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [recommendations.length]);
 
   const fetchRecommendations = async () => {
     try {
@@ -60,7 +79,7 @@ const RecommendationFeed = () => {
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-100 text-emerald-950 rounded-full text-xs font-bold border border-emerald-200 mb-2">
               <Sparkles className="w-3.5 h-3.5 text-emerald-700" />
-              <span>Gemini AI Personalization</span>
+              <span>AI Personalization</span>
             </div>
             <h2 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">
               Curated Recommendations For You
@@ -108,11 +127,11 @@ const RecommendationFeed = () => {
           })}
         </div>
 
-        {/* Product Cards Grid */}
+        {/* Product Cards — single-row auto-sliding carousel */}
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="h-80 bg-gray-100 rounded-2xl animate-pulse" />
+          <div className="flex gap-6 overflow-x-hidden">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="h-80 bg-gray-100 rounded-2xl animate-pulse shrink-0 w-[85%] sm:w-[45%] lg:w-[23%]" />
             ))}
           </div>
         ) : recommendations.length === 0 ? (
@@ -120,17 +139,21 @@ const RecommendationFeed = () => {
             <Compass className="w-12 h-12 text-emerald-600 mx-auto mb-3" />
             <h3 className="text-base font-bold text-gray-900">No Recommendations Yet</h3>
             <p className="text-xs text-gray-500 mt-1 max-w-md mx-auto">
-              Start browsing our catalog or take our Designer Quiz to unlock instant Gemini AI recommendations!
+              Start browsing our catalog or take our Designer Quiz to unlock instant AI recommendations!
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div
+            ref={carouselRef}
+            className="flex gap-6 overflow-x-auto no-scrollbar scroll-smooth snap-x snap-mandatory pb-2"
+          >
             {recommendations.map(item => (
-              <RecommendationCard
-                key={item.id || item._id}
-                item={item}
-                onExplain={handleExplain}
-              />
+              <div key={item.id || item._id} data-rec-card className="shrink-0 snap-start w-[85%] sm:w-[45%] lg:w-[23%]">
+                <RecommendationCard
+                  item={item}
+                  onExplain={handleExplain}
+                />
+              </div>
             ))}
           </div>
         )}

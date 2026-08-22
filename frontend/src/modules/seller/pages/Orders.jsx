@@ -137,6 +137,12 @@ const Orders = () => {
     setShowAssignModal(true);
   };
 
+  const handleAssignMemberClick = (order) => {
+    setSelectedOrderForAssign(order);
+    setShowAssignModal(true);
+    handleSellerManagedSelect();
+  };
+
   const handleInAppSelect = async () => {
     setAssignmentMode('in-app');
     try {
@@ -374,6 +380,7 @@ const Orders = () => {
                     order={order}
                     onClick={() => navigate(`/seller/orders/${order._id}`)}
                     onAssign={handleAssignInit}
+                    onAssignMember={handleAssignMemberClick}
                   />
                 ))}
               </div>
@@ -433,7 +440,7 @@ const Orders = () => {
                             >
                               <Eye size={14} />
                             </button>
-                            {order.status === 'Processing' && !order.deliveryBoy && (
+                            {order.status === 'Processing' && order.deliveryStatus === 'None' && (
                               <button
                                 onClick={() => handleAssignInit(order)}
                                 className="p-2 bg-seller-primary text-white rounded-lg hover:bg-seller-dark transition-all shadow-lg shadow-seller-primary/20"
@@ -447,6 +454,23 @@ const Orders = () => {
                                  <Truck size={12} className="text-seller-primary" />
                                  <span className="text-[9px] font-black text-seller-primary uppercase tracking-widest">{order.deliveryStatus || 'Assigned'}</span>
                               </div>
+                            )}
+                            {order.deliveryType === 'seller-managed' && order.deliveryStatus !== 'None' && (
+                              order.assignedStaff ? (
+                                <div className="flex items-center gap-1.5 p-1.5 px-3 bg-slate-100 rounded-lg border border-slate-200" title={`Self-Managed: ${order.assignedStaff?.name || 'Staff assigned'}`}>
+                                  <User size={12} className="text-slate-600" />
+                                  <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest truncate max-w-[80px]">{order.assignedStaff.name}</span>
+                                </div>
+                              ) : (
+                                <button
+                                  onClick={() => handleAssignMemberClick(order)}
+                                  className="flex items-center gap-1.5 p-1.5 px-3 bg-amber-50 text-amber-600 border border-amber-200 rounded-lg hover:bg-amber-100 transition-all"
+                                  title="Self-Managed — no staff member assigned yet"
+                                >
+                                  <User size={12} />
+                                  <span className="text-[9px] font-black uppercase tracking-widest">Assign Member</span>
+                                </button>
+                              )
                             )}
                           </div>
                         </td>

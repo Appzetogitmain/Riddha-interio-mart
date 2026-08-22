@@ -155,7 +155,7 @@ const CostEstimatorPage = () => {
 
     setCalculating(true);
     try {
-      toast.loading('Calculating costs & Gemini AI analysis...', { id: 'estimator-toast' });
+      toast.loading('Calculating costs & AI analysis...', { id: 'estimator-toast' });
       const res = await estimatorService.createEstimate({
         estimateName: `${roomType} (${computedArea} sq ft) Estimate`,
         roomType,
@@ -253,7 +253,7 @@ const CostEstimatorPage = () => {
             </div>
             <h1 className="text-2xl sm:text-4xl font-display font-black text-white tracking-tight">Interior Cost Estimator</h1>
             <p className="text-slate-200 text-xs sm:text-sm max-w-2xl leading-relaxed">
-              Calculate instant itemized cost breakdowns by room area, design scope, and material quality tiers with Gemini AI budget recommendations.
+              Calculate instant itemized cost breakdowns by room area, design scope, and material quality tiers with AI budget recommendations.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
@@ -686,13 +686,13 @@ const CostEstimatorPage = () => {
               </div>
             </div>
 
-            {/* FEATURE 3: GEMINI AI ANALYSIS & OPTIMIZATIONS */}
+            {/* FEATURE 3: AI ANALYSIS & OPTIMIZATIONS */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Cost Allocation Narrative */}
               <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
                 <div className="flex items-center space-x-2 text-amber-700 font-bold text-base font-display">
                   <LuBrain className="text-amber-600 text-xl" />
-                  <span>Gemini AI Budget Analysis</span>
+                  <span>AI Budget Analysis</span>
                 </div>
                 <p className="text-xs text-slate-700 leading-relaxed whitespace-pre-line">
                   {currentEstimate.aiAnalysis?.costBreakdownAnalysis || 'Cost allocation is well balanced across primary categories.'}
@@ -703,7 +703,7 @@ const CostEstimatorPage = () => {
               <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
                 <div className="flex items-center space-x-2 text-emerald-700 font-bold text-base font-display">
                   <FiTrendingDown className="text-emerald-600 text-xl" />
-                  <span>Gemini Cost Optimizations</span>
+                  <span>AI Cost Optimizations</span>
                 </div>
                 <div className="space-y-3">
                   {currentEstimate.aiAnalysis?.optimizationSuggestions?.map((opt, i) => (

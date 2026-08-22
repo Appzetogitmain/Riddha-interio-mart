@@ -2,8 +2,18 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { FiX } from 'react-icons/fi';
 
-const AppliedFilters = ({ filters, onRemoveFilter, onClearAll }) => {
+const AppliedFilters = ({ filters, onRemoveFilter, onClearAll, categories = [] }) => {
   const activeFilters = [];
+
+  if (filters.category) {
+    const cat = categories.find((c) => c._id === filters.category);
+    const sub = cat?.subcategories?.find((s) => s._id === filters.subcategory);
+    activeFilters.push({
+      id: 'category',
+      label: sub ? `${cat.name} • ${sub.name}` : (cat ? cat.name : 'Category'),
+      onRemove: () => onRemoveFilter(['category', 'subcategory'])
+    });
+  }
 
   if (filters.minPrice !== undefined || filters.maxPrice !== undefined) {
     const min = filters.minPrice || 0;

@@ -15,8 +15,11 @@ const CategoriesPage = () => {
   const [loading, setLoading] = useState(true);
   const [filterOptions, setFilterOptions] = useState(null);
   const [filterLoading, setFilterLoading] = useState(false);
+  const [categories, setCategories] = useState([]);
 
   const [filters, setFilters] = useState({
+    category: searchParams.get('category') || undefined,
+    subcategory: searchParams.get('subcategory') || undefined,
     minPrice: searchParams.get('minPrice') ? Number(searchParams.get('minPrice')) : undefined,
     maxPrice: searchParams.get('maxPrice') ? Number(searchParams.get('maxPrice')) : undefined,
     stock: searchParams.get('stock') || undefined,
@@ -48,7 +51,16 @@ const CategoriesPage = () => {
         console.error('Failed to fetch filter options:', err);
       }
     };
+    const fetchCategories = async () => {
+      try {
+        const res = await api.get('/categories');
+        setCategories(Array.isArray(res.data?.data) ? res.data.data : []);
+      } catch (err) {
+        console.error('Failed to fetch categories for filter:', err);
+      }
+    };
     fetchFilterOptions();
+    fetchCategories();
   }, []);
 
   useEffect(() => {
@@ -58,6 +70,8 @@ const CategoriesPage = () => {
         setLoading(true);
         const params = {};
 
+        if (filters.category) params.category = filters.category;
+        if (filters.subcategory) params.subcategory = filters.subcategory;
         if (filters.minPrice !== undefined) params.minPrice = filters.minPrice;
         if (filters.maxPrice !== undefined) params.maxPrice = filters.maxPrice;
         if (filters.stock) params.stock = filters.stock;
@@ -131,6 +145,8 @@ const CategoriesPage = () => {
 
   const handleClearAllFilters = () => {
     handleFiltersChange({
+      category: undefined,
+      subcategory: undefined,
       minPrice: undefined,
       maxPrice: undefined,
       stock: undefined,
@@ -204,6 +220,7 @@ const CategoriesPage = () => {
         filters={filters}
         onRemoveFilter={handleRemoveFilter}
         onClearAll={handleClearAllFilters}
+        categories={categories}
       />
 
       <div className="flex gap-16 relative">
@@ -213,6 +230,7 @@ const CategoriesPage = () => {
             filters={filters}
             onFiltersChange={handleFiltersChange}
             filterOptions={filterOptions}
+            categories={categories}
             isLoading={filterLoading}
           />
         </aside>
@@ -299,6 +317,7 @@ const CategoriesPage = () => {
                     setIsSidebarOpen(false);
                   }}
                   filterOptions={filterOptions}
+                  categories={categories}
                   isLoading={filterLoading}
                 />
               </div>

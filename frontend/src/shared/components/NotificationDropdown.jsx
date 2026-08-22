@@ -184,7 +184,7 @@ const NotificationDropdown = ({ isMobile = false, buttonClassName = '', viewAllP
     ? 'p-2 rounded-full text-deep-espresso hover:bg-gray-100'
     : (isSeller || isAdmin)
       ? 'p-2.5 text-slate-500 hover:bg-slate-100 rounded-xl'
-      : 'p-2 rounded-full text-gray-500 hover:text-[#004D40] hover:bg-gray-50';
+      : 'p-2 rounded-full text-gray-500 hover:text-[#28a399] hover:bg-gray-50';
 
   const defaultViewAllPath = isSeller
     ? '/seller/notifications'

@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../../shared/utils/api';
 
 const TopBrands = ({ title }) => {
   const [brands, setBrands] = useState([]);
   const [loading, setLoading] = useState(true);
+  const scrollRef = useRef(null);
 
   useEffect(() => {
     const fetchBrands = async () => {
@@ -21,6 +22,24 @@ const TopBrands = ({ title }) => {
     };
     fetchBrands();
   }, []);
+
+  // Auto-slide the brands carousel
+  useEffect(() => {
+    if (brands.length <= 4) return;
+    const timer = setInterval(() => {
+      const el = scrollRef.current;
+      if (!el) return;
+      const card = el.querySelector('[data-brand-card]');
+      const amount = card ? card.offsetWidth + 16 : el.clientWidth * 0.4;
+      const atEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 4;
+      if (atEnd) {
+        el.scrollTo({ left: 0, behavior: 'smooth' });
+      } else {
+        el.scrollBy({ left: amount, behavior: 'smooth' });
+      }
+    }, 3500);
+    return () => clearInterval(timer);
+  }, [brands.length]);
 
   if (!loading && brands.length === 0) return null;
 
@@ -53,12 +72,16 @@ const TopBrands = ({ title }) => {
         </div>
 
         <div className="relative z-10 px-4 sm:px-6 md:px-8 pb-6 md:pb-8 pt-5">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 lg:gap-5">
-            {brands.slice(0, 8).map((brand) => (
+          <div
+            ref={scrollRef}
+            className="flex gap-3 md:gap-4 lg:gap-5 overflow-x-auto no-scrollbar scroll-smooth snap-x snap-mandatory pb-1"
+          >
+            {brands.slice(0, 12).map((brand) => (
               <Link
                 key={brand._id}
+                data-brand-card
                 to={`/brand/${brand.slug || brand.name.toLowerCase().replace(/\s+/g, '-')}`}
-                className="group/brand relative overflow-hidden rounded-xl border border-slate-200/70 bg-white/90 p-0 flex flex-col text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(24,157,145,0.12)] hover:border-[#189D91]/20"
+                className="group/brand relative overflow-hidden rounded-xl border border-slate-200/70 bg-white/90 p-0 flex flex-col text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(24,157,145,0.12)] hover:border-[#189D91]/20 shrink-0 snap-start w-[calc(50%-6px)] md:w-[calc(25%-13px)]"
               >
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(24,157,145,0.06),transparent_55%)] opacity-0 group-hover/brand:opacity-100 transition-opacity" />
 

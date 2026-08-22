@@ -232,12 +232,12 @@ const AiAssistantWidget = () => {
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
         aria-label="Ask Tejas"
-        className={`w-14 h-14 rounded-full flex items-center justify-center shadow-xl border border-white/20 transition-colors focus:outline-none overflow-hidden ${isOpen ? 'bg-[#189D91] hover:bg-[#004D40] text-white' : 'bg-white'}`}
+        className={`w-20 h-20 rounded-full flex items-center justify-center shadow-xl border border-white/20 transition-colors focus:outline-none overflow-hidden ${isOpen ? 'bg-[#189D91] hover:bg-[#28a399] text-white' : 'bg-white'}`}
       >
         <AnimatePresence mode="wait">
           {isOpen ? (
             <motion.div key="close" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }}>
-              <FiX size={24} />
+              <FiX size={30} />
             </motion.div>
           ) : (
             <motion.img
@@ -467,7 +467,7 @@ const AiAssistantWidget = () => {
               <button
                 type="submit"
                 disabled={isLoading || !!handoverState || !inputText.trim()}
-                className="w-9 h-9 bg-[#189D91] hover:bg-[#004D40] disabled:bg-gray-100 text-white disabled:text-gray-400 rounded-xl flex items-center justify-center shrink-0 transition-colors focus:outline-none shadow-sm"
+                className="w-9 h-9 bg-[#189D91] hover:bg-[#28a399] disabled:bg-gray-100 text-white disabled:text-gray-400 rounded-xl flex items-center justify-center shrink-0 transition-colors focus:outline-none shadow-sm"
               >
                 <FiSend size={14} />
               </button>

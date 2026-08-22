@@ -51,6 +51,19 @@ const getCategorySlug = (name) => {
   return name.toLowerCase().replace(/\s+/g, '-');
 };
 
+// AI-powered tools & services — shown in their own strip between the header and the categories bar
+const AI_SERVICES = [
+  { to: '/designer-quiz', icon: FiCompass, label: 'Design Quiz', sub: 'AI Persona' },
+  { to: '/recommendations', icon: FiZap, label: 'AI Recommendations', sub: 'For You' },
+  { to: '/client-brief', icon: FiFileText, label: 'Project Brief', sub: 'AI Generator' },
+  { to: '/projects', icon: LuLayoutDashboard, label: 'Projects', sub: 'Dashboard' },
+  { to: '/cost-estimator', icon: LuCalculator, label: 'Cost Estimator', sub: 'AI Calculation' },
+  { to: '/boq-generator', icon: FiList, label: 'BOQ Generator', sub: 'Quantities & AI' },
+  { to: '/quotation-generator', icon: FiFileText, label: 'Quotation Gen', sub: 'GST & Quotes' },
+  { to: '/orders/track', icon: FiTruck, label: 'Order Tracking', sub: 'Live GPS & AI' },
+  { to: '/rfq/new', icon: FiPercent, label: 'Get a Quote', sub: 'Request Pricing', state: { source: 'header-ai-strip' } }
+];
+
 const SidebarLink = ({ to, icon: Icon, label, onClick }) => (
   <NavLink
     to={to}
@@ -80,10 +93,11 @@ const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
   const [policiesOpen, setPoliciesOpen] = useState(false);
-  const [activeCategory, setActiveCategory] = useState(null);
+  const [hoveredCategory, setHoveredCategory] = useState(null);
   const [categories, setCategories] = useState([]);
   const [scrolled, setScrolled] = useState(false);
   const dropdownTimeoutRef = useRef(null);
+  const categoriesBarRef = useRef(null);
   const { cartCount } = useCart();
   const { wishlistItems } = useWishlist();
   const wishlistCount = wishlistItems?.length || 0;
@@ -171,15 +185,36 @@ const Navbar = () => {
     setPoliciesOpen(false);
   };
 
-  const handleCategoryEnter = (catId) => {
+  // Positions the subcategory dropdown via JS (instead of pure CSS group-hover) because
+  // its trigger sits inside the horizontally-scrolling categories row: that row needs
+  // overflow-x-auto, and per the CSS spec setting overflow-x without overflow-y forces
+  // overflow-y to 'auto' too — which silently clips any absolutely-positioned dropdown
+  // nested inside it. Rendering the dropdown as a sibling outside that row, positioned
+  // from the hovered item's real bounding box, sidesteps the clipping entirely.
+  const handleCategoryEnter = (e, cat, slug) => {
     if (dropdownTimeoutRef.current) clearTimeout(dropdownTimeoutRef.current);
-    setActiveCategory(catId);
+    const subcats = cat.subcategories || [];
+    if (subcats.length === 0) {
+      setHoveredCategory(null);
+      return;
+    }
+    const itemRect = e.currentTarget.getBoundingClientRect();
+    const barRect = categoriesBarRef.current?.getBoundingClientRect();
+    setHoveredCategory({
+      slug,
+      subcats,
+      left: barRect ? itemRect.left - barRect.left : 0
+    });
   };
 
   const handleCategoryLeave = () => {
     dropdownTimeoutRef.current = setTimeout(() => {
-      setActiveCategory(null);
-    }, 200);
+      setHoveredCategory(null);
+    }, 150);
+  };
+
+  const handleDropdownEnter = () => {
+    if (dropdownTimeoutRef.current) clearTimeout(dropdownTimeoutRef.current);
   };
 
   return (
@@ -202,7 +237,7 @@ const Navbar = () => {
 
               {/* Delivery Location */}
               <div className="flex items-center gap-2 text-gray-900">
-                <FiMapPin className="text-[#004D40] w-5 h-5 shrink-0" />
+                <FiMapPin className="text-[#28a399] w-5 h-5 shrink-0" />
                 <div className="flex flex-col">
                   <span className="text-[10px] font-medium text-gray-400 leading-none">Delivering to</span>
                   <button
@@ -216,7 +251,7 @@ const Navbar = () => {
 
               {/* Delivery Time */}
               <div className="flex items-center gap-2 text-gray-900 border-l border-gray-100 pl-2 lg:pl-4">
-                <FiTruck className="text-[#004D40] w-5 h-5 shrink-0" />
+                <FiTruck className="text-[#28a399] w-5 h-5 shrink-0" />
                 <div className="flex flex-col">
                   <span className="text-[10px] font-medium text-gray-400 leading-none">Delivery in</span>
                   <span className="text-[11.5px] font-extrabold text-[#EA580C] mt-0.5">
@@ -232,14 +267,14 @@ const Navbar = () => {
               </div>
             )}
 
-            {/* AI Tools & Services */}
-            <div className="flex items-center gap-1.5 lg:gap-2 lg:px-1 shrink overflow-x-auto custom-scrollbar pt-1 md:pb-1">
+            {/* Seller & Bulk Order shortcuts (AI tools & services now live in their own strip below) */}
+            <div className="flex items-center gap-1.5 lg:gap-2 shrink-0">
               {/* Become a Seller */}
               <Link to="/seller/join" className="flex items-center gap-1.5 group">
-                <AiOutlineShop className="text-gray-500 w-4 h-4 group-hover:text-[#004D40] transition-colors" />
+                <AiOutlineShop className="text-gray-500 w-4 h-4 group-hover:text-[#28a399] transition-colors" />
                 <div className="flex flex-col text-left">
-                  <span className="text-[10px] font-bold text-gray-700 leading-none group-hover:text-[#004D40] transition-colors">Become a Seller</span>
-                  <span className="text-[9px] font-bold text-[#004D40] mt-0.5">Join Now</span>
+                  <span className="text-[10px] font-bold text-gray-700 leading-none group-hover:text-[#28a399] transition-colors">Become a Seller</span>
+                  <span className="text-[9px] font-bold text-[#28a399] mt-0.5">Join Now</span>
                 </div>
               </Link>
 
@@ -248,109 +283,12 @@ const Navbar = () => {
                 onClick={() => setIsBulkModalOpen(true)}
                 className="flex items-center gap-1.5 group border-l border-gray-100 pl-2 lg:pl-3 xl:pl-4 text-left"
               >
-                <FiFileText className="text-gray-500 w-4 h-4 group-hover:text-[#004D40] transition-colors" />
+                <FiFileText className="text-gray-500 w-4 h-4 group-hover:text-[#28a399] transition-colors" />
                 <div className="flex flex-col text-left">
-                  <span className="text-[10px] font-bold text-gray-700 leading-none group-hover:text-[#004D40] transition-colors">Bulk Order</span>
-                  <span className="text-[9px] font-bold text-[#004D40] mt-0.5">Best Price</span>
+                  <span className="text-[10px] font-bold text-gray-700 leading-none group-hover:text-[#28a399] transition-colors">Bulk Order</span>
+                  <span className="text-[9px] font-bold text-[#28a399] mt-0.5">Best Price</span>
                 </div>
               </button>
-
-              {/* Design Quiz */}
-              <Link
-                to="/designer-quiz"
-                className="flex items-center gap-1.5 group border-l border-gray-100 pl-2 lg:pl-3 xl:pl-4 text-left"
-              >
-                <FiCompass className="text-gray-500 w-4 h-4 group-hover:text-[#004D40] transition-colors" />
-                <div className="flex flex-col text-left">
-                  <span className="text-[10px] font-bold text-gray-700 leading-none group-hover:text-[#004D40] transition-colors font-sans">Design Quiz</span>
-                  <span className="text-[9px] font-bold text-[#004D40] mt-0.5 font-sans">AI Persona</span>
-                </div>
-              </Link>
-
-              {/* AI Recommendations */}
-              <Link
-                to="/recommendations"
-                className="flex items-center gap-1.5 group border-l border-gray-100 pl-2 lg:pl-3 xl:pl-4 text-left"
-              >
-                <FiZap className="text-gray-500 w-4 h-4 group-hover:text-[#004D40] transition-colors" />
-                <div className="flex flex-col text-left">
-                  <span className="text-[10px] font-bold text-gray-700 leading-none group-hover:text-[#004D40] transition-colors font-sans">AI Recommendations</span>
-                  <span className="text-[9px] font-bold text-[#004D40] mt-0.5 font-sans">For You</span>
-                </div>
-              </Link>
-
-              {/* Project Brief */}
-              <Link
-                to="/client-brief"
-                className="flex items-center gap-1.5 group border-l border-gray-100 pl-2 lg:pl-3 xl:pl-4 text-left"
-              >
-                <FiFileText className="text-gray-500 w-4 h-4 group-hover:text-[#004D40] transition-colors" />
-                <div className="flex flex-col text-left">
-                  <span className="text-[10px] font-bold text-gray-700 leading-none group-hover:text-[#004D40] transition-colors font-sans">Project Brief</span>
-                  <span className="text-[9px] font-bold text-[#004D40] mt-0.5 font-sans">AI Generator</span>
-                </div>
-              </Link>
-
-              {/* Project Management Studio */}
-              <Link
-                to="/projects"
-                className="flex items-center gap-1.5 group border-l border-gray-100 pl-2 lg:pl-3 xl:pl-4 text-left"
-              >
-                <LuLayoutDashboard className="text-gray-500 w-4 h-4 group-hover:text-[#004D40] transition-colors" />
-                <div className="flex flex-col text-left">
-                  <span className="text-[10px] font-bold text-gray-700 leading-none group-hover:text-[#004D40] transition-colors font-sans">Projects</span>
-                  <span className="text-[9px] font-bold text-[#004D40] mt-0.5 font-sans">Dashboard</span>
-                </div>
-              </Link>
-
-              {/* Cost Estimator */}
-              <Link
-                to="/cost-estimator"
-                className="flex items-center gap-1.5 group border-l border-gray-100 pl-2 lg:pl-3 xl:pl-4 text-left"
-              >
-                <LuCalculator className="text-gray-500 w-4 h-4 group-hover:text-[#004D40] transition-colors" />
-                <div className="flex flex-col text-left">
-                  <span className="text-[10px] font-bold text-gray-700 leading-none group-hover:text-[#004D40] transition-colors font-sans">Cost Estimator</span>
-                  <span className="text-[9px] font-bold text-[#004D40] mt-0.5 font-sans">AI Calculation</span>
-                </div>
-              </Link>
-
-              {/* BOQ Generator */}
-              <Link
-                to="/boq-generator"
-                className="flex items-center gap-1.5 group border-l border-gray-100 pl-2 lg:pl-3 xl:pl-4 text-left"
-              >
-                <FiList className="text-gray-500 w-4 h-4 group-hover:text-[#004D40] transition-colors" />
-                <div className="flex flex-col text-left">
-                  <span className="text-[10px] font-bold text-gray-700 leading-none group-hover:text-[#004D40] transition-colors font-sans">BOQ Generator</span>
-                  <span className="text-[9px] font-bold text-[#004D40] mt-0.5 font-sans">Quantities & AI</span>
-                </div>
-              </Link>
-
-              {/* Quotation Generator */}
-              <Link
-                to="/quotation-generator"
-                className="flex items-center gap-1.5 group border-l border-gray-100 pl-2 lg:pl-3 xl:pl-4 text-left"
-              >
-                <FiFileText className="text-gray-500 w-4 h-4 group-hover:text-[#004D40] transition-colors" />
-                <div className="flex flex-col text-left">
-                  <span className="text-[10px] font-bold text-gray-700 leading-none group-hover:text-[#004D40] transition-colors font-sans">Quotation Gen</span>
-                  <span className="text-[9px] font-bold text-[#004D40] mt-0.5 font-sans">GST & Quotes</span>
-                </div>
-              </Link>
-
-              {/* Order Tracking */}
-              <Link
-                to="/orders/track"
-                className="flex items-center gap-1.5 group border-l border-gray-100 pl-2 lg:pl-3 xl:pl-4 text-left"
-              >
-                <FiTruck className="text-gray-500 w-4 h-4 group-hover:text-[#004D40] transition-colors" />
-                <div className="flex flex-col text-left">
-                  <span className="text-[10px] font-bold text-gray-700 leading-none group-hover:text-[#004D40] transition-colors font-sans">Order Tracking</span>
-                  <span className="text-[9px] font-bold text-[#004D40] mt-0.5 font-sans">Live GPS & AI</span>
-                </div>
-              </Link>
-
             </div>
 
             <div className="h-8 w-[1px] bg-gray-200 shrink-0 mx-1"></div>
@@ -358,11 +296,11 @@ const Navbar = () => {
             {/* User Actions */}
             <div className="flex items-center gap-3 lg:gap-4 shrink-0 pr-1">
               <Link to="/profile" className="flex items-center group relative" title={user ? (user.fullName?.split(' ')[0] || 'Profile') : 'Login'}>
-                <FiUser className="w-5 h-5 text-gray-500 group-hover:text-[#004D40] transition-colors" />
+                <FiUser className="w-5 h-5 text-gray-500 group-hover:text-[#28a399] transition-colors" />
               </Link>
 
               <Link to="/notifications" className="flex items-center group relative" title="Notifications">
-                <FiBell className="w-5 h-5 text-gray-500 group-hover:text-[#004D40] transition-colors" />
+                <FiBell className="w-5 h-5 text-gray-500 group-hover:text-[#28a399] transition-colors" />
                 <span className="absolute -top-1.5 -right-1.5 bg-amber-500 text-deep-espresso text-[9px] font-black h-4 w-4 flex items-center justify-center rounded-full border-2 border-white">
                   3
                 </span>
@@ -378,23 +316,12 @@ const Navbar = () => {
               </Link>
 
               <Link to="/cart" className="flex items-center group relative" title="Cart">
-                <FiShoppingCart className="w-5 h-5 text-gray-500 group-hover:text-[#004D40] transition-colors" />
+                <FiShoppingCart className="w-5 h-5 text-gray-500 group-hover:text-[#28a399] transition-colors" />
                 {cartCount > 0 && (
                   <span className="absolute -top-1.5 -right-1.5 bg-[#FF6B35] text-white text-[9px] font-bold h-4 w-4 flex items-center justify-center rounded-full border-2 border-white">
                     {cartCount}
                   </span>
                 )}
-              </Link>
-
-              {/* ── B2B: standalone quotation request (Requirement A) ── */}
-              <Link
-                to="/rfq/new"
-                state={{ source: 'header' }}
-                title="Request a quotation"
-                className="hidden lg:inline-flex items-center gap-1.5 rounded-lg border border-[#189D91] px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-[#189D91] transition-colors hover:bg-[#189D91] hover:text-white"
-              >
-                <FiFileText className="w-3.5 h-3.5" />
-                Get Quote
               </Link>
 
               {user && (
@@ -443,15 +370,34 @@ const Navbar = () => {
         </div>
       </nav>
 
+      {/* AI Tools & Services Strip — sits between the header and the categories bar, each service shown separately */}
+      <div className="hidden md:block bg-white border-b border-gray-100 relative z-40">
+        <div className="max-w-[1700px] mx-auto px-6 lg:px-8">
+          <div className="flex items-center gap-x-7 lg:gap-x-10 py-2.5 overflow-x-auto no-scrollbar scroll-smooth lg:justify-center">
+            {AI_SERVICES.map((svc) => (
+              <Link key={svc.to} to={svc.to} state={svc.state} className="flex items-center gap-2 group shrink-0">
+                <div className="w-7 h-7 rounded-lg bg-gray-50 border border-[#189D91]/20 flex items-center justify-center shadow-sm group-hover:bg-[#189D91] group-hover:border-[#189D91] transition-colors shrink-0">
+                  <svc.icon className="w-3.5 h-3.5 text-[#189D91] group-hover:text-white transition-colors" />
+                </div>
+                <div className="flex flex-col text-left">
+                  <span className="text-[10.5px] font-bold text-gray-700 leading-none group-hover:text-[#28a399] transition-colors whitespace-nowrap">{svc.label}</span>
+                  <span className="text-[9px] font-bold text-[#189D91] mt-0.5 whitespace-nowrap">{svc.sub}</span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </div>
+
       {/* Desktop Secondary Categories Nav with Mega Menu */}
-      <div className="hidden md:block bg-white border-b border-gray-200 relative z-40">
+      <div ref={categoriesBarRef} className="hidden md:block bg-white border-b border-gray-200 relative z-40">
         <div className="max-w-[1700px] mx-auto px-6 lg:px-8 flex items-center h-12">
-          <div className="flex items-center gap-4 w-full overflow-hidden">
+          <div className="flex items-center gap-4 w-full">
             {/* All Categories Button */}
             <div className="relative group/cat shrink-0">
               <Link
                 to="/categories"
-                className="flex items-center gap-2 bg-[#004D40] text-white px-5 py-2.5 rounded-lg font-bold text-xs uppercase tracking-wider hover:bg-[#003d33] transition-colors shadow-sm"
+                className="flex items-center gap-2 bg-[#28a399] text-white px-5 py-2.5 rounded-lg font-bold text-xs uppercase tracking-wider hover:bg-[#003d33] transition-colors shadow-sm"
               >
                 <FiMenu className="w-4 h-4" />
                 <span>All Categories</span>
@@ -487,12 +433,14 @@ const Navbar = () => {
                   <div
                     key={i}
                     className="relative h-full flex items-center shrink-0"
+                    onMouseEnter={(e) => handleCategoryEnter(e, cat, slug)}
+                    onMouseLeave={handleCategoryLeave}
                   >
                     <Link
                       to={linkTo}
                       className={`text-[13px] font-semibold tracking-tight transition-all h-full flex items-center whitespace-nowrap px-1 py-3 ${isActive
-                        ? "text-[#004D40] border-b-2 border-[#004D40]"
-                        : "text-gray-800 hover:text-[#004D40]"
+                        ? "text-[#28a399] border-b-2 border-[#28a399]"
+                        : "text-gray-800 hover:text-[#28a399]"
                         }`}
                     >
                       {cat.name}
@@ -504,11 +452,27 @@ const Navbar = () => {
           </div>
         </div>
 
-
-        {/* Mega Menu Dropdown - DISABLED AS REQUESTED */}
-        {/* <AnimatePresence>
-          ...
-        </AnimatePresence> */}
+        {/* Subcategories Dropdown — rendered outside the scrolling row (see handleCategoryEnter) so it isn't clipped */}
+        {hoveredCategory && (
+          <div
+            onMouseEnter={handleDropdownEnter}
+            onMouseLeave={handleCategoryLeave}
+            style={{ left: hoveredCategory.left }}
+            className="absolute top-full pt-2 z-50"
+          >
+            <div className="bg-white shadow-2xl border border-gray-100 rounded-xl py-2 w-56 max-h-96 overflow-y-auto">
+              {hoveredCategory.subcats.map((sub) => (
+                <Link
+                  key={sub._id || sub.name}
+                  to={`/category/${hoveredCategory.slug}?sub=${encodeURIComponent(sub.name)}`}
+                  className="block px-5 py-2 text-[13px] font-semibold text-gray-700 hover:bg-gray-50 hover:text-[#28a399] transition-colors whitespace-nowrap"
+                >
+                  {sub.name}
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       <AnimatePresence>
@@ -561,7 +525,7 @@ const Navbar = () => {
                 {/* Mobile Delivery Location Selector */}
                 <div className="px-5 py-3.5 bg-gray-50/50 border-b border-gray-100 flex items-center justify-between shrink-0">
                   <div className="flex items-center gap-2.5">
-                    <FiMapPin className="text-[#004D40] w-4 h-4" />
+                    <FiMapPin className="text-[#28a399] w-4 h-4" />
                     <div className="flex flex-col">
                       <span className="text-[9px] font-semibold text-gray-400 uppercase tracking-wider">Delivering to</span>
                       <span className="text-[12px] font-bold text-gray-800 mt-0.5">{activeCity} - {pincode}</span>
@@ -572,7 +536,7 @@ const Navbar = () => {
                       closeMobile();
                       handleOpenPincodeModal();
                     }}
-                    className="text-[10px] font-bold uppercase tracking-wider text-[#004D40] hover:underline"
+                    className="text-[10px] font-bold uppercase tracking-wider text-[#28a399] hover:underline"
                   >
                     Change
                   </button>
@@ -662,7 +626,7 @@ const Navbar = () => {
             >
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-2xl bg-[#004D40]/5 flex items-center justify-center text-[#004D40]">
+                  <div className="w-9 h-9 rounded-2xl bg-[#28a399]/5 flex items-center justify-center text-[#28a399]">
                     <FiMapPin className="w-5 h-5" />
                   </div>
                   <div>
@@ -691,7 +655,7 @@ const Navbar = () => {
                     value={tempPincode}
                     onChange={(e) => setTempPincode(e.target.value.replace(/\D/g, ''))}
                     placeholder="e.g. 700016"
-                    className="w-full px-4 py-3 rounded-xl bg-gray-50 border-2 border-transparent focus:border-[#004D40]/10 focus:bg-white focus:outline-none text-[13px] font-bold text-gray-800 tracking-widest"
+                    className="w-full px-4 py-3 rounded-xl bg-gray-50 border-2 border-transparent focus:border-[#28a399]/10 focus:bg-white focus:outline-none text-[13px] font-bold text-gray-800 tracking-widest"
                     required
                   />
                 </div>
@@ -704,7 +668,7 @@ const Navbar = () => {
 
                 <button
                   type="submit"
-                  className="w-full py-3.5 bg-[#004D40] text-white rounded-2xl font-bold text-xs uppercase tracking-[0.2em] hover:bg-[#003d33] transition-colors shadow-lg shadow-[#004D40]/15"
+                  className="w-full py-3.5 bg-[#28a399] text-white rounded-2xl font-bold text-xs uppercase tracking-[0.2em] hover:bg-[#003d33] transition-colors shadow-lg shadow-[#28a399]/15"
                 >
                   Update Location
                 </button>

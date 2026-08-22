@@ -1,19 +1,13 @@
-import React, { useState } from 'react';
-import { Sparkles, SlidersHorizontal, Search } from 'lucide-react';
+import React from 'react';
+import { Sparkles, X, SlidersHorizontal } from 'lucide-react';
 import api from '../../../shared/utils/api';
 
-const SearchRefinement = ({ query, onApplyFilter }) => {
-  const [suggestions, setSuggestions] = useState([
-    'Style: Modern Minimalist',
-    'Material: Italian Marble',
-    'Price: Under ₹50,000',
-    'Rating: 4.5+ Stars',
-    'In Stock Only'
-  ]);
+const SearchRefinement = ({ query, interpretation, chips = [], onRemoveChip, loading }) => {
+  if (loading || chips.length === 0) return null;
 
-  const handleFilterClick = (filterText) => {
-    if (onApplyFilter) onApplyFilter(filterText);
-    api.post('/recommendations/track', { action: 'search_filter_click', context: 'search' }).catch(() => {});
+  const handleRemove = (chip) => {
+    if (onRemoveChip) onRemoveChip(chip);
+    api.post('/recommendations/track', { action: 'search_filter_remove', context: 'search' }).catch(() => {});
   };
 
   return (
@@ -21,19 +15,21 @@ const SearchRefinement = ({ query, onApplyFilter }) => {
       <div className="flex items-center gap-2 mb-2">
         <Sparkles className="w-4 h-4 text-emerald-700" />
         <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wider">
-          AI Suggested Search Refinements for "{query || 'Catalog'}"
+          {interpretation ? `Searching for: ${interpretation}` : `AI Understood "${query}"`}
         </h4>
       </div>
 
       <div className="flex items-center gap-2 flex-wrap">
-        {suggestions.map((sug, idx) => (
+        {chips.map((chip) => (
           <button
-            key={idx}
-            onClick={() => handleFilterClick(sug)}
-            className="px-3 py-1.5 bg-white hover:bg-emerald-700 hover:text-white border border-emerald-200 text-gray-700 rounded-xl text-xs font-medium transition-all shadow-2xs active:scale-95 flex items-center gap-1.5"
+            key={chip.key}
+            onClick={() => handleRemove(chip)}
+            title="Remove this filter"
+            className="px-3 py-1.5 bg-white hover:bg-emerald-700 hover:text-white border border-emerald-200 text-gray-700 rounded-xl text-xs font-medium transition-all shadow-2xs active:scale-95 flex items-center gap-1.5 group"
           >
             <SlidersHorizontal className="w-3 h-3 text-emerald-600 group-hover:text-white" />
-            <span>{sug}</span>
+            <span>{chip.label}</span>
+            <X className="w-3 h-3 text-gray-400 group-hover:text-white" />
           </button>
         ))}
       </div>

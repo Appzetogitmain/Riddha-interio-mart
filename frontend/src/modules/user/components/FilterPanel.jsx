@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiChevronDown, FiX } from 'react-icons/fi';
+import CategoryFilter from './filters/CategoryFilter';
 import PriceFilter from './filters/PriceFilter';
 import StockFilter from './filters/StockFilter';
 import RatingFilter from './filters/RatingFilter';
@@ -11,8 +12,9 @@ import DeliveryFilter from './filters/DeliveryFilter';
 import NewArrivalsFilter from './filters/NewArrivalsFilter';
 import OfferTypeFilter from './filters/OfferTypeFilter';
 
-const FilterPanel = ({ filters, onFiltersChange, filterOptions, isLoading = false }) => {
+const FilterPanel = ({ filters, onFiltersChange, filterOptions, categories = [], isLoading = false }) => {
   const [expandedSections, setExpandedSections] = useState({
+    category: true,
     price: true,
     stock: true,
     rating: false,
@@ -46,8 +48,18 @@ const FilterPanel = ({ filters, onFiltersChange, filterOptions, isLoading = fals
     });
   };
 
+  const handleCategoryChange = (categoryId, subcategoryId) => {
+    onFiltersChange({
+      ...filters,
+      category: categoryId,
+      subcategory: subcategoryId
+    });
+  };
+
   const handleResetFilters = () => {
     onFiltersChange({
+      category: undefined,
+      subcategory: undefined,
       minPrice: undefined,
       maxPrice: undefined,
       stock: undefined,
@@ -93,6 +105,17 @@ const FilterPanel = ({ filters, onFiltersChange, filterOptions, isLoading = fals
           </button>
         )}
       </div>
+
+      {/* Category Filter */}
+      <FilterSection title="Category" section="category" isExpanded={expandedSections.category} onToggle={toggleSection}>
+        <CategoryFilter
+          categories={categories}
+          selectedCategory={filters.category}
+          selectedSubcategory={filters.subcategory}
+          onChange={handleCategoryChange}
+          isLoading={isLoading}
+        />
+      </FilterSection>
 
       {/* Price Filter */}
       <FilterSection title="Price Range" section="price" isExpanded={expandedSections.price} onToggle={toggleSection}>

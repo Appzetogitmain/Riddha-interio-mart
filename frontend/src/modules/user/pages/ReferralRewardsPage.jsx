@@ -126,7 +126,7 @@ const ReferralRewardsPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_0.6fr] gap-12">
           {/* Main Referral Content */}
           <div className="space-y-12">
-            <div className="bg-gradient-to-br from-[#004D40] to-[#189D91] p-8 md:p-12 rounded-[3.5rem] text-white relative overflow-hidden shadow-2xl">
+            <div className="bg-gradient-to-br from-[#28a399] to-[#189D91] p-8 md:p-12 rounded-[3.5rem] text-white relative overflow-hidden shadow-2xl">
               <div className="relative z-10 space-y-6">
                  <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/20">
                     <FiGift className="text-yellow-400" /> Professional Rewards
@@ -145,7 +145,7 @@ const ReferralRewardsPage = () => {
                     </div>
                     <button 
                       onClick={copyCode}
-                      className="bg-white text-[#004D40] px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-black hover:text-white transition-all active:scale-95 flex items-center gap-3 shadow-2xl"
+                      className="bg-white text-[#28a399] px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-black hover:text-white transition-all active:scale-95 flex items-center gap-3 shadow-2xl"
                     >
                       {copied ? <FiCheck /> : <FiCopy />} {copied ? 'COPIED' : 'COPY CODE'}
                     </button>

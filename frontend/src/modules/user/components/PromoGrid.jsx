@@ -53,8 +53,8 @@ const PromoGrid = () => {
       items: ["Special Pricing", "Bulk Deals", "Priority Support"],
       btnText: "Join Now",
       bg: "bg-[#F4F9F8]",
-      textColor: "text-[#004D40]",
-      btnColor: "text-[#004D40]",
+      textColor: "text-[#28a399]",
+      btnColor: "text-[#28a399]",
       img: ContractorImg,
       link: "/contractor-registration"
     },

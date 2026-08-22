@@ -134,6 +134,16 @@ class FilterService {
       isApproved: true
     };
 
+    // Category/subcategory are passed as ObjectIds (from the already-fetched
+    // /categories list, which embeds subcategory _ids) — no name resolution needed.
+    if (filters.category && filters.category !== 'all') {
+      query.category = filters.category;
+    }
+
+    if (filters.subcategory && filters.subcategory !== 'all') {
+      query.subcategory = filters.subcategory;
+    }
+
     if (filters.stock && filters.stock !== 'all') {
       query.stock = filters.stock;
     }

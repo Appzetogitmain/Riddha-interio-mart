@@ -69,35 +69,37 @@ Return ONLY a valid JSON array of item objects:
 
     let extractedItems = null;
 
-    try {
-      const response = await openaiClient.generateText(prompt, {
-        modelType: 'vision',
-        expectJson: true,
-        temperature: 0.7,
-        maxTokens: 800
-      });
+    if (base64Image) {
+      try {
+        const response = await openaiClient.generateWithVision(prompt, [{ base64: base64Image, mimeType }], {
+          modelType: 'vision',
+          expectJson: true,
+          temperature: 0.7,
+          maxTokens: 800
+        });
 
-      await OpenAIUsageTracker.trackUsage(
-        {
-          inputTokens: response.inputTokens,
-          outputTokens: response.outputTokens,
-          totalTokens: response.totalTokens,
-        },
-        'boqDrawingExtraction',
-        userId,
-        '/api/boqs/upload-drawing',
-        response.model
-      );
+        await OpenAIUsageTracker.trackUsage(
+          {
+            inputTokens: response.inputTokens,
+            outputTokens: response.outputTokens,
+            totalTokens: response.totalTokens,
+          },
+          'boqDrawingExtraction',
+          userId,
+          '/api/boqs/upload-drawing',
+          response.model
+        );
 
-      const cleanedText = response.text.replace(/```json/g, '').replace(/```/g, '').trim();
-      const parsed = JSON.parse(cleanedText);
-      if (Array.isArray(parsed) && parsed.length > 0) extractedItems = parsed;
-    } catch (e) {
-      const errorInfo = OpenAIErrorHandler.handleError(e, {
-        service: 'BoqService',
-        method: 'extractItemsFromDrawing'
-      });
-      console.error('[BOQ DRAWING EXTRACTION ERROR]', errorInfo.message);
+        const cleanedText = response.text.replace(/```json/g, '').replace(/```/g, '').trim();
+        const parsed = JSON.parse(cleanedText);
+        if (Array.isArray(parsed) && parsed.length > 0) extractedItems = parsed;
+      } catch (e) {
+        const errorInfo = OpenAIErrorHandler.handleError(e, {
+          service: 'BoqService',
+          method: 'extractItemsFromDrawing'
+        });
+        console.error('[BOQ DRAWING EXTRACTION ERROR]', errorInfo.message);
+      }
     }
 
     if (!extractedItems) {

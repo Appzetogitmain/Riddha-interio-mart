@@ -243,6 +243,9 @@ const SellerNotifications = ({ token }) => {
     const onOrderNew = (payload) => {
       playNotificationSound();
       setQueue(q => [...q, { type: 'order', data: payload }]);
+      // Let any currently-open Orders page (or other listeners) know to refresh
+      // without a full page reload — see Orders.jsx's 'seller:new-order' listener.
+      window.dispatchEvent(new CustomEvent('seller:new-order', { detail: payload }));
     };
 
     socket.on('batch:product_reviewed', onBatchReviewed);

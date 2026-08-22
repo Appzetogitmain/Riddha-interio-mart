@@ -866,8 +866,8 @@ exports.updateSellerManagedDeliveryStatus = async (req, res) => {
       return res.status(400).json({ success: false, error: 'This order is not managed by seller.' });
     }
 
-    const { status, pickupProofImages, pickupProofVideo, deliveryProofImages } = req.body;
-    
+    const { status, pickupProofImages, pickupProofVideo, deliveryProofImages, otp } = req.body;
+
     const permittedStates = ['Picked', 'Out for Delivery', 'Delivered'];
     if (!permittedStates.includes(status)) {
       return res.status(400).json({ success: false, error: 'Invalid status update for seller-managed delivery.' });
@@ -881,9 +881,46 @@ exports.updateSellerManagedDeliveryStatus = async (req, res) => {
       }
     }
 
+    // Generate & email the customer a delivery OTP the moment the seller heads out —
+    // same mechanism the in-app delivery-partner flow already uses.
+    if (status === 'Out for Delivery' && !order.deliveryOtp) {
+      const generatedOtp = Math.floor(1000 + Math.random() * 9000).toString();
+      order.deliveryOtp = generatedOtp;
+
+      console.log(`\n========================================`);
+      console.log(`[TESTING OTP] Delivery OTP for Order #${order._id.toString().slice(-8).toUpperCase()} is: ${generatedOtp}`);
+      console.log(`========================================\n`);
+
+      try {
+        const User = require('../models/User');
+        const customer = await User.findById(order.user);
+        if (customer && customer.email) {
+          const emailService = require('../services/emailService');
+          await emailService.queueEmail(
+            customer.email,
+            `Delivery OTP for Order #${order._id.toString().slice(-8).toUpperCase()}`,
+            'delivery_otp',
+            { order, otp: generatedOtp }
+          );
+        }
+      } catch (e) {
+        console.error('Failed to queue OTP email', e);
+      }
+    }
+
+    // Self-managed deliveries are completed the same way as in-app ones: the customer's
+    // OTP must be entered before the order can be marked Delivered.
     if (status === 'Delivered') {
+      const isStaticBypass = (process.env.useMockOtpForDelivery === 'true' || process.env.USE_MOCK_OTP_FOR_DELIVERY === 'true') && otp === '1234';
+      if (!isStaticBypass) {
+        if (!order.deliveryOtp) {
+          return res.status(400).json({ success: false, error: 'Delivery OTP has not been generated yet. Mark the order Out for Delivery first.' });
+        }
+        if (order.deliveryOtp !== otp) {
+          return res.status(400).json({ success: false, error: 'Invalid delivery OTP provided.' });
+        }
+      }
       if (deliveryProofImages) order.deliveryProofImages = deliveryProofImages;
-      // Depending on rules, seller might not necessarily have to prove it via app, but let's assume they should if requested.
     }
 
     order.deliveryStatus = status;

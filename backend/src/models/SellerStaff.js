@@ -27,6 +27,11 @@ const SellerStaffSchema = new mongoose.Schema({
     trim: true,
     default: ''
   },
+  drivingLicenseImage: {
+    type: String,
+    trim: true,
+    default: ''
+  },
   isActive: {
     type: Boolean,
     default: true

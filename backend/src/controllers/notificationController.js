@@ -9,10 +9,10 @@ exports.getNotifications = async (req, res, next) => {
     const limit = parseInt(req.query.limit, 10) || 20;
     const startIndex = (page - 1) * limit;
 
-    const query = { recipient: req.user.id };
+    const query = { userId: req.user.id };
 
     const total = await Notification.countDocuments(query);
-    const unreadCount = await Notification.countDocuments({ ...query, read: false });
+    const unreadCount = await Notification.countDocuments({ ...query, isRead: false });
 
     const notifications = await Notification.find(query)
       .sort({ createdAt: -1 })
@@ -42,8 +42,8 @@ exports.getNotifications = async (req, res, next) => {
 exports.markAsRead = async (req, res, next) => {
   try {
     const notification = await Notification.findOneAndUpdate(
-      { _id: req.params.id, recipient: req.user.id },
-      { read: true },
+      { _id: req.params.id, userId: req.user.id },
+      { isRead: true },
       { new: true, runValidators: true }
     );
 
@@ -63,8 +63,8 @@ exports.markAsRead = async (req, res, next) => {
 exports.markAllAsRead = async (req, res, next) => {
   try {
     await Notification.updateMany(
-      { recipient: req.user.id, read: false },
-      { read: true }
+      { userId: req.user.id, isRead: false },
+      { isRead: true }
     );
 
     res.status(200).json({ success: true, message: 'All notifications marked as read' });
@@ -80,7 +80,7 @@ exports.deleteNotification = async (req, res, next) => {
   try {
     const notification = await Notification.findOneAndDelete({
       _id: req.params.id,
-      recipient: req.user.id
+      userId: req.user.id
     });
 
     if (!notification) {
@@ -98,7 +98,7 @@ exports.deleteNotification = async (req, res, next) => {
 // @access  Private
 exports.clearAllNotifications = async (req, res, next) => {
   try {
-    await Notification.deleteMany({ recipient: req.user.id });
+    await Notification.deleteMany({ userId: req.user.id });
     res.status(200).json({ success: true, message: 'All notifications cleared' });
   } catch (err) {
     next(err);

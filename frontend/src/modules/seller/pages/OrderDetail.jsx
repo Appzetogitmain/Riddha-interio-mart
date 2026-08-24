@@ -370,6 +370,14 @@ const OrderDetail = () => {
                   <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Total</p>
                   <p className="text-base font-black text-slate-900 mt-0.5">₹{order.totalPrice?.toLocaleString()}</p>
                 </div>
+                {order.deliveryTimeline?.expectedDeliveryTime && (
+                  <div>
+                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1"><LuClock size={9} /> Est. Delivery</p>
+                    <p className="text-xs font-bold text-indigo-700 mt-0.5">
+                      {new Date(order.deliveryTimeline.expectedDeliveryTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
 

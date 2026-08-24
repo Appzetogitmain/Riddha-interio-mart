@@ -83,6 +83,12 @@ const NotificationSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  // Free-form payload (e.g. orderId, batchId) so the frontend can deep-link "View Order" etc.
+  // without needing a separate lookup — see NotificationDropdown.jsx's getNavTarget().
+  data: {
+    type: mongoose.Schema.Types.Mixed,
+    default: {}
+  },
   scheduledFor: Date,
   sentAt: { type: Date, default: Date.now },
   expiresAt: Date

@@ -22,7 +22,11 @@ const STATUS_PIPELINE = [
 ];
 
 const OrderTrackingPage = () => {
-  const { orderId } = useParams();
+  // Mounted under both /orders/:orderId/track and /track-order/:id — read whichever param the
+  // matched route actually supplies so a real order id is never silently dropped in favor of
+  // the 'demo-order-1' fallback below.
+  const { orderId: orderIdParam, id: idParam } = useParams();
+  const orderId = orderIdParam || idParam;
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
@@ -125,7 +129,7 @@ const OrderTrackingPage = () => {
 
       if (res.success && res.data) {
         setIssueResult(res.data.aiAnalysis || res.data.issue?.aiAnalysis);
-        toast.success('Issue reported! Gemini AI resolution plan generated.');
+        toast.success('Issue reported! AI resolution plan generated.');
         fetchTrackingData();
       }
     } catch (e) {
@@ -169,9 +173,36 @@ const OrderTrackingPage = () => {
 
   const currentStatus = order?.status?.toLowerCase() || 'in-transit';
   const currentPipelineIdx = Math.max(0, STATUS_PIPELINE.findIndex(s => s.id === currentStatus || currentStatus.includes(s.id)));
-  const partner = order?.deliveryPartnerDetails || {};
-  const aiPred = order?.aiPredictions || {};
-  const otpCode = order?.proofOfDelivery?.otp || '4892';
+  // Real once the order has actually been dispatched (backend only assigns a partner/generates
+  // an AI ETA at that point — see trackingController.js's isDispatched gate); before that, these
+  // stay empty rather than showing a fabricated driver/arrival time for an order still Processing.
+  const partner = order?.deliveryPartnerDetails?.name ? order.deliveryPartnerDetails : null;
+  const aiPred = order?.aiPredictions?.estimatedDeliveryTime ? order.aiPredictions : {};
+  // order.deliveryOtp is the canonical OTP — it's the one emailed to the customer and the one
+  // verifyDeliveryOtp actually checks. order.proofOfDelivery.otp is a separate, unrelated code
+  // that was never wired to the real verification flow; showing it here was the cause of
+  // "Invalid OTP" errors (the delivery partner was being told the wrong code to enter).
+  const otpCode = order?.deliveryOtp || null;
+  // Fall back to the deterministic distance-based ETA (set the moment the order goes "Out for
+  // Delivery") until the AI-refined prediction has been generated.
+  const fallbackEta = order?.deliveryTimeline?.expectedDeliveryTime
+    ? new Date(order.deliveryTimeline.expectedDeliveryTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    : null;
+  // Real seller-to-shipping-address distance (haversine), replacing the old hardcoded "3.8 km".
+  const distanceKm = (() => {
+    const seller = order?.sellerCoordinates;
+    const shipping = order?.shippingCoordinates;
+    if (!seller?.latitude || !shipping?.latitude) return null;
+    const R = 6371;
+    const dLat = ((shipping.latitude - seller.latitude) * Math.PI) / 180;
+    const dLng = ((shipping.longitude - seller.longitude) * Math.PI) / 180;
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos((seller.latitude * Math.PI) / 180) * Math.cos((shipping.latitude * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
+    return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) * 100) / 100;
+  })();
+  // Minutes remaining until the real expectedDeliveryTime, replacing the old hardcoded "18 mins".
+  const minutesRemaining = order?.deliveryTimeline?.expectedDeliveryTime
+    ? Math.max(0, Math.round((new Date(order.deliveryTimeline.expectedDeliveryTime).getTime() - Date.now()) / 60000))
+    : null;
 
   return (
     <div className="min-h-screen bg-slate-50 py-8 px-3 sm:px-6 lg:px-8">
@@ -188,7 +219,7 @@ const OrderTrackingPage = () => {
               Order #{order?.orderNumber || 'ORD-2026-8912'}
             </h1>
             <p className="text-slate-200 text-xs sm:text-sm max-w-2xl leading-relaxed">
-              Track live GPS delivery partner location, view Gemini AI arrival predictions, and manage delivery proof & issue resolutions.
+              Track live GPS delivery partner location, view AI arrival predictions, and manage delivery proof & issue resolutions.
             </p>
           </div>
 
@@ -201,9 +232,13 @@ const OrderTrackingPage = () => {
               </span>
             </div>
             <div className="text-3xl font-black text-amber-400 tracking-widest font-mono">
-              {otpCode}
+              {otpCode || '— — — —'}
             </div>
-            <p className="text-[11px] text-slate-300">Share this 4-digit OTP with your delivery agent upon arrival.</p>
+            <p className="text-[11px] text-slate-300">
+              {otpCode
+                ? 'Share this 4-digit OTP with your delivery agent upon arrival.'
+                : 'Your OTP will appear here once the order is out for delivery.'}
+            </p>
             <div className="flex gap-2 pt-1">
               <button
                 onClick={() => setShowIssueModal(true)}
@@ -221,36 +256,50 @@ const OrderTrackingPage = () => {
           </div>
         </div>
 
-        {/* Gemini AI Delivery ETA Card */}
-        <div className="bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 rounded-3xl p-6 text-deep-espresso shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-          <div className="flex items-center space-x-4">
-            <div className="p-3.5 bg-slate-900 text-amber-400 rounded-2xl shrink-0 shadow-md">
+        {/* AI Delivery ETA Card — only once a real estimate exists (order actually dispatched) */}
+        {(aiPred.estimatedDeliveryTime || fallbackEta) ? (
+          <div className="bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 rounded-3xl p-6 text-deep-espresso shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div className="flex items-center space-x-4">
+              <div className="p-3.5 bg-slate-900 text-amber-400 rounded-2xl shrink-0 shadow-md">
+                <FiClock className="w-7 h-7" />
+              </div>
+              <div>
+                <div className="flex items-center space-x-2">
+                  <span className="text-xs font-black uppercase tracking-wider bg-slate-900/10 px-2 py-0.5 rounded-full">
+                    AI Arrival Prediction
+                  </span>
+                  <span className="text-xs font-bold bg-slate-900 text-amber-400 px-2 py-0.5 rounded-full uppercase">
+                    Confidence: {aiPred.confidenceLevel || 'high'}
+                  </span>
+                </div>
+                <h2 className="text-xl sm:text-2xl font-black font-display text-slate-900 mt-1">
+                  Expected Arrival: {aiPred.estimatedDeliveryTime || fallbackEta}
+                </h2>
+                <p className="text-xs font-semibold text-slate-900/80 max-w-2xl mt-0.5">
+                  {aiPred.message || 'Your interior decor items are being transported safely along an optimized route.'}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={fetchTrackingData}
+              className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-amber-400 font-bold text-xs rounded-xl shadow-md inline-flex items-center gap-2 shrink-0 self-start md:self-auto"
+            >
+              <FiRefreshCw /> Refresh Live Status
+            </button>
+          </div>
+        ) : (
+          <div className="bg-slate-100 border border-slate-200 rounded-3xl p-6 flex items-center gap-4">
+            <div className="p-3.5 bg-white text-slate-400 rounded-2xl shrink-0 shadow-sm border border-slate-200">
               <FiClock className="w-7 h-7" />
             </div>
             <div>
-              <div className="flex items-center space-x-2">
-                <span className="text-xs font-black uppercase tracking-wider bg-slate-900/10 px-2 py-0.5 rounded-full">
-                  Gemini AI Arrival Prediction
-                </span>
-                <span className="text-xs font-bold bg-slate-900 text-amber-400 px-2 py-0.5 rounded-full uppercase">
-                  Confidence: {aiPred.confidenceLevel || 'high'}
-                </span>
-              </div>
-              <h2 className="text-xl sm:text-2xl font-black font-display text-slate-900 mt-1">
-                Expected Arrival: {aiPred.estimatedDeliveryTime || '04:45 PM'}
-              </h2>
-              <p className="text-xs font-semibold text-slate-900/80 max-w-2xl mt-0.5">
-                {aiPred.message || 'Your interior decor items are being transported safely along an optimized route.'}
+              <h2 className="text-base font-bold text-slate-700">Estimated arrival not available yet</h2>
+              <p className="text-xs font-semibold text-slate-500 mt-0.5">
+                We'll show a delivery time estimate here once your order is out for delivery.
               </p>
             </div>
           </div>
-          <button
-            onClick={fetchTrackingData}
-            className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-amber-400 font-bold text-xs rounded-xl shadow-md inline-flex items-center gap-2 shrink-0 self-start md:self-auto"
-          >
-            <FiRefreshCw /> Refresh Live Status
-          </button>
-        </div>
+        )}
 
         {/* Tab Navigation */}
         <div className="flex items-center gap-2 border-b border-slate-200 overflow-x-auto pb-2 scrollbar-none max-w-full">
@@ -330,7 +379,7 @@ const OrderTrackingPage = () => {
                       </div>
                     </div>
                     <div className="bg-slate-900 text-white px-3 py-1 rounded-xl text-xs font-extrabold border border-amber-500/50 shadow-xl mt-2 text-center whitespace-nowrap">
-                      {partner.name || 'Vikram Singh'} ({driverLoc.speed} km/h)
+                      {partner ? `${partner.name} (${driverLoc.speed} km/h)` : 'Awaiting Dispatch'}
                     </div>
                   </div>
 
@@ -348,8 +397,8 @@ const OrderTrackingPage = () => {
                 {/* Driver Live Speed Card */}
                 <div className="grid grid-cols-3 gap-3 text-xs">
                   <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 text-center">
-                    <span className="text-slate-400 font-bold text-[10px] uppercase">Distance Left</span>
-                    <div className="text-lg font-black text-slate-900">3.8 km</div>
+                    <span className="text-slate-400 font-bold text-[10px] uppercase">Distance</span>
+                    <div className="text-lg font-black text-slate-900">{distanceKm != null ? `${distanceKm} km` : '—'}</div>
                   </div>
                   <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 text-center">
                     <span className="text-slate-400 font-bold text-[10px] uppercase">Current Speed</span>
@@ -357,7 +406,7 @@ const OrderTrackingPage = () => {
                   </div>
                   <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 text-center">
                     <span className="text-slate-400 font-bold text-[10px] uppercase">Est. Minutes</span>
-                    <div className="text-lg font-black text-emerald-700">18 mins</div>
+                    <div className="text-lg font-black text-emerald-700">{minutesRemaining != null ? `${minutesRemaining} mins` : '—'}</div>
                   </div>
                 </div>
               </div>
@@ -466,36 +515,44 @@ const OrderTrackingPage = () => {
             {/* Delivery Partner Card */}
             <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-4">
               <h3 className="text-base font-bold text-slate-900 font-display">Assigned Delivery Partner</h3>
-              <div className="flex items-center space-x-3">
-                <img
-                  src={partner.photo || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80'}
-                  alt={partner.name}
-                  className="w-14 h-14 rounded-2xl object-cover border border-amber-500/50 shadow-md shrink-0"
-                />
-                <div>
-                  <div className="font-extrabold text-slate-900 text-sm">{partner.name || 'Vikram Singh'}</div>
-                  <div className="flex items-center space-x-1 text-xs text-amber-600 font-bold">
-                    <FiStar className="fill-amber-500 text-amber-500" />
-                    <span>{partner.rating || 4.9} (180+ deliveries)</span>
+              {partner ? (
+                <>
+                  <div className="flex items-center space-x-3">
+                    <img
+                      src={partner.photo || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80'}
+                      alt={partner.name}
+                      className="w-14 h-14 rounded-2xl object-cover border border-amber-500/50 shadow-md shrink-0"
+                    />
+                    <div>
+                      <div className="font-extrabold text-slate-900 text-sm">{partner.name}</div>
+                      <div className="flex items-center space-x-1 text-xs text-amber-600 font-bold">
+                        <FiStar className="fill-amber-500 text-amber-500" />
+                        <span>{partner.rating || 4.9} rating</span>
+                      </div>
+                      <div className="text-[11px] text-slate-500 font-mono mt-0.5">Vehicle: {partner.vehicleNo || 'N/A'}</div>
+                    </div>
                   </div>
-                  <div className="text-[11px] text-slate-500 font-mono mt-0.5">Vehicle: {partner.vehicleNo || 'KA-01-EQ-9876'}</div>
-                </div>
-              </div>
 
-              <div className="flex gap-2">
-                <a
-                  href={`tel:${partner.phone || '+919876543210'}`}
-                  className="flex-1 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl shadow-sm inline-flex items-center justify-center gap-2"
-                >
-                  <FiPhoneCall /> Call Driver
-                </a>
-                <button
-                  onClick={() => toast.success('Connecting to driver in-app chat...')}
-                  className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl inline-flex items-center justify-center gap-2 border border-slate-200"
-                >
-                  <FiMessageSquare /> In-App Chat
-                </button>
-              </div>
+                  <div className="flex gap-2">
+                    <a
+                      href={`tel:${partner.phone || ''}`}
+                      className="flex-1 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl shadow-sm inline-flex items-center justify-center gap-2"
+                    >
+                      <FiPhoneCall /> Call Driver
+                    </a>
+                    <button
+                      onClick={() => toast.success('Connecting to driver in-app chat...')}
+                      className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl inline-flex items-center justify-center gap-2 border border-slate-200"
+                    >
+                      <FiMessageSquare /> In-App Chat
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <p className="text-xs font-semibold text-slate-400">
+                  A delivery partner will be assigned once your order is picked up.
+                </p>
+              )}
             </div>
 
             {/* Delivery Destination Card */}
@@ -523,7 +580,7 @@ const OrderTrackingPage = () => {
             >
               <div className="bg-white rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl border border-slate-200 text-xs">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                  <h3 className="text-base font-bold text-slate-900 font-display">Report Delivery Issue (Gemini AI Resolution)</h3>
+                  <h3 className="text-base font-bold text-slate-900 font-display">Report Delivery Issue</h3>
                   <button onClick={() => setShowIssueModal(false)} className="p-1 text-slate-400 hover:text-slate-700">✕</button>
                 </div>
 
@@ -557,13 +614,13 @@ const OrderTrackingPage = () => {
                     disabled={submittingIssue}
                     className="w-full py-2.5 bg-amber-500 hover:bg-amber-400 text-deep-espresso font-bold rounded-xl shadow-sm"
                   >
-                    {submittingIssue ? 'Gemini Analyzing Solution...' : 'Submit Issue'}
+                    {submittingIssue ? 'Analyzing Solution...' : 'Submit Issue'}
                   </button>
                 </form>
 
                 {issueResult && (
                   <div className="p-4 bg-slate-900 text-white rounded-2xl space-y-2">
-                    <div className="font-bold text-amber-400">Gemini AI Recommended Solution:</div>
+                    <div className="font-bold text-amber-400">AI Recommended Solution:</div>
                     <p className="text-slate-300 leading-relaxed">{issueResult.customerMessage || issueResult.recommendedSolution}</p>
                   </div>
                 )}

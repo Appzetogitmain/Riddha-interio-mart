@@ -6,6 +6,42 @@ const Seller = require('../models/Seller');
 const Coupon = require('../models/Coupon');
 const paginate = require('../utils/paginate');
 const { geocodeAddress } = require('../utils/geocoder');
+const filterService = require('../services/filterService');
+
+// Set deliveryTimeline.outForDeliveryAt/expectedDeliveryTime on an order the moment it goes
+// "Out for Delivery", using the seller/shipping coordinates already geocoded at order creation.
+// Deterministic (distanceKm * 6 min/km) — same fallback math trackingService.js uses when the
+// AI estimator is unavailable — so every order gets a real ETA instantly, no AI call needed here.
+const applyOutForDeliveryEta = (order) => {
+  // Mongoose leaves an un-set nested path as a truthy {} (lat/lng undefined) rather than
+  // undefined, so a plain `order.sellerCoordinates ? ... : null` guard doesn't actually catch
+  // missing coordinates — it must check the numeric fields themselves, or calculateDistance
+  // silently computes NaN, which then produces an Invalid Date and fails order.save().
+  const hasCoords = (c) => c && typeof c.latitude === 'number' && typeof c.longitude === 'number';
+  const distanceKm = filterService.calculateDistance(
+    hasCoords(order.sellerCoordinates) ? [order.sellerCoordinates.longitude, order.sellerCoordinates.latitude] : null,
+    hasCoords(order.shippingCoordinates) ? [order.shippingCoordinates.longitude, order.shippingCoordinates.latitude] : null
+  );
+  const etaMinutes = (typeof distanceKm === 'number' && !Number.isNaN(distanceKm)) ? Math.max(10, Math.round(distanceKm * 6)) : 30;
+  const now = new Date();
+  order.deliveryTimeline = order.deliveryTimeline || {};
+  order.deliveryTimeline.outForDeliveryAt = now;
+  order.deliveryTimeline.expectedDeliveryTime = new Date(now.getTime() + etaMinutes * 60000);
+};
+
+// Builds the customer-facing status notification, including the ETA when the order just went
+// "Out for Delivery" so the customer knows when to expect it rather than just that it shipped.
+const buildOrderStatusMessage = (order) => {
+  const shortId = order._id.toString().slice(-8).toUpperCase();
+  // deliveryStatus defaults to the literal string 'None' rather than being unset, so it can't
+  // just be checked for truthiness — that produced "is now None" instead of the real status.
+  const label = (order.deliveryStatus && order.deliveryStatus !== 'None') ? order.deliveryStatus : order.status;
+  if (label === 'Out for Delivery' && order.deliveryTimeline?.expectedDeliveryTime) {
+    const etaLabel = new Date(order.deliveryTimeline.expectedDeliveryTime).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+    return `Your order #${shortId} is out for delivery. Estimated arrival: ${etaLabel}.`;
+  }
+  return `Your order #${shortId} is now ${label}.`;
+};
 
 const { 
   notifySellerNewOrder, 
@@ -485,7 +521,14 @@ exports.getOrderById = async (req, res) => {
 // @access  Private
 exports.getMyOrders = async (req, res) => {
   try {
-    const result = await paginate(Order, { user: req.user.id }, req);
+    const query = { user: req.user.id };
+    // Supports a single status ("Delivered") or a comma-separated group for tab filters like
+    // "Pending" (Pending,Processing,Packed) or "Shipped" (Shipped,Out for Delivery) on /orders.
+    if (req.query.status) {
+      const statuses = req.query.status.split(',').map((s) => s.trim()).filter(Boolean);
+      query.status = statuses.length > 1 ? { $in: statuses } : statuses[0];
+    }
+    const result = await paginate(Order, query, req);
     res.status(200).json({
       success: true,
       count: result.data.length,
@@ -529,7 +572,16 @@ exports.getOrders = async (req, res) => {
     if (req.query.status) {
       query.status = req.query.status;
     }
-    
+
+    // Scope to a specific customer's orders when requested (e.g. the admin "Fulfillment
+    // Purchases Log" panel) — this was previously silently ignored, so every customer's detail
+    // view showed the same unfiltered, role-scoped order list instead of just their own orders.
+    // Always additive to whatever role-based scoping already applies below, never expands it.
+    if (req.query.user) {
+      query.user = req.query.user;
+    }
+
+
     // If user is seller, only show orders belonging to them or containing their products
     if (isSeller) {
       query.$or = [
@@ -702,9 +754,11 @@ exports.updateOrderStatus = async (req, res) => {
 
         // Generate and Send OTP
         if (newStatus === 'Out for Delivery' && !order.deliveryOtp) {
+          applyOutForDeliveryEta(order);
+
           const otp = Math.floor(1000 + Math.random() * 9000).toString(); // 4 digit OTP
           order.deliveryOtp = otp;
-          
+
           // Log OTP to console to help with local testing!
           console.log(`\n========================================`);
           console.log(`[TESTING OTP] Delivery OTP for Order #${order._id.toString().slice(-8).toUpperCase()} is: ${otp}`);
@@ -757,10 +811,14 @@ exports.updateOrderStatus = async (req, res) => {
       if (newStatus === 'Delivered') {
         try {
           order.deliveredAt = Date.now();
-          
+
           const walletService = require('../services/walletService');
           // Note: walletService.clearPendingSale is now handled asynchronously by the background escrow service after 7 days
-          
+          // Defensive re-attempt: recordPendingSale is idempotent (keyed on the order id), so
+          // this is a safe no-op if it already succeeded at order placement, and a real fix if
+          // that earlier call silently failed (it's wrapped in a swallowing try/catch there).
+          await walletService.recordPendingSale(updatedOrder);
+
           if (updatedOrder.deliveryBoy) {
             await walletService.recordDeliveryEarning(
               updatedOrder.deliveryBoy,
@@ -779,7 +837,8 @@ exports.updateOrderStatus = async (req, res) => {
         orderId: order._id,
         status: order.status,
         deliveryStatus: order.deliveryStatus,
-        message: `Your order #${order._id.toString().slice(-8).toUpperCase()} is now ${order.deliveryStatus || order.status}.`
+        expectedDeliveryTime: order.deliveryTimeline?.expectedDeliveryTime,
+        message: buildOrderStatusMessage(order)
       });
 
       res.status(200).json({
@@ -884,6 +943,8 @@ exports.updateSellerManagedDeliveryStatus = async (req, res) => {
     // Generate & email the customer a delivery OTP the moment the seller heads out —
     // same mechanism the in-app delivery-partner flow already uses.
     if (status === 'Out for Delivery' && !order.deliveryOtp) {
+      applyOutForDeliveryEta(order);
+
       const generatedOtp = Math.floor(1000 + Math.random() * 9000).toString();
       order.deliveryOtp = generatedOtp;
 
@@ -941,11 +1002,25 @@ exports.updateSellerManagedDeliveryStatus = async (req, res) => {
 
     const updatedOrder = await order.save();
 
+    // Seller-managed deliveries have no delivery-partner wallet to credit, but the seller's own
+    // pending-sale credit still needs to exist — it's normally recorded at order placement, but
+    // that call is wrapped in a swallowing try/catch there, so re-attempt it here defensively
+    // (idempotent, keyed on the order id — a safe no-op if it already succeeded).
+    if (status === 'Delivered') {
+      try {
+        const walletService = require('../services/walletService');
+        await walletService.recordPendingSale(updatedOrder);
+      } catch (walletErr) {
+        console.error('Failed to update seller wallet upon self-managed delivery:', walletErr.message);
+      }
+    }
+
     notifyUserOrderStatus(order.user, {
       orderId: order._id,
       status: order.status,
       deliveryStatus: order.deliveryStatus,
-      message: `Your order #${order._id.toString().slice(-8).toUpperCase()} is now ${order.deliveryStatus || order.status}.`
+      expectedDeliveryTime: order.deliveryTimeline?.expectedDeliveryTime,
+      message: buildOrderStatusMessage(order)
     });
 
     res.status(200).json({ success: true, data: updatedOrder });
@@ -1386,7 +1461,7 @@ exports.handleRazorpayWebhook = async (req, res) => {
 // @access  Private/Delivery
 exports.verifyDeliveryOtp = async (req, res) => {
   try {
-    const { otp } = req.body;
+    const { otp, deliveryProofImages } = req.body;
     const order = await Order.findById(req.params.id);
     if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
 
@@ -1394,20 +1469,27 @@ exports.verifyDeliveryOtp = async (req, res) => {
     if (!order.deliveryBoy || order.deliveryBoy.toString() !== req.user.id) {
       return res.status(403).json({ success: false, error: 'Not authorized: You are not the assigned delivery partner for this order.' });
     }
-    
+
     // STATIC OTP BYPASS: allow 1234 if useMockOtpForDelivery environment variable is true
     const isStaticBypass = (process.env.useMockOtpForDelivery === 'true' || process.env.USE_MOCK_OTP_FOR_DELIVERY === 'true') && otp === '1234';
 
     if (!isStaticBypass && order.deliveryOtp !== otp) {
       return res.status(400).json({ success: false, error: 'Invalid delivery OTP provided.' });
     }
-    
+
+    // Matches the seller-managed delivery path's behavior: proof images are accepted and saved
+    // when provided, with the "at least one required" rule enforced client-side (ProofUploadModal),
+    // not as a hard backend requirement here.
+    if (Array.isArray(deliveryProofImages) && deliveryProofImages.length > 0) {
+      order.deliveryProofImages = deliveryProofImages;
+    }
+
     // OTP matches, mark as delivered
     order.isDelivered = true;
     order.deliveredAt = Date.now();
     order.status = 'Delivered';
     order.deliveryStatus = 'Delivered';
-    
+
     if (order.paymentMethod === 'COD') {
       order.isPaid = true;
       order.paidAt = Date.now();
@@ -1419,7 +1501,9 @@ exports.verifyDeliveryOtp = async (req, res) => {
     try {
       const walletService = require('../services/walletService');
       // Note: walletService.clearPendingSale is now handled asynchronously by the background escrow service after 7 days
-      
+      // Defensive re-attempt (idempotent, safe if it already succeeded at order placement).
+      await walletService.recordPendingSale(updatedOrder);
+
       if (updatedOrder.deliveryBoy) {
         await walletService.recordDeliveryEarning(
           updatedOrder.deliveryBoy,

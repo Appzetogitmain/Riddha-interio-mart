@@ -24,8 +24,7 @@ import {
   FiZap,
   FiCompass,
   FiSearch,
-  FiPercent,
-  FiBell
+  FiPercent
 } from "react-icons/fi";
 import { AiOutlineShop } from "react-icons/ai";
 import { motion, AnimatePresence } from "framer-motion";
@@ -297,13 +296,6 @@ const Navbar = () => {
             <div className="flex items-center gap-3 lg:gap-4 shrink-0 pr-1">
               <Link to="/profile" className="flex items-center group relative" title={user ? (user.fullName?.split(' ')[0] || 'Profile') : 'Login'}>
                 <FiUser className="w-5 h-5 text-gray-500 group-hover:text-[#28a399] transition-colors" />
-              </Link>
-
-              <Link to="/notifications" className="flex items-center group relative" title="Notifications">
-                <FiBell className="w-5 h-5 text-gray-500 group-hover:text-[#28a399] transition-colors" />
-                <span className="absolute -top-1.5 -right-1.5 bg-amber-500 text-deep-espresso text-[9px] font-black h-4 w-4 flex items-center justify-center rounded-full border-2 border-white">
-                  3
-                </span>
               </Link>
 
               <Link to="/wishlist" className="flex items-center group relative" title="Wishlist">

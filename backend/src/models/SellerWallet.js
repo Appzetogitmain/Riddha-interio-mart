@@ -32,6 +32,13 @@ const SellerWalletTransactionSchema = new mongoose.Schema({
     unique: true,
     sparse: true
   },
+  // Set once a per-order "Claim Payment" request has been submitted for this transaction, so a
+  // cleared sale_credit can only be claimed once even though the pooled withdrawableBalance
+  // itself doesn't track which order a given rupee came from.
+  claimedAt: {
+    type: Date,
+    default: null
+  },
   createdAt: {
     type: Date,
     default: Date.now

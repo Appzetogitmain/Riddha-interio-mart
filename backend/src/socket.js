@@ -127,15 +127,29 @@ function isUserOnline(role, id) {
 // Database Persistence Helpers
 // -----------------------------------------------------------------------------
 
+// The Notification schema's userId field has no role discriminator (unlike Order's
+// refPath pattern) — it just stores whatever ObjectId is given, regardless of whether that id
+// actually belongs to the User, Seller, Admin, or Delivery collection. recipientModel is kept as
+// a call-site parameter (harmless if unused) purely for readability at each call site below.
+const NOTIFICATION_TYPE_CATEGORY = {
+  order_update: 'orders',
+  delivery_update: 'orders',
+  stock_alert: 'orders',
+  seller_approval: 'account',
+  admin_alert: 'account'
+};
+const categoryForType = (type) => NOTIFICATION_TYPE_CATEGORY[type] || 'orders';
+
 async function persistNotification({ recipient, recipientModel, title, message, type, metadata }) {
   try {
     const notification = await Notification.create({
-      recipient,
-      recipientModel,
+      userId: recipient,
       title,
       message,
       type,
-      metadata
+      category: categoryForType(type),
+      isRead: false,
+      data: metadata || {}
     });
     return notification;
   } catch (err) {
@@ -149,12 +163,13 @@ async function persistForAdmins({ title, message, type, metadata }) {
     const Admin = require('./models/Admin');
     const admins = await Admin.find({}).lean();
     const notifications = admins.map(admin => ({
-      recipient: admin._id,
-      recipientModel: 'Admin',
+      userId: admin._id,
       title,
       message,
       type,
-      metadata
+      category: categoryForType(type),
+      isRead: false,
+      data: metadata || {}
     }));
     if (notifications.length > 0) {
       const saved = await Notification.insertMany(notifications);

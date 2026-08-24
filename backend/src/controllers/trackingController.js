@@ -2,9 +2,22 @@ const Order = require('../models/Order');
 const DeliveryPartner = require('../models/DeliveryPartner');
 const DeliveryIssue = require('../models/DeliveryIssue');
 const trackingService = require('../services/trackingService');
+const filterService = require('../services/filterService');
 
 // Helper to generate 4-digit OTP
 const generateOTP = () => Math.floor(1000 + Math.random() * 9000).toString();
+
+// Real haversine distance between the order's seller and shipping coordinates (both geocoded
+// at order creation — see orderController.js), falling back to the given default only when
+// either pair is missing.
+const hasCoords = (c) => c && typeof c.latitude === 'number' && typeof c.longitude === 'number';
+const getOrderDistanceKm = (order, fallback) => {
+  const distanceKm = filterService.calculateDistance(
+    hasCoords(order?.sellerCoordinates) ? [order.sellerCoordinates.longitude, order.sellerCoordinates.latitude] : null,
+    hasCoords(order?.shippingCoordinates) ? [order.shippingCoordinates.longitude, order.shippingCoordinates.latitude] : null
+  );
+  return (typeof distanceKm === 'number' && !Number.isNaN(distanceKm)) ? distanceKm : fallback;
+};
 
 // 1. Get Full Order Tracking Info
 exports.getOrderTracking = async (req, res, next) => {
@@ -23,8 +36,18 @@ exports.getOrderTracking = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Order tracking record not found' });
     }
 
+    // Only fabricate driver-assignment/AI-ETA data once the order has actually been dispatched —
+    // otherwise a "Processing" order (never picked up) shows a confident fake driver and arrival
+    // time, which is misleading and inconsistent with the OTP box (which already correctly waits
+    // for "Out for Delivery"). Merely having a deliveryBoy assigned isn't enough — a seller can
+    // assign an order that the delivery partner hasn't accepted/picked up yet, so this must check
+    // real status progression, not just the assignment field.
+    const isDispatched =
+      ['Accepted', 'Picked', 'Out for Delivery', 'Delivered'].includes(order.deliveryStatus) ||
+      ['Shipped', 'Delivered'].includes(order.status);
+
     // Ensure Delivery Partner is attached
-    if (!order.deliveryPartnerDetails || !order.deliveryPartnerDetails.name) {
+    if (isDispatched && (!order.deliveryPartnerDetails || !order.deliveryPartnerDetails.name)) {
       let partner = await DeliveryPartner.findOne({ status: 'active' });
       if (!partner) {
         partner = new DeliveryPartner({
@@ -58,13 +81,13 @@ exports.getOrderTracking = async (req, res, next) => {
       await order.save();
     }
 
-    // Generate AI Prediction if missing or older than 15 mins
-    if (!order.aiPredictions || !order.aiPredictions.generatedAt || (Date.now() - new Date(order.aiPredictions.generatedAt).getTime() > 15 * 60000)) {
+    // Generate AI Prediction if missing or older than 15 mins (only once actually dispatched)
+    if (isDispatched && (!order.aiPredictions || !order.aiPredictions.generatedAt || (Date.now() - new Date(order.aiPredictions.generatedAt).getTime() > 15 * 60000))) {
       const aiEst = await trackingService.predictDeliveryTime({
         currentLat: order.currentLocation?.coordinates?.[1] || 12.9716,
         currentLng: order.currentLocation?.coordinates?.[0] || 77.6412,
         destination: order.shippingAddress?.fullAddress || 'Indiranagar, Bengaluru',
-        distanceKm: 3.8
+        distanceKm: getOrderDistanceKm(order, 3.8)
       }, req.user._id);
 
       order.aiPredictions = {
@@ -143,7 +166,7 @@ exports.getETAPrediction = async (req, res, next) => {
       currentLat: order?.currentLocation?.coordinates?.[1] || 12.9716,
       currentLng: order?.currentLocation?.coordinates?.[0] || 77.6412,
       destination: order?.shippingAddress?.fullAddress || 'Bengaluru',
-      distanceKm: 3.5
+      distanceKm: getOrderDistanceKm(order, 3.5)
     }, req.user._id);
 
     res.status(200).json({
@@ -165,7 +188,7 @@ exports.checkDelays = async (req, res, next) => {
       currentLat: order?.currentLocation?.coordinates?.[1] || 12.9716,
       currentLng: order?.currentLocation?.coordinates?.[0] || 77.6412,
       destination: order?.shippingAddress?.fullAddress || 'Bengaluru',
-      distanceKm: 3.5,
+      distanceKm: getOrderDistanceKm(order, 3.5),
       speed: order?.currentLocation?.speed || 25,
       partnerStatus: order?.status || 'in-transit'
     }, req.user._id);

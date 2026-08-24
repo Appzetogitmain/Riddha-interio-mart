@@ -30,6 +30,12 @@ const ManageUserPage = ({ type }) => {
   const [loading, setLoading] = useState(true);
   const [activeMenu, setActiveMenu] = useState(null);
 
+  // Pagination (backend already supports page/limit — see adminController.getUsers)
+  const PAGE_SIZE = 20;
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalResults, setTotalResults] = useState(0);
+
   // Dynamic Slide-over Details Drawer
   const [selectedUserDetail, setSelectedUserDetail] = useState(null);
   const [userOrders, setUserOrders] = useState([]);
@@ -42,11 +48,14 @@ const ManageUserPage = ({ type }) => {
 
   const navigate = useNavigate();
 
-  const fetchUsers = async () => {
+  const fetchUsers = async (pageToFetch = 1) => {
     try {
       setLoading(true);
-      const res = await api.get(`/auth/admin/users`, { params: { userType: currentTab } });
+      const res = await api.get(`/auth/admin/users`, { params: { userType: currentTab, page: pageToFetch, limit: PAGE_SIZE } });
       setUsers(res.data.data);
+      setPage(res.data.page || pageToFetch);
+      setTotalPages(res.data.totalPages || 1);
+      setTotalResults(res.data.totalResults ?? res.data.data?.length ?? 0);
     } catch (err) {
       console.error('Failed to fetch users:', err);
       toast.error('Failed to load user directory');
@@ -55,8 +64,13 @@ const ManageUserPage = ({ type }) => {
     }
   };
 
+  const goToPage = (nextPage) => {
+    if (nextPage < 1 || nextPage > totalPages || nextPage === page) return;
+    fetchUsers(nextPage);
+  };
+
   useEffect(() => {
-    fetchUsers();
+    fetchUsers(1);
     // Reset filters and selection when type changes
     setSelectedUserDetail(null);
     setStatusFilter('all');
@@ -155,11 +169,15 @@ const ManageUserPage = ({ type }) => {
           </div>
           <div className="flex gap-4">
             <div className="px-4 py-2 bg-white rounded-xl border border-soft-oatmeal shadow-sm flex flex-col">
-              <span className="text-[10px] font-black text-warm-sand uppercase tracking-widest">Active Accounts</span>
+              <span className="text-[10px] font-black text-warm-sand uppercase tracking-widest">Total Accounts</span>
+              <span className="text-lg font-bold text-deep-espresso">{totalResults}</span>
+            </div>
+            <div className="px-4 py-2 bg-white rounded-xl border border-soft-oatmeal shadow-sm flex flex-col">
+              <span className="text-[10px] font-black text-warm-sand uppercase tracking-widest">Active (this page)</span>
               <span className="text-lg font-bold text-deep-espresso">{users.filter(u => !u.isBlocked).length}</span>
             </div>
             <div className="px-4 py-2 bg-white rounded-xl border border-soft-oatmeal shadow-sm flex flex-col">
-              <span className="text-[10px] font-black text-warm-sand uppercase tracking-widest">Blocked Accounts</span>
+              <span className="text-[10px] font-black text-warm-sand uppercase tracking-widest">Blocked (this page)</span>
               <span className="text-lg font-bold text-red-600">{users.filter(u => u.isBlocked).length}</span>
             </div>
           </div>
@@ -401,6 +419,29 @@ const ManageUserPage = ({ type }) => {
               </table>
             </div>
           )}
+          {!loading && totalResults > 0 && (
+            <div className="flex items-center justify-between px-6 py-4 border-t border-soft-oatmeal">
+              <span className="text-xs font-bold text-warm-sand">
+                Page {page} of {totalPages} &middot; {totalResults} total {currentTab === 'customer' ? 'customers' : 'enterprise users'}
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => goToPage(page - 1)}
+                  disabled={page <= 1}
+                  className="px-3 py-1.5 rounded-lg border border-soft-oatmeal text-xs font-bold text-deep-espresso disabled:opacity-40 disabled:cursor-not-allowed hover:bg-soft-oatmeal/20 transition-colors"
+                >
+                  Previous
+                </button>
+                <button
+                  onClick={() => goToPage(page + 1)}
+                  disabled={page >= totalPages}
+                  className="px-3 py-1.5 rounded-lg border border-soft-oatmeal text-xs font-bold text-deep-espresso disabled:opacity-40 disabled:cursor-not-allowed hover:bg-soft-oatmeal/20 transition-colors"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -554,6 +595,27 @@ const ManageUserPage = ({ type }) => {
                 </div>
               </div>
             ))
+          )}
+          {!loading && totalResults > 0 && (
+            <div className="flex items-center justify-between gap-2 pt-2">
+              <button
+                onClick={() => goToPage(page - 1)}
+                disabled={page <= 1}
+                className="flex-1 py-2.5 rounded-xl border border-soft-oatmeal text-[9px] font-black uppercase tracking-widest text-deep-espresso disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Previous
+              </button>
+              <span className="text-[9px] font-black text-warm-sand uppercase tracking-widest shrink-0">
+                {page} / {totalPages}
+              </span>
+              <button
+                onClick={() => goToPage(page + 1)}
+                disabled={page >= totalPages}
+                className="flex-1 py-2.5 rounded-xl border border-soft-oatmeal text-[9px] font-black uppercase tracking-widest text-deep-espresso disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
+            </div>
           )}
         </div>
       </div>

@@ -463,6 +463,15 @@ const OrderDetailPage = () => {
                   </span>
                 </div>
 
+                {order.deliveryTimeline?.expectedDeliveryTime && (
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-warm-sand">Estimated Delivery:</span>
+                    <span className="font-bold text-deep-espresso">
+                      {new Date(order.deliveryTimeline.expectedDeliveryTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+                )}
+
                 {order.deliveryType === 'in-app' && order.deliveryBoy && (
                   <div className="flex items-center gap-3 p-3 bg-soft-oatmeal/10 rounded-xl mt-2">
                     <div className="w-9 h-9 rounded-full bg-[var(--color-primary)] flex items-center justify-center text-white font-black shrink-0">

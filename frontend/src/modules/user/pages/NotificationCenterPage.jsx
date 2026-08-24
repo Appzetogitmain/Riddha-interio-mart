@@ -137,7 +137,7 @@ const NotificationCenterPage = () => {
           <div className="space-y-3">
             <div className="inline-flex items-center space-x-2 bg-amber-500/20 border border-amber-500/30 px-3 py-1 rounded-full text-xs font-semibold text-amber-300">
               <LuSparkles className="text-amber-400" />
-              <span>Multi-Channel Notification Center with Gemini AI</span>
+              <span>Multi-Channel Notification Center</span>
             </div>
             <h1 className="text-2xl sm:text-4xl font-display font-black text-white tracking-tight">
               Notification Inbox
@@ -237,7 +237,7 @@ const NotificationCenterPage = () => {
                               className="text-[11px] font-bold text-slate-500 hover:text-slate-900 inline-flex items-center gap-1"
                             >
                               <LuBrain className="text-amber-600" />
-                              <span>{isExpanded ? 'Hide Gemini Channels' : 'View Gemini Multi-Channel Formats'}</span>
+                              <span>{isExpanded ? 'Hide Channels' : 'View Multi-Channel Formats'}</span>
                             </button>
                           )}
                         </div>
@@ -264,7 +264,7 @@ const NotificationCenterPage = () => {
                     </div>
                   </div>
 
-                  {/* Gemini Multi-Channel Format Drawer */}
+                  {/* Multi-Channel Format Drawer */}
                   <AnimatePresence>
                     {isExpanded && item.channels && (
                       <motion.div

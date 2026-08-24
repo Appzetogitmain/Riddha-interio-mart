@@ -28,9 +28,12 @@ const OrderTracking = () => {
       else setIsPolling(true);
 
       const res = await api.get('/orders');
-      const activeOrders = res.data.data.filter(o => 
-        ['Shipped', 'Out for Delivery', 'Processing'].includes(o.status) || 
-        (o.deliveryBoy && o.deliveryStatus !== 'None' && o.status !== 'Delivered')
+      // Note: order.status never actually holds "Out for Delivery" — only order.deliveryStatus
+      // does (updateOrderStatus/updateSellerManagedDeliveryStatus map it to 'Shipped' instead).
+      // Check deliveryStatus directly so self-managed orders with no deliveryBoy still show up.
+      const activeOrders = res.data.data.filter(o =>
+        ['Shipped', 'Processing'].includes(o.status) ||
+        (o.deliveryStatus && o.deliveryStatus !== 'None' && o.status !== 'Delivered')
       );
       setOrders(activeOrders);
       setLastSync(new Date());

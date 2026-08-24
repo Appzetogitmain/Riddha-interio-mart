@@ -24,6 +24,8 @@ const AddProductPage = () => {
   // Custom Dropdown State
   const [isCatOpen, setIsCatOpen] = useState(false);
   const [catSearch, setCatSearch] = useState('');
+  const [isBrandOpen, setIsBrandOpen] = useState(false);
+  const [brandSearch, setBrandSearch] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     sku: '',
@@ -554,15 +556,18 @@ const AddProductPage = () => {
                          }
                        }
 
-                       if (data.image && data.image.startsWith('data:')) {
-                         fetch(data.image)
-                           .then(res => res.blob())
-                           .then(blob => {
-                             const file = new File([blob], `ai_generated_${Date.now()}.jpg`, { type: 'image/jpeg' });
-                             setImgFiles(prev => [...prev, file]);
-                           })
-                           .catch(err => console.error("Failed to convert base64 image to File:", err));
-                       }
+                       const aiImages = (data.images && data.images.length > 0) ? data.images : (data.image ? [data.image] : []);
+                       aiImages.forEach((imgSrc, idx) => {
+                         if (imgSrc && imgSrc.startsWith('data:')) {
+                           fetch(imgSrc)
+                             .then(res => res.blob())
+                             .then(blob => {
+                               const file = new File([blob], `ai_generated_${Date.now()}_${idx}.jpg`, { type: 'image/jpeg' });
+                               setImgFiles(prev => [...prev, file]);
+                             })
+                             .catch(err => console.error("Failed to convert base64 image to File:", err));
+                         }
+                       });
 
                        setFormData((prev) => ({
                          ...prev,
@@ -570,12 +575,12 @@ const AddProductPage = () => {
                          hsnCode: data.hsnCode,
                          sku: data.sku,
                          brand: matchedBrandId || prev.brand,
-                         dimensions: data.dimensions?.height && data.dimensions?.width 
+                         dimensions: data.dimensions?.height && data.dimensions?.width
                            ? `${data.dimensions.height} x ${data.dimensions.width} ${data.dimensions.unit || ''}`.trim()
                            : prev.dimensions,
                          thickness: data.dimensions?.thickness || prev.thickness,
                          seoKeywords: data.seoKeywords,
-                         images: data.image ? [...prev.images, data.image] : prev.images,
+                         images: aiImages.length > 0 ? [...prev.images, ...aiImages].slice(0, 5) : prev.images,
                          dynamicAttributes: {
                            ...(prev.dynamicAttributes || {}),
                            ...data.specifications
@@ -644,21 +649,43 @@ const AddProductPage = () => {
                          className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-warm-sand transition-all font-medium"
                        />
                     </div>
-                   <div className="space-y-2">
+                   <div className="space-y-2 relative">
                       <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest flex items-center gap-2">
                          <FiTag size={12} /> Brand Partner
                       </label>
-                      <select 
-                        required
-                        value={formData.brand}
-                        onChange={(e) => setFormData({...formData, brand: e.target.value})}
-                        className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-warm-sand transition-all cursor-pointer font-medium"
-                      >
-                         <option value="">{brands.length > 0 ? 'Select associated brand' : 'No brands found'}</option>
-                         {brands.map(b => (
-                           <option key={b._id} value={b._id}>{b.name}</option>
-                         ))}
-                      </select>
+                      <div className="relative">
+                         <input
+                           type="text"
+                           placeholder={brands.find(b => b._id === formData.brand)?.name || (brands.length > 0 ? 'Search brand...' : 'No brands found')}
+                           value={brandSearch}
+                           onChange={(e) => { setBrandSearch(e.target.value); setIsBrandOpen(true); }}
+                           onFocus={() => setIsBrandOpen(true)}
+                           onBlur={() => setTimeout(() => setIsBrandOpen(false), 150)}
+                           className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-warm-sand transition-all font-medium"
+                         />
+                         {isBrandOpen && (
+                           <div className="absolute left-0 right-0 top-full mt-2 bg-white border border-soft-oatmeal rounded-xl shadow-2xl z-50 max-h-60 overflow-y-auto p-1.5">
+                              {brands.filter(b => b.name.toLowerCase().includes(brandSearch.toLowerCase())).map(b => (
+                                <button
+                                  key={b._id}
+                                  type="button"
+                                  onMouseDown={(e) => {
+                                    e.preventDefault();
+                                    setFormData({ ...formData, brand: b._id });
+                                    setBrandSearch('');
+                                    setIsBrandOpen(false);
+                                  }}
+                                  className="w-full text-left px-3 py-2.5 text-xs font-bold text-warm-sand hover:bg-soft-oatmeal/20 rounded-lg transition-colors"
+                                >
+                                  {b.name}
+                                </button>
+                              ))}
+                              {brands.filter(b => b.name.toLowerCase().includes(brandSearch.toLowerCase())).length === 0 && (
+                                <p className="px-3 py-2.5 text-xs font-semibold text-warm-sand/60">No brands match "{brandSearch}"</p>
+                              )}
+                           </div>
+                         )}
+                      </div>
                    </div>
                     <div className="space-y-2 relative">
                        <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest">Category</label>

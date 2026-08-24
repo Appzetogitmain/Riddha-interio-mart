@@ -28,10 +28,10 @@ exports.getSellerWallet = async (req, res, next) => {
       try {
         const Order = require('../models/Order');
         const orders = await Order.find({ _id: { $in: referenceIds } })
-          .select('user orderItems')
+          .select('user orderItems deliveredAt status')
           .populate('user', 'fullName email')
           .lean();
-        
+
         orders.forEach(order => {
           ordersMap[order._id.toString()] = order;
         });
@@ -39,6 +39,8 @@ exports.getSellerWallet = async (req, res, next) => {
         console.error('Failed to batch populate orders for seller wallet transactions:', err.message);
       }
     }
+
+    const ESCROW_DAYS = 7;
 
     // 3. Map populated data back to transactions in-memory
     const populatedTransactions = wallet.transactions.map((tx) => {
@@ -51,7 +53,15 @@ exports.getSellerWallet = async (req, res, next) => {
             productName: order.orderItems && order.orderItems.length > 0 ? order.orderItems[0].name : 'Unknown Product',
             itemsCount: order.orderItems ? order.orderItems.length : 0
           };
+          if (order.deliveredAt) {
+            txObj.orderData.deliveredAt = order.deliveredAt;
+            txObj.orderData.unlocksAt = new Date(new Date(order.deliveredAt).getTime() + ESCROW_DAYS * 24 * 60 * 60 * 1000);
+          }
         }
+      }
+      // A sale_credit is claimable once its 7-day escrow has cleared and it hasn't been claimed yet.
+      if (tx.type === 'sale_credit') {
+        txObj.claimable = tx.status === 'cleared' && !tx.claimedAt;
       }
       return txObj;
     });
@@ -150,6 +160,26 @@ exports.requestSellerWithdrawal = async (req, res, next) => {
     res.status(201).json({
       success: true,
       message: 'Payout request successfully submitted and escrow debited.',
+      data: payout
+    });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+};
+
+/**
+ * @desc    Claim payout for a single, escrow-cleared order (per-order "Claim Payment" button)
+ * @route   POST /api/wallets/seller/claim/:orderId
+ * @access  Private (Seller)
+ */
+exports.claimOrderPayout = async (req, res, next) => {
+  try {
+    const { bankDetails } = req.body || {};
+    const payout = await walletService.claimOrderPayout(req.user.id, req.params.orderId, bankDetails);
+
+    res.status(201).json({
+      success: true,
+      message: 'Claim submitted — payout request created and escrow debited.',
       data: payout
     });
   } catch (err) {

@@ -24,7 +24,8 @@ const AIContentPanel = ({
     seoKeywords: [],
     specifications: {},
     dimensions: {},
-    image: null
+    image: null,
+    images: []
   });
 
   const [newKeyword, setNewKeyword] = useState("");
@@ -106,13 +107,15 @@ const AIContentPanel = ({
         setTimeout(() => {
           const generated = {
             description: response.data.description || "",
+            shortDescription: response.data.short_description || "",
             hsnCode: response.data.hsn_code || "",
             sku: response.data.sku || formData.sku || "",
             brandName: response.data.brand_name || "",
             seoKeywords: response.data.seo_keywords || [],
             specifications: response.data.specifications || {},
             dimensions: response.data.dimensions || {},
-            image: response.data.image || null
+            image: response.data.image || null,
+            images: response.data.images || (response.data.image ? [response.data.image] : [])
           };
           setGeneratedData(generated);
           setStatus("success");
@@ -192,7 +195,7 @@ const AIContentPanel = ({
             className="rounded border-slate-300 text-orange-600 focus:ring-orange-500/20 cursor-pointer"
           />
           <label htmlFor="generate-image-chk" className="text-xs font-bold text-slate-600 cursor-pointer select-none">
-            Generate Product Image with AI also?
+            Generate 2-3 Product Images with AI also?
           </label>
         </div>
 
@@ -370,12 +373,18 @@ const AIContentPanel = ({
         </div>
       </div>
 
-      {/* Generated Image Preview */}
-      {generatedData.image && (
+      {/* Generated Images Preview */}
+      {generatedData.images && generatedData.images.length > 0 && (
         <div className="space-y-3">
-          <label className="text-[10px] font-black uppercase tracking-wider text-slate-500">Generated AI Product Image</label>
-          <div className="relative aspect-square max-w-[200px] mx-auto rounded-2xl overflow-hidden border border-slate-200 shadow-sm">
-            <img src={generatedData.image} alt="AI Generated" className="w-full h-full object-cover" />
+          <label className="text-[10px] font-black uppercase tracking-wider text-slate-500">
+            Generated AI Product Images ({generatedData.images.length})
+          </label>
+          <div className="grid grid-cols-3 gap-3">
+            {generatedData.images.map((img, i) => (
+              <div key={i} className="relative aspect-square rounded-2xl overflow-hidden border border-slate-200 shadow-sm">
+                <img src={img} alt={`AI Generated ${i + 1}`} className="w-full h-full object-cover" />
+              </div>
+            ))}
           </div>
         </div>
       )}
@@ -438,6 +447,16 @@ const AIContentPanel = ({
           </button>
         </div>
       </div>
+
+      {/* Short (BOQ-style) description */}
+      {generatedData.shortDescription && (
+        <div className="space-y-2">
+          <label className="text-[10px] font-black uppercase tracking-wider text-slate-500">Short BOQ Line Description</label>
+          <p className="text-xs font-semibold text-slate-600 italic bg-slate-50 rounded-2xl p-4 border border-slate-100 leading-relaxed">
+            "{generatedData.shortDescription}"
+          </p>
+        </div>
+      )}
 
       {/* Description preview and editor */}
       <div className="space-y-3">

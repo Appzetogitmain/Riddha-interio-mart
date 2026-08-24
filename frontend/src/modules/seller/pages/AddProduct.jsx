@@ -63,9 +63,11 @@ const AddProduct = () => {
   const [isCatOpen, setIsCatOpen] = useState(false);
   const [isSubOpen, setIsSubOpen] = useState(false);
   const [isSubSubOpen, setIsSubSubOpen] = useState(false);
+  const [isBrandOpen, setIsBrandOpen] = useState(false);
   const [catSearch, setCatSearch] = useState("");
   const [subSearch, setSubSearch] = useState("");
   const [subSubSearch, setSubSubSearch] = useState("");
+  const [brandSearch, setBrandSearch] = useState("");
   const [customBrandName, setCustomBrandName] = useState("");
 
   const fileInputRef = useRef(null);
@@ -244,6 +246,14 @@ const AddProduct = () => {
   const filteredSubSubcategories = subsubcategories.filter((subsub) =>
     subsub.name.toLowerCase().includes(subSubSearch.toLowerCase()),
   );
+
+  const filteredBrands = brands.filter((b) =>
+    b.name.toLowerCase().includes(brandSearch.toLowerCase()),
+  );
+
+  const selectedBrandName = formData.brand === 'other'
+    ? (customBrandName || 'Other (Add New Brand)')
+    : (brands.find((b) => b._id === formData.brand)?.name || '');
 
   const fetchInitialData = async () => {
     try {
@@ -931,25 +941,67 @@ const AddProduct = () => {
                         }
                       </div>
 
-                      <div className="space-y-2">
+                      <div className="space-y-2 relative">
                         <label className="text-xs font-bold text-slate-600 uppercase tracking-wider ml-1">
                           Brand Identity <span className="text-red-400">*</span>
                         </label>
-                        <select
-                          required
-                          value={formData.brand}
-                          onChange={(e) => handleFieldChange('brand', e.target.value)}
-                          onBlur={() => handleBlur('brand')}
-                          className={`w-full px-6 py-4 rounded-2xl border-none font-semibold text-sm transition-all ${fc('brand')} text-slate-900`}
-                        >
-                          <option value="">Select Brand</option>
-                          {brands.map((brand) => (
-                            <option key={brand._id} value={brand._id}>
-                              {brand.name}
-                            </option>
-                          ))}
-                          <option value="other">Other (Add New Brand)</option>
-                        </select>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            placeholder={selectedBrandName || "Search brand..."}
+                            value={brandSearch}
+                            onChange={(e) => {
+                              setBrandSearch(e.target.value);
+                              setIsBrandOpen(true);
+                            }}
+                            onFocus={() => setIsBrandOpen(true)}
+                            onBlur={() => {
+                              setTimeout(() => {
+                                setIsBrandOpen(false);
+                                handleBlur('brand');
+                              }, 150);
+                            }}
+                            className={`w-full px-6 py-4 rounded-2xl border-none font-semibold text-sm transition-all ${fc('brand')} text-slate-900`}
+                          />
+                          {isBrandOpen && (
+                            <div className="absolute left-0 right-0 top-full mt-3 bg-white border border-slate-100 rounded-2xl shadow-2xl z-50 max-h-60 overflow-y-auto overflow-x-hidden p-2">
+                              {filteredBrands.map((brand) => (
+                                <button
+                                  key={brand._id}
+                                  type="button"
+                                  onMouseDown={(e) => {
+                                    e.preventDefault();
+                                    handleFieldChange('brand', brand._id);
+                                    setTouched((prev) => ({ ...prev, brand: true }));
+                                    setFieldErrors((prev) => ({ ...prev, brand: '' }));
+                                    setBrandSearch("");
+                                    setIsBrandOpen(false);
+                                  }}
+                                  className="w-full text-left px-4 py-3 text-xs font-bold text-slate-600 hover:bg-slate-50 rounded-xl transition-colors uppercase tracking-widest"
+                                >
+                                  {brand.name}
+                                </button>
+                              ))}
+                              {filteredBrands.length === 0 && (
+                                <p className="px-4 py-3 text-xs font-semibold text-slate-400">No brands match "{brandSearch}"</p>
+                              )}
+                              <button
+                                type="button"
+                                onMouseDown={(e) => {
+                                  e.preventDefault();
+                                  handleFieldChange('brand', 'other');
+                                  setTouched((prev) => ({ ...prev, brand: true }));
+                                  setFieldErrors((prev) => ({ ...prev, brand: '' }));
+                                  setBrandSearch("");
+                                  setIsBrandOpen(false);
+                                }}
+                                className="w-full text-left px-4 py-3 text-xs font-black text-seller-primary hover:bg-seller-light/30 rounded-xl transition-colors uppercase tracking-widest border-t border-slate-50 mt-1"
+                              >
+                                + Other (Add New Brand)
+                              </button>
+                            </div>
+                          )}
+                        </div>
                         {formData.brand === 'other' && (
                           <input
                             type="text"
@@ -1256,15 +1308,18 @@ const AddProduct = () => {
                         }
                       }
 
-                      if (data.image && data.image.startsWith('data:')) {
-                        fetch(data.image)
-                          .then(res => res.blob())
-                          .then(blob => {
-                            const file = new File([blob], `ai_generated_${Date.now()}.jpg`, { type: 'image/jpeg' });
-                            setImgFiles(prev => [...prev, file]);
-                          })
-                          .catch(err => console.error("Failed to convert base64 image to File:", err));
-                      }
+                      const aiImages = (data.images && data.images.length > 0) ? data.images : (data.image ? [data.image] : []);
+                      aiImages.forEach((imgSrc, idx) => {
+                        if (imgSrc && imgSrc.startsWith('data:')) {
+                          fetch(imgSrc)
+                            .then(res => res.blob())
+                            .then(blob => {
+                              const file = new File([blob], `ai_generated_${Date.now()}_${idx}.jpg`, { type: 'image/jpeg' });
+                              setImgFiles(prev => [...prev, file]);
+                            })
+                            .catch(err => console.error("Failed to convert base64 image to File:", err));
+                        }
+                      });
 
                       setFormData((prev) => ({
                         ...prev,
@@ -1277,7 +1332,7 @@ const AddProduct = () => {
                           : prev.dimensions,
                         thickness: data.dimensions?.thickness || prev.thickness,
                         seoKeywords: data.seoKeywords,
-                        images: data.image ? [...prev.images, data.image] : prev.images,
+                        images: aiImages.length > 0 ? [...prev.images, ...aiImages].slice(0, 5) : prev.images,
                         dynamicAttributes: {
                           ...(prev.dynamicAttributes || {}),
                           ...data.specifications

@@ -91,8 +91,12 @@ const downloadShippingLabels = async (req, res) => {
       return res.status(404).json({ success: false, message: "Order not found" });
     }
 
-    // Auth check
-    if (req.user.role !== "admin" && order.seller.toString() !== req.user.id) {
+    // Auth check: admin, the owning seller, or the delivery partner assigned to carry this
+    // order (needs the E-Way Bill on hand for transport/handoff).
+    const isOwner = req.user.role === "admin"
+      || order.seller.toString() === req.user.id
+      || (req.user.role === "delivery" && order.deliveryBoy?.toString() === req.user.id);
+    if (!isOwner) {
       return res.status(403).json({ success: false, message: "Not authorized to access these labels" });
     }
 
@@ -130,8 +134,12 @@ const downloadCustomerInvoice = async (req, res) => {
       return res.status(404).json({ success: false, message: "Order not found" });
     }
 
-    // Auth check: Admin can access any order's invoice, or the customer who placed it
-    if (req.user.role !== "admin" && order.user.toString() !== req.user.id) {
+    // Auth check: Admin can access any order's invoice, the customer who placed it, or the
+    // delivery partner currently assigned to carry it (needs to show the invoice on handoff).
+    const isOwner = req.user.role === "admin"
+      || order.user.toString() === req.user.id
+      || (req.user.role === "delivery" && order.deliveryBoy?.toString() === req.user.id);
+    if (!isOwner) {
       return res.status(403).json({ success: false, message: "Not authorized to access this invoice" });
     }
 

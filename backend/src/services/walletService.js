@@ -371,6 +371,73 @@ class WalletService {
   }
 
   /**
+   * Claims the payout for a single, already-escrow-cleared order's sale_credit transaction
+   * (the per-order "Claim Payment / Withdraw" action, as opposed to requestSellerPayout's
+   * arbitrary-amount bulk withdrawal of the pooled withdrawableBalance).
+   */
+  async claimOrderPayout(sellerId, orderId, customBankDetails = null, customIdempotencyKey = null) {
+    const seller = await Seller.findById(sellerId);
+    if (!seller) throw new Error('Seller profile not found.');
+
+    const bankDetails = (customBankDetails && customBankDetails.accountNumber) ? customBankDetails : seller.bankDetails;
+    if (!bankDetails || !bankDetails.accountNumber) {
+      throw new Error('Please configure your bank details in your profile before claiming a payout.');
+    }
+
+    return executeInTransaction(async (session) => {
+      const wallet = await SellerWallet.findOne({ seller: sellerId }).session(session);
+      if (!wallet) throw new Error('Wallet not found.');
+
+      const tx = wallet.transactions.find(t =>
+        t.type === 'sale_credit' &&
+        t.referenceId.toString() === orderId.toString() &&
+        t.status === 'cleared' &&
+        !t.claimedAt
+      );
+      if (!tx) {
+        throw new Error("This order's earnings are not yet available to claim, or have already been claimed.");
+      }
+
+      const amount = tx.amount;
+      if (wallet.withdrawableBalance < amount) {
+        throw new Error('Insufficient withdrawable balance for this claim.');
+      }
+
+      wallet.withdrawableBalance = Number((wallet.withdrawableBalance - amount).toFixed(2));
+
+      const payoutRequest = await SellerPayout.create([{
+        seller: sellerId,
+        amount,
+        status: 'requested',
+        bankDetails: {
+          accountHolderName: bankDetails.accountHolderName,
+          accountNumber: bankDetails.accountNumber,
+          ifscCode: bankDetails.ifscCode,
+          bankName: bankDetails.bankName
+        }
+      }], { session });
+      const payout = payoutRequest[0];
+
+      const idempotencyKey = customIdempotencyKey || `claim_payout_${orderId}_${payout._id}`;
+      const newBalance = Number(wallet.withdrawableBalance.toFixed(2));
+
+      tx.claimedAt = new Date();
+      wallet.transactions.push({
+        amount: -amount,
+        type: 'payout_debit',
+        status: 'pending',
+        description: `Claim payout requested for Order ${orderId}. Request ID: ${payout._id}`,
+        referenceId: payout._id,
+        balanceAfter: newBalance,
+        idempotencyKey
+      });
+
+      await wallet.save({ session });
+      return payout;
+    });
+  }
+
+  /**
    * Process and approve seller payout
    */
   async approveSellerPayout(payoutId, transactionReference, customIdempotencyKey = null) {

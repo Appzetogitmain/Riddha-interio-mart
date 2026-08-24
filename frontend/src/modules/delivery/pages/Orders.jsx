@@ -17,6 +17,22 @@ import { toast } from 'react-hot-toast';
 import { useSearchParams } from 'react-router-dom';
 import ProofUploadModal from '../components/ProofUploadModal';
 
+// Haversine distance in km — mirrors backend/src/services/filterService.js's calculateDistance,
+// duplicated client-side so the order card can show pickup→delivery distance without a round trip.
+const distanceKmBetween = (sellerCoords, shippingCoords) => {
+  if (!sellerCoords?.latitude || !shippingCoords?.latitude) return null;
+  const [lat1, lon1] = [sellerCoords.latitude, sellerCoords.longitude];
+  const [lat2, lon2] = [shippingCoords.latitude, shippingCoords.longitude];
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return Math.round(R * c * 100) / 100;
+};
+
 const Orders = () => {
   const [searchParams] = useSearchParams();
   const filterParam = searchParams.get('filter');
@@ -123,10 +139,10 @@ const Orders = () => {
     }
   };
 
-  const handleVerifyOtp = async (orderId, otp) => {
+  const handleVerifyOtp = async (orderId, otp, deliveryProofImages) => {
     const loadingToast = toast.loading('Verifying OTP...');
     try {
-      const { data } = await api.post(`/orders/${orderId}/verify-otp`, { otp });
+      const { data } = await api.post(`/orders/${orderId}/verify-otp`, { otp, deliveryProofImages });
       if (data.success) {
         toast.success(data.message || 'OTP Verified & Delivered', { id: loadingToast });
         fetchOrders(true);
@@ -303,7 +319,8 @@ const Orders = () => {
                         totalBill: isReturnTask ? order.refundAmount : order.totalPrice,
                         paymentMode: isReturnTask ? 'REFUND' : order.paymentMethod,
                         otp: order.deliveryOtp,
-                        invoiceUrl: order.invoiceUrl,
+                        distanceKm: isReturnTask ? null : distanceKmBetween(order.sellerCoordinates, order.shippingCoordinates),
+                        expectedDeliveryTime: isReturnTask ? null : order.deliveryTimeline?.expectedDeliveryTime,
                         isReturn: isReturnTask
                       }} 
                       onAccept={(id) => handleDeliveryResponse(id, 'Accepted')}

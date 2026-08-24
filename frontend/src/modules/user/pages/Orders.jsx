@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiPackage, FiShoppingBag, FiChevronRight, FiClock, FiCheckCircle, FiTruck, FiArrowLeft } from 'react-icons/fi';
+import { FiPackage, FiShoppingBag, FiChevronRight, FiClock, FiCheckCircle, FiTruck, FiArrowLeft, FiSearch } from 'react-icons/fi';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../../../shared/utils/api';
 import ReviewFeedbackModal from '../components/ReviewFeedbackModal';
@@ -8,10 +8,25 @@ import ExistingReviewCard from '../components/ExistingReviewCard';
 import ReturnRequestModal from '../components/ReturnRequestModal';
 import { FiMessageCircle, FiRefreshCw } from 'react-icons/fi';
 
+const PAGE_SIZE = 10;
+
+const STATUS_TABS = [
+  { id: 'all', label: 'All', statuses: null },
+  { id: 'pending', label: 'Pending', statuses: ['Pending', 'Processing', 'Packed'] },
+  { id: 'shipped', label: 'Shipped', statuses: ['Shipped'] },
+  { id: 'completed', label: 'Completed', statuses: ['Delivered'] },
+  { id: 'cancelled', label: 'Cancelled', statuses: ['Cancelled'] }
+];
+
 const Orders = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalResults, setTotalResults] = useState(0);
+  const [activeTab, setActiveTab] = useState('all');
   const [reviews, setReviews] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
 
   // Feedback Modal State
@@ -42,11 +57,18 @@ const Orders = () => {
     }
   };
 
-  const fetchMyOrders = async () => {
+  const fetchMyOrders = async (pageToFetch, tabId) => {
     try {
-      const { data } = await api.get('/orders/my-orders');
+      setLoading(true);
+      const tab = STATUS_TABS.find((t) => t.id === tabId) || STATUS_TABS[0];
+      const params = { page: pageToFetch, limit: PAGE_SIZE };
+      if (tab.statuses) params.status = tab.statuses.join(',');
+      const { data } = await api.get('/orders/my-orders', { params });
       if (data.success) {
         setOrders(data.data);
+        setPage(data.page || pageToFetch);
+        setTotalPages(data.totalPages || 1);
+        setTotalResults(data.totalResults ?? data.data.length);
       }
     } catch (err) {
       console.error('Failed to fetch orders:', err);
@@ -56,9 +78,18 @@ const Orders = () => {
   };
 
   useEffect(() => {
-    fetchMyOrders();
+    fetchMyOrders(1, activeTab);
+    setSearchTerm('');
+  }, [activeTab]);
+
+  useEffect(() => {
     fetchReviews();
   }, []);
+
+  const goToPage = (nextPage) => {
+    if (nextPage < 1 || nextPage > totalPages || nextPage === page) return;
+    fetchMyOrders(nextPage, activeTab);
+  };
 
   const openFeedbackModal = (orderId, product, existingReview = null) => {
     setActiveOrder(orderId);
@@ -75,6 +106,18 @@ const Orders = () => {
       default: return 'bg-amber-50 text-amber-700 border-amber-100';
     }
   };
+
+  // Client-side filter over the already-fetched page — searches product name, order id, and
+  // price (either the order total or any single item's price).
+  const term = searchTerm.trim().toLowerCase();
+  const filteredOrders = !term ? orders : orders.filter((order) => {
+    const matchesId = order._id.slice(-8).toLowerCase().includes(term);
+    const matchesTotal = String(order.totalPrice).includes(term);
+    const matchesItem = (order.orderItems || []).some((item) =>
+      item.name?.toLowerCase().includes(term) || String(item.price).includes(term)
+    );
+    return matchesId || matchesTotal || matchesItem;
+  });
 
   return (
     <motion.div
@@ -109,6 +152,36 @@ const Orders = () => {
           </p>
         </motion.div>
 
+        {/* Status Filter Tabs */}
+        <div className="flex items-center gap-2 mb-4 overflow-x-auto pb-1 scrollbar-none">
+          {STATUS_TABS.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all shrink-0 ${
+                activeTab === tab.id
+                  ? 'bg-gray-900 text-white shadow-md'
+                  : 'bg-white border border-gray-200 text-gray-600 hover:border-teal-300 hover:text-teal-600'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {!loading && orders.length > 0 && (
+          <div className="relative mb-6">
+            <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search by product name, price, or order ID..."
+              className="w-full pl-11 pr-4 py-3 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 shadow-sm"
+            />
+          </div>
+        )}
+
         {loading ? (
           <div className="py-20 flex flex-col items-center justify-center">
             <div className="w-8 h-8 border-2 border-gray-200 border-t-teal-600 rounded-full animate-spin mb-4" />
@@ -124,9 +197,13 @@ const Orders = () => {
             <div className="w-20 h-20 rounded-full bg-gray-50 flex items-center justify-center mb-6">
               <FiShoppingBag className="h-10 w-10 text-gray-300" />
             </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">No orders found</h3>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">
+              {activeTab === 'all' ? 'No orders found' : `No ${STATUS_TABS.find((t) => t.id === activeTab)?.label} orders`}
+            </h3>
             <p className="text-gray-500 text-sm mb-8 text-center max-w-xs px-6">
-              You haven't placed any orders yet. Start your premium collection today.
+              {activeTab === 'all'
+                ? "You haven't placed any orders yet. Start your premium collection today."
+                : 'Try a different filter tab to see your other orders.'}
             </p>
             <Link
               to="/products"
@@ -135,11 +212,20 @@ const Orders = () => {
               Browse Products
             </Link>
           </motion.div>
+        ) : filteredOrders.length === 0 ? (
+          /* No search results */
+          <div className="flex flex-col items-center justify-center py-16 bg-white border border-gray-200 rounded-2xl shadow-sm">
+            <div className="w-16 h-16 rounded-full bg-gray-50 flex items-center justify-center mb-4">
+              <FiSearch className="h-8 w-8 text-gray-300" />
+            </div>
+            <h3 className="text-lg font-bold text-gray-900 mb-1">No matching orders</h3>
+            <p className="text-gray-500 text-sm">Try a different product name, price, or order ID.</p>
+          </div>
         ) : (
           /* Order List */
-          <div className="space-y-4 md:space-y-6">
+          <div className="space-y-3 md:space-y-4">
             <AnimatePresence>
-              {orders.map((order, idx) => (
+              {filteredOrders.map((order, idx) => (
                 <motion.div
                   key={order._id}
                   initial={{ opacity: 0, y: 10 }}
@@ -147,9 +233,9 @@ const Orders = () => {
                   transition={{ delay: idx * 0.05 }}
                   className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden hover:border-teal-200 transition-all group"
                 >
-                  <div className="p-5 md:p-8">
+                  <div className="p-4 md:p-5">
                     {/* Header: ID, Status & Price */}
-                    <div className="flex items-start justify-between gap-4 mb-6">
+                    <div className="flex items-start justify-between gap-4 mb-4">
                       <div className="flex items-center gap-3">
                         <div className="hidden sm:flex w-10 h-10 rounded-xl bg-gray-50 items-center justify-center text-gray-400 border border-gray-100">
                           <FiClock size={18} />
@@ -164,11 +250,17 @@ const Orders = () => {
                           {order.status}
                         </span>
                         <p className="text-lg font-bold text-gray-900">₹{order.totalPrice.toLocaleString()}</p>
+                        {order.deliveryTimeline?.expectedDeliveryTime && !['Delivered', 'Cancelled'].includes(order.status) && (
+                          <p className="text-[10px] font-bold text-teal-700 flex items-center gap-1">
+                            <FiClock size={10} />
+                            Est. Delivery: {new Date(order.deliveryTimeline.expectedDeliveryTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </p>
+                        )}
                       </div>
                     </div>
 
                     {/* Order Items */}
-                    <div className="space-y-4 mb-6">
+                    <div className="space-y-2.5 mb-4">
                        {order.orderItems.map((item, i) => {
                           const existingReview = reviews.find(r => r.product && (r.product._id === item.product || r.product === item.product));
                           
@@ -227,7 +319,7 @@ const Orders = () => {
                     </div>
 
                     {/* Footer: Date & Actions */}
-                    <div className="flex items-center justify-between pt-5 border-t border-gray-100">
+                    <div className="flex items-center justify-between pt-4 border-t border-gray-100">
                        <div>
                           <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">
                             Placed on {new Date(order.createdAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}
@@ -256,6 +348,29 @@ const Orders = () => {
                 </motion.div>
               ))}
             </AnimatePresence>
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between pt-4">
+                <span className="text-xs font-semibold text-gray-500">
+                  Page {page} of {totalPages} &middot; {totalResults} order{totalResults === 1 ? '' : 's'}
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => goToPage(page - 1)}
+                    disabled={page <= 1}
+                    className="px-4 py-2 rounded-lg border border-gray-200 bg-white text-xs font-bold text-gray-700 hover:border-teal-300 hover:text-teal-600 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    Previous
+                  </button>
+                  <button
+                    onClick={() => goToPage(page + 1)}
+                    disabled={page >= totalPages}
+                    className="px-4 py-2 rounded-lg border border-gray-200 bg-white text-xs font-bold text-gray-700 hover:border-teal-300 hover:text-teal-600 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -275,7 +390,7 @@ const Orders = () => {
           onClose={() => setIsReturnModalOpen(false)}
           order={returnOrder}
           orderItem={returnItem}
-          onSuccess={fetchMyOrders}
+          onSuccess={() => fetchMyOrders(page, activeTab)}
         />
       )}
 

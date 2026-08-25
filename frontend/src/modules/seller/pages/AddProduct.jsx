@@ -33,6 +33,7 @@ import {
 import api from "../../../shared/utils/api";
 import ProductVariantsEditor from "../components/ProductVariantsEditor";
 import AIContentPanel from "../../../shared/components/AIContentPanel";
+import UnitSelect from "../../../shared/components/UnitSelect";
 import DeliveryOptionsForm from "../components/DeliveryOptionsForm";
 import PaymentOptionsForm from "../components/PaymentOptionsForm";
 
@@ -100,6 +101,7 @@ const AddProduct = () => {
     gstRate: "",
     b2bPrice: "",
     b2bMinQty: "",
+    maxB2CQty: "",
     seoKeywords: [],
     deliveryOptions: {
       availableDeliveryDays: [],
@@ -188,6 +190,7 @@ const AddProduct = () => {
         gstRate: item.gstRate || "",
         b2bPrice: item.b2bPrice || "",
         b2bMinQty: item.b2bMinQty || "",
+        maxB2CQty: item.maxB2CQty || "",
       });
     } catch (err) {
       console.error("Failed to load product for edit:", err);
@@ -225,6 +228,7 @@ const AddProduct = () => {
         images: item.images || [],
         b2bPrice: item.b2bPrice || "",
         b2bMinQty: item.b2bMinQty || "",
+        maxB2CQty: item.maxB2CQty || "",
       }));
       setSelection("catalog");
     } catch (err) {
@@ -347,6 +351,10 @@ const AddProduct = () => {
         if (value === '' || value === undefined || value === null) return 'Enterprise Min Qty is required';
         if (!Number.isInteger(Number(value)) || Number(value) <= 0) return 'Must be a whole number > 0';
         return '';
+      case 'maxB2CQty':
+        if (value === '' || value === undefined || value === null) return '';
+        if (!Number.isInteger(Number(value)) || Number(value) <= 0) return 'Must be a whole number > 0';
+        return '';
       default:
         return '';
     }
@@ -455,8 +463,8 @@ const AddProduct = () => {
         errors.push(`"${file.name}" is not a supported format (JPG/PNG/WEBP only)`);
       } else if (file.size > MAX_SIZE) {
         errors.push(`"${file.name}" exceeds 5 MB limit (${(file.size / 1024 / 1024).toFixed(1)} MB)`);
-      } else if (formData.images.length + validFiles.length >= 5) {
-        errors.push(`Max 5 images allowed — "${file.name}" was skipped`);
+      } else if (formData.images.length + validFiles.length >= 10) {
+        errors.push(`Max 10 images allowed — "${file.name}" was skipped`);
       } else {
         validFiles.push(file);
       }
@@ -494,8 +502,8 @@ const AddProduct = () => {
   };
 
   const handleCameraCapture = async () => {
-    if (formData.images.length >= 5) {
-      setError("Max 5 images allowed");
+    if (formData.images.length >= 10) {
+      setError("Max 10 images allowed");
       return;
     }
     // 1. Try Flutter openCamera handler
@@ -530,8 +538,8 @@ const AddProduct = () => {
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
 
-    if (formData.images.length >= 5) {
-      setError("Max 5 images allowed");
+    if (formData.images.length >= 10) {
+      setError("Max 10 images allowed");
       return;
     }
 
@@ -667,6 +675,7 @@ const AddProduct = () => {
           : undefined,
         b2bPrice: formData.b2bPrice ? Number(formData.b2bPrice) : undefined,
         b2bMinQty: formData.b2bMinQty ? Number(formData.b2bMinQty) : undefined,
+        maxB2CQty: formData.maxB2CQty ? Number(formData.maxB2CQty) : undefined,
         countInStock: Number(formData.countInStock),
         images: uploadedUrls,
         videoUrl: finalVideoUrl,
@@ -1332,7 +1341,7 @@ const AddProduct = () => {
                           : prev.dimensions,
                         thickness: data.dimensions?.thickness || prev.thickness,
                         seoKeywords: data.seoKeywords,
-                        images: aiImages.length > 0 ? [...prev.images, ...aiImages].slice(0, 5) : prev.images,
+                        images: aiImages.length > 0 ? [...prev.images, ...aiImages].slice(0, 10) : prev.images,
                         dynamicAttributes: {
                           ...(prev.dynamicAttributes || {}),
                           ...data.specifications
@@ -1461,6 +1470,22 @@ const AddProduct = () => {
                         </div>
                       </div>
                       <div className="space-y-2">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest relative group">
+                          Max Qty per B2C Order
+                          <span className="invisible group-hover:visible absolute left-0 -top-8 w-max bg-slate-800 text-white text-[10px] rounded px-2 py-1 shadow-lg normal-case tracking-normal z-10">Customers who want more than this must submit a Bulk Order Request</span>
+                        </label>
+                        <input
+                          type="number"
+                          min="1"
+                          placeholder="Unlimited"
+                          value={formData.maxB2CQty}
+                          onChange={(e) => handleFieldChange('maxB2CQty', e.target.value)}
+                          onBlur={() => handleBlur('maxB2CQty')}
+                          className={`w-full px-6 py-4 rounded-2xl border-none font-bold text-slate-900 transition-all ${fc('maxB2CQty')}`}
+                        />
+                        {fieldErr('maxB2CQty')}
+                      </div>
+                      <div className="space-y-2">
                         <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                           GST Rate Override
                         </label>
@@ -1487,18 +1512,11 @@ const AddProduct = () => {
                           <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                             Unit
                           </label>
-                          <select
+                          <UnitSelect
                             value={formData.unit}
-                            onChange={(e) =>
-                              setFormData({ ...formData, unit: e.target.value })
-                            }
-                            className="w-full px-4 py-4 rounded-2xl bg-slate-50 border-none font-bold text-xs text-slate-600"
-                          >
-                            <option value="piece">Piece</option>
-                            <option value="kg">Kg</option>
-                            <option value="sqft">Sq. Ft.</option>
-                            <option value="box">Box</option>
-                          </select>
+                            onChange={(unit) => setFormData({ ...formData, unit })}
+                            triggerClassName="w-full flex items-center justify-between px-4 py-4 rounded-2xl bg-slate-50 border-none font-bold text-xs text-slate-600 cursor-pointer"
+                          />
                         </div>
                         <div className="space-y-2">
                           <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
@@ -1533,7 +1551,7 @@ const AddProduct = () => {
                         </h3>
                       </div>
                       <span className="text-[10px] font-bold text-slate-400 bg-slate-50 px-2.5 py-1 rounded-lg uppercase">
-                        {formData.images.length}/5
+                        {formData.images.length}/10
                       </span>
                     </div>
 
@@ -1583,7 +1601,7 @@ const AddProduct = () => {
                           </div>
                         );
                       })}
-                      {formData.images.length < 5 && (
+                      {formData.images.length < 10 && (
                         <>
                           <div
                             onClick={() => fileInputRef.current.click()}
@@ -1640,7 +1658,7 @@ const AddProduct = () => {
                       <div className="space-y-0.5">
                         <p className="text-[9px] font-black text-slate-500 uppercase tracking-wider">Image Requirements</p>
                         <p className="text-[9px] text-slate-400 font-medium leading-relaxed">
-                          Max <span className="font-black text-slate-600">5 MB</span> per image &nbsp;•&nbsp; Formats: <span className="font-black text-slate-600">JPG, PNG, WEBP</span> &nbsp;•&nbsp; Up to <span className="font-black text-slate-600">5 photos</span>
+                          Max <span className="font-black text-slate-600">5 MB</span> per image &nbsp;•&nbsp; Formats: <span className="font-black text-slate-600">JPG, PNG, WEBP</span> &nbsp;•&nbsp; Up to <span className="font-black text-slate-600">10 photos</span>
                         </p>
                         <p className="text-[9px] text-slate-400 font-medium">Recommended: square images at 800×800 px or higher</p>
                       </div>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import PageWrapper from "../components/PageWrapper";
 import {
   FiUser,
@@ -549,10 +550,18 @@ const SettingsPage = () => {
 
             {activeTab === "Invoice" && (
               <div className="space-y-6 max-w-xl animate-in fade-in slide-in-from-bottom-2 duration-300">
-                <h3 className="text-xl font-display font-bold text-deep-espresso flex items-center gap-3">
-                  <FiSave className="text-warm-sand" /> Invoice Formatting
-                </h3>
-                
+                <div className="flex items-center justify-between flex-wrap gap-3">
+                  <h3 className="text-xl font-display font-bold text-deep-espresso flex items-center gap-3">
+                    <FiSave className="text-warm-sand" /> Invoice Formatting
+                  </h3>
+                  <Link
+                    to="/admin/invoice-templates"
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-deep-espresso text-white text-[10px] font-black uppercase tracking-widest hover:bg-dusty-cocoa transition-all"
+                  >
+                    <FiLayout size={13} /> Manage Invoice & Document Templates
+                  </Link>
+                </div>
+
                 <div className="space-y-4">
                   {/* Admin Name */}
                   <div className="space-y-2">

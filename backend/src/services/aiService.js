@@ -148,12 +148,16 @@ OUTPUT FORMAT (STRICT JSON):
 const generateProductContent = async (
   name, category, subcategory, subsubcategory,
   brand, material, color, dimensions, thickness,
-  sku, generateImage = false, customPrompt = ""
+  sku, generateImage = false, customPrompt = "", imageCount = null
 ) => {
   try {
     const catText = `${category || ''} ${subcategory || ''} ${subsubcategory || ''}`.toLowerCase();
     const isHardware = catText.includes('hardware');
-    const imagePromptCount = isHardware ? 3 : '2 to 3';
+    const defaultTargetCount = isHardware ? 3 : 2;
+    const targetCount = Number.isFinite(imageCount) && imageCount > 0
+      ? Math.min(imageCount, 10)
+      : defaultTargetCount;
+    const imagePromptCount = targetCount;
 
     let prompt = `You are a premium product copywriter, technical database specialist, and SEO specialist for Riddha Interior Mart (RIMX), an e-commerce platform specializing in home interiors, building materials, furniture, tiles, hardware, and electrical fittings.
 
@@ -246,7 +250,6 @@ YOUR TASK — Return the following:
     // Prefer real product photos found by searching the product name + SKU; only
     // fall back to AI-generated images for any slots a search couldn't fill.
     if (generateImage) {
-      const targetCount = isHardware ? 3 : 2;
       const baseCacheKey = (sku || name || '').trim().toLowerCase();
 
       // 1) Real image search by product name + SKU

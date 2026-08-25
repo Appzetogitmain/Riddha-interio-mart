@@ -3,7 +3,10 @@ import { FiX, FiPackage, FiPhone, FiUser, FiMessageSquare, FiSend, FiChevronRigh
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../../../shared/utils/api';
 
-const BulkOrderModal = ({ isOpen, onClose }) => {
+// prefillItem (optional): { id, name, qty, price, image, category, maxQty } — seeds
+// the order with a single item (e.g. a customer hit a product's per-order quantity
+// cap on the PDP/cart). Still editable/removable, and more items can be browsed in.
+const BulkOrderModal = ({ isOpen, onClose, prefillItem }) => {
   const [selectionMode, setSelectionMode] = useState('single');
   const [categories, setCategories] = useState([]);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState([]);
@@ -19,13 +22,20 @@ const BulkOrderModal = ({ isOpen, onClose }) => {
     if (isOpen) {
       fetchCategories();
       document.body.style.overflow = 'hidden';
+      if (prefillItem) {
+        setOrderItems([prefillItem]);
+        setFormData((prev) => ({
+          ...prev,
+          message: `Requesting ${prefillItem.qty} unit(s) of "${prefillItem.name}" — exceeds the standard per-order limit${prefillItem.maxQty ? ` of ${prefillItem.maxQty}` : ''}.`
+        }));
+      }
     } else {
       document.body.style.overflow = '';
     }
     return () => {
       document.body.style.overflow = '';
     };
-  }, [isOpen]);
+  }, [isOpen, prefillItem]);
 
   const fetchCategories = async () => {
     try {

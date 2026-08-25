@@ -26,7 +26,10 @@ const downloadImage = (url) => {
 
 // Helper to draw table rows in pdfkit
 const drawTableRow = (doc, y, values, widths, alignments, isHeader = false) => {
-  let currentX = 50;
+  // Must match the x=40 the surrounding table/row rects are drawn at (see tableTop
+  // rects below) — starting 10pt further right than the rects caused the last
+  // column ("Total (Rs)") to spill past the table border and the page margin.
+  let currentX = 40;
   doc.fontSize(isHeader ? 8 : 7).font(isHeader ? "Helvetica-Bold" : "Helvetica");
   
   for (let i = 0; i < values.length; i++) {
@@ -132,7 +135,7 @@ class InvoicePdfService {
       const row = [
         index + 1,
         item.name,
-        "6907", // Default dummy HSN
+        item.product?.hsnCode || "6907", // Fallback dummy HSN when the product has none set
         item.quantity,
         "Box",
         rate.toFixed(2),
@@ -148,14 +151,15 @@ class InvoicePdfService {
     });
     
     // Total Row
-    doc.rect(40, currentY, 515, 20).fill("#f1f5f9").stroke("#cccccc");
+    doc.rect(40, currentY, 515, 26).fill("#f1f5f9").stroke("#cccccc");
     doc.fillColor("#000000").font("Helvetica-Bold").fontSize(8);
-    doc.text("Total", 50, currentY + 6);
-    doc.text(`${order.orderItems.reduce((acc, curr) => acc + curr.quantity, 0)} Items`, 220, currentY + 6);
-    doc.text(`Rs. ${order.itemsPrice.toFixed(2)}`, 380, currentY + 6, { align: "right", width: 80 });
-    doc.text(`Rs. ${order.totalPrice.toFixed(2)}`, 490, currentY + 6, { align: "right", width: 60 });
-    currentY += 25;
-    
+    doc.text("Total", 40, currentY + 9);
+    doc.text(`${order.orderItems.reduce((acc, curr) => acc + curr.quantity, 0)} Items`, 210, currentY + 9);
+    doc.text(`Rs. ${order.itemsPrice.toFixed(2)}`, 370, currentY + 9, { align: "right", width: 80 });
+    doc.fillColor("#0f766e").fontSize(10).text(`Rs. ${order.totalPrice.toFixed(2)}`, 460, currentY + 8, { align: "right", width: 95 });
+    doc.fillColor("#000000");
+    currentY += 31;
+
     // Bank details & declaration & signature
     const bottomY = currentY;
     
@@ -304,7 +308,7 @@ class InvoicePdfService {
       doc.rect(40, dcItemY, 515, 15).stroke("#eeeeee");
       doc.text(index + 1, 50, dcItemY + 4);
       doc.text(item.name, 80, dcItemY + 4);
-      doc.text("6907", 300, dcItemY + 4);
+      doc.text(item.product?.hsnCode || "6907", 300, dcItemY + 4);
       doc.text(item.quantity, 380, dcItemY + 4);
       doc.text("1", 440, dcItemY + 4);
       doc.text("25 KG", 500, dcItemY + 4);
@@ -389,7 +393,7 @@ class InvoicePdfService {
   /**
    * Generates Bill C: Marketplace to Customer Tax Invoice (Not visible to seller)
    */
-  async generateMarketplaceToCustomerInvoice(order, seller, settings) {
+  async generateMarketplaceToCustomerInvoice(order, seller, settings, termsContent) {
     const doc = new PDFDocument({ size: "A4", margin: 40 });
     const buffers = [];
     doc.on("data", buffers.push.bind(buffers));
@@ -484,7 +488,7 @@ class InvoicePdfService {
       const row = [
         index + 1,
         item.name,
-        "6907",
+        item.product?.hsnCode || "6907", // Fallback dummy HSN when the product has none set
         item.quantity,
         "Box",
         rate.toFixed(2),
@@ -500,14 +504,15 @@ class InvoicePdfService {
     });
     
     // Total Row
-    doc.rect(40, currentY, 515, 20).fill("#f1f5f9").stroke("#cccccc");
+    doc.rect(40, currentY, 515, 26).fill("#f1f5f9").stroke("#cccccc");
     doc.fillColor("#000000").font("Helvetica-Bold").fontSize(8);
-    doc.text("Total", 50, currentY + 6);
-    doc.text(`${order.orderItems.reduce((acc, curr) => acc + curr.quantity, 0)} Items`, 220, currentY + 6);
-    doc.text(`Rs. ${order.itemsPrice.toFixed(2)}`, 380, currentY + 6, { align: "right", width: 80 });
-    doc.text(`Rs. ${order.totalPrice.toFixed(2)}`, 490, currentY + 6, { align: "right", width: 60 });
-    currentY += 25;
-    
+    doc.text("Total", 40, currentY + 9);
+    doc.text(`${order.orderItems.reduce((acc, curr) => acc + curr.quantity, 0)} Items`, 210, currentY + 9);
+    doc.text(`Rs. ${order.itemsPrice.toFixed(2)}`, 370, currentY + 9, { align: "right", width: 80 });
+    doc.fillColor("#e11d48").fontSize(10).text(`Rs. ${order.totalPrice.toFixed(2)}`, 460, currentY + 8, { align: "right", width: 95 });
+    doc.fillColor("#000000");
+    currentY += 31;
+
     // Bank details & IRN block
     const bottomY = currentY;
     
@@ -566,7 +571,17 @@ class InvoicePdfService {
     
     // Footer note
     doc.fillColor("#888888").font("Helvetica").fontSize(7).text("Note: This is a computer generated invoice and does not require a physical signature.", 40, irnY + 85, { align: "center", width: 515 });
-    
+
+    // Terms & Conditions (admin-managed, TermsCondition type: 'product_purchase') —
+    // shown after all invoice details, since pdfkit auto-wraps/paginates doc.text
+    // this is safe for arbitrarily long admin-authored content.
+    if (termsContent) {
+      const termsY = irnY + 85 + 25;
+      doc.moveTo(40, termsY - 10).lineTo(555, termsY - 10).strokeColor("#cccccc").stroke();
+      doc.fillColor("#e11d48").font("Helvetica-Bold").fontSize(8).text("TERMS & CONDITIONS", 40, termsY);
+      doc.fillColor("#444444").font("Helvetica").fontSize(7).text(termsContent, 40, termsY + 14, { width: 515, align: "left" });
+    }
+
     doc.end();
     return new Promise((resolve) => {
       doc.on("end", () => resolve(Buffer.concat(buffers)));

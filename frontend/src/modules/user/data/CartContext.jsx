@@ -68,33 +68,51 @@ export const CartProvider = ({ children }) => {
     }
   };
 
+  // Regular (non-enterprise) B2C customers can be capped per-product via
+  // Product.maxB2CQty; enterprise buyers use the RFQ/B2B pricing flow instead
+  // and are exempt. Returns null when the requested quantity is fine to apply,
+  // or { capped: true, maxQty } when the caller should offer a Bulk Order
+  // Request instead of applying the quantity.
+  const checkQtyCap = (product, quantity) => {
+    if (user?.userType === 'enterpriser') return null;
+    const maxQty = product?.maxB2CQty;
+    if (maxQty && quantity > maxQty) {
+      return { capped: true, maxQty };
+    }
+    return null;
+  };
+
   const addToCart = async (product, quantity = 1) => {
     const productId = product._id || product.id;
-    
+
     // Check if already in local cart for optimistic update
     const itemIndex = cart.findIndex(item => (item._id || item.id) === productId);
-    
+
     if (itemIndex > -1) {
       // If already exists, use updateQuantity logic
       const existingItem = cart[itemIndex];
-      updateQuantity(productId, existingItem.quantity + quantity);
-    } else {
-      // Add new item optimistically
-      setCart(prev => [...prev, { ...product, quantity, _id: productId }]);
+      return updateQuantity(productId, existingItem.quantity + quantity);
+    }
 
-      if (isLoggedIn) {
-        try {
-          const response = await api.post('/cart', { productId, quantity });
-          if (response.data.success) {
-            // refresh cart from server to get accurate data and populated fields
-            fetchCart();
-          }
-        } catch (err) {
-          console.error('Failed to add to cart on backend:', err);
-          // Revert optimistic if needed, but usually we just let it be
+    const capResult = checkQtyCap(product, quantity);
+    if (capResult) return capResult;
+
+    // Add new item optimistically
+    setCart(prev => [...prev, { ...product, quantity, _id: productId }]);
+
+    if (isLoggedIn) {
+      try {
+        const response = await api.post('/cart', { productId, quantity });
+        if (response.data.success) {
+          // refresh cart from server to get accurate data and populated fields
+          fetchCart();
         }
+      } catch (err) {
+        console.error('Failed to add to cart on backend:', err);
+        // Revert optimistic if needed, but usually we just let it be
       }
     }
+    return { capped: false };
   };
 
   const removeFromCart = async (productId) => {
@@ -112,8 +130,12 @@ export const CartProvider = ({ children }) => {
   const updateQuantity = async (productId, quantity) => {
     if (quantity < 1) {
       removeFromCart(productId);
-      return;
+      return { capped: false };
     }
+
+    const existingItem = cart.find(item => (item._id || item.id) === productId);
+    const capResult = existingItem ? checkQtyCap(existingItem, quantity) : null;
+    if (capResult) return capResult;
 
     // Local update
     setCart(prev =>
@@ -135,6 +157,7 @@ export const CartProvider = ({ children }) => {
         }
       }
     }
+    return { capped: false };
   };
 
   const getItemQuantity = (productId) => {

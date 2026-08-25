@@ -82,6 +82,7 @@ class EmailService {
   async sendRegistrationDocuments(to, fullName, roleType, signatureBase64 = '') {
     try {
       const TermsCondition = require('../models/TermsCondition');
+      const SystemSettings = require('../models/SystemSettings');
       const { generateAgreementPDF } = require('../utils/documentPdfGenerator');
 
       // Fetch Terms & Conditions
@@ -92,8 +93,12 @@ class EmailService {
       let privacy = await TermsCondition.findOne({ type: `${roleType}_privacy` });
       let privacyText = privacy ? privacy.content : `Welcome to Riddha Interior Mart. This is the default ${roleType} privacy policy.`;
 
+      // Fetch admin-configured document header/footer
+      const settings = await SystemSettings.findOne();
+      const docSettings = settings?.documentTemplateSettings;
+
       // Generate the PDF
-      const pdfBuffer = await generateAgreementPDF(roleType, termsText, privacyText, fullName, signatureBase64);
+      const pdfBuffer = await generateAgreementPDF(roleType, termsText, privacyText, fullName, signatureBase64, docSettings);
 
       // Email template body
       const roleLabel = roleType === 'user' ? 'Customer' : roleType === 'seller' ? 'Seller' : 'Delivery Partner';

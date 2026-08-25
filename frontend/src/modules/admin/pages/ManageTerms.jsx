@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import PageWrapper from '../components/PageWrapper';
-import { FiUser, FiBriefcase, FiTruck, FiSave, FiCheck, FiXCircle } from 'react-icons/fi';
+import { FiUser, FiBriefcase, FiTruck, FiSave, FiCheck, FiXCircle, FiShoppingBag } from 'react-icons/fi';
 import api from '../../../shared/utils/api';
 
 const ManageTerms = () => {
@@ -74,9 +74,11 @@ const ManageTerms = () => {
       case 'seller': 
       case 'seller_privacy': 
         return <FiBriefcase className="size-4" />;
-      case 'delivery': 
-      case 'delivery_privacy': 
+      case 'delivery':
+      case 'delivery_privacy':
         return <FiTruck className="size-4" />;
+      case 'product_purchase':
+        return <FiShoppingBag className="size-4" />;
       default: return null;
     }
   };
@@ -89,6 +91,7 @@ const ManageTerms = () => {
       case 'seller_privacy': return 'Seller Privacy Policy';
       case 'delivery': return 'Delivery Partner T&C';
       case 'delivery_privacy': return 'Delivery Partner Privacy Policy';
+      case 'product_purchase': return 'Product Purchase T&C';
       default: return '';
     }
   };
@@ -114,8 +117,8 @@ const ManageTerms = () => {
 
         <div className="bg-white rounded-2xl md:rounded-[32px] shadow-xl border border-soft-oatmeal overflow-hidden">
           {/* Tabs Header */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 border-b border-soft-oatmeal bg-soft-oatmeal/5 w-full">
-            {['user', 'user_privacy', 'seller', 'seller_privacy', 'delivery', 'delivery_privacy'].map((tab) => (
+          <div className="flex overflow-x-auto no-scrollbar border-b border-soft-oatmeal bg-soft-oatmeal/5 w-full">
+            {['user', 'user_privacy', 'seller', 'seller_privacy', 'delivery', 'delivery_privacy', 'product_purchase'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => {
@@ -123,9 +126,9 @@ const ManageTerms = () => {
                   setError('');
                   setIsSaved(false);
                 }}
-                className={`py-4 px-2 text-[9px] md:text-[10px] font-black uppercase tracking-[0.1em] transition-all border-b-2 flex items-center justify-center gap-1.5 min-h-[60px] text-center ${
-                  activeTab === tab 
-                    ? 'text-dusty-cocoa border-dusty-cocoa font-bold bg-white/50' 
+                className={`shrink-0 py-4 px-4 text-[10px] font-black uppercase tracking-[0.1em] whitespace-nowrap transition-all border-b-2 flex items-center justify-center gap-1.5 ${
+                  activeTab === tab
+                    ? 'text-dusty-cocoa border-dusty-cocoa font-bold bg-white/50'
                     : 'text-warm-sand border-transparent hover:text-deep-espresso hover:bg-white/30'
                 }`}
               >

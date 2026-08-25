@@ -27,6 +27,7 @@ const EditProductPage = () => {
     price: '',
     b2bPrice: '',
     b2bMinQty: '',
+    maxB2CQty: '',
     description: '',
     material: '',
     dimensions: '',
@@ -66,6 +67,7 @@ const EditProductPage = () => {
           price: product.price || '',
           b2bPrice: product.b2bPrice || '',
           b2bMinQty: product.b2bMinQty || '',
+          maxB2CQty: product.maxB2CQty || '',
           description: product.description || '',
           material: product.material || '',
           dimensions: product.dimensions || '',
@@ -258,6 +260,7 @@ const EditProductPage = () => {
         price: Number(formData.price),
         b2bPrice: formData.b2bPrice !== '' ? Number(formData.b2bPrice) : undefined,
         b2bMinQty: formData.b2bMinQty !== '' ? Number(formData.b2bMinQty) : undefined,
+        maxB2CQty: formData.maxB2CQty !== '' ? Number(formData.maxB2CQty) : undefined,
         stock: Number(formData.stock),
         images: formData.images,
         videoUrl: finalVideoUrl,
@@ -620,7 +623,21 @@ const EditProductPage = () => {
                          />
                        </div>
                     </div>
-                    
+
+                    {/* B2C Order Quantity Cap */}
+                    <div className="space-y-2">
+                       <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest flex items-center gap-2">
+                          <FiUser size={12} /> Max Qty per B2C Order
+                       </label>
+                       <input
+                         type="number" placeholder="Unlimited"
+                         value={formData.maxB2CQty}
+                         onChange={(e) => setFormData({...formData, maxB2CQty: e.target.value})}
+                         className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-warm-sand transition-all font-medium"
+                       />
+                       <p className="text-[9px] text-warm-sand/70 font-medium">Customers wanting more than this must submit a Bulk Order Request.</p>
+                    </div>
+
                     <div className="grid grid-cols-2 gap-4">
                        <div className="space-y-2">
                          <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest">Unit</label>

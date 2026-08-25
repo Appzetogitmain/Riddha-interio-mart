@@ -390,7 +390,7 @@ const ProductListPage = ({ status }) => {
               </div>
 
               <div className="space-y-3">
-                <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest ml-1">Normal Commission (%)</label>
+                <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest ml-1">B2C Commission (%)</label>
                 <div className="relative">
                   <input 
                     type="number"
@@ -419,7 +419,7 @@ const ProductListPage = ({ status }) => {
                   </div>
 
                   <div className="space-y-3">
-                    <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest ml-1">Enterprise Commission (%)</label>
+                    <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest ml-1">B2B Commission (%)</label>
                     <div className="relative">
                       <input 
                         type="number"

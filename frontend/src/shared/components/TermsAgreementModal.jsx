@@ -207,14 +207,16 @@ const TermsAgreementModal = ({ isOpen, onClose, onAgree, roleType = 'user', init
                 <div 
                   ref={contentRef}
                   onScroll={handleScroll}
-                  className="flex-1 overflow-y-auto p-6 bg-white prose prose-sm max-w-none prose-p:text-gray-600"
+                  className="flex-1 overflow-y-auto p-6 bg-white"
                 >
                   {loading ? (
                     <div className="flex h-full items-center justify-center">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#c5a880]"></div>
                     </div>
                   ) : (
-                    <div dangerouslySetInnerHTML={{ __html: activeTab === 'terms' ? termsContent : privacyContent }} />
+                    <div className="whitespace-pre-wrap text-gray-600 text-sm leading-relaxed">
+                      {activeTab === 'terms' ? termsContent : privacyContent}
+                    </div>
                   )}
                   
                   {/* End marker to encourage scrolling */}

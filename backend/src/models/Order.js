@@ -197,6 +197,12 @@ const OrderSchema = new mongoose.Schema({
     type: [String],
     default: []
   },
+  // General order-related photos the seller attaches (packaging, condition, etc.) —
+  // distinct from pickupProofImages/deliveryProofImages which gate delivery status changes.
+  orderImages: {
+    type: [String],
+    default: []
+  },
   businessDetails: {
     shopName: String,
     gstNumber: String,

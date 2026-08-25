@@ -5,6 +5,9 @@ import { LuPlus, LuImage, LuBriefcase, LuTags, LuInfo, LuArrowLeft, LuPackage, L
 import { FiPackage, FiEdit3, FiTrash2, FiPlus } from 'react-icons/fi';
 import api from '../../../shared/utils/api';
 import AIContentPanel from '../../../shared/components/AIContentPanel';
+import ImagePreviewModal from '../../../shared/components/ImagePreviewModal';
+import UnitSelect from '../../../shared/components/UnitSelect';
+import ProductVariantsEditor from '../../seller/components/ProductVariantsEditor';
 
 const AddInventoryPage = () => {
   const navigate = useNavigate();
@@ -16,8 +19,10 @@ const AddInventoryPage = () => {
   const [loading, setLoading] = useState(false);
   const [imgFiles, setImgFiles] = useState([]); // Array of actual File objects
   const [videoFile, setVideoFile] = useState(null);
+  const [previewImageSrc, setPreviewImageSrc] = useState(null);
   const [categories, setCategories] = useState([]);
   const [brands, setBrands] = useState([]);
+  const [customBrandName, setCustomBrandName] = useState('');
   
   // Custom Dropdown State
   const [isCatOpen, setIsCatOpen] = useState(false);
@@ -42,6 +47,7 @@ const AddInventoryPage = () => {
     countInStock: 50,
     unit: 'piece',
     unitValue: '1',
+    maxB2CQty: '',
     seoKeywords: []
   });
   
@@ -81,6 +87,7 @@ const AddInventoryPage = () => {
               countInStock: 50,
               unit: itm.unit || 'piece',
               unitValue: itm.unitValue || '1',
+              maxB2CQty: itm.maxB2CQty || '',
             });
           }
         }
@@ -204,9 +211,10 @@ const AddInventoryPage = () => {
     e.preventDefault();
     if (!formData.category) return alert('Please select or enter a category');
     if (!formData.brand) return alert('Please select a brand partner.');
+    if (formData.brand === 'other' && !customBrandName.trim()) return alert('Please enter the new brand name.');
     if (skuStatus.exists) return alert('Cannot save product: The entered SKU code already exists. Please enter a unique SKU.');
     if (formData.images.length === 0) return alert('Cannot save product: Please upload or select at least 1 image for this product.');
-    
+
     try {
       setLoading(true);
 
@@ -229,13 +237,33 @@ const AddInventoryPage = () => {
         }
       }
 
+      let finalBrand = formData.brand;
+      if (formData.brand === 'other' && customBrandName.trim()) {
+        try {
+          const { data: brandRes } = await api.post('/brands', { name: customBrandName.trim() });
+          finalBrand = brandRes.data?._id || brandRes._id;
+        } catch (e) {
+          const errorMsg = e.response?.data?.error || e.message || '';
+          if (errorMsg.toLowerCase().includes('already exists')) {
+            const { data: brandListRes } = await api.get('/brands');
+            const matched = (brandListRes.data || []).find(b => b.name.toLowerCase() === customBrandName.trim().toLowerCase());
+            if (matched) finalBrand = matched._id;
+            else throw new Error('This brand name is already taken. Please pick a different name or select it from the list.');
+          } else {
+            throw new Error('Failed to create new brand: ' + errorMsg);
+          }
+        }
+      }
+
       const payload = {
         ...formData,
+        brand: finalBrand,
         price: Number(formData.price),
         countInStock: Number(formData.countInStock),
+        maxB2CQty: formData.maxB2CQty !== '' ? Number(formData.maxB2CQty) : undefined,
         images: finalImages,
         videoUrl: finalVideoUrl,
-        isApproved: true, 
+        isApproved: true,
         approvalStatus: 'approved',
         sellerType: 'Admin',
         isActive: true
@@ -245,7 +273,7 @@ const AddInventoryPage = () => {
       navigate('/admin/inventory');
     } catch (err) {
       console.error('Failed to add inventory product:', err);
-      alert(err.response?.data?.error || 'Error creating product.');
+      alert(err.response?.data?.error || err.message || 'Error creating product.');
     } finally {
       setLoading(false);
     }
@@ -276,13 +304,26 @@ const AddInventoryPage = () => {
                 <div className="grid grid-cols-2 gap-3">
                    {formData.images.map((img, idx) => (
                      <div key={idx} className="relative aspect-square rounded-xl overflow-hidden border border-soft-oatmeal group">
-                        <img src={img} alt="" className="w-full h-full object-cover" />
-                        <button 
-                          type="button" onClick={() => removeImage(idx)}
-                          className="absolute inset-0 bg-red-500/80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all text-white"
-                        >
-                           <FiTrash2 size={16} />
-                        </button>
+                        <img
+                          src={img}
+                          alt=""
+                          onClick={() => setPreviewImageSrc(img)}
+                          className="w-full h-full object-cover cursor-pointer"
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-all pointer-events-none">
+                          <button
+                            type="button" onClick={() => setPreviewImageSrc(img)}
+                            className="p-2 bg-slate-700/90 hover:bg-slate-800 rounded-full text-white pointer-events-auto"
+                          >
+                             <LuImage size={16} />
+                          </button>
+                          <button
+                            type="button" onClick={() => removeImage(idx)}
+                            className="p-2 bg-red-500/90 hover:bg-red-600 rounded-full text-white pointer-events-auto"
+                          >
+                             <FiTrash2 size={16} />
+                          </button>
+                        </div>
                      </div>
                    ))}
                    {formData.images.length < 10 && (
@@ -344,11 +385,16 @@ const AddInventoryPage = () => {
                          );
                          if (matched) {
                            matchedBrandId = matched._id;
+                         } else {
+                           matchedBrandId = "other";
+                           setCustomBrandName(data.brandName);
                          }
                        }
 
                        const aiImages = (data.images && data.images.length > 0) ? data.images : (data.image ? [data.image] : []);
-                       aiImages.forEach((imgSrc, idx) => {
+                       // Skip any image already sitting in the product (e.g. Apply clicked twice on the same selection).
+                       const newAiImages = aiImages.filter((imgSrc) => !formData.images.includes(imgSrc));
+                       newAiImages.forEach((imgSrc, idx) => {
                          if (imgSrc && imgSrc.startsWith('data:')) {
                            fetch(imgSrc)
                              .then(res => res.blob())
@@ -371,7 +417,7 @@ const AddInventoryPage = () => {
                            : prev.dimensions,
                          thickness: data.dimensions?.thickness || prev.thickness,
                          seoKeywords: data.seoKeywords,
-                         images: aiImages.length > 0 ? [...prev.images, ...aiImages].slice(0, 5) : prev.images,
+                         images: newAiImages.length > 0 ? [...prev.images, ...newAiImages].slice(0, 10) : prev.images,
                          dynamicAttributes: {
                            ...(prev.dynamicAttributes || {}),
                            ...data.specifications
@@ -566,7 +612,11 @@ const AddInventoryPage = () => {
                     <div className="relative">
                       <input
                         type="text"
-                        placeholder={brands.find(b => b._id === formData.brand)?.name || 'Search brand...'}
+                        placeholder={
+                          formData.brand === 'other'
+                            ? (customBrandName || 'Other (Add New Brand)')
+                            : brands.find(b => b._id === formData.brand)?.name || 'Search brand...'
+                        }
                         value={brandSearch}
                         onChange={(e) => { setBrandSearch(e.target.value); setIsBrandOpen(true); }}
                         onFocus={() => setIsBrandOpen(true)}
@@ -593,7 +643,28 @@ const AddInventoryPage = () => {
                            {brands.filter(b => b.name.toLowerCase().includes(brandSearch.toLowerCase())).length === 0 && (
                              <p className="px-3 py-2.5 text-xs font-semibold text-warm-sand/60">No brands match "{brandSearch}"</p>
                            )}
+                           <button
+                             type="button"
+                             onMouseDown={(e) => {
+                               e.preventDefault();
+                               setFormData({ ...formData, brand: 'other' });
+                               setBrandSearch('');
+                               setIsBrandOpen(false);
+                             }}
+                             className="w-full text-left px-3 py-2.5 text-xs font-black text-deep-espresso hover:bg-soft-oatmeal/20 rounded-lg transition-colors border-t border-soft-oatmeal/50 mt-1"
+                           >
+                             + Other (Add New Brand)
+                           </button>
                         </div>
+                      )}
+                      {formData.brand === 'other' && (
+                        <input
+                          type="text"
+                          placeholder="Type new brand name..."
+                          value={customBrandName}
+                          onChange={(e) => setCustomBrandName(e.target.value)}
+                          className="w-full mt-2 bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none"
+                        />
                       )}
                     </div>
                   </div>
@@ -624,19 +695,11 @@ const AddInventoryPage = () => {
                 <div className="grid grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest">Unit Type</label>
-                      <select 
+                      <UnitSelect
                         value={formData.unit}
-                        onChange={(e) => setFormData({...formData, unit: e.target.value})}
-                        className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none appearance-none cursor-pointer"
-                      >
-                         <option value="piece">Piece (Pcs)</option>
-                         <option value="kg">Kilogram (Kg)</option>
-                         <option value="ltr">Litre (Ltr)</option>
-                         <option value="watt">Watt (W)</option>
-                         <option value="mtr">Meter (m)</option>
-                         <option value="box">Box</option>
-                         <option value="pack">Pack</option>
-                      </select>
+                        onChange={(unit) => setFormData({...formData, unit})}
+                        triggerClassName="w-full flex items-center justify-between bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none cursor-pointer"
+                      />
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest">Unit Value (Qty)</label>
@@ -648,6 +711,18 @@ const AddInventoryPage = () => {
                         className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none"
                       />
                     </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest">Max Qty per B2C Order</label>
+                  <input
+                    type="number"
+                    placeholder="Unlimited"
+                    value={formData.maxB2CQty}
+                    onChange={(e) => setFormData({...formData, maxB2CQty: e.target.value})}
+                    className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none"
+                  />
+                  <p className="text-[9px] text-warm-sand/70 font-medium">Customers wanting more than this must submit a Bulk Order Request.</p>
                 </div>
 
                 <div className="space-y-2">
@@ -713,6 +788,8 @@ const AddInventoryPage = () => {
                    </div>
                 </div>
 
+                <ProductVariantsEditor formData={formData} setFormData={setFormData} categories={categories} />
+
                 <div className="flex justify-end pt-6">
                   <button 
                     disabled={loading}
@@ -729,6 +806,9 @@ const AddInventoryPage = () => {
           </div>
         </form>
       </div>
+      {previewImageSrc && (
+        <ImagePreviewModal src={previewImageSrc} onClose={() => setPreviewImageSrc(null)} />
+      )}
     </PageWrapper>
   );
 };

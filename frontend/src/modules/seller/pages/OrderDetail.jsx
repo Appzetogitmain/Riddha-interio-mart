@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import PageWrapper from '../components/PageWrapper';
 import ProofUploadModal from '../components/ProofUploadModal';
+import DeliveryMethodModal from '../components/DeliveryMethodModal';
+import ImagePreviewModal from '../../../shared/components/ImagePreviewModal';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import {
@@ -20,6 +22,8 @@ import {
   LuX,
   LuRefreshCw,
   LuShare2,
+  LuImage,
+  LuUpload,
 } from 'react-icons/lu';
 import { FiCheckCircle, FiBox } from 'react-icons/fi';
 import api from '../../../shared/utils/api';
@@ -33,12 +37,15 @@ const statusConfig = {
   Cancelled:  { color: 'bg-rose-50 text-rose-700 border-rose-200' },
 };
 
+// "Delivered" is intentionally not offered here — it must always go through a
+// verified path: the assigned in-app delivery partner's own OTP flow, or the
+// seller's "Self Delivery Updates" card below (OTP + proof photos required).
 const STATUS_ACTIONS = {
   Pending:    [{ label: 'Accept Order',    next: 'Processing', style: 'bg-seller-primary text-white hover:opacity-90' },
                { label: 'Cancel Order',    next: 'Cancelled',  style: 'bg-white border border-rose-200 text-rose-600 hover:bg-rose-50' }],
   Processing: [{ label: 'Mark as Packed',  next: 'Packed',     style: 'bg-seller-primary text-white hover:opacity-90' }],
   Packed:     [{ label: 'Mark as Shipped', next: 'Shipped',    style: 'bg-seller-primary text-white hover:opacity-90' }],
-  Shipped:    [{ label: 'Mark Delivered',  next: 'Delivered',  style: 'bg-emerald-600 text-white hover:bg-emerald-700' }],
+  Shipped:    [],
 };
 
 const OrderDetail = () => {
@@ -51,6 +58,17 @@ const OrderDetail = () => {
   const [isProofModalOpen, setIsProofModalOpen] = useState(false);
   const [proofTargetStatus, setProofTargetStatus] = useState(null);
   const [isPickupProof, setIsPickupProof] = useState(true);
+
+  const [isDeliveryModalOpen, setIsDeliveryModalOpen] = useState(false);
+  const [deliveryModalMode, setDeliveryModalMode] = useState('select-type');
+
+  const [uploadingOrderImage, setUploadingOrderImage] = useState(false);
+  const [previewImageSrc, setPreviewImageSrc] = useState(null);
+
+  const openDeliveryModal = (mode = 'select-type') => {
+    setDeliveryModalMode(mode);
+    setIsDeliveryModalOpen(true);
+  };
 
   const fetchOrderDetail = async () => {
     try {
@@ -127,6 +145,31 @@ const OrderDetail = () => {
       toast.error(err?.response?.data?.error || err?.response?.data?.message || 'Failed to submit proof');
     } finally {
       setUpdating(false);
+    }
+  };
+
+  const handleOrderImageUpload = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    setUploadingOrderImage(true);
+    try {
+      const urls = [];
+      for (const file of files) {
+        const formData = new FormData();
+        formData.append('image', file);
+        const res = await api.post('/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+        if (res.data.success) urls.push(res.data.url);
+      }
+      if (urls.length > 0) {
+        await api.put(`/orders/${id}/images`, { images: urls });
+        await fetchOrderDetail();
+        toast.success('Order photo(s) uploaded');
+      }
+    } catch (err) {
+      toast.error(err?.response?.data?.error || 'Failed to upload order photo(s)');
+    } finally {
+      setUploadingOrderImage(false);
+      e.target.value = '';
     }
   };
 
@@ -450,22 +493,83 @@ const OrderDetail = () => {
           <div className="space-y-4">
 
             {/* Status actions */}
-            {actions.length > 0 && (
+            {(actions.length > 0 || (order.status === 'Processing' && order.deliveryStatus === 'None')) && (
               <div className="bg-white rounded-2xl border border-slate-100 px-4 py-4">
                 <p className="text-xs font-black text-slate-700 uppercase tracking-widest mb-3">Update Status</p>
                 <div className="space-y-2">
-                  {actions.map((action) => (
+                  {order.status === 'Processing' && order.deliveryStatus === 'None' ? (
                     <button
-                      key={action.next}
                       disabled={updating}
-                      onClick={() => handleStatusUpdate(action.next)}
-                      className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${action.style} disabled:opacity-50`}
+                      onClick={() => openDeliveryModal('select-type')}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-50"
                     >
-                      {updating ? <LuRefreshCw size={13} className="animate-spin" /> : <LuCheck size={13} />}
-                      {action.label}
+                      <LuTruck size={13} />
+                      Assign Delivery Method to Continue
                     </button>
-                  ))}
+                  ) : (
+                    actions.map((action) => (
+                      <button
+                        key={action.next}
+                        disabled={updating}
+                        onClick={() => handleStatusUpdate(action.next)}
+                        className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${action.style} disabled:opacity-50`}
+                      >
+                        {updating ? <LuRefreshCw size={13} className="animate-spin" /> : <LuCheck size={13} />}
+                        {action.label}
+                      </button>
+                    ))
+                  )}
                 </div>
+              </div>
+            )}
+
+            {/* Delivery assignment / current assignment */}
+            {!['Cancelled'].includes(order.status) && (
+              <div className="bg-white rounded-2xl border border-slate-100 px-4 py-4">
+                <p className="text-xs font-black text-slate-700 uppercase tracking-widest mb-3 flex items-center gap-1.5">
+                  <LuTruck size={12} className="text-seller-primary" /> Delivery
+                </p>
+                {order.deliveryStatus === 'None' ? (
+                  <div className="space-y-2">
+                    <p className="text-xs font-semibold text-slate-500">No delivery method assigned yet.</p>
+                    <button
+                      onClick={() => openDeliveryModal('select-type')}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all bg-seller-primary text-white hover:opacity-90"
+                    >
+                      <LuTruck size={13} /> Assign Delivery Method
+                    </button>
+                  </div>
+                ) : order.deliveryType === 'in-app' ? (
+                  <div className="flex items-center gap-2.5 p-2.5 bg-seller-light/40 rounded-xl border border-seller-primary/20">
+                    <LuTruck size={14} className="text-seller-primary shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-slate-800 truncate">{order.deliveryBoy?.fullName || 'Delivery Partner Assigned'}</p>
+                      <p className="text-[10px] font-semibold text-slate-400">{order.deliveryBoy?.phone || ''} · {order.deliveryStatus}</p>
+                    </div>
+                  </div>
+                ) : order.deliveryType === 'seller-managed' ? (
+                  order.assignedStaff ? (
+                    <div className="flex items-center gap-2.5 p-2.5 bg-slate-50 rounded-xl border border-slate-200">
+                      <LuUser size={14} className="text-slate-600 shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-slate-800 truncate">{order.assignedStaff.name}</p>
+                        <p className="text-[10px] font-semibold text-slate-400">{order.assignedStaff.phone}</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <p className="text-xs font-semibold text-slate-500">Self-managed — no staff member assigned yet.</p>
+                      <button
+                        onClick={() => openDeliveryModal('seller-managed')}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100"
+                      >
+                        <LuUser size={13} /> Assign Member
+                      </button>
+                    </div>
+                  )
+                ) : (
+                  <span className="text-[10px] font-black bg-slate-200 text-slate-500 px-2.5 py-1 rounded-full uppercase">Shiprocket · Pending</span>
+                )}
               </div>
             )}
 
@@ -577,16 +681,66 @@ const OrderDetail = () => {
                 </button>
               </div>
             </div>
+
+            {/* Order photos (general, not delivery proof) */}
+            <div className="bg-white rounded-2xl border border-slate-100 px-4 py-4">
+              <p className="text-xs font-black text-slate-700 uppercase tracking-widest mb-3 flex items-center gap-1.5">
+                <LuImage size={12} className="text-seller-primary" /> Order Photos
+              </p>
+              <div className="grid grid-cols-4 gap-2 mb-2">
+                {(order.orderImages || []).map((img, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setPreviewImageSrc(img)}
+                    className="aspect-square rounded-lg overflow-hidden border border-slate-100"
+                  >
+                    <img src={img} alt="" className="w-full h-full object-cover" />
+                  </button>
+                ))}
+              </div>
+              {(order.orderImages || []).length < 10 && (
+                <label className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-50 border border-dashed border-slate-200 text-xs font-bold text-slate-500 hover:bg-slate-100 transition-all cursor-pointer disabled:opacity-50">
+                  {uploadingOrderImage ? (
+                    <LuRefreshCw size={13} className="animate-spin" />
+                  ) : (
+                    <LuUpload size={13} className="text-slate-400" />
+                  )}
+                  {uploadingOrderImage ? 'Uploading...' : 'Upload Photos'}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    hidden
+                    disabled={uploadingOrderImage}
+                    onChange={handleOrderImageUpload}
+                  />
+                </label>
+              )}
+            </div>
           </div>
         </div>
       </div>
-      
+
       {isProofModalOpen && (
         <ProofUploadModal
           onClose={() => setIsProofModalOpen(false)}
           onSubmit={submitProof}
           isPickup={isPickupProof}
         />
+      )}
+
+      {isDeliveryModalOpen && (
+        <DeliveryMethodModal
+          order={order}
+          initialMode={deliveryModalMode}
+          onClose={() => setIsDeliveryModalOpen(false)}
+          onAssigned={(updatedOrder) => setOrder(updatedOrder)}
+        />
+      )}
+
+      {previewImageSrc && (
+        <ImagePreviewModal src={previewImageSrc} onClose={() => setPreviewImageSrc(null)} />
       )}
     </PageWrapper>
   );

@@ -17,7 +17,8 @@ const {
   validateCoupon,
   updateSellerManagedDeliveryStatus,
   regenerateInvoice,
-  downloadInvoice
+  downloadInvoice,
+  addOrderImages
 } = require('../controllers/orderController');
 const { protect, authorize } = require('../middleware/auth');
 const { check } = require('express-validator');
@@ -52,6 +53,9 @@ router.route('/:id/status')
 
 router.route('/:id/assign-delivery')
   .put(authorize('admin', 'seller'), assignOrderToDeliveryBoy);
+
+router.route('/:id/images')
+  .put(authorize('admin', 'seller'), addOrderImages);
 
 router.route('/:id/seller-delivery-status')
   .put(authorize('seller'), updateSellerManagedDeliveryStatus);

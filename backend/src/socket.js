@@ -558,6 +558,27 @@ async function notifySellerBulkOrder(sellerId, payload) {
   });
 }
 
+async function notifyAdminNewBulkOrder(payload) {
+  if (!io) return;
+  const itemCount = (payload.items || []).length;
+  const message = `${payload.customerName} submitted a bulk order request with ${itemCount} product${itemCount !== 1 ? 's' : ''}.`;
+
+  const { admins, sample: adminNotif } = await persistForAdmins({
+    title: 'New Bulk Order Request',
+    message,
+    type: 'order_update',
+    metadata: payload
+  });
+  io.to('role:admin').emit('bulk_order:new', payload);
+  if (adminNotif) io.to('role:admin').emit('notification:new', adminNotif);
+
+  await maybePushToOfflineAdmins(admins, {
+    title: 'New Bulk Order Request',
+    body: message,
+    data: { type: 'order_update' }
+  });
+}
+
 async function notifyLowStock(sellerId, payload) {
   if (!io) return;
   
@@ -618,5 +639,6 @@ module.exports = {
   notifyLowStock,
   notifyAdminNewBatch,
   notifySellerBatchReview,
-  notifySellerBulkOrder
+  notifySellerBulkOrder,
+  notifyAdminNewBulkOrder
 };

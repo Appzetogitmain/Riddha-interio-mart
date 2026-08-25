@@ -37,6 +37,13 @@ const LoginPage = () => {
 
   const role = getRole();
   const isDelivery = role === "delivery";
+
+  const roleLoginTitle = {
+    admin: "Admin Login",
+    seller: "Seller Login",
+    delivery: "Delivery Login",
+    user: "User Login",
+  }[role];
   const isDesktop =
     typeof window !== "undefined" ? window.innerWidth >= 768 : false;
 
@@ -178,6 +185,10 @@ const LoginPage = () => {
                 className="w-full h-auto object-contain"
               />
             </div>
+
+            <h1 className="w-full text-center md:text-left text-xl font-black text-slate-900 tracking-tight mb-3">
+              {roleLoginTitle}
+            </h1>
 
             {error && (
               <div className="w-full mb-4 p-3.5 bg-rose-50 border border-rose-100 rounded-xl text-center md:text-left">
@@ -367,7 +378,7 @@ const LoginPage = () => {
             <div className="mb-6 flex items-center justify-between gap-4 max-w-[460px]">
               <div>
                 <h1 className="text-2xl xl:text-[2rem] font-black text-slate-900 tracking-tight">
-                  Log In
+                  {roleLoginTitle}
                 </h1>
                 <p className="text-sm font-semibold text-slate-500 mt-1 capitalize">
                   Access your secure {role} panel

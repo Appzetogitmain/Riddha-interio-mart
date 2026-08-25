@@ -9,11 +9,32 @@ import { getDeliveryEstimate } from '../../../shared/utils/delivery';
 import SmartGuide from '../components/SmartGuide';
 // Requirement A — capture bulk buyers who will not check out at list price
 import RequestQuoteButton from '../components/RFQ/RequestQuoteButton';
+import BulkOrderModal from '../components/BulkOrderModal';
 
 const CartPage = () => {
   const { cart, updateQuantity, removeFromCart, pricingBreakdown } = useCart();
   const { isLoggedIn, address } = useUser();
   const navigate = useNavigate();
+
+  const [bulkModalOpen, setBulkModalOpen] = useState(false);
+  const [bulkPrefill, setBulkPrefill] = useState(null);
+
+  const handleIncrement = async (item) => {
+    const nextQty = item.quantity + 1;
+    const result = await updateQuantity(item._id || item.id, nextQty);
+    if (result?.capped) {
+      setBulkPrefill({
+        id: item._id || item.id,
+        name: item.name,
+        qty: nextQty,
+        price: item.price,
+        image: item.images?.[0] || item.image,
+        category: typeof item.category === 'string' ? item.category : (item.category?.name || 'General'),
+        maxQty: result.maxQty,
+      });
+      setBulkModalOpen(true);
+    }
+  };
 
   // Price Calculations (securely driven by backend pricing engine)
   const mrpValue = pricingBreakdown?.subtotal || 0;
@@ -129,7 +150,7 @@ const CartPage = () => {
                           </button>
                           <span className="font-bold text-gray-900 w-4 text-center">{item.quantity}</span>
                           <button
-                            onClick={() => updateQuantity(item._id || item.id, item.quantity + 1)}
+                            onClick={() => handleIncrement(item)}
                             className="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-md text-gray-600 hover:bg-gray-200"
                           >
                             <FiPlus size={14} />
@@ -304,7 +325,7 @@ const CartPage = () => {
                       </button>
                       <span className="w-8 text-center text-[15px] font-bold text-gray-900">{item.quantity}</span>
                       <button
-                        onClick={() => updateQuantity(item._id || item.id, item.quantity + 1)}
+                        onClick={() => handleIncrement(item)}
                         className="w-8 h-8 flex items-center justify-center text-gray-500 hover:bg-white hover:shadow-sm rounded-lg transition-all"
                       >
                         <FiPlus size={14} className="stroke-[2.5px]" />
@@ -374,6 +395,12 @@ const CartPage = () => {
           )}
         </div>
       </div>
+
+      <BulkOrderModal
+        isOpen={bulkModalOpen}
+        onClose={() => setBulkModalOpen(false)}
+        prefillItem={bulkPrefill}
+      />
     </div>
   );
 };

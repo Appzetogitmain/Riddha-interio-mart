@@ -1,6 +1,6 @@
 const BulkOrder = require('../models/BulkOrder');
 const Product   = require('../models/Product');
-const { notifySellerBulkOrder } = require('../socket');
+const { notifySellerBulkOrder, notifyAdminNewBulkOrder } = require('../socket');
 const { sendBulkOrderWhatsApp, sendSellerBulkOrderWhatsApp } = require('../utils/whatsapp');
 
 // ── Internal: populate products → group by seller → notify each seller ──────
@@ -58,8 +58,16 @@ exports.createBulkOrder = async (req, res) => {
     const { name, phone, email, items, message } = req.body;
     const bulkOrder = await BulkOrder.create({ name, phone, email, items, message });
 
-    // Fire-and-forget: admin WhatsApp + seller notifications — never blocks the response
+    // Fire-and-forget: admin WhatsApp + in-app notifications + seller notifications — never blocks the response
     sendBulkOrderWhatsApp(bulkOrder).catch(() => {});
+    notifyAdminNewBulkOrder({
+      customerName: bulkOrder.name,
+      customerPhone: bulkOrder.phone,
+      customerEmail: bulkOrder.email,
+      items: bulkOrder.items,
+      message: bulkOrder.message || '',
+      orderId: String(bulkOrder._id),
+    }).catch(() => {});
     _notifySellers(bulkOrder).catch(() => {});
 
     res.status(201).json({ success: true, data: bulkOrder });

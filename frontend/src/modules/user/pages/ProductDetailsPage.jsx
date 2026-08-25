@@ -19,6 +19,7 @@ import { useWishlist } from '../data/WishlistContext';
 import { useUser } from '../data/UserContext';
 import api from '../../../shared/utils/api';
 import { getDeliveryEstimate } from '../../../shared/utils/delivery';
+import BulkOrderModal from '../components/BulkOrderModal';
 // Requirement A — B2B quote & sample entry points
 import RequestQuoteButton from '../components/RFQ/RequestQuoteButton';
 import RequestSampleButton from '../components/Samples/RequestSampleButton';
@@ -71,6 +72,8 @@ const ProductDetailsPage = () => {
   const [copied, setCopied] = useState(false);
   const [selectedVariantOptions, setSelectedVariantOptions] = useState({});
   const [currentVariant, setCurrentVariant] = useState(null);
+  const [bulkModalOpen, setBulkModalOpen] = useState(false);
+  const [bulkPrefill, setBulkPrefill] = useState(null);
 
   const allMedia = product ? [
     ...(product.images || []),
@@ -192,9 +195,33 @@ const ProductDetailsPage = () => {
     <div className="py-32 text-center text-gray-500 text-sm">Product not found.</div>
   );
 
-  const handleAddToCart = () => addToCart(product, 1);
-  const handleBuyNow = () => {
-    if (currentQuantity === 0) addToCart(product, 1);
+  const openBulkOrderForCap = (quantity, maxQty) => {
+    setBulkPrefill({
+      id: product._id || product.id,
+      name: product.name,
+      qty: quantity,
+      price: product.price,
+      image: product.images?.[0],
+      category: typeof product.category === 'string' ? product.category : (product.category?.name || 'General'),
+      maxQty,
+    });
+    setBulkModalOpen(true);
+  };
+
+  const handleAddToCart = async () => {
+    const result = await addToCart(product, 1);
+    if (result?.capped) openBulkOrderForCap(1, result.maxQty);
+  };
+  const handleIncrementQuantity = async () => {
+    const nextQty = currentQuantity + 1;
+    const result = await updateQuantity(product._id || product.id, nextQty);
+    if (result?.capped) openBulkOrderForCap(nextQty, result.maxQty);
+  };
+  const handleBuyNow = async () => {
+    if (currentQuantity === 0) {
+      const result = await addToCart(product, 1);
+      if (result?.capped) return openBulkOrderForCap(1, result.maxQty);
+    }
     navigate('/cart');
   };
 
@@ -279,7 +306,7 @@ const ProductDetailsPage = () => {
         <span className="text-gray-700 font-semibold truncate max-w-[220px]">{product.name}</span>
       </nav>
 
-      <div className="bg-white md:rounded-xl md:border md:border-gray-100 md:shadow-sm p-0 md:p-6">
+      <div className="bg-white md:rounded-xl md:border-2 md:border-gray-800 md:shadow-sm p-0 md:p-6">
 
         {/* ── Top section: Gallery + Info ── */}
         <div className="flex flex-col lg:flex-row gap-0 lg:gap-10">
@@ -287,7 +314,7 @@ const ProductDetailsPage = () => {
           {/* Gallery */}
           <div className="w-full lg:w-[44%] lg:sticky lg:top-20 lg:self-start">
             {/* Main image */}
-            <div className="relative bg-gray-50 w-full h-[380px] md:h-auto md:aspect-square overflow-hidden md:rounded-lg md:border md:border-gray-100">
+            <div className="relative bg-gray-50 w-full h-[380px] md:h-auto md:aspect-square overflow-hidden rounded-lg border-2 border-gray-800">
               {/* Mobile back */}
               <button
                 onClick={() => navigate(-1)}
@@ -295,6 +322,13 @@ const ProductDetailsPage = () => {
               >
                 <FiArrowLeft size={18} className="text-gray-800" />
               </button>
+
+              {/* Discount badge — dynamic from live price vs. base price */}
+              {hasDiscount && (
+                <div className="absolute top-16 md:top-4 left-4 z-10 bg-pink-600 text-white text-[11px] font-black px-2.5 py-1 rounded-md shadow-md">
+                  {Math.round((1 - displayPrice / displayBasePrice) * 100)}% OFF
+                </div>
+              )}
 
               {/* Share */}
               <button
@@ -467,7 +501,7 @@ const ProductDetailsPage = () => {
             {/* Full Specifications Table */}
             <div className="mt-6 border-t border-gray-100 pt-5 px-5 md:px-0">
               <h3 className="text-[12px] font-black text-gray-900 uppercase tracking-[0.2em] mb-4">Specifications</h3>
-              <div className="divide-y divide-gray-100 border border-gray-100 rounded-xl overflow-hidden shadow-xs">
+              <div className="divide-y divide-gray-100 border-2 border-gray-800 rounded-xl overflow-hidden shadow-xs">
                 {specItems.map(([k, v], i) => (
                   <div key={`spec-${k}`} className={`flex py-2.5 px-4 text-[13px] ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50/40'}`}>
                     <span className="w-36 text-gray-400 font-semibold uppercase text-[10px] tracking-wider shrink-0">{k}</span>
@@ -531,7 +565,7 @@ const ProductDetailsPage = () => {
                         {currentQuantity} in cart
                       </div>
                       <button
-                        onClick={() => updateQuantity(product._id || product.id, currentQuantity + 1)}
+                        onClick={handleIncrementQuantity}
                         className="w-11 h-full flex items-center justify-center text-[#189D91] hover:bg-[#189D91]/5 transition-colors"
                       >
                         <FiPlus size={14} />
@@ -821,6 +855,12 @@ const ProductDetailsPage = () => {
           </div>
         )}
       </AnimatePresence>
+
+      <BulkOrderModal
+        isOpen={bulkModalOpen}
+        onClose={() => setBulkModalOpen(false)}
+        prefillItem={bulkPrefill}
+      />
     </div>
   );
 };

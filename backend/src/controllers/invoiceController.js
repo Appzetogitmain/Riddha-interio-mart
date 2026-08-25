@@ -1,6 +1,7 @@
 const Order = require("../models/Order");
 const Seller = require("../models/Seller");
 const SystemSettings = require("../models/SystemSettings");
+const TermsCondition = require("../models/TermsCondition");
 const invoicePdfService = require("../services/invoicePdfService");
 const { generateInvoiceNumbers } = require("../utils/invoiceNumberGenerator");
 
@@ -9,7 +10,7 @@ const { generateInvoiceNumbers } = require("../utils/invoiceNumberGenerator");
 // @access  Private (Seller/Admin)
 const downloadSellerInvoice = async (req, res) => {
   try {
-    let order = await Order.findById(req.params.id);
+    let order = await Order.findById(req.params.id).populate('orderItems.product', 'hsnCode');
     if (!order) {
       return res.status(404).json({ success: false, message: "Order not found" });
     }
@@ -86,7 +87,7 @@ const shareSellerInvoice = async (req, res) => {
 // @access  Private (Seller/Admin)
 const downloadShippingLabels = async (req, res) => {
   try {
-    const order = await Order.findById(req.params.id);
+    const order = await Order.findById(req.params.id).populate('orderItems.product', 'hsnCode');
     if (!order) {
       return res.status(404).json({ success: false, message: "Order not found" });
     }
@@ -129,7 +130,7 @@ const downloadShippingLabels = async (req, res) => {
 // @access  Private (Admin only)
 const downloadCustomerInvoice = async (req, res) => {
   try {
-    let order = await Order.findById(req.params.id);
+    let order = await Order.findById(req.params.id).populate('orderItems.product', 'hsnCode');
     if (!order) {
       return res.status(404).json({ success: false, message: "Order not found" });
     }
@@ -156,7 +157,9 @@ const downloadCustomerInvoice = async (req, res) => {
       settings = {};
     }
 
-    const pdfBuffer = await invoicePdfService.generateMarketplaceToCustomerInvoice(order, seller, settings);
+    const terms = await TermsCondition.findOne({ type: "product_purchase" });
+
+    const pdfBuffer = await invoicePdfService.generateMarketplaceToCustomerInvoice(order, seller, settings, terms?.content);
 
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", `attachment; filename=Customer_Invoice_${order.marketplaceInvoiceNumber.replace(/\//g, "-")}.pdf`);

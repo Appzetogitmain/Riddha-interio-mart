@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import ProductCard from '../components/ProductCard';
 import FilterPanel from '../components/FilterPanel';
 import AppliedFilters from '../components/AppliedFilters';
+import CategoryIconFilter from '../components/CategoryIconFilter';
 import { FiFilter, FiChevronDown, FiX } from 'react-icons/fi';
 import api from '../../../shared/utils/api';
 
@@ -223,6 +224,15 @@ const CategoriesPage = () => {
         categories={categories}
       />
 
+      {/* Category icon strip — primary category filter, replaces the old sidebar dropdown */}
+      <CategoryIconFilter
+        categories={categories}
+        selectedCategory={filters.category}
+        selectedSubcategory={filters.subcategory}
+        onChange={(categoryId, subcategoryId) => handleFiltersChange({ ...filters, category: categoryId, subcategory: subcategoryId })}
+        isLoading={filterLoading}
+      />
+
       <div className="flex gap-16 relative">
         {/* Sidebar - Desktop */}
         <aside className="hidden md:block w-72 flex-shrink-0 sticky top-32 max-h-[calc(100vh-9rem)] overflow-y-auto pr-2">
@@ -230,7 +240,6 @@ const CategoriesPage = () => {
             filters={filters}
             onFiltersChange={handleFiltersChange}
             filterOptions={filterOptions}
-            categories={categories}
             isLoading={filterLoading}
           />
         </aside>
@@ -317,7 +326,6 @@ const CategoriesPage = () => {
                     setIsSidebarOpen(false);
                   }}
                   filterOptions={filterOptions}
-                  categories={categories}
                   isLoading={filterLoading}
                 />
               </div>

@@ -36,6 +36,15 @@ const SystemSettingsSchema = new mongoose.Schema({
     showGSTBreakdown: { type: Boolean, default: true },
     invoiceFooterText: { type: String, default: 'This is a computer-generated invoice.' }
   },
+  // Header/footer chrome for the signed Terms & Conditions / Privacy Policy
+  // agreement PDF (backend/src/utils/documentPdfGenerator.js) — the center
+  // content itself comes from TermsCondition, edited separately at /admin/terms.
+  documentTemplateSettings: {
+    headerTitle: { type: String, default: 'Riddha Interior Mart Pvt. Ltd.' },
+    headerTagline: { type: String, default: "India's Largest Interior Supply Hub" },
+    headerContact: { type: String, default: 'support@riddhamart.com | www.riddhamart.com' },
+    footerText: { type: String, default: 'CONFIDENTIAL DOCUMENT' }
+  },
   trustBarItems: {
     type: [{
       iconName: String,

@@ -99,6 +99,25 @@ exports.addOrderItems = async (req, res) => {
     }
   }
 
+  // 1.5 Enforce per-product B2C max order quantity (enterprise/B2B buyers are exempt —
+  // they use the RFQ/B2B pricing flow instead, not the per-order retail cap).
+  if (req.user.userType !== 'enterpriser') {
+    const productIds = orderItems.map(i => i.product);
+    const cappedProducts = await Product.find({ _id: { $in: productIds }, maxB2CQty: { $ne: null } })
+      .select('name maxB2CQty')
+      .lean();
+    const capMap = new Map(cappedProducts.map(p => [String(p._id), p]));
+    for (const item of orderItems) {
+      const capped = capMap.get(String(item.product));
+      if (capped && item.quantity > capped.maxB2CQty) {
+        return res.status(400).json({
+          success: false,
+          message: `"${capped.name}" has a maximum order quantity of ${capped.maxB2CQty} for regular purchases. Please submit a Bulk Order Request for larger quantities.`
+        });
+      }
+    }
+  }
+
   const mongoose = require('mongoose');
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -709,6 +728,22 @@ exports.updateOrderStatus = async (req, res) => {
         return res.status(400).json({ success: false, error: 'Delivered orders cannot be cancelled.' });
       }
 
+      // 3. Require a delivery method to be assigned before the order can be packed
+      // (seller only — admin keeps override power for support cases).
+      if (newStatus === 'Packed' && req.user.role === 'seller' && order.deliveryStatus === 'None') {
+        return res.status(400).json({ success: false, error: 'Please assign a delivery method before marking this order as packed.' });
+      }
+
+      // 4. "Delivered" must always go through a verified path — OTP + proof via
+      // seller-delivery-status (self-managed) or verify-otp (in-app delivery partner).
+      // A seller can never set it directly through this generic endpoint.
+      if (newStatus === 'Delivered' && req.user.role === 'seller') {
+        if (order.deliveryType === 'seller-managed') {
+          return res.status(400).json({ success: false, error: 'Use the Self Delivery Updates flow to mark this order Delivered (OTP + proof required).' });
+        }
+        return res.status(400).json({ success: false, error: 'Only the assigned delivery partner can mark this order as Delivered.' });
+      }
+
       // Handle Proofs
       if (newStatus === 'Picked') {
         if (req.body.pickupProofImages) {
@@ -904,6 +939,33 @@ exports.assignOrderToDeliveryBoy = async (req, res) => {
 
       res.status(200).json({ success: true, data: order });
     }
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Attach general order-related photos (not delivery proof)
+// @route   PUT /api/orders/:id/images
+// @access  Private/Admin, Seller
+exports.addOrderImages = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+
+    // BOLA/IDOR Authorization Check
+    if (req.user.role === 'seller' && order.seller.toString() !== req.user.id) {
+      return res.status(403).json({ success: false, error: 'Not authorized: You do not own this order.' });
+    }
+
+    const { images } = req.body;
+    if (!Array.isArray(images) || images.length === 0) {
+      return res.status(400).json({ success: false, error: 'At least one image URL is required.' });
+    }
+
+    order.orderImages = [...(order.orderImages || []), ...images].slice(0, 10);
+    await order.save();
+
+    res.status(200).json({ success: true, data: order });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

@@ -9,9 +9,16 @@ const fs = require('fs');
  * @param {string} privacyContent - Privacy Policy text
  * @param {string} fullName - Full name of the user
  * @param {string} signatureBase64 - Base64 string of the signature image
+ * @param {object} docSettings - SystemSettings.documentTemplateSettings (header/footer chrome)
  * @returns {Promise<Buffer>} - Buffer of the generated PDF
  */
-const generateAgreementPDF = (role, termsContent, privacyContent, fullName = '', signatureBase64 = '') => {
+const generateAgreementPDF = (role, termsContent, privacyContent, fullName = '', signatureBase64 = '', docSettings = {}) => {
+  const {
+    headerTitle = 'Riddha Interior Mart Pvt. Ltd.',
+    headerTagline = "India's Largest Interior Supply Hub",
+    headerContact = 'support@riddhamart.com | www.riddhamart.com',
+    footerText = 'CONFIDENTIAL DOCUMENT'
+  } = docSettings || {};
   return new Promise((resolve, reject) => {
     try {
       const doc = new PDFDocument({
@@ -50,13 +57,13 @@ const generateAgreementPDF = (role, termsContent, privacyContent, fullName = '',
         doc.fontSize(12)
           .font('Helvetica-Bold')
           .fillColor('#3d2b1f')
-          .text('Riddha Interior Mart Pvt. Ltd.', 200, 40, { align: 'right' });
-        
+          .text(headerTitle, 200, 40, { align: 'right' });
+
         doc.fontSize(8)
           .font('Helvetica')
           .fillColor('#7c6f64')
-          .text("India's Largest Interior Supply Hub", 200, 55, { align: 'right' })
-          .text('support@riddhamart.com | www.riddhamart.com', 200, 68, { align: 'right' });
+          .text(headerTagline, 200, 55, { align: 'right' })
+          .text(headerContact, 200, 68, { align: 'right' });
 
         // Decorative Colored bar
         doc.moveDown(1.5);
@@ -166,7 +173,7 @@ const generateAgreementPDF = (role, termsContent, privacyContent, fullName = '',
         doc.fontSize(8)
           .font('Helvetica-Bold')
           .fillColor('#7c6f64')
-          .text('CONFIDENTIAL DOCUMENT', 50, 792, { align: 'left' });
+          .text(footerText, 50, 792, { align: 'left' });
 
         doc.fontSize(8)
           .font('Helvetica')

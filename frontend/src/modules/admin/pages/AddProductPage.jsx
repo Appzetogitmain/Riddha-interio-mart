@@ -7,8 +7,11 @@ import { toast } from 'react-hot-toast';
 import BulkUploadModal from '../components/BulkUploadModal';
 import { FiUploadCloud } from 'react-icons/fi';
 import AIContentPanel from '../../../shared/components/AIContentPanel';
+import ImagePreviewModal from '../../../shared/components/ImagePreviewModal';
+import UnitSelect from '../../../shared/components/UnitSelect';
 import DeliveryOptionsForm from '../../seller/components/DeliveryOptionsForm';
 import PaymentOptionsForm from '../../seller/components/PaymentOptionsForm';
+import ProductVariantsEditor from '../../seller/components/ProductVariantsEditor';
 
 const AddProductPage = () => {
   const navigate = useNavigate();
@@ -17,9 +20,11 @@ const AddProductPage = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
+  const [customBrandName, setCustomBrandName] = useState('');
   const [imgFiles, setImgFiles] = useState([]);
   const [videoFile, setVideoFile] = useState(null);
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
+  const [previewImageSrc, setPreviewImageSrc] = useState(null);
   
   // Custom Dropdown State
   const [isCatOpen, setIsCatOpen] = useState(false);
@@ -37,6 +42,7 @@ const AddProductPage = () => {
     price: '',
     b2bPrice: '',
     b2bMinQty: '',
+    maxB2CQty: '',
     description: '',
     material: '',
     dimensions: '',
@@ -238,8 +244,8 @@ const AddProductPage = () => {
   };
 
   const handleCameraCapture = async () => {
-    if (formData.images.length >= 5) {
-      toast.error("Max 5 images allowed");
+    if (formData.images.length >= 10) {
+      toast.error("Max 10 images allowed");
       return;
     }
     // 1. Try Flutter openCamera handler
@@ -274,8 +280,8 @@ const AddProductPage = () => {
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
     
-    if (formData.images.length >= 5) {
-      toast.error("Max 5 images allowed");
+    if (formData.images.length >= 10) {
+      toast.error("Max 10 images allowed");
       return;
     }
 
@@ -307,6 +313,10 @@ const AddProductPage = () => {
     }
     if (!formData.brand) {
       toast.error('Please select a brand partner.');
+      return;
+    }
+    if (formData.brand === 'other' && !customBrandName.trim()) {
+      toast.error('Please enter the new brand name.');
       return;
     }
     if (!formData.category) {
@@ -357,12 +367,32 @@ const AddProductPage = () => {
         uploadedUrls = uploadRes.images || [];
         if (uploadRes.videoUrl) finalVideoUrl = uploadRes.videoUrl;
       }
-      
+
+      let finalBrand = formData.brand;
+      if (formData.brand === 'other' && customBrandName.trim()) {
+        try {
+          const { data: brandRes } = await api.post('/brands', { name: customBrandName.trim() });
+          finalBrand = brandRes.data?._id || brandRes._id;
+        } catch (e) {
+          const errorMsg = e.response?.data?.error || e.message || '';
+          if (errorMsg.toLowerCase().includes('already exists')) {
+            const { data: brandListRes } = await api.get('/brands');
+            const matched = (brandListRes.data || []).find(b => b.name.toLowerCase() === customBrandName.trim().toLowerCase());
+            if (matched) finalBrand = matched._id;
+            else throw new Error('This brand name is already taken. Please pick a different name or select it from the list.');
+          } else {
+            throw new Error('Failed to create new brand: ' + errorMsg);
+          }
+        }
+      }
+
       const payload = {
         ...formData,
+        brand: finalBrand,
         price: Number(formData.price),
         b2bPrice: formData.b2bPrice !== '' ? Number(formData.b2bPrice) : undefined,
         b2bMinQty: formData.b2bMinQty !== '' ? Number(formData.b2bMinQty) : undefined,
+        maxB2CQty: formData.maxB2CQty !== '' ? Number(formData.maxB2CQty) : undefined,
         countInStock: Number(formData.stock),
         images: uploadedUrls,
         videoUrl: finalVideoUrl,
@@ -374,7 +404,7 @@ const AddProductPage = () => {
       navigate('/admin/catalog');
     } catch (err) {
       console.error('Failed to add product:', err);
-      setStatusMessage(err.response?.data?.error || 'Failed to add product to catalog');
+      setStatusMessage(err.response?.data?.error || err.message || 'Failed to add product to catalog');
     } finally {
       setSubmitting(false);
     }
@@ -426,7 +456,7 @@ const AddProductPage = () => {
 
         <form onSubmit={handleSubmit} noValidate className="space-y-6 md:space-y-8 pb-12">
           {/* Main Form Card */}
-          <div className="bg-white rounded-3xl md:rounded-[32px] border border-soft-oatmeal shadow-xl grid grid-cols-1 xl:grid-cols-3 relative">
+          <div className="bg-white rounded-3xl md:rounded-[32px] border border-soft-oatmeal shadow-xl grid grid-cols-1 xl:grid-cols-2 relative">
              {/* Left: Image Preview Area */}
              <div className="p-6 md:p-8 bg-soft-oatmeal/10 border-b xl:border-r xl:border-b-0 border-soft-oatmeal space-y-6">
                 <input 
@@ -451,18 +481,30 @@ const AddProductPage = () => {
                             </div>
                           ) : (
                              <>
-                               <img src={src} alt="" className="w-full h-full object-cover" />
-                               <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-2 z-10">
-                                 <div className="flex justify-end">
-                                   <button 
-                                     type="button" 
+                               <img
+                                 src={src}
+                                 alt=""
+                                 onClick={() => setPreviewImageSrc(src)}
+                                 className="w-full h-full object-cover cursor-pointer"
+                               />
+                               <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-2 z-10 pointer-events-none">
+                                 <div className="flex justify-between pointer-events-auto">
+                                   <button
+                                     type="button"
+                                     onClick={() => setPreviewImageSrc(src)}
+                                     className="p-1.5 bg-slate-700 hover:bg-slate-800 text-white rounded-full transition-colors shadow-md"
+                                   >
+                                      <FiImage size={12} />
+                                   </button>
+                                   <button
+                                     type="button"
                                      onClick={() => removeImage(idx)}
                                      className="p-1.5 bg-red-600 hover:bg-red-700 text-white rounded-full transition-colors shadow-md"
                                    >
                                       <FiTrash2 size={12} />
                                    </button>
                                  </div>
-                                 <div className="flex justify-center pb-1">
+                                 <div className="flex justify-center pb-1 pointer-events-auto">
                                    <button
                                      type="button"
                                      onClick={() => handleRemoveBg(idx)}
@@ -477,7 +519,7 @@ const AddProductPage = () => {
                         </div>
                       );
                     })}
-                    {formData.images.length < 5 && (
+                    {formData.images.length < 10 && (
                       <>
                         <div 
                           onClick={triggerFileInput}
@@ -539,8 +581,7 @@ const AddProductPage = () => {
               </div>
 
               {/* AI Content */}
-              <div className="bg-white rounded-3xl md:rounded-[32px] border border-soft-oatmeal shadow-xl p-6 md:p-8 lg:p-12">
-                 <div className="pt-4 border-t border-soft-oatmeal/30">
+              <div className="">
                    <AIContentPanel
                      formData={formData}
                      onApply={(data) => {
@@ -553,11 +594,16 @@ const AddProductPage = () => {
                          );
                          if (matched) {
                            matchedBrandId = matched._id;
+                         } else {
+                           matchedBrandId = "other";
+                           setCustomBrandName(data.brandName);
                          }
                        }
 
                        const aiImages = (data.images && data.images.length > 0) ? data.images : (data.image ? [data.image] : []);
-                       aiImages.forEach((imgSrc, idx) => {
+                       // Skip any image already sitting in the product (e.g. Apply clicked twice on the same selection).
+                       const newAiImages = aiImages.filter((imgSrc) => !formData.images.includes(imgSrc));
+                       newAiImages.forEach((imgSrc, idx) => {
                          if (imgSrc && imgSrc.startsWith('data:')) {
                            fetch(imgSrc)
                              .then(res => res.blob())
@@ -580,7 +626,7 @@ const AddProductPage = () => {
                            : prev.dimensions,
                          thickness: data.dimensions?.thickness || prev.thickness,
                          seoKeywords: data.seoKeywords,
-                         images: aiImages.length > 0 ? [...prev.images, ...aiImages].slice(0, 5) : prev.images,
+                         images: newAiImages.length > 0 ? [...prev.images, ...newAiImages].slice(0, 10) : prev.images,
                          dynamicAttributes: {
                            ...(prev.dynamicAttributes || {}),
                            ...data.specifications
@@ -589,7 +635,6 @@ const AddProductPage = () => {
                      }}
                      theme="admin"
                    />
-                 </div>
               </div>
 
               {/* Right: Detailed Fields */}
@@ -656,7 +701,11 @@ const AddProductPage = () => {
                       <div className="relative">
                          <input
                            type="text"
-                           placeholder={brands.find(b => b._id === formData.brand)?.name || (brands.length > 0 ? 'Search brand...' : 'No brands found')}
+                           placeholder={
+                             formData.brand === 'other'
+                               ? (customBrandName || 'Other (Add New Brand)')
+                               : brands.find(b => b._id === formData.brand)?.name || (brands.length > 0 ? 'Search brand...' : 'No brands found')
+                           }
                            value={brandSearch}
                            onChange={(e) => { setBrandSearch(e.target.value); setIsBrandOpen(true); }}
                            onFocus={() => setIsBrandOpen(true)}
@@ -683,7 +732,28 @@ const AddProductPage = () => {
                               {brands.filter(b => b.name.toLowerCase().includes(brandSearch.toLowerCase())).length === 0 && (
                                 <p className="px-3 py-2.5 text-xs font-semibold text-warm-sand/60">No brands match "{brandSearch}"</p>
                               )}
+                              <button
+                                type="button"
+                                onMouseDown={(e) => {
+                                  e.preventDefault();
+                                  setFormData({ ...formData, brand: 'other' });
+                                  setBrandSearch('');
+                                  setIsBrandOpen(false);
+                                }}
+                                className="w-full text-left px-3 py-2.5 text-xs font-black text-deep-espresso hover:bg-soft-oatmeal/20 rounded-lg transition-colors border-t border-soft-oatmeal/50 mt-1"
+                              >
+                                + Other (Add New Brand)
+                              </button>
                            </div>
+                         )}
+                         {formData.brand === 'other' && (
+                           <input
+                             type="text"
+                             placeholder="Type new brand name..."
+                             value={customBrandName}
+                             onChange={(e) => setCustomBrandName(e.target.value)}
+                             className="w-full mt-2 bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-warm-sand transition-all font-medium"
+                           />
                          )}
                       </div>
                    </div>
@@ -882,27 +952,29 @@ const AddProductPage = () => {
                          />
                        </div>
                     </div>
-                    
+
+                    {/* B2C Order Quantity Cap */}
+                    <div className="space-y-2">
+                       <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest flex items-center gap-2">
+                          <FiUser size={12} /> Max Qty per B2C Order
+                       </label>
+                       <input
+                         type="number" placeholder="Unlimited"
+                         value={formData.maxB2CQty}
+                         onChange={(e) => setFormData({...formData, maxB2CQty: e.target.value})}
+                         className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-warm-sand transition-all font-medium"
+                       />
+                       <p className="text-[9px] text-warm-sand/70 font-medium">Customers wanting more than this must submit a Bulk Order Request.</p>
+                    </div>
+
                     <div className="grid grid-cols-2 gap-4">
                        <div className="space-y-2">
                          <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest">Unit</label>
-                         <select 
-                           value={formData.unit} onChange={(e) => setFormData({...formData, unit: e.target.value})}
-                           className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-warm-sand transition-all cursor-pointer font-medium"
-                         >
-                            <option value="piece">Piece (Pcs)</option>
-                            <option value="kg">Kilogram (Kg)</option>
-                            <option value="gm">Gram (g)</option>
-                            <option value="ml">Millilitre (ml)</option>
-                            <option value="ltr">Litre (Ltr)</option>
-                            <option value="watt">Watt (W)</option>
-                            <option value="mtr">Meter (m)</option>
-                            <option value="ft">Feet (ft)</option>
-                            <option value="sqft">Sq. Ft.</option>
-                            <option value="box">Box</option>
-                            <option value="bundle">Bundle</option>
-                            <option value="pack">Pack</option>
-                         </select>
+                         <UnitSelect
+                           value={formData.unit}
+                           onChange={(unit) => setFormData({...formData, unit})}
+                           triggerClassName="w-full flex items-center justify-between bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-warm-sand transition-all cursor-pointer font-medium"
+                         />
                        </div>
                        <div className="space-y-2">
                          <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest">Unit Value (Qty)</label>
@@ -992,6 +1064,8 @@ const AddProductPage = () => {
                    </div>
                 </div>
 
+              <ProductVariantsEditor formData={formData} setFormData={setFormData} categories={categories} />
+
               <div className="pt-6 flex justify-end">
                    <button 
                      type="submit"
@@ -1010,6 +1084,9 @@ const AddProductPage = () => {
             </div>
         </form>
       </div>
+      {previewImageSrc && (
+        <ImagePreviewModal src={previewImageSrc} onClose={() => setPreviewImageSrc(null)} />
+      )}
     </PageWrapper>
   );
 };

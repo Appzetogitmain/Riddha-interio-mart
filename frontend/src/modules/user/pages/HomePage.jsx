@@ -4,7 +4,6 @@ import Banner from '../components/Banner';
 import OfferBanner from '../components/OfferBanner';
 import FavouriteCategories from '../components/FavouriteCategories';
 import TopBrands from '../components/TopBrands';
-import CategoryQuickAccess from '../components/CategoryQuickAccess';
 import PromoGrid from '../components/PromoGrid';
 import TrustBar from '../components/TrustBar';
 import ExpressDeliveryBanner from '../components/ExpressDeliveryBanner';
@@ -242,9 +241,6 @@ const HomePage = () => {
       <section className="w-full">
         <Banner banners={banners} />
       </section>
-
-      {/* Quick Access Categories */}
-      <CategoryQuickAccess />
 
       {/* Featured Advertisements */}
       {(advertisedProducts.length > 0) && (

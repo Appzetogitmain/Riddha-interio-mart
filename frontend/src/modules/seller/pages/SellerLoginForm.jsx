@@ -94,7 +94,7 @@ const SellerLoginForm = () => {
             className="w-full max-w-[380px] mx-auto"
           >
             <div className="mb-6">
-              <h2 className="text-2xl font-semibold text-slate-900 tracking-tight">Sign In</h2>
+              <h2 className="text-2xl font-semibold text-slate-900 tracking-tight">Seller Login</h2>
               <p className="text-slate-400 font-semibold text-[10px] uppercase tracking-widest mt-1">
                 Enter credentials to continue
               </p>

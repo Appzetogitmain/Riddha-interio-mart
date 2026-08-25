@@ -60,6 +60,7 @@ const ManageSellerListPage = React.lazy(() => import('./pages/ManageSellerListPa
 const FeedbackManagement = React.lazy(() => import('./pages/FeedbackManagement'));
 const SellerRecommendationManagement = React.lazy(() => import('./pages/SellerRecommendationManagement'));
 const ManageTerms = React.lazy(() => import('./pages/ManageTerms'));
+const InvoiceTemplatesPage = React.lazy(() => import('./pages/InvoiceTemplatesPage'));
 const SupportTicketsPage = React.lazy(() => import('./pages/SupportTicketsPage'));
 const BOQSourcingRequestsPage = React.lazy(() => import('./pages/BOQSourcingRequestsPage'));
 const AdminCampaignBuilderPage = React.lazy(() => import('./pages/AdminCampaignBuilderPage'));
@@ -173,6 +174,7 @@ const AdminRoutes = () => {
           {/* Settings */}
           <Route element={<ProtectedRoute permission="settings" />}>
             <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/invoice-templates" element={<InvoiceTemplatesPage />} />
             <Route path="/feedback" element={<FeedbackManagement />} />
             <Route path="/seller-recommendations" element={<SellerRecommendationManagement />} />
             <Route path="/support-tickets" element={<SupportTicketsPage />} />

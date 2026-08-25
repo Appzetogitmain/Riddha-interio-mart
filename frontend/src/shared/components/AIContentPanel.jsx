@@ -8,12 +8,17 @@ const AIContentPanel = ({
   onCancel,
   theme = "seller" // "seller" or "admin" to match colors
 }) => {
+  const isAdmin = theme === "admin";
+
   const [status, setStatus] = useState("idle"); // idle, generating, success, error
   const [progress, setProgress] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
   const [errorMessage, setErrorMessage] = useState("");
 
+  // Image generation is admin-only.
   const [generateImage, setGenerateImage] = useState(false);
+  const [imageCount, setImageCount] = useState(3);
+  const [selectedImages, setSelectedImages] = useState(new Set());
 
   // AI results state
   const [generatedData, setGeneratedData] = useState({
@@ -95,7 +100,8 @@ const AIContentPanel = ({
         dimensions: formData.dimensions,
         thickness: formData.thickness,
         sku: formData.sku,
-        generateImage: generateImage,
+        generateImage: isAdmin && generateImage,
+        imageCount: isAdmin && generateImage ? imageCount : undefined,
         customPrompt: customPrompt
       });
 
@@ -118,9 +124,15 @@ const AIContentPanel = ({
             images: response.data.images || (response.data.image ? [response.data.image] : [])
           };
           setGeneratedData(generated);
+          setSelectedImages(new Set(generated.images.map((_, i) => i)));
           setStatus("success");
-          
-          // Auto-apply fields to the main form
+
+          // Auto-apply everything — description, brand, SKU/HSN, specs, and the
+          // (default all-selected) generated images — straight into the real form
+          // fields, same as description/brand already do. The checkboxes below
+          // stay available so the admin can review what was added and, if an
+          // image isn't wanted, remove it via the normal image grid — unchecking
+          // here does not silently withhold it before it's even seen.
           console.log("Auto-applying generated AI content to form:", generated);
           onApply(generated);
         }, 600);
@@ -149,6 +161,41 @@ const AIContentPanel = ({
       ...prev,
       seoKeywords: prev.seoKeywords.filter(k => k !== keywordToRemove)
     }));
+  };
+
+  const toggleImageSelected = (idx) => {
+    setSelectedImages(prev => {
+      const next = new Set(prev);
+      if (next.has(idx)) next.delete(idx);
+      else next.add(idx);
+      return next;
+    });
+  };
+
+  const toggleSelectAllImages = () => {
+    setSelectedImages(prev =>
+      prev.size === generatedData.images.length
+        ? new Set()
+        : new Set(generatedData.images.map((_, i) => i))
+    );
+  };
+
+  // Admin "Regenerate" doesn't immediately fire the API again — it re-opens the
+  // settings step so the admin can fix anything they missed (e.g. tick "Generate
+  // Product Images" or change the quantity) before generating again.
+  const handleRegenerateClick = () => {
+    if (isAdmin) {
+      setStatus("idle");
+    } else {
+      handleGenerate();
+    }
+  };
+
+  const handleApplyClick = () => {
+    const selected = generatedData.images.filter((_, i) => selectedImages.has(i));
+    const payload = { ...generatedData, images: selected, image: selected[0] || null };
+    console.log("Apply SEO Optimization clicked in AIContentPanel. Content to apply:", payload);
+    onApply(payload);
   };
 
   // Basic SEO calculation
@@ -186,18 +233,42 @@ const AIContentPanel = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5 px-1">
-          <input
-            type="checkbox"
-            id="generate-image-chk"
-            checked={generateImage}
-            onChange={(e) => setGenerateImage(e.target.checked)}
-            className="rounded border-slate-300 text-orange-600 focus:ring-orange-500/20 cursor-pointer"
-          />
-          <label htmlFor="generate-image-chk" className="text-xs font-bold text-slate-600 cursor-pointer select-none">
-            Generate 2-3 Product Images with AI also?
-          </label>
-        </div>
+        {isAdmin && (
+          <div className="space-y-3 px-1">
+            <div className="flex items-center gap-2.5">
+              <input
+                type="checkbox"
+                id="generate-image-chk"
+                checked={generateImage}
+                onChange={(e) => setGenerateImage(e.target.checked)}
+                className="rounded border-slate-300 text-blue-600 focus:ring-blue-500/20 cursor-pointer"
+              />
+              <label htmlFor="generate-image-chk" className="text-xs font-bold text-slate-600 cursor-pointer select-none">
+                Generate Product Images with AI also?
+              </label>
+            </div>
+            {generateImage && (
+              <div className="flex items-center gap-2.5 pl-6">
+                <label htmlFor="image-count-input" className="text-xs font-bold text-slate-500">
+                  Number of images:
+                </label>
+                <input
+                  type="number"
+                  id="image-count-input"
+                  min={1}
+                  max={10}
+                  value={imageCount}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value, 10);
+                    setImageCount(Number.isFinite(val) ? Math.min(Math.max(val, 1), 10) : 1);
+                  }}
+                  className={`w-20 px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 bg-slate-50 focus:outline-none focus:ring-2 ${ringColor}`}
+                />
+                <span className="text-[10px] font-semibold text-slate-400">(max 10)</span>
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="space-y-2 px-1">
           <label htmlFor="custom-prompt-input" className="text-xs font-bold text-slate-600 block">
@@ -373,19 +444,43 @@ const AIContentPanel = ({
         </div>
       </div>
 
-      {/* Generated Images Preview */}
+      {/* Generated Images Preview — already applied to the product; checkboxes control re-apply */}
       {generatedData.images && generatedData.images.length > 0 && (
         <div className="space-y-3">
-          <label className="text-[10px] font-black uppercase tracking-wider text-slate-500">
-            Generated AI Product Images ({generatedData.images.length})
-          </label>
-          <div className="grid grid-cols-3 gap-3">
-            {generatedData.images.map((img, i) => (
-              <div key={i} className="relative aspect-square rounded-2xl overflow-hidden border border-slate-200 shadow-sm">
-                <img src={img} alt={`AI Generated ${i + 1}`} className="w-full h-full object-cover" />
-              </div>
-            ))}
+          <div className="flex items-center justify-between">
+            <label className="text-[10px] font-black uppercase tracking-wider text-slate-500">
+              Generated AI Product Images — Added to Product ({selectedImages.size}/{generatedData.images.length} selected)
+            </label>
+            <button
+              type="button"
+              onClick={toggleSelectAllImages}
+              className={`text-[10px] font-black uppercase tracking-wider ${textColor} hover:underline cursor-pointer`}
+            >
+              {selectedImages.size === generatedData.images.length ? "Deselect All" : "Select All"}
+            </button>
           </div>
+          <div className="grid grid-cols-3 gap-3">
+            {generatedData.images.map((img, i) => {
+              const isSelected = selectedImages.has(i);
+              return (
+                <div
+                  key={i}
+                  onClick={() => toggleImageSelected(i)}
+                  className={`relative aspect-square rounded-2xl overflow-hidden border-2 shadow-sm cursor-pointer transition-all ${
+                    isSelected ? "border-emerald-500" : "border-slate-200 opacity-50"
+                  }`}
+                >
+                  <img src={img} alt={`AI Generated ${i + 1}`} className="w-full h-full object-cover" />
+                  <div className={`absolute top-1.5 right-1.5 w-5 h-5 rounded-md flex items-center justify-center border-2 ${
+                    isSelected ? "bg-emerald-500 border-emerald-500" : "bg-white/80 border-slate-300"
+                  }`}>
+                    {isSelected && <Check size={12} className="text-white stroke-[3]" />}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <p className="text-[10px] font-semibold text-slate-400">These images were added to the product's image grid automatically. Untick any you don't want here, then remove them from the image grid using its delete icon.</p>
         </div>
       )}
 
@@ -473,18 +568,15 @@ const AIContentPanel = ({
       <div className="grid grid-cols-2 gap-4">
         <button
           type="button"
-          onClick={handleGenerate}
+          onClick={handleRegenerateClick}
           className="py-3.5 rounded-2xl border border-slate-200 font-bold text-xs text-slate-500 hover:bg-slate-50 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
         >
           <RefreshCw size={12} />
-          Regenerate
+          {isAdmin ? "Regenerate Image" : "Regenerate"}
         </button>
         <button
           type="button"
-          onClick={() => {
-            console.log("Apply SEO Optimization clicked in AIContentPanel. Content to apply:", generatedData);
-            onApply(generatedData);
-          }}
+          onClick={handleApplyClick}
           className={`py-3.5 rounded-2xl text-white font-bold text-xs shadow-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer ${primaryColor}`}
         >
           <Check size={12} />

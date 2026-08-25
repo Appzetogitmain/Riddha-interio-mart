@@ -5,7 +5,7 @@ const TermsConditionSchema = new mongoose.Schema(
     type: {
       type: String,
       required: [true, 'Please specify terms type'],
-      enum: ['user', 'seller', 'delivery', 'user_privacy', 'seller_privacy', 'delivery_privacy'],
+      enum: ['user', 'seller', 'delivery', 'user_privacy', 'seller_privacy', 'delivery_privacy', 'product_purchase'],
       unique: true
     },
     content: {

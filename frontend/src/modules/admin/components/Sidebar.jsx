@@ -531,7 +531,7 @@ const Sidebar = ({ isOpen, onClose }) => {
           api.get("/auth/admin/sellers/pending"),
           api.get("/delivery"),
           api.get("/products", {
-            params: { isApproved: "pending", isActive: "all" },
+            params: { approvalStatus: "pending", isActive: "all" },
           }),
           api.get("/product-batches", { params: { status: "pending_review" } }),
           api.get("/returns"),

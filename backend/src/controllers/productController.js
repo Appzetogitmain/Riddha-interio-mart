@@ -1254,9 +1254,17 @@ async function attachOfferPricing(products) {
 // @access  Private/Admin or Seller
 exports.generateProductContentHandler = async (req, res, next) => {
   try {
-    const { name, category, subcategory, subsubcategory, brand, material, color, dimensions, thickness, sku, generateImage, customPrompt } = req.body;
-    const generateImageBool = generateImage === true || generateImage === 'true';
-    console.log("POST /api/products/generate-content body:", req.body, "parsed generateImage:", generateImageBool);
+    const { name, category, subcategory, subsubcategory, brand, material, color, dimensions, thickness, sku, generateImage, customPrompt, imageCount } = req.body;
+    // Image generation is admin-only: sellers can still generate description/SKU/HSN/SEO
+    // content, but any requested image generation is ignored server-side for non-admins,
+    // regardless of what the client sends.
+    const isAdmin = (req.user?.role || '').toLowerCase() === 'admin';
+    const generateImageBool = isAdmin && (generateImage === true || generateImage === 'true');
+    const parsedImageCount = parseInt(imageCount, 10);
+    const resolvedImageCount = generateImageBool && Number.isFinite(parsedImageCount)
+      ? Math.min(Math.max(parsedImageCount, 1), 10)
+      : null;
+    console.log("POST /api/products/generate-content body:", req.body, "parsed generateImage:", generateImageBool, "imageCount:", resolvedImageCount);
     const aiService = require('../services/aiService');
     const content = await aiService.generateProductContent(
       name,
@@ -1270,7 +1278,8 @@ exports.generateProductContentHandler = async (req, res, next) => {
       thickness,
       sku,
       generateImageBool,
-      customPrompt
+      customPrompt,
+      resolvedImageCount
     );
 
     if (content) {

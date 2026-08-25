@@ -58,6 +58,12 @@ const ProductSchema = new mongoose.Schema({
     type: Number,
     default: null
   },
+  // Maximum quantity a regular (non-enterprise) B2C customer can order at once.
+  // null/0 = unlimited. Enterprise buyers (userType: 'enterpriser') are exempt.
+  maxB2CQty: {
+    type: Number,
+    default: null
+  },
   category: {
     type: mongoose.Schema.ObjectId,
     ref: 'Category',

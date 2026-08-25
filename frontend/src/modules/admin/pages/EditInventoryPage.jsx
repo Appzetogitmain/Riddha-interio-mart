@@ -34,6 +34,7 @@ const EditInventoryPage = () => {
     countInStock: 0,
     unit: 'piece',
     unitValue: '1',
+    maxB2CQty: '',
     adminCommission: 0,
     sellerPrice: 0,
     discountPrice: 0,
@@ -69,6 +70,7 @@ const EditInventoryPage = () => {
           countInStock: product.countInStock || 0,
           unit: product.unit || 'piece',
           unitValue: product.unitValue || '1',
+          maxB2CQty: product.maxB2CQty || '',
           adminCommission: product.adminCommission || 0,
           sellerPrice: product.sellerPrice || product.price || 0,
           discountPrice: product.discountPrice || 0,
@@ -126,6 +128,7 @@ const EditInventoryPage = () => {
         ...formData,
         price: Number(formData.price),
         countInStock: Number(formData.countInStock),
+        maxB2CQty: formData.maxB2CQty !== '' ? Number(formData.maxB2CQty) : undefined,
         videoUrl: finalVideoUrl
       };
 
@@ -398,6 +401,18 @@ const EditInventoryPage = () => {
                         className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none"
                       />
                     </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest">Max Qty per B2C Order</label>
+                  <input
+                    type="number"
+                    placeholder="Unlimited"
+                    value={formData.maxB2CQty}
+                    onChange={(e) => setFormData({...formData, maxB2CQty: e.target.value})}
+                    className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none"
+                  />
+                  <p className="text-[9px] text-warm-sand/70 font-medium">Customers wanting more than this must submit a Bulk Order Request.</p>
                 </div>
 
                 {/* Dynamic Specifications */}

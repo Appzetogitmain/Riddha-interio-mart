@@ -31,8 +31,16 @@ const CardHeader = ({ icon: Icon, title, action }) => (
 const CheckoutPage = () => {
   const navigate = useNavigate();
   const { cart, pricingBreakdown, loading: cartLoading } = useCart();
-  const { address, isLoggedIn, fetchAddresses, loading: userLoading } = useUser();
+  const { address, isLoggedIn, fetchAddresses, loading: userLoading, user } = useUser();
   const [appliedCoupon, setAppliedCoupon] = useState(null);
+
+  // Safety net: a per-product Max B2C Order Quantity can be set/lowered by the admin/seller
+  // after an item was already added to cart (the cart/product pages block it going in, but
+  // don't re-validate items already sitting in the cart) — catch that here, before payment,
+  // rather than letting the customer discover it only after filling in payment details.
+  const overCapItem = user?.userType === 'enterpriser'
+    ? null
+    : cart.find(item => item.maxB2CQty && item.quantity > item.maxB2CQty);
 
   useEffect(() => {
     if (!isLoggedIn) { navigate('/login'); return; }
@@ -51,6 +59,11 @@ const CheckoutPage = () => {
   const grandTotal     = Math.max(0, subtotal - baseDiscount + deliveryCharges - couponDiscount);
 
   const handleProceedToPayment = () => {
+    if (overCapItem) {
+      toast.error(`"${overCapItem.name}" has a maximum order quantity of ${overCapItem.maxB2CQty}. Reduce the quantity in your cart, or submit a Bulk Order Request for the rest.`);
+      navigate('/cart');
+      return;
+    }
     if (!address) { toast.error('Add a shipping address first.'); return; }
     if (!address.fullName || !address.mobileNumber || !address.fullAddress || !address.pincode || !address.city) {
       toast.error('Address has incomplete details.'); return;
@@ -202,22 +215,35 @@ const CheckoutPage = () => {
             <Card>
               <CardHeader icon={FiShoppingBag} title={`Order Items (${cart.length})`} />
               <div className="divide-y divide-gray-50">
-                {cart.map((item) => (
-                  <div key={item._id || item.id} className="flex gap-3 px-4 py-3 items-center">
-                    <img
-                      src={item.image || item.images?.[0]}
-                      alt={item.name}
-                      className="w-14 h-14 object-cover bg-gray-50 border border-gray-100 shrink-0"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[12px] font-bold text-gray-800 line-clamp-1">{item.name}</p>
-                      <p className="text-[11px] text-gray-400 mt-0.5">Qty: <span className="font-bold text-gray-600">{item.quantity}</span></p>
+                {cart.map((item) => {
+                  const isOverCap = item.maxB2CQty && item.quantity > item.maxB2CQty && user?.userType !== 'enterpriser';
+                  return (
+                    <div key={item._id || item.id} className="px-4 py-3">
+                      <div className="flex gap-3 items-center">
+                        <img
+                          src={item.image || item.images?.[0]}
+                          alt={item.name}
+                          className="w-14 h-14 object-cover bg-gray-50 border border-gray-100 shrink-0"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[12px] font-bold text-gray-800 line-clamp-1">{item.name}</p>
+                          <p className="text-[11px] text-gray-400 mt-0.5">Qty: <span className={`font-bold ${isOverCap ? 'text-red-500' : 'text-gray-600'}`}>{item.quantity}</span></p>
+                        </div>
+                        <span className="text-[13px] font-black text-gray-900 shrink-0">
+                          ₹{(item.price * item.quantity)?.toLocaleString('en-IN')}
+                        </span>
+                      </div>
+                      {isOverCap && (
+                        <div className="flex items-start gap-2 mt-2 p-2.5 bg-red-50 border border-red-100">
+                          <FiAlertCircle className="text-red-500 shrink-0 mt-0.5" size={13} />
+                          <p className="text-[10.5px] text-red-600 leading-relaxed">
+                            Max order quantity for this product is <span className="font-bold">{item.maxB2CQty}</span>. Reduce the quantity in your cart, or submit a Bulk Order Request for the rest — you can order the remainder separately.
+                          </p>
+                        </div>
+                      )}
                     </div>
-                    <span className="text-[13px] font-black text-gray-900 shrink-0">
-                      ₹{(item.price * item.quantity)?.toLocaleString('en-IN')}
-                    </span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </Card>
           </div>
@@ -252,7 +278,12 @@ const CheckoutPage = () => {
                 <span className="text-xl font-black text-gray-900">₹{grandTotal.toLocaleString('en-IN')}</span>
               </div>
 
-              {!address && (
+              {overCapItem ? (
+                <div className="mx-5 mb-3 flex items-center gap-2 p-2.5 bg-red-50 border border-red-200">
+                  <FiAlertCircle className="text-red-500 shrink-0" size={13} />
+                  <p className="text-[10px] text-red-600 font-bold uppercase tracking-wider">Reduce quantity to proceed</p>
+                </div>
+              ) : !address && (
                 <div className="mx-5 mb-3 flex items-center gap-2 p-2.5 bg-amber-50 border border-amber-200">
                   <FiAlertCircle className="text-amber-500 shrink-0" size={13} />
                   <p className="text-[10px] text-amber-700 font-bold uppercase tracking-wider">Add address to proceed</p>
@@ -261,14 +292,18 @@ const CheckoutPage = () => {
 
               <div className="px-5 pb-5">
                 <button
-                  onClick={!address ? () => navigate('/address', { state: { from: '/checkout' } }) : handleProceedToPayment}
+                  onClick={overCapItem ? () => navigate('/cart') : (!address ? () => navigate('/address', { state: { from: '/checkout' } }) : handleProceedToPayment)}
                   className={`w-full h-12 font-black text-xs uppercase tracking-[0.15em] transition-colors flex items-center justify-center gap-2 ${
-                    !address
+                    overCapItem
+                      ? 'bg-red-500 hover:bg-red-600 text-white'
+                      : !address
                       ? 'bg-amber-500 hover:bg-amber-600 text-white'
                       : 'bg-[#189D91] hover:bg-[#14847a] text-white'
                   }`}
                 >
-                  {!address ? <><FiPlusCircle size={14} /> Add Address First</> : 'Proceed to Payment'}
+                  {overCapItem
+                    ? <><FiAlertCircle size={14} /> Fix Cart Quantity</>
+                    : !address ? <><FiPlusCircle size={14} /> Add Address First</> : 'Proceed to Payment'}
                 </button>
 
                 <div className="flex items-start gap-2 mt-3 p-3 bg-gray-50 border border-gray-100">
@@ -298,14 +333,18 @@ const CheckoutPage = () => {
         {/* CTA */}
         <div className="px-4 py-3">
           <button
-            onClick={!address ? () => navigate('/address', { state: { from: '/checkout' } }) : handleProceedToPayment}
+            onClick={overCapItem ? () => navigate('/cart') : (!address ? () => navigate('/address', { state: { from: '/checkout' } }) : handleProceedToPayment)}
             className={`w-full h-12 font-black text-[13px] uppercase tracking-wider transition-colors flex items-center justify-center gap-2 ${
-              !address
+              overCapItem
+                ? 'bg-red-500 hover:bg-red-600 text-white'
+                : !address
                 ? 'bg-amber-500 hover:bg-amber-600 text-white'
                 : 'bg-[#189D91] hover:bg-[#14847a] text-white'
             }`}
           >
-            {!address
+            {overCapItem
+              ? <><FiAlertCircle size={15} /> Fix Cart Quantity</>
+              : !address
               ? <><FiPlusCircle size={15} /> Add Address to Continue</>
               : <>Proceed to Payment <FiArrowRight size={14} /></>
             }

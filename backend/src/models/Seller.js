@@ -83,6 +83,13 @@ const SellerSchema = new mongoose.Schema({
     hyperlocal: { type: Boolean, default: false },
     express: { type: Boolean, default: false }
   },
+  // Categories this seller deals in (e.g. Marble, Paints) — set at registration, editable later.
+  // Used to route bulk order requests to relevant sellers when the request has no specific
+  // product attached (customer only described what they need, e.g. "500 sq ft of marble").
+  sellingCategories: [{
+    type: mongoose.Schema.ObjectId,
+    ref: 'Category'
+  }],
   gstNumber: {
     type: String,
     default: ""

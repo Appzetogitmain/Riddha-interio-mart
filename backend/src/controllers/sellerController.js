@@ -10,6 +10,17 @@ exports.registerSeller = async (req, res, next) => {
   try {
     const { fullName, email, phone, shopName, shopAddress, password, gstNumber, panNumber, hsnNumber, termsSignature, termsVersion } = req.body;
 
+    // Sent as a JSON string (multipart form fields are always strings) — array of Category ids.
+    let sellingCategories = [];
+    if (req.body.sellingCategories) {
+      try {
+        const parsed = JSON.parse(req.body.sellingCategories);
+        if (Array.isArray(parsed)) sellingCategories = parsed;
+      } catch (e) {
+        console.error('Failed to parse sellingCategories on seller registration:', e.message);
+      }
+    }
+
     // Handle uploaded documents
     const gstDoc = req.files && req.files.gstDoc ? req.files.gstDoc[0].path : undefined;
     const panDoc = req.files && req.files.panDoc ? req.files.panDoc[0].path : undefined;
@@ -33,6 +44,7 @@ exports.registerSeller = async (req, res, next) => {
       gstDoc,
       panDoc,
       shopDoc,
+      sellingCategories,
       status: 'pending',
       termsSignature: termsSignature || '',
       termsAgreedAt: termsSignature ? new Date() : undefined,
@@ -168,8 +180,8 @@ exports.getSellerMe = async (req, res, next) => {
 // @desc    Update Seller Profile
 exports.updateSellerProfile = async (req, res, next) => {
   try {
-    const { fullName, email, phone, shopName, shopAddress, avatar, gstNumber, panNumber, hsnNumber, bankDetails, signatureImage } = req.body;
-    
+    const { fullName, email, phone, shopName, shopAddress, avatar, gstNumber, panNumber, hsnNumber, bankDetails, signatureImage, sellingCategories } = req.body;
+
     const seller = await Seller.findById(req.user.id);
     if (!seller) return res.status(404).json({ success: false, error: 'Seller not found' });
 
@@ -193,6 +205,10 @@ exports.updateSellerProfile = async (req, res, next) => {
       hsnNumber: hsnNumber !== undefined ? hsnNumber : seller.hsnNumber,
       signatureImage: signatureImage !== undefined ? signatureImage : seller.signatureImage
     };
+
+    if (Array.isArray(sellingCategories)) {
+      fieldsToUpdate.sellingCategories = sellingCategories;
+    }
 
     // Merge bankDetails fields individually to allow partial updates
     if (bankDetails) {

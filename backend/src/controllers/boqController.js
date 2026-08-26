@@ -238,13 +238,21 @@ exports.deleteBOQItem = async (req, res, next) => {
   }
 };
 
-// Rasterizes page 1 of an uploaded PDF into a PNG buffer so it can flow through
-// the same OpenAI vision pipeline used for JPG/PNG/WEBP drawing uploads.
-async function rasterizePdfFirstPage(buffer) {
+// Multi-page architectural drawing sets (floor plan + schedules/legends + elevations) split
+// their information across pages — reading only page 1 silently drops the rest. Rasterize up
+// to MAX_PDF_PAGES pages so the vision model can cross-reference the plan against any table.
+const MAX_PDF_PAGES = 5;
+
+async function rasterizePdfPages(buffer, maxPages = MAX_PDF_PAGES) {
   const { pdf } = await import('pdf-to-img');
   const document = await pdf(buffer, { scale: 2.0 });
   try {
-    return await document.getPage(1);
+    const pageCount = Math.min(document.length, maxPages);
+    const pages = [];
+    for (let i = 1; i <= pageCount; i++) {
+      pages.push(await document.getPage(i));
+    }
+    return pages;
   } finally {
     await document.destroy();
   }
@@ -254,39 +262,41 @@ async function rasterizePdfFirstPage(buffer) {
 exports.extractFromDrawing = async (req, res, next) => {
   try {
     const userId = req.user._id;
-    let base64Image = null;
-    let mimeType = 'image/jpeg';
+    let images = [];
 
     if (req.file) {
       if (req.file.mimetype === 'application/pdf') {
         try {
-          const pageBuffer = await rasterizePdfFirstPage(req.file.buffer);
-          base64Image = pageBuffer.toString('base64');
-          mimeType = 'image/png';
+          const pageBuffers = await rasterizePdfPages(req.file.buffer);
+          images = pageBuffers.map(buf => ({ base64: buf.toString('base64'), mimeType: 'image/png' }));
         } catch (pdfErr) {
           console.error('[BOQ Drawing PDF Conversion Error]', pdfErr.message);
           return res.status(400).json({ success: false, message: 'Could not read that PDF. Please make sure it is not corrupted or password-protected, or upload an image instead.' });
         }
       } else {
-        base64Image = req.file.buffer.toString('base64');
-        mimeType = req.file.mimetype;
+        images = [{ base64: req.file.buffer.toString('base64'), mimeType: req.file.mimetype }];
       }
     }
 
-    const extractedItems = await boqService.extractItemsFromDrawing(base64Image, mimeType, userId);
+    const { items: extractedItems, detectedSpaceType, roomsIdentified } = await boqService.extractItemsFromDrawing(images, userId);
     const summary = calculateBOQSummary(extractedItems);
-    const analysis = await boqService.analyzeMissingItems(extractedItems, 'Living Room', userId);
+    const analysis = await boqService.analyzeMissingItems(extractedItems, detectedSpaceType || 'Living Room', userId);
     summary.completenessScore = analysis.completenessScore || 85;
+
+    const spaceLabel = detectedSpaceType || 'Interior';
+    const roomsNote = roomsIdentified && roomsIdentified.length > 0
+      ? ` Rooms/zones identified: ${roomsIdentified.join(', ')}.`
+      : '';
 
     const boq = await BOQ.create({
       userId,
-      boqName: `Drawing Sketch BOQ (${new Date().toLocaleDateString()})`,
-      description: 'Auto-extracted from uploaded interior drawing sketch image.',
+      boqName: `Drawing Sketch BOQ - ${spaceLabel} (${new Date().toLocaleDateString()})`,
+      description: `Auto-extracted from uploaded interior drawing sketch/PDF (${spaceLabel}).`,
       boqType: 'from-drawing',
       items: extractedItems,
       summary,
       sourceData: {
-        extractionNotes: 'AI extracted items from drawing sketch via AI Vision'
+        extractionNotes: `AI extracted items from ${images.length > 1 ? `${images.length} drawing pages` : 'a drawing sketch'} via AI Vision. Detected space type: ${spaceLabel}.${roomsNote}`
       },
       aiAnalysis: {
         missingItems: analysis.missingItems || [],

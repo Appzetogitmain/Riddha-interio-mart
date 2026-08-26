@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   FiMapPin, FiTruck, FiClock, FiCheckCircle, FiAlertTriangle, FiPhoneCall,
@@ -246,12 +246,6 @@ const OrderTrackingPage = () => {
               >
                 Report Issue
               </button>
-              <Link
-                to="/delivery/partner-app"
-                className="flex-1 py-1.5 bg-amber-500 hover:bg-amber-400 text-deep-espresso rounded-xl text-xs font-bold transition-all text-center"
-              >
-                Driver App
-              </Link>
             </div>
           </div>
         </div>

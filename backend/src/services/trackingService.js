@@ -1,6 +1,7 @@
 const openaiClient = require('./openaiService');
 const OpenAIErrorHandler = require('../utils/openaiErrorHandler');
 const OpenAIUsageTracker = require('./openaiUsageTracker');
+const { estimateEtaMinutesFromDistance } = require('../utils/deliveryEta');
 
 class TrackingService {
 
@@ -18,6 +19,14 @@ Traffic Level: ${data.traffic || 'moderate'}
 Time of Day: ${data.timeOfDay || 'afternoon'}
 Weather: ${data.weather || 'clear'}
 Partner Average Speed: ${data.speed || 30} km/h
+Order Size: ${data.itemCount || 1} item(s)
+
+IMPORTANT: "estimatedDelivery" is the time promised to the customer — it must already include a
+realistic buffer for traffic, parking, and hand-off delays, NOT the fastest theoretically
+possible time. Compute "bestCaseTime" as the optimistic scenario and "worstCaseTime" with extra
+delay allowance, then set "estimatedDelivery" close to "worstCaseTime" (not "bestCaseTime") so
+the promised time still holds if something takes longer than expected. Larger orders (more
+items) need extra load/unload buffer on top of the drive time.
 
 Generate JSON response with format:
 {
@@ -61,11 +70,16 @@ Return strictly JSON format with no extra markdown formatting wrappers.
       console.error('[TRACKING DELIVERY PREDICTION ERROR]', errorInfo.message);
 
       const now = new Date();
-      const etaTime = new Date(now.getTime() + (data.distanceKm ? data.distanceKm * 6 : 25) * 60000);
+      // Buffered ETA (includes traffic/handoff margin) — the raw, un-buffered drive time is
+      // what "bestCaseTime" below represents instead.
+      const rawEtaMinutes = data.distanceKm ? data.distanceKm * 6 : 25;
+      const bufferedEtaMinutes = estimateEtaMinutesFromDistance(data.distanceKm, data.itemCount);
+      const etaTime = new Date(now.getTime() + bufferedEtaMinutes * 60000);
+      const bestCaseTime = new Date(now.getTime() + Math.max(10, Math.round(rawEtaMinutes)) * 60000);
       return {
         estimatedDelivery: etaTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         confidence: 'high',
-        bestCaseTime: new Date(etaTime.getTime() - 5 * 60000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        bestCaseTime: bestCaseTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         worstCaseTime: new Date(etaTime.getTime() + 10 * 60000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         factors: ['Optimal route selected', 'Clear traffic flow', 'Experienced delivery agent'],
         message: 'Your interior supplies are on track and expected to arrive shortly.'

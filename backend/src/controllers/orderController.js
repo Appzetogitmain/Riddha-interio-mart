@@ -7,11 +7,13 @@ const Coupon = require('../models/Coupon');
 const paginate = require('../utils/paginate');
 const { geocodeAddress } = require('../utils/geocoder');
 const filterService = require('../services/filterService');
+const { estimateEtaMinutesFromDistance } = require('../utils/deliveryEta');
 
 // Set deliveryTimeline.outForDeliveryAt/expectedDeliveryTime on an order the moment it goes
 // "Out for Delivery", using the seller/shipping coordinates already geocoded at order creation.
-// Deterministic (distanceKm * 6 min/km) — same fallback math trackingService.js uses when the
-// AI estimator is unavailable — so every order gets a real ETA instantly, no AI call needed here.
+// Deterministic (distanceKm * 6 min/km, then padded via deliveryEta's buffer policy) — same
+// math trackingService.js uses when the AI estimator is unavailable — so every order gets a
+// real, buffered ETA instantly, no AI call needed here.
 const applyOutForDeliveryEta = (order) => {
   // Mongoose leaves an un-set nested path as a truthy {} (lat/lng undefined) rather than
   // undefined, so a plain `order.sellerCoordinates ? ... : null` guard doesn't actually catch
@@ -22,7 +24,11 @@ const applyOutForDeliveryEta = (order) => {
     hasCoords(order.sellerCoordinates) ? [order.sellerCoordinates.longitude, order.sellerCoordinates.latitude] : null,
     hasCoords(order.shippingCoordinates) ? [order.shippingCoordinates.longitude, order.shippingCoordinates.latitude] : null
   );
-  const etaMinutes = (typeof distanceKm === 'number' && !Number.isNaN(distanceKm)) ? Math.max(10, Math.round(distanceKm * 6)) : 30;
+  // Larger/bulk orders (more items to load, carry up, and unpack) get extra buffer too.
+  const itemCount = Array.isArray(order.orderItems)
+    ? order.orderItems.reduce((sum, item) => sum + (Number(item.quantity) || 1), 0)
+    : 1;
+  const etaMinutes = estimateEtaMinutesFromDistance(distanceKm, itemCount);
   const now = new Date();
   order.deliveryTimeline = order.deliveryTimeline || {};
   order.deliveryTimeline.outForDeliveryAt = now;

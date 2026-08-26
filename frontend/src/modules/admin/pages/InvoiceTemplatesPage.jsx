@@ -26,6 +26,11 @@ const INVOICE_ENDPOINTS = {
   eway: "label",
 };
 
+const SUPPLY_TYPES = [
+  { key: "intra-state", label: "Intra-State (CGST+SGST)" },
+  { key: "inter-state", label: "Inter-State (IGST)" },
+];
+
 // Live-preview panel: fetches a PDF as a blob and renders it via an iframe —
 // same pattern already used on the customer-facing InvoicePage.jsx.
 const PdfPreview = ({ fetchUrl, autoLoad, onRequestLoad }) => {
@@ -47,7 +52,22 @@ const PdfPreview = ({ fetchUrl, autoLoad, onRequestLoad }) => {
       setPdfUrl(url);
     } catch (err) {
       console.error("Failed to load preview:", err);
-      setError(err.response?.data?.message || err.response?.data?.error || "Failed to load preview.");
+      // responseType is "blob", so an error JSON body from the server also lands as a
+      // Blob in err.response.data instead of a parsed object — decode it before falling
+      // back to a generic message.
+      let message = "";
+      const errorBlob = err.response?.data;
+      if (errorBlob instanceof Blob && errorBlob.type.includes("json")) {
+        try {
+          const parsed = JSON.parse(await errorBlob.text());
+          message = parsed?.message || parsed?.error || "";
+        } catch {
+          // ignore parse failure, fall through to generic message
+        }
+      } else {
+        message = err.response?.data?.message || err.response?.data?.error || "";
+      }
+      setError(message || "Failed to load preview.");
       setPdfUrl(null);
     } finally {
       setLoading(false);
@@ -106,7 +126,7 @@ const InvoiceTemplatesPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [systemSettings, setSystemSettings] = useState({ invoiceSettings: {}, documentTemplateSettings: {} });
-  const [orderId, setOrderId] = useState("");
+  const [supplyType, setSupplyType] = useState("intra-state");
   const [termsRole, setTermsRole] = useState("seller");
   const reloadRef = useRef(null);
 
@@ -149,8 +169,8 @@ const InvoiceTemplatesPage = () => {
   };
 
   const invoiceFetchUrl =
-    activeTab in INVOICE_ENDPOINTS && orderId.trim()
-      ? `/invoices/orders/${orderId.trim()}/invoice/${INVOICE_ENDPOINTS[activeTab]}`
+    activeTab in INVOICE_ENDPOINTS
+      ? `/invoices/preview/${INVOICE_ENDPOINTS[activeTab]}?supplyType=${supplyType}`
       : null;
   const termsFetchUrl = `/terms/agreement-preview/${termsRole}`;
 
@@ -242,19 +262,26 @@ const InvoiceTemplatesPage = () => {
                   </div>
 
                   <div className="space-y-2 pt-2">
-                    <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest pl-1">Order ID to Preview</label>
-                    <input
-                      type="text"
-                      value={orderId}
-                      onChange={(e) => setOrderId(e.target.value)}
-                      placeholder="Paste an Order ID from Admin → Orders"
-                      className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-2xl px-5 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-warm-sand/20 focus:bg-white transition-all font-medium font-mono"
-                    />
-                    {activeTab === "eway" && (
-                      <p className="text-[10px] text-warm-sand/70 font-medium pl-1">
-                        E-Way Bill preview requires an order whose seller invoice has already been shared with the marketplace.
-                      </p>
-                    )}
+                    <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest pl-1">Preview Supply Type</label>
+                    <div className="flex gap-2">
+                      {SUPPLY_TYPES.map((option) => (
+                        <button
+                          key={option.key}
+                          type="button"
+                          onClick={() => setSupplyType(option.key)}
+                          className={`flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${
+                            supplyType === option.key
+                              ? "bg-deep-espresso text-white border-deep-espresso"
+                              : "bg-soft-oatmeal/10 text-warm-sand border-soft-oatmeal"
+                          }`}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+                    <p className="text-[10px] text-warm-sand/70 font-medium pl-1">
+                      Preview uses standard sample order data with this GST split — no real order needed.
+                    </p>
                   </div>
 
                   <button
@@ -272,7 +299,7 @@ const InvoiceTemplatesPage = () => {
                 <PdfPreview
                   key={activeTab}
                   fetchUrl={invoiceFetchUrl}
-                  autoLoad={false}
+                  autoLoad
                   onRequestLoad={(fn) => { reloadRef.current = fn; }}
                 />
               </div>

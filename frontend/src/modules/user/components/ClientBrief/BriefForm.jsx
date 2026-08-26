@@ -19,7 +19,10 @@ const QUESTIONS = [
     title: 'Room Type',
     subtitle: 'Which specific space are we focusing on?',
     type: 'single-select',
-    options: ['Living Room', 'Bedroom', 'Kitchen', 'Dining Room', 'Office', 'Bathroom', 'Outdoor / Other']
+    options: [
+      'Living Room', 'Bedroom', 'Kitchen', 'Dining Room', 'Office', 'Bathroom', 'Outdoor / Other',
+      'Corporate Office', 'Retail / Shopping Center', 'Restaurant / Café', 'Hotel / Hospitality', 'Other Commercial Space'
+    ]
   },
   {
     id: 3,
@@ -36,7 +39,9 @@ const QUESTIONS = [
     options: [
       'Furniture Selection', 'Color Scheme', 'Lighting Design',
       'Decor & Accessories', 'Floorplan & Layout', 'Flooring',
-      'Wall Treatment & Paint', 'Custom Built-ins'
+      'Wall Treatment & Paint', 'Custom Built-ins',
+      'Signage & Branding', 'Reception / Front Desk Design',
+      'HVAC & Ventilation Planning', 'Fire & Safety Compliance'
     ]
   },
   {
@@ -179,11 +184,11 @@ const BriefForm = ({ onGenerate, onSaveAnswer, initialAnswers = {}, briefId }) =
   return (
     <div className="w-full max-w-3xl mx-auto bg-white rounded-3xl border border-gray-100 shadow-xl overflow-hidden">
       {/* Header & Progress Bar */}
-      <div className="bg-slate-900 text-white p-6 sm:p-8">
+      <div className="bg-gradient-to-r from-slate-900 via-slate-900 to-amber-950 text-white p-6 sm:p-8">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <span className="w-3 h-3 bg-[#189D91] rounded-full animate-ping"></span>
-            <span className="text-xs font-bold uppercase tracking-wider text-[#189D91]">
+            <span className="w-3 h-3 bg-amber-400 rounded-full animate-ping"></span>
+            <span className="text-xs font-bold uppercase tracking-wider text-amber-400">
               Question {currentStep + 1} of {QUESTIONS.length}
             </span>
           </div>
@@ -193,14 +198,14 @@ const BriefForm = ({ onGenerate, onSaveAnswer, initialAnswers = {}, briefId }) =
         {/* Progress Bar Track */}
         <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
           <motion.div
-            className="h-full bg-[#189D91]"
+            className="h-full bg-amber-400"
             initial={{ width: 0 }}
             animate={{ width: `${progressPercentage}%` }}
             transition={{ duration: 0.3 }}
           />
         </div>
 
-        <h2 className="text-2xl sm:text-3xl font-extrabold mt-6 tracking-tight">{question.title}</h2>
+        <h2 className="text-2xl sm:text-3xl font-extrabold mt-6 tracking-tight text-white">{question.title}</h2>
         <p className="text-sm text-gray-400 mt-1">{question.subtitle}</p>
       </div>
 
@@ -227,12 +232,12 @@ const BriefForm = ({ onGenerate, onSaveAnswer, initialAnswers = {}, briefId }) =
                       onClick={() => handleSelectOption(opt)}
                       className={`p-4 rounded-2xl border text-left font-bold text-sm transition-all flex items-center justify-between ${
                         isSelected
-                          ? 'bg-[#189D91]/10 border-[#189D91] text-[#189D91] shadow-sm'
+                          ? 'bg-amber-500/10 border-amber-500 text-amber-700 shadow-sm'
                           : 'bg-gray-50 border-gray-100 text-slate-700 hover:bg-gray-100'
                       }`}
                     >
                       <span>{opt}</span>
-                      {isSelected && <FiCheckCircle className="text-[#189D91]" size={18} />}
+                      {isSelected && <FiCheckCircle className="text-amber-600" size={18} />}
                     </button>
                   );
                 })}
@@ -251,12 +256,12 @@ const BriefForm = ({ onGenerate, onSaveAnswer, initialAnswers = {}, briefId }) =
                       onClick={() => handleMultiSelectToggle(opt)}
                       className={`p-4 rounded-2xl border text-left font-bold text-sm transition-all flex items-center justify-between ${
                         isSelected
-                          ? 'bg-[#189D91]/10 border-[#189D91] text-[#189D91] shadow-sm'
+                          ? 'bg-amber-500/10 border-amber-500 text-amber-700 shadow-sm'
                           : 'bg-gray-50 border-gray-100 text-slate-700 hover:bg-gray-100'
                       }`}
                     >
                       <span>{opt}</span>
-                      {isSelected && <FiCheckCircle className="text-[#189D91]" size={18} />}
+                      {isSelected && <FiCheckCircle className="text-amber-600" size={18} />}
                     </button>
                   );
                 })}
@@ -271,7 +276,7 @@ const BriefForm = ({ onGenerate, onSaveAnswer, initialAnswers = {}, briefId }) =
                   value={currentVal || ''}
                   onChange={(e) => handleSelectOption(e.target.value)}
                   placeholder={question.placeholder}
-                  className="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl text-slate-800 font-medium text-sm focus:outline-none focus:border-[#189D91] transition-all"
+                  className="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl text-slate-800 font-medium text-sm focus:outline-none focus:border-amber-500 transition-all"
                 />
               </div>
             )}
@@ -284,7 +289,7 @@ const BriefForm = ({ onGenerate, onSaveAnswer, initialAnswers = {}, briefId }) =
                   value={currentVal || ''}
                   onChange={(e) => handleSelectOption(e.target.value)}
                   placeholder={question.placeholder}
-                  className="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl text-slate-800 font-medium text-sm focus:outline-none focus:border-[#189D91] transition-all"
+                  className="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl text-slate-800 font-medium text-sm focus:outline-none focus:border-amber-500 transition-all"
                 />
               </div>
             )}
@@ -294,7 +299,7 @@ const BriefForm = ({ onGenerate, onSaveAnswer, initialAnswers = {}, briefId }) =
               <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100 space-y-6">
                 <div className="text-center">
                   <span className="text-xs font-bold uppercase tracking-wider text-gray-400">Estimated Total Investment</span>
-                  <p className="text-3xl font-black text-[#189D91] mt-1">
+                  <p className="text-3xl font-black text-amber-600 mt-1">
                     ₹{Number(currentVal || question.default).toLocaleString('en-IN')}
                   </p>
                 </div>
@@ -305,7 +310,7 @@ const BriefForm = ({ onGenerate, onSaveAnswer, initialAnswers = {}, briefId }) =
                   step={question.step}
                   value={currentVal || question.default}
                   onChange={(e) => handleSelectOption(Number(e.target.value))}
-                  className="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#189D91]"
+                  className="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-amber-500"
                 />
                 <div className="flex justify-between text-xs font-bold text-gray-400">
                   <span>₹50,000 (Starter)</span>
@@ -335,7 +340,7 @@ const BriefForm = ({ onGenerate, onSaveAnswer, initialAnswers = {}, briefId }) =
           <button
             type="button"
             onClick={handleNext}
-            className="px-7 py-3.5 bg-[#189D91] hover:bg-[#15877c] text-white rounded-xl text-xs font-extrabold tracking-wider uppercase flex items-center gap-2.5 shadow-lg shadow-[#189D91]/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+            className="px-7 py-3.5 bg-amber-500 hover:bg-amber-400 text-deep-espresso rounded-xl text-xs font-extrabold tracking-wider uppercase flex items-center gap-2.5 shadow-lg shadow-amber-500/30 transition-all hover:scale-[1.02] active:scale-[0.98]"
           >
             {currentStep === QUESTIONS.length - 1 ? (
               <>

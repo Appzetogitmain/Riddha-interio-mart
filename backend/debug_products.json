@@ -1,7 +1,11 @@
 {
-  "timestamp": "2026-08-25T15:07:49.805Z",
-  "query": {},
+  "timestamp": "2026-08-26T09:25:29.283Z",
+  "query": {
+    "approvalStatus": "pending",
+    "isActive": "all"
+  },
   "builtFilter": {
+    "approvalStatus": "pending",
     "isBundle": {
       "$ne": true
     }
@@ -19,16 +23,6 @@
       "subsubcategory": "6a4dfe86a06cf368b84a9293"
     },
     {
-      "_id": "6a8d3b3f5a5725421e3d041b",
-      "name": "Royale Designer Palette",
-      "category": {
-        "_id": "6a4cf715a06cf368b84a62e3",
-        "name": "Paint"
-      },
-      "subcategory": "6a4e0f4aa06cf368b84a9dc1",
-      "subsubcategory": "6a4e0f4aa06cf368b84a9dc2"
-    },
-    {
       "_id": "6a8c7a79ab6e9eccc5043133",
       "name": "Polycab Primma LF-FR House Wire",
       "category": {
@@ -39,74 +33,84 @@
       "subsubcategory": "6a4dfe86a06cf368b84a926b"
     },
     {
-      "_id": "6a8aa2d1897083dc82dd782f",
-      "name": "Pendant Light",
+      "_id": "6a758842fbb213b03d09474f",
+      "name": "Premium Emulsion Paint",
+      "category": {
+        "_id": "6a4cf715a06cf368b84a62e3",
+        "name": "Paint"
+      },
+      "subcategory": "6a4e0f4aa06cf368b84a9dc1",
+      "subsubcategory": "6a4e0f4aa06cf368b84a9dc4"
+    },
+    {
+      "_id": "6a73a209fbb213b03d091c8c",
+      "name": "BOTTLE PULL OUTS",
+      "category": {
+        "_id": "6a1544acd45bbef0c578fa3e",
+        "name": "Hardware"
+      },
+      "subcategory": "6a4d7e72a06cf368b84a7588",
+      "subsubcategory": "6a4d7e72a06cf368b84a758a"
+    },
+    {
+      "_id": "6a731fa3494ccc3cb64bce4f",
+      "name": "Philips LED Ceiling Panel Light 18W",
       "category": {
         "_id": "6a0daa34047bdee23fc765da",
         "name": "Lighting"
       },
-      "subcategory": "6a4d5daea06cf368b84a721b",
-      "subsubcategory": "6a4d5daea06cf368b84a721d"
+      "subcategory": "6a4d5daea06cf368b84a71eb",
+      "subsubcategory": "6a4d5daea06cf368b84a71f1"
     },
     {
-      "_id": "6a8937842e1cd9e01d08762e",
-      "name": "marble look tile",
+      "_id": "6a731aa4db4638654784a283",
+      "name": "slipwell bed",
       "category": {
-        "_id": "6a0d97bf804fbfd108773a6f",
-        "name": "Flooring"
+        "_id": "6a0d954f804fbfd1087737f1",
+        "name": "Furniture"
       },
-      "subcategory": "6a4d4f65a06cf368b84a7146",
-      "subsubcategory": "6a4d4f65a06cf368b84a7148"
+      "subcategory": "6a4d1974a06cf368b84a6c76",
+      "subsubcategory": "6a4d1974a06cf368b84a6c78"
     },
     {
-      "_id": "6a882476432f2410076022fe",
-      "name": "stone marble",
+      "_id": "6a730b3517e61af69f5935b6",
+      "name": "Premium itallitan marble slab",
       "category": {
         "_id": "69e1cc1d60884ec078193fe9",
         "name": "Marble"
       },
       "subcategory": "6a4d111fa06cf368b84a67fa",
-      "subsubcategory": "6a4d111fa06cf368b84a67fd"
+      "subsubcategory": "6a4d111fa06cf368b84a67fc"
     },
     {
-      "_id": "6a7cb0d4391d4b105319b393",
-      "name": "CAROUSEL",
+      "_id": "6a72f56a641bae80fc8d00e0",
+      "name": "King Size Hydraulic Storage Bed SW-HB-7788",
       "category": {
-        "_id": "6a0daaed047bdee23fc767b7",
-        "name": "Modular Kitchen"
+        "_id": "6a0d954f804fbfd1087737f1",
+        "name": "Furniture"
       },
-      "subcategory": "6a4d7691a06cf368b84a7489",
-      "subsubcategory": "6a4d7691a06cf368b84a748e"
+      "subcategory": "6a4d1974a06cf368b84a6c76",
+      "subsubcategory": "6a4d1974a06cf368b84a6c78"
     },
     {
-      "_id": "6a7c7ab5f9423d7fdd08b928",
-      "name": "flooring tiles",
+      "_id": "6a72f3c0bcbf3be5792cd272",
+      "name": "Modern L-Shaped Fabric Sofa Set UC-LS-9021",
       "category": {
-        "_id": "6a0d97bf804fbfd108773a6f",
-        "name": "Flooring"
+        "_id": "6a0d954f804fbfd1087737f1",
+        "name": "Furniture"
       },
-      "subcategory": "6a4d4f65a06cf368b84a7146",
-      "subsubcategory": "6a4d4f65a06cf368b84a7148"
+      "subcategory": "6a4d1974a06cf368b84a6c76",
+      "subsubcategory": "6a4d1974a06cf368b84a6c77"
     },
     {
-      "_id": "6a7c77bcf9423d7fdd08b78f",
-      "name": "wall tiles",
+      "_id": "6a72ee02d2b0c2bcf3faeb95",
+      "name": "Modern L-Shaped Fabric Sofa Set UC-LS-9021",
       "category": {
-        "_id": "6a0d97bf804fbfd108773a6f",
-        "name": "Flooring"
+        "_id": "6a0d954f804fbfd1087737f1",
+        "name": "Furniture"
       },
-      "subcategory": "6a4d4f65a06cf368b84a713f",
-      "subsubcategory": "6a4d4f65a06cf368b84a7140"
-    },
-    {
-      "_id": "6a7c242857735308abaf356b",
-      "name": "floor Tiles",
-      "category": {
-        "_id": "6a0d97bf804fbfd108773a6f",
-        "name": "Flooring"
-      },
-      "subcategory": "6a4d4f65a06cf368b84a713f",
-      "subsubcategory": "6a4d4f65a06cf368b84a7140"
+      "subcategory": "6a4d1974a06cf368b84a6c76",
+      "subsubcategory": "6a4d1974a06cf368b84a6c77"
     }
   ]
 }

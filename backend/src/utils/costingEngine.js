@@ -4,13 +4,20 @@
 
 // Base rates per sq ft for room types
 const BASE_ROOM_RATES = {
+  // Residential
   'Living Room': 500,
   'Bedroom': 400,
   'Kitchen': 1000,
   'Dining Room': 450,
   'Office': 400,
   'Bathroom': 750,
-  'Other': 450
+  'Other': 450,
+  // Commercial — higher base rates reflect fit-out complexity (durable finishes, code compliance)
+  'Corporate Office': 550,
+  'Retail / Shopping Center': 650,
+  'Restaurant / Café': 950,
+  'Hotel / Hospitality': 1200,
+  'Other Commercial Space': 500
 };
 
 // Material Tier Multipliers
@@ -35,7 +42,12 @@ const ADDITIONAL_SERVICE_COSTS = {
   '3D rendering': 10000,
   'Color consultation': 3000,
   'Material sampling': 3000,
-  'Site visits': 4000
+  'Site visits': 4000,
+  // Commercial-specific services
+  'Signage & branding': 18000,
+  'HVAC & ventilation planning': 35000,
+  'Fire & safety compliance': 15000,
+  'Commercial kitchen equipment': 120000
 };
 
 /**

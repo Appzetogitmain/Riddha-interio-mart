@@ -20,10 +20,18 @@ const generateQuotationPDF = (quotation) => {
       const brandGreen = '#047857'; // Emerald 700
       const textGray = '#475569';   // Slate 600
 
-      // Header Banner
+      // Header Banner — identifies the designer/contractor who generated this quote,
+      // not the marketplace (that credit moves to the footer as "Powered by Riddha Interio Mart").
+      const generator = quotation.userId || {};
+      const generatorName = generator.businessDetails?.shopName || generator.fullName || quotation.company?.contactPerson || 'Independent Designer';
+      const generatorContact = [generator.email, generator.phone].filter(Boolean).join('  |  ');
+
       doc.rect(40, 40, 515, 65).fill(brandDark);
-      doc.fillColor('#FFFFFF').fontSize(18).font('Helvetica-Bold').text('RIDDHA INTERIO MART', 55, 52);
-      doc.fontSize(8.5).font('Helvetica').text('Official Interior Design Quotation', 55, 75);
+      doc.fillColor('#FFFFFF').fontSize(16).font('Helvetica-Bold').text(generatorName, 55, 50, { width: 300 });
+      doc.fontSize(8.5).font('Helvetica').text('Interior Design Quotation', 55, 70);
+      if (generatorContact) {
+        doc.fontSize(7.5).fillColor('#CBD5E1').text(generatorContact, 55, 83, { width: 300 });
+      }
 
       // Quote Number & Date Box (Fixed positioning & explicit width alignment)
       const headerRightX = 370;
@@ -195,14 +203,14 @@ const generateQuotationPDF = (quotation) => {
       }
       doc.rect(380, y, 175, 45).stroke('#CBD5E1');
       doc.fillColor(brandDark).fontSize(8).font('Helvetica-Bold').text('Authorized Signature & Seal', 390, y + 10);
-      doc.fillColor(textGray).fontSize(7.5).font('Helvetica').text('Riddha Interio Mart Concierge', 390, y + 28);
+      doc.fillColor(textGray).fontSize(7.5).font('Helvetica').text(generatorName, 390, y + 28);
 
-      // Add Page Numbers
+      // Add Page Numbers & Marketplace Credit
       const range = doc.bufferedPageRange();
       for (let i = range.start; i < range.start + range.count; i++) {
         doc.switchToPage(i);
         doc.fillColor('#94A3B8').fontSize(7.5).font('Helvetica')
-          .text(`Page ${i + 1} of ${range.count}  |  Riddha Interio Mart Quotation System`, 40, 815, { align: 'center', width: 515 });
+          .text(`Powered by Riddha Interio Mart  |  Page ${i + 1} of ${range.count}`, 40, 815, { align: 'center', width: 515 });
       }
 
       doc.end();

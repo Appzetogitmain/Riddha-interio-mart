@@ -68,7 +68,6 @@ const ProjectDetailPage = React.lazy(() => import('./pages/ProjectDetailPage'));
 const CostEstimatorPage = React.lazy(() => import('./pages/CostEstimatorPage'));
 const BOQGeneratorPage = React.lazy(() => import('./pages/BOQGeneratorPage'));
 const QuotationGeneratorPage = React.lazy(() => import('./pages/QuotationGeneratorPage'));
-const DeliveryPartnerAppPage = React.lazy(() => import('./pages/DeliveryPartnerAppPage'));
 const NotificationCenterPage = React.lazy(() => import('./pages/NotificationCenterPage'));
 const NotificationPreferencesPage = React.lazy(() => import('./pages/NotificationPreferencesPage'));
 const SellerAIContentGeneratorPage = React.lazy(() => import('./pages/SellerAIContentGeneratorPage'));
@@ -100,7 +99,6 @@ const UserRoutes = () => {
       <Route path="/notifications/preferences" element={<NotificationPreferencesPage />} />
       <Route path="/orders/track" element={<OrderTrackingPage />} />
       <Route path="/orders/:orderId/track" element={<OrderTrackingPage />} />
-      <Route path="/delivery/partner-app" element={<DeliveryPartnerAppPage />} />
       <Route path="/splash" element={<SplashPage />} />
       <Route path="/onboarding" element={<OnboardingPage />} />
       <Route path="/" element={<RootRoute />} />

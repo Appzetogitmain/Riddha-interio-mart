@@ -13,7 +13,10 @@ import { useUser } from '../data/UserContext';
 import toast from 'react-hot-toast';
 
 const ROOM_TYPES = [
-  'Living Room', 'Bedroom', 'Kitchen', 'Dining Room', 'Office', 'Bathroom', 'Other'
+  // Residential
+  'Living Room', 'Bedroom', 'Kitchen', 'Dining Room', 'Office', 'Bathroom', 'Other',
+  // Commercial
+  'Corporate Office', 'Retail / Shopping Center', 'Restaurant / Café', 'Hotel / Hospitality', 'Other Commercial Space'
 ];
 
 const SCOPE_OPTIONS = [
@@ -67,7 +70,11 @@ const ADDITIONAL_SERVICES = [
   '3D rendering',
   'Color consultation',
   'Material sampling',
-  'Site visits'
+  'Site visits',
+  'Signage & branding',
+  'HVAC & ventilation planning',
+  'Fire & safety compliance',
+  'Commercial kitchen equipment'
 ];
 
 const CostEstimatorPage = () => {

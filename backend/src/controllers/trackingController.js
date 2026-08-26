@@ -87,7 +87,8 @@ exports.getOrderTracking = async (req, res, next) => {
         currentLat: order.currentLocation?.coordinates?.[1] || 12.9716,
         currentLng: order.currentLocation?.coordinates?.[0] || 77.6412,
         destination: order.shippingAddress?.fullAddress || 'Indiranagar, Bengaluru',
-        distanceKm: getOrderDistanceKm(order, 3.8)
+        distanceKm: getOrderDistanceKm(order, 3.8),
+        itemCount: (order.orderItems || []).reduce((sum, item) => sum + (Number(item.quantity) || 1), 0)
       }, req.user._id);
 
       order.aiPredictions = {
@@ -166,7 +167,8 @@ exports.getETAPrediction = async (req, res, next) => {
       currentLat: order?.currentLocation?.coordinates?.[1] || 12.9716,
       currentLng: order?.currentLocation?.coordinates?.[0] || 77.6412,
       destination: order?.shippingAddress?.fullAddress || 'Bengaluru',
-      distanceKm: getOrderDistanceKm(order, 3.5)
+      distanceKm: getOrderDistanceKm(order, 3.5),
+      itemCount: (order?.orderItems || []).reduce((sum, item) => sum + (Number(item.quantity) || 1), 0)
     }, req.user._id);
 
     res.status(200).json({

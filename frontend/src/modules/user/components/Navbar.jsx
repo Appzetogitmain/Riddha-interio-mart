@@ -542,7 +542,6 @@ const Navbar = () => {
                     <SidebarLink to="/boq-generator" icon={FiList} label="BOQ Generator" onClick={closeMobile} />
                     <SidebarLink to="/quotation-generator" icon={FiFileText} label="Quotation Generator" onClick={closeMobile} />
                     <SidebarLink to="/orders/track" icon={FiTruck} label="Real-Time Order Tracking" onClick={closeMobile} />
-                    <SidebarLink to="/delivery/partner-app" icon={FiTruck} label="Delivery Partner Dispatch App" onClick={closeMobile} />
                     <SidebarLink to="/projects" icon={LuLayoutDashboard} label="My Projects Studio" onClick={closeMobile} />
                     <SidebarLink to="/client-brief" icon={FiFileText} label="AI Project Brief" onClick={closeMobile} />
                     <SidebarLink to="/products" icon={FiGrid} label="Shop Products" onClick={closeMobile} />

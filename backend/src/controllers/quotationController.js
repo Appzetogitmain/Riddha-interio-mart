@@ -372,7 +372,8 @@ exports.generateAIEnhancements = async (req, res, next) => {
 exports.exportQuotationPDF = async (req, res, next) => {
   try {
     const { quotationId } = req.params;
-    const quotation = await Quotation.findById(quotationId);
+    const quotation = await Quotation.findById(quotationId)
+      .populate('userId', 'fullName email phone businessDetails.shopName');
     if (!quotation) {
       return res.status(404).json({ success: false, message: 'Quotation not found' });
     }
@@ -393,7 +394,8 @@ exports.emailQuotation = async (req, res, next) => {
     const { quotationId } = req.params;
     const { clientEmail, message } = req.body;
 
-    const quotation = await Quotation.findById(quotationId);
+    const quotation = await Quotation.findById(quotationId)
+      .populate('userId', 'fullName email phone businessDetails.shopName');
     if (!quotation) {
       return res.status(404).json({ success: false, message: 'Quotation not found' });
     }

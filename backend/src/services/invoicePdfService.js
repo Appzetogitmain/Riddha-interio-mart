@@ -36,6 +36,9 @@ const drawTableRow = (doc, y, values, widths, alignments, isHeader = false) => {
     const val = values[i] !== undefined && values[i] !== null ? values[i].toString() : "";
     const w = widths[i];
     const align = alignments[i] || "left";
+    // Note: pdfkit's `lineBreak: false` only suppresses wrapping when `width` is omitted —
+    // with an explicit column width (as here) it still wraps. So a header label MUST fit its
+    // column at this font size, or it wraps to 2 lines and bleeds into the row below.
     doc.text(val, currentX, y, { width: w, align: align });
     currentX += w;
   }
@@ -112,9 +115,11 @@ class InvoicePdfService {
     
     // Table
     const tableTop = 275;
-    const colWidths = [20, 160, 45, 25, 25, 45, 40, 50, 50, 55]; // sum = 515
+    // sum = 515. Description narrowed from 160 (item names rarely use all of it, leaving a
+    // visible gap before HSN/SAC) so the remaining columns shift left and sit closer to it.
+    const colWidths = [20, 140, 50, 30, 30, 45, 30, 65, 50, 55];
     const colAlignments = ["center", "left", "center", "center", "center", "right", "right", "right", "right", "right"];
-    const headers = ["Sl.", "Description of Goods", "HSN/SAC", "Qty", "Unit", "Rate (Rs)", "Disc (Rs)", "Taxable Value", "GST Rate", "Total (Rs)"];
+    const headers = ["Sl.", "Description of Goods", "HSN/SAC", "Qty", "Unit", "Rate (Rs)", "Disc", "Taxable Value", "GST Rate", "Total (Rs)"];
     
     doc.rect(40, tableTop, 515, 20).fill("#0f766e");
     doc.fillColor("#ffffff");
@@ -163,15 +168,24 @@ class InvoicePdfService {
     // Bank details & declaration & signature
     const bottomY = currentY;
     
-    // Tax summary block
+    // Tax summary block — Inter-State supply is IGST-only; Intra-State splits into CGST+SGST.
+    // order.cgst/sgst/igst store rupee AMOUNTS (see taxService.calculateTaxes), not rates, so
+    // the rate shown here is derived from taxAmount/itemsPrice — printing the amount fields
+    // directly with a "%" suffix was the bug ("CGST (720.76%)").
+    const isInterStateA = order.taxType === "inter-state";
+    const gstRateA = order.itemsPrice > 0 ? (order.taxAmount / order.itemsPrice) * 100 : 18;
     doc.rect(40, bottomY, 150, 75).stroke("#cccccc");
-    doc.fillColor("#0f766e").font("Helvetica-Bold").fontSize(7).text("GST SUMMARY", 46, bottomY + 6);
+    doc.fillColor("#0f766e").font("Helvetica-Bold").fontSize(7).text(`GST SUMMARY (${isInterStateA ? "INTER" : "INTRA"}-STATE)`, 46, bottomY + 6);
     doc.fillColor("#000000").font("Helvetica").fontSize(7);
     doc.text(`Taxable Value  : Rs. ${order.itemsPrice.toFixed(2)}`, 46, bottomY + 18);
-    doc.text(`CGST (${(order.cgst || 9)}%) : Rs. ${(order.taxAmount / 2).toFixed(2)}`, 46, bottomY + 28);
-    doc.text(`SGST (${(order.sgst || 9)}%) : Rs. ${(order.taxAmount / 2).toFixed(2)}`, 46, bottomY + 38);
+    if (isInterStateA) {
+      doc.text(`IGST (${gstRateA.toFixed(1)}%)  : Rs. ${order.taxAmount.toFixed(2)}`, 46, bottomY + 28);
+    } else {
+      doc.text(`CGST (${(gstRateA / 2).toFixed(1)}%) : Rs. ${(order.taxAmount / 2).toFixed(2)}`, 46, bottomY + 28);
+      doc.text(`SGST (${(gstRateA / 2).toFixed(1)}%) : Rs. ${(order.taxAmount / 2).toFixed(2)}`, 46, bottomY + 38);
+    }
     doc.font("Helvetica-Bold").text(`Total Tax      : Rs. ${order.taxAmount.toFixed(2)}`, 46, bottomY + 52);
-    
+
     // Bank details
     const bank = seller.bankDetails || {};
     doc.rect(200, bottomY, 170, 75).stroke("#cccccc");
@@ -465,9 +479,11 @@ class InvoicePdfService {
     
     // Table
     const tableTop = 275;
-    const colWidths = [20, 160, 45, 25, 25, 45, 40, 50, 50, 55]; // sum = 515
+    // sum = 515. Description narrowed from 160 (item names rarely use all of it, leaving a
+    // visible gap before HSN/SAC) so the remaining columns shift left and sit closer to it.
+    const colWidths = [20, 140, 50, 30, 30, 45, 30, 65, 50, 55];
     const colAlignments = ["center", "left", "center", "center", "center", "right", "right", "right", "right", "right"];
-    const headers = ["Sl.", "Description of Goods", "HSN/SAC", "Qty", "Unit", "Rate (Rs)", "Disc (Rs)", "Taxable Value", "GST Rate", "Total (Rs)"];
+    const headers = ["Sl.", "Description of Goods", "HSN/SAC", "Qty", "Unit", "Rate (Rs)", "Disc", "Taxable Value", "GST Rate", "Total (Rs)"];
     
     doc.rect(40, tableTop, 515, 20).fill("#e11d48");
     doc.fillColor("#ffffff");
@@ -516,13 +532,22 @@ class InvoicePdfService {
     // Bank details & IRN block
     const bottomY = currentY;
     
-    // Tax summary block
+    // Tax summary block — Inter-State supply is IGST-only; Intra-State splits into CGST+SGST.
+    // order.cgst/sgst/igst store rupee AMOUNTS (see taxService.calculateTaxes), not rates, so
+    // the rate shown here is derived from taxAmount/itemsPrice — printing the amount fields
+    // directly with a "%" suffix was the bug ("CGST (720.76%)").
+    const isInterStateC = order.taxType === "inter-state";
+    const gstRateC = order.itemsPrice > 0 ? (order.taxAmount / order.itemsPrice) * 100 : 18;
     doc.rect(40, bottomY, 140, 75).stroke("#cccccc");
-    doc.fillColor("#e11d48").font("Helvetica-Bold").fontSize(7).text("GST SUMMARY (INTRA-STATE)", 46, bottomY + 6);
+    doc.fillColor("#e11d48").font("Helvetica-Bold").fontSize(7).text(`GST SUMMARY (${isInterStateC ? "INTER" : "INTRA"}-STATE)`, 46, bottomY + 6);
     doc.fillColor("#000000").font("Helvetica").fontSize(7);
     doc.text(`Taxable Value  : Rs. ${order.itemsPrice.toFixed(2)}`, 46, bottomY + 18);
-    doc.text(`CGST (${(order.cgst || 9)}%) : Rs. ${(order.taxAmount / 2).toFixed(2)}`, 46, bottomY + 28);
-    doc.text(`SGST (${(order.sgst || 9)}%) : Rs. ${(order.taxAmount / 2).toFixed(2)}`, 46, bottomY + 38);
+    if (isInterStateC) {
+      doc.text(`IGST (${gstRateC.toFixed(1)}%)  : Rs. ${order.taxAmount.toFixed(2)}`, 46, bottomY + 28);
+    } else {
+      doc.text(`CGST (${(gstRateC / 2).toFixed(1)}%) : Rs. ${(order.taxAmount / 2).toFixed(2)}`, 46, bottomY + 28);
+      doc.text(`SGST (${(gstRateC / 2).toFixed(1)}%) : Rs. ${(order.taxAmount / 2).toFixed(2)}`, 46, bottomY + 38);
+    }
     doc.font("Helvetica-Bold").text(`Total Tax      : Rs. ${order.taxAmount.toFixed(2)}`, 46, bottomY + 52);
     
     // ECO Declaration

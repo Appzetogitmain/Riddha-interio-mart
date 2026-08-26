@@ -44,39 +44,60 @@ class BoqService {
 
   /**
    * 1. AI Vision Drawing/Sketch Item Extraction
+   * `images`: array of { base64, mimeType } — one entry per page for multi-page PDF uploads,
+   * so a floor plan page can be cross-referenced against a schedule/legend table on another page.
    */
-  async extractItemsFromDrawing(base64Image, mimeType = 'image/jpeg', userId = null) {
-    const prompt = `Analyze this interior design drawing/floorplan sketch image.
+  async extractItemsFromDrawing(images = [], userId = null) {
+    const BOQ_CATEGORIES = ['Furniture', 'Flooring', 'Lighting', 'Paint', 'Hardware', 'Decor', 'Custom', 'Labor & Services'];
 
-Extract all visible:
-1. Furniture items (sofas, tables, beds, wardrobes, chairs)
-2. Fixtures (lighting, ceiling fans, electrical points)
-3. Materials (flooring tiles, wall paneling, paint)
-4. Decor items (rugs, curtains, artwork)
+    const prompt = `You are analyzing ${images.length > 1 ? `${images.length} pages of` : 'an'} uploaded interior/architectural drawing${images.length > 1 ? ' set' : ''}.
 
-Return ONLY a valid JSON array of item objects:
-[
-  {
-    "itemName": "Specific item name",
-    "category": "Furniture|Flooring|Lighting|Paint|Hardware|Decor|Custom",
-    "quantity": 1,
-    "unit": "Pieces|Sq Ft|Sets|Boxes",
-    "unitCost": 15000,
-    "description": "Brief description based on visual sketch details",
-    "priority": "essential|important|optional"
-  }
-]`;
+The input may be a photographic sketch or rendering, OR a technical architectural floor plan made of line drawings — walls, doors, windows, dimension lines, room labels — possibly alongside a legend, schedule, or table listing items and quantities. Examine every page provided before answering.
+
+Do the following:
+1. Identify the overall space/project type from room labels, layout, and any title block or header text — e.g. "Living Room", "Bedroom", "Corporate Office", "Retail Store", "Restaurant", "Hotel Room". If multiple rooms/zones appear (e.g. an office floor plan with cabins, workstations, a conference room, and a reception), report the overall project type (e.g. "Corporate Office") and list each distinct room/zone label you can read.
+2. If any table, legend, or schedule (door schedule, furniture schedule, finish schedule, BOQ table) is printed on the drawing, treat its quantities and specs as authoritative — do not guess a quantity if one is explicitly printed.
+3. Extract every item needed to execute this project, matched to the detected space type:
+   - Residential: furniture (sofas, beds, wardrobes, dining sets), lighting fixtures, flooring, wall treatments, decor.
+   - Commercial/office: workstations, office chairs, conference/meeting tables, reception desks, storage/filing cabinets, partitions, cabins, pantry fixtures, signage, HVAC/electrical fixtures, fire-safety fixtures.
+   - Retail/hospitality: display racks/shelving, checkout counters, hotel room furniture sets, restaurant seating & tables, kitchen equipment — as applicable.
+   Infer quantities from room counts, dimension annotations, and repeated symbols in the drawing (e.g. 12 workstation symbols = quantity 12).
+4. Include structural/finish elements clearly depicted via line work when relevant to a BOQ — partition walls (Sq Ft or Running Ft), false ceiling area, flooring area — using dimension lines or labeled areas to size them.
+
+Return ONLY a valid JSON object with this exact schema:
+{
+  "detectedSpaceType": "Best-matching overall space/project type label",
+  "roomsIdentified": ["Room or zone label 1", "Room or zone label 2"],
+  "items": [
+    {
+      "itemName": "Specific item name",
+      "category": "One of: ${BOQ_CATEGORIES.join('|')}",
+      "quantity": 1,
+      "unit": "Pieces|Sq Ft|Running Ft|Sets|Boxes",
+      "unitCost": 15000,
+      "description": "Brief description based on visual/table details, naming the room/zone it belongs to when known",
+      "priority": "essential|important|optional"
+    }
+  ]
+}
+The "category" field MUST be exactly one of the listed values — map anything else (e.g. signage, HVAC, partitions) into the closest one ("Custom" or "Hardware").`;
 
     let extractedItems = null;
+    let detectedSpaceType = null;
+    let roomsIdentified = [];
 
-    if (base64Image) {
+    if (Array.isArray(images) && images.length > 0) {
       try {
-        const response = await openaiClient.generateWithVision(prompt, [{ base64: base64Image, mimeType }], {
-          modelType: 'vision',
-          expectJson: true,
-          temperature: 0.7,
-          maxTokens: 800
-        });
+        const response = await openaiClient.generateWithVision(
+          prompt,
+          images.map(img => ({ base64: img.base64, mimeType: img.mimeType })),
+          {
+            modelType: 'vision',
+            expectJson: true,
+            temperature: 0.7,
+            maxTokens: 2000
+          }
+        );
 
         await OpenAIUsageTracker.trackUsage(
           {
@@ -92,7 +113,11 @@ Return ONLY a valid JSON array of item objects:
 
         const cleanedText = response.text.replace(/```json/g, '').replace(/```/g, '').trim();
         const parsed = JSON.parse(cleanedText);
-        if (Array.isArray(parsed) && parsed.length > 0) extractedItems = parsed;
+        if (parsed && Array.isArray(parsed.items) && parsed.items.length > 0) {
+          extractedItems = parsed.items;
+          detectedSpaceType = typeof parsed.detectedSpaceType === 'string' ? parsed.detectedSpaceType : null;
+          roomsIdentified = Array.isArray(parsed.roomsIdentified) ? parsed.roomsIdentified.filter(r => typeof r === 'string') : [];
+        }
       } catch (e) {
         const errorInfo = OpenAIErrorHandler.handleError(e, {
           service: 'BoqService',
@@ -112,8 +137,16 @@ Return ONLY a valid JSON array of item objects:
       ];
     }
 
+    // Guard against the model returning a category outside the Mongoose enum — would otherwise
+    // reject the whole BOQ save.
+    extractedItems = extractedItems.map(item => ({
+      ...item,
+      category: BOQ_CATEGORIES.includes(item.category) ? item.category : 'Custom'
+    }));
+
     // Automatically sync extracted items with real MongoDB Product Catalog prices
-    return await this.syncItemsWithProductCatalog(extractedItems);
+    const syncedItems = await this.syncItemsWithProductCatalog(extractedItems);
+    return { items: syncedItems, detectedSpaceType, roomsIdentified };
   }
 
   /**

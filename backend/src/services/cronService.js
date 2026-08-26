@@ -8,6 +8,7 @@ const invoicePdfService = require('./invoicePdfService');
 const emailService = require('./emailService');
 const walletService = require('./walletService');
 const rfqSlaService = require('./rfqSlaService');
+const { getProductPurchaseTermsContent } = require('../utils/getProductPurchaseTerms');
 
 class CronService {
   constructor() {
@@ -173,7 +174,8 @@ class CronService {
           }
 
           // Generate Marketplace -> Customer Invoice (Bill C)
-          const pdfBuffer = await invoicePdfService.generateMarketplaceToCustomerInvoice(order, seller, settings);
+          const termsContent = await getProductPurchaseTermsContent();
+          const pdfBuffer = await invoicePdfService.generateMarketplaceToCustomerInvoice(order, seller, settings, termsContent);
 
           // Send via emailService
           await emailService.sendCustomerInvoiceEmail(user.email, order, pdfBuffer);

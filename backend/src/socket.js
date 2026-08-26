@@ -579,6 +579,75 @@ async function notifyAdminNewBulkOrder(payload) {
   });
 }
 
+// Admin assigned an existing bulk order request to a seller for a quote (as opposed to
+// notifySellerBulkOrder, which fires when the customer's own products already belong to
+// that seller — this covers the admin-driven category-match distribution path too).
+async function notifySellerBulkOrderAssignment(sellerId, payload) {
+  if (!io) return;
+  const message = `Admin assigned you a bulk order request from ${payload.customerName} — please review and respond with availability, pricing, and delivery estimate.`;
+  const notif = await persistNotification({
+    recipient: sellerId,
+    recipientModel: 'Seller',
+    title: 'Bulk Order Assigned to You',
+    message,
+    type: 'order_update',
+    metadata: payload
+  });
+  io.to(`seller:${sellerId}`).emit('bulk_order:assigned', payload);
+  if (notif) io.to(`seller:${sellerId}`).emit('notification:new', notif);
+
+  await maybePushToUser('seller', sellerId, 'Seller', {
+    title: 'Bulk Order Assigned to You',
+    body: message,
+    data: { type: 'order_update' }
+  });
+}
+
+// Seller accepted/rejected an assigned bulk order — let admin know so they can pick the
+// best response to send back to the customer.
+async function notifyAdminBulkOrderResponse(payload) {
+  if (!io) return;
+  const message = payload.decision === 'accepted'
+    ? `${payload.sellerName} accepted the bulk order from ${payload.customerName} — Qty: ${payload.availableQuantity}, Rs. ${payload.unitPrice}/unit, ETA: ${payload.deliveryEstimate}.`
+    : `${payload.sellerName} declined the bulk order request from ${payload.customerName}.`;
+
+  const { admins, sample: adminNotif } = await persistForAdmins({
+    title: payload.decision === 'accepted' ? 'Seller Responded to Bulk Order' : 'Seller Declined Bulk Order',
+    message,
+    type: 'order_update',
+    metadata: payload
+  });
+  io.to('role:admin').emit('bulk_order:seller_response', payload);
+  if (adminNotif) io.to('role:admin').emit('notification:new', adminNotif);
+
+  await maybePushToOfflineAdmins(admins, {
+    title: payload.decision === 'accepted' ? 'Seller Responded to Bulk Order' : 'Seller Declined Bulk Order',
+    body: message,
+    data: { type: 'order_update' }
+  });
+}
+
+// Customer clicked "Confirm" on the final offer emailed to them for their bulk order.
+async function notifyAdminBulkOrderConfirmed(payload) {
+  if (!io) return;
+  const message = `${payload.customerName} confirmed the bulk order offer. Proceed to finalize the order/payment.`;
+
+  const { admins, sample: adminNotif } = await persistForAdmins({
+    title: 'Bulk Order Offer Confirmed',
+    message,
+    type: 'order_update',
+    metadata: payload
+  });
+  io.to('role:admin').emit('bulk_order:confirmed', payload);
+  if (adminNotif) io.to('role:admin').emit('notification:new', adminNotif);
+
+  await maybePushToOfflineAdmins(admins, {
+    title: 'Bulk Order Offer Confirmed',
+    body: message,
+    data: { type: 'order_update' }
+  });
+}
+
 async function notifyLowStock(sellerId, payload) {
   if (!io) return;
   
@@ -640,5 +709,8 @@ module.exports = {
   notifyAdminNewBatch,
   notifySellerBatchReview,
   notifySellerBulkOrder,
-  notifyAdminNewBulkOrder
+  notifyAdminNewBulkOrder,
+  notifySellerBulkOrderAssignment,
+  notifyAdminBulkOrderResponse,
+  notifyAdminBulkOrderConfirmed
 };

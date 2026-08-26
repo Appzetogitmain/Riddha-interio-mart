@@ -16,6 +16,7 @@ const Cancellation = React.lazy(() => import('./pages/Cancellation'));;
 const Returns = React.lazy(() => import('./pages/Returns'));;
 const Refund = React.lazy(() => import('./pages/Refund'));;
 const Terms = React.lazy(() => import('./pages/Terms'));;
+const BulkOrderOfferPage = React.lazy(() => import('./pages/BulkOrderOfferPage'));;
 const CheckoutPage = React.lazy(() => import('./pages/CheckoutPage'));;
 const LoginPage = React.lazy(() => import('./pages/LoginPage'));;
 const SignupPage = React.lazy(() => import('./pages/SignupPage'));;
@@ -127,6 +128,7 @@ const UserRoutes = () => {
       <Route path="/policies/returns" element={<Returns />} />
       <Route path="/policies/refund" element={<Refund />} />
       <Route path="/terms" element={<Terms />} />
+      <Route path="/bulk-order-offer/:id" element={<BulkOrderOfferPage />} />
       <Route path="/checkout" element={<CheckoutPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignupPage />} />

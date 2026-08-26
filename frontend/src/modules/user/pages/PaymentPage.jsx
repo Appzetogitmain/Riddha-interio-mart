@@ -295,10 +295,13 @@ const PaymentPage = () => {
     } catch (err) {
       console.error("Failed to place order:", err);
       setIsProcessing(false);
-      toast.error(
-        "Failed to initialize purchase order. Please verify address details.",
-        { id: rzpToast },
-      );
+      // e.g. a per-product max B2C order quantity rejection — surface the backend's
+      // actual reason (it names the product and suggests a Bulk Order Request) instead
+      // of a generic message that would misleadingly send the customer to fix their address.
+      const errMsg =
+        err.response?.data?.message ||
+        "Failed to initialize purchase order. Please verify address details.";
+      toast.error(errMsg, { id: rzpToast });
     }
   };
 

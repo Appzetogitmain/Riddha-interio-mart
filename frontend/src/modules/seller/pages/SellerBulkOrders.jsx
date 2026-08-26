@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   ShoppingBag, Clock, CheckCircle, Activity,
   Search, Download, Eye, X, Phone, Mail,
-  CalendarDays, Package, MessageSquare
+  CalendarDays, Package, MessageSquare, XCircle
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import api from '../../../shared/utils/api';
@@ -16,6 +16,114 @@ const statusColor = (status) => {
   if (status === 'Processing') return 'bg-indigo-50 text-indigo-700 border-indigo-200';
   if (status === 'Resolved')   return 'bg-green-50 text-green-700 border-green-200';
   return 'bg-red-50 text-red-700 border-red-200';
+};
+
+const assignmentStatusColor = (status) => {
+  if (status === 'accepted') return 'bg-green-50 text-green-700 border-green-200';
+  if (status === 'rejected') return 'bg-red-50 text-red-700 border-red-200';
+  return 'bg-yellow-50 text-yellow-700 border-yellow-200';
+};
+
+// ── Assignment response form: quote qty/price/ETA to accept, or decline ───
+const AssignmentResponseCard = ({ order, myAssignment, onResponded }) => {
+  const [form, setForm] = useState({ availableQuantity: '', unitPrice: '', deliveryEstimate: '', notes: '' });
+  const [submitting, setSubmitting] = useState(null); // 'accepted' | 'rejected'
+
+  const submit = async (decision) => {
+    if (decision === 'accepted' && (!form.availableQuantity || !form.unitPrice || !form.deliveryEstimate)) {
+      toast.error('Available quantity, unit price, and delivery estimate are required to accept.');
+      return;
+    }
+    try {
+      setSubmitting(decision);
+      const res = await api.put(`/bulk-orders/${order._id}/respond`, { decision, ...form });
+      toast.success(decision === 'accepted' ? 'Quote sent to admin!' : 'Request declined.');
+      onResponded(res.data.data);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to submit response.');
+    } finally {
+      setSubmitting(null);
+    }
+  };
+
+  if (myAssignment.status !== 'pending') {
+    return (
+      <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 space-y-2">
+        <div className="flex items-center justify-between">
+          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Your Response</p>
+          <span className={`text-xs font-bold px-2.5 py-1 rounded-lg border capitalize ${assignmentStatusColor(myAssignment.status)}`}>
+            {myAssignment.status}
+          </span>
+        </div>
+        {myAssignment.status === 'accepted' && (
+          <p className="text-sm text-slate-700">
+            Qty: <span className="font-bold">{myAssignment.availableQuantity}</span> · Rs. <span className="font-bold">{myAssignment.unitPrice}</span>/unit · ETA: <span className="font-bold">{myAssignment.deliveryEstimate}</span>
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-amber-50 rounded-2xl p-4 border border-amber-100 space-y-3">
+      <p className="text-[10px] font-black uppercase tracking-widest text-amber-700">Respond to this Bulk Order Request</p>
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <label className="text-[10px] font-bold text-slate-500 uppercase">Available Qty</label>
+          <input
+            type="number"
+            value={form.availableQuantity}
+            onChange={(e) => setForm({ ...form, availableQuantity: e.target.value })}
+            className="w-full mt-0.5 px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:border-[#189D91]"
+          />
+        </div>
+        <div>
+          <label className="text-[10px] font-bold text-slate-500 uppercase">Unit Price (Rs)</label>
+          <input
+            type="number"
+            value={form.unitPrice}
+            onChange={(e) => setForm({ ...form, unitPrice: e.target.value })}
+            className="w-full mt-0.5 px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:border-[#189D91]"
+          />
+        </div>
+      </div>
+      <div>
+        <label className="text-[10px] font-bold text-slate-500 uppercase">Delivery Estimate</label>
+        <input
+          type="text"
+          placeholder="e.g. 5-7 business days"
+          value={form.deliveryEstimate}
+          onChange={(e) => setForm({ ...form, deliveryEstimate: e.target.value })}
+          className="w-full mt-0.5 px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:border-[#189D91]"
+        />
+      </div>
+      <div>
+        <label className="text-[10px] font-bold text-slate-500 uppercase">Notes (optional)</label>
+        <textarea
+          rows={2}
+          value={form.notes}
+          onChange={(e) => setForm({ ...form, notes: e.target.value })}
+          className="w-full mt-0.5 px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:border-[#189D91] resize-none"
+        />
+      </div>
+      <div className="flex gap-2 pt-1">
+        <button
+          onClick={() => submit('accepted')}
+          disabled={submitting !== null}
+          className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-[#189D91] text-white font-bold text-xs hover:bg-[#14847a] disabled:opacity-50"
+        >
+          <CheckCircle size={14} /> {submitting === 'accepted' ? 'Sending...' : 'Accept & Quote'}
+        </button>
+        <button
+          onClick={() => submit('rejected')}
+          disabled={submitting !== null}
+          className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-white border border-red-200 text-red-600 font-bold text-xs hover:bg-red-50 disabled:opacity-50"
+        >
+          <XCircle size={14} /> {submitting === 'rejected' ? 'Sending...' : 'Decline'}
+        </button>
+      </div>
+    </div>
+  );
 };
 
 // ── Stat Card ────────────────────────────────────────────────────
@@ -32,7 +140,7 @@ const StatCard = ({ icon: Icon, label, value, color }) => (
 );
 
 // ── Detail Drawer ─────────────────────────────────────────────────
-const DetailDrawer = ({ order, onClose }) => (
+const DetailDrawer = ({ order, onClose, onResponded }) => (
   <>
     <motion.div
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -70,6 +178,11 @@ const DetailDrawer = ({ order, onClose }) => (
             {order.status}
           </span>
         </div>
+
+        {/* Admin-assigned request needing a response (accept + quote, or decline) */}
+        {order.myAssignment && (
+          <AssignmentResponseCard order={order} myAssignment={order.myAssignment} onResponded={onResponded} />
+        )}
 
         {/* Customer Info */}
         <div className="bg-slate-50 rounded-2xl p-4 space-y-3 border border-slate-100">
@@ -113,7 +226,7 @@ const DetailDrawer = ({ order, onClose }) => (
           <div className="flex items-center gap-2">
             <Package size={14} className="text-slate-400" />
             <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-              Your Products in This Order ({order.items.length})
+              {order.myAssignment?.matchType === 'category' ? 'Requested Items' : 'Your Products in This Order'} ({order.items.length})
             </p>
           </div>
 
@@ -202,6 +315,19 @@ const SellerBulkOrders = () => {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'My Bulk Orders');
     XLSX.writeFile(wb, `My_Bulk_Orders_${new Date().toLocaleDateString('en-IN').replace(/\//g, '-')}.xlsx`);
+  };
+
+  // The /respond response has the full bulk order but assignments[].seller isn't populated
+  // here (this seller already knows it's their own row) — re-locate "my" assignment by its
+  // stable _id so the accepted/rejected status and quote persist in local state.
+  const mergeMyAssignment = (updatedOrder, prevOrder) => {
+    const myAssignment = updatedOrder.assignments?.find(a => String(a._id) === String(prevOrder?.myAssignment?._id));
+    return { ...updatedOrder, myAssignment: myAssignment || prevOrder?.myAssignment || null };
+  };
+
+  const handleResponded = (updatedOrder) => {
+    setOrders(prev => prev.map(o => o._id === updatedOrder._id ? mergeMyAssignment(updatedOrder, o) : o));
+    setSelectedOrder(prev => prev && prev._id === updatedOrder._id ? mergeMyAssignment(updatedOrder, prev) : prev);
   };
 
   const filtered = orders.filter(o =>
@@ -313,6 +439,11 @@ const SellerBulkOrders = () => {
                       <span className={`text-xs font-bold px-2.5 py-1 rounded-lg border ${statusColor(order.status)}`}>
                         {order.status}
                       </span>
+                      {order.myAssignment?.status === 'pending' && (
+                        <span className="block mt-1 text-[10px] font-bold text-amber-600 animate-pulse">
+                          Action needed
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-center">
                       <button
@@ -337,6 +468,7 @@ const SellerBulkOrders = () => {
           <DetailDrawer
             order={selectedOrder}
             onClose={() => setSelectedOrder(null)}
+            onResponded={handleResponded}
           />
         )}
       </AnimatePresence>

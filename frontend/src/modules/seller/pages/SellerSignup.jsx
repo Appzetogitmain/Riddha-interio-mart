@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
-import { FiUser, FiMail, FiLock, FiEye, FiEyeOff, FiPhone, FiMapPin, FiShoppingBag, FiGift, FiArrowLeft, FiCheckCircle, FiFileText } from 'react-icons/fi';
+import { FiUser, FiMail, FiLock, FiEye, FiEyeOff, FiPhone, FiMapPin, FiShoppingBag, FiGift, FiArrowLeft, FiCheckCircle, FiFileText, FiTag } from 'react-icons/fi';
 import api from '../../../shared/utils/api';
 import { toast } from 'react-hot-toast';
 import logo from '../../../assets/transparent_logo.png';
@@ -38,7 +38,25 @@ const SellerSignup = () => {
   const [termsContent, setTermsContent] = useState('');
   const [loadingTerms, setLoadingTerms] = useState(false);
   const [signatureData, setSignatureData] = useState(null);
+  const [categories, setCategories] = useState([]);
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState([]);
+  const [categorySearchTerm, setCategorySearchTerm] = useState('');
   const navigate = useNavigate();
+
+  useEffect(() => {
+    api.get('/categories')
+      .then(res => setCategories(res.data.data || []))
+      .catch(err => console.error('Failed to fetch categories:', err));
+  }, []);
+
+  const toggleCategory = (catId) => {
+    setSelectedCategoryIds(prev =>
+      prev.includes(catId) ? prev.filter(id => id !== catId) : [...prev, catId]
+    );
+    if (fieldErrors.sellingCategories) {
+      setFieldErrors({ ...fieldErrors, sellingCategories: '' });
+    }
+  };
 
   const handleChange = (e) => {
     let { name, value } = e.target;
@@ -141,6 +159,10 @@ const SellerSignup = () => {
       newErrors.shopAddress = 'Address must be at least 10 characters';
     }
 
+    if (selectedCategoryIds.length === 0) {
+      newErrors.sellingCategories = 'Select at least one category you sell in';
+    }
+
     if (!formData.password) {
       newErrors.password = 'Password is required';
     } else if (formData.password.length < 6) {
@@ -175,6 +197,7 @@ const SellerSignup = () => {
     const signupData = new FormData();
     Object.keys(formData).forEach(key => signupData.append(key, formData[key]));
     Object.keys(docs).forEach(key => signupData.append(key, docs[key]));
+    signupData.append('sellingCategories', JSON.stringify(selectedCategoryIds));
     if (signatureData) {
       signupData.append('termsSignature', signatureData.signature);
       signupData.append('termsVersion', signatureData.termsVersion);
@@ -453,6 +476,50 @@ const SellerSignup = () => {
                     />
                   </div>
                   {fieldErrors.shopAddress && <p className="text-[10px] text-red-500 font-semibold mt-1 ml-1">{fieldErrors.shopAddress}</p>}
+                </div>
+
+                <div className="space-y-1 md:space-y-0.5">
+                  <label className="text-[10px] md:text-[8px] font-semibold uppercase tracking-widest text-slate-400 ml-1">
+                    Categories You Sell
+                  </label>
+                  <p className="text-[10px] md:text-[8.5px] text-slate-400 ml-1 mb-1">
+                    Used to match you with relevant bulk order requests, e.g. Marble, Paints.
+                  </p>
+                  <div className="relative group mb-2">
+                    <FiTag className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 size-4 md:size-3" />
+                    <input
+                      type="text"
+                      value={categorySearchTerm}
+                      onChange={(e) => setCategorySearchTerm(e.target.value)}
+                      placeholder="Search categories..."
+                      className="w-full pl-12 pr-4 py-2.5 md:py-2 md:pl-9 rounded-xl bg-[#FDF8F8] border-2 border-transparent focus:border-[#E36666]/20 focus:bg-white focus:outline-none text-sm md:text-[11px] font-medium text-slate-700 transition-all"
+                    />
+                  </div>
+                  <div className={`flex flex-wrap gap-2 max-h-[130px] overflow-y-auto p-2 rounded-xl border-2 ${fieldErrors.sellingCategories ? 'border-red-500/50' : 'border-transparent bg-[#FDF8F8]'}`}>
+                    {categories
+                      .filter(cat => cat.name.toLowerCase().includes(categorySearchTerm.toLowerCase()))
+                      .map(cat => {
+                        const isSelected = selectedCategoryIds.includes(cat._id);
+                        return (
+                          <button
+                            key={cat._id}
+                            type="button"
+                            onClick={() => toggleCategory(cat._id)}
+                            className={`px-3.5 py-1.5 rounded-xl text-[10.5px] md:text-[9.5px] font-semibold transition-all border ${
+                              isSelected
+                                ? 'bg-[#E36666] border-[#E36666] text-white shadow-sm'
+                                : 'bg-white border-slate-200 text-slate-600 hover:border-[#E36666]/40'
+                            }`}
+                          >
+                            {cat.name}
+                          </button>
+                        );
+                      })}
+                    {categories.length === 0 && (
+                      <p className="text-[10px] font-semibold text-slate-400 py-2">Loading categories…</p>
+                    )}
+                  </div>
+                  {fieldErrors.sellingCategories && <p className="text-[10px] text-red-500 font-semibold mt-1 ml-1">{fieldErrors.sellingCategories}</p>}
                 </div>
               </div>
 

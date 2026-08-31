@@ -148,7 +148,9 @@ const SellerSchema = new mongoose.Schema({
     accountHolderName: { type: String, default: "" },
     accountNumber: { type: String, default: "" },
     ifscCode: { type: String, default: "" },
-    bankName: { type: String, default: "" }
+    bankName: { type: String, default: "" },
+    branch: { type: String, default: "" },
+    accountType: { type: String, enum: ['Current', 'Savings', 'Other', ''], default: '' }
   },
   // Terms & Conditions Agreement
   termsSignature: {
@@ -163,6 +165,76 @@ const SellerSchema = new mongoose.Schema({
     default: ''
   },
   signatureImage: {
+    type: String,
+    default: ''
+  },
+
+  // Seller Onboarding & Consent + SOP details — collected at registration via the
+  // "Seller Consent & Aadhaar Authentication" and "Seller/Vendor SOP" forms.
+  onboarding: {
+    // Consent (Section B)
+    firmNameMs: { type: String, default: '' },
+    consentSellerRegistration: { type: Boolean, default: false },
+    consentAadhaarEkyc: { type: Boolean, default: false },
+    consentElectronicAcceptance: { type: Boolean, default: false },
+
+    // Legal & Business Information (Section C.1)
+    legalEntityName: { type: String, default: '' },
+    entityType: { type: String, enum: ['Proprietorship', 'Partnership', 'LLP', 'Pvt Ltd', 'Ltd', 'Other', ''], default: '' },
+    incorporationDate: { type: Date },
+    cityStatePin: { type: String, default: '' },
+    branchWarehouseAddress: { type: String, default: '' },
+    natureOfBusiness: { type: String, default: '' },
+    yearsInBusiness: { type: Number },
+    website: { type: String, default: '' },
+
+    // Tax, Registration & Compliance (Section C.2)
+    udyamMsmeNo: { type: String, default: '' },
+    cinLlpinNo: { type: String, default: '' },
+    tradeLicenceNo: { type: String, default: '' },
+    gstRegistrationState: { type: String, default: '' },
+
+    // Authorized Person / Contact Details (Section C.3)
+    authorizedPersonName: { type: String, default: '' },
+    designation: { type: String, default: '' },
+    aadhaarLast4: { type: String, default: '' },
+    alternateContactPerson: { type: String, default: '' },
+    alternateContactDetail: { type: String, default: '' },
+
+    // Product & Commercial Details (Section C.4)
+    primaryProductCategory: { type: String, default: '' },
+    brandsProductLines: { type: String, default: '' },
+    serviceDeliveryLocations: { type: String, default: '' },
+    standardLeadTime: { type: String, default: '' },
+    minOrderValueMoq: { type: String, default: '' },
+    priceListReference: { type: String, default: '' },
+
+    // Document checklist confirmations (Section D.6)
+    docChecklist: {
+      gstCertificate: { type: Boolean, default: false },
+      pan: { type: Boolean, default: false },
+      cancelledCheque: { type: Boolean, default: false },
+      companyRegistration: { type: Boolean, default: false },
+      msmeUdyam: { type: Boolean, default: false },
+      brandAuthorization: { type: Boolean, default: false }
+    },
+    consentAadhaarAuth: { type: Boolean, default: false },
+    consentSellerDeclaration: { type: Boolean, default: false },
+
+    // Sign-off (Section D + SOP Section 19)
+    signOffDate: { type: Date },
+    signOffPlace: { type: String, default: '' }
+  },
+
+  // Seller/Vendor SOP Agreement (separate document from the standard platform T&C)
+  sopSignature: {
+    type: String,
+    default: ''
+  },
+  sopAgreedAt: {
+    type: Date
+  },
+  sopVersion: {
     type: String,
     default: ''
   },

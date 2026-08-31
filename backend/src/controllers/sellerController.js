@@ -8,9 +8,9 @@ const { notifyAdminNewSeller } = require('../socket');
 // @access  Public
 exports.registerSeller = async (req, res, next) => {
   try {
-    const { fullName, email, phone, shopName, shopAddress, password, gstNumber, panNumber, hsnNumber, termsSignature, termsVersion } = req.body;
+    const { fullName, email, phone, shopName, shopAddress, password, gstNumber, panNumber, hsnNumber, termsSignature, termsVersion, sopSignature, sopVersion } = req.body;
 
-    // Sent as a JSON string (multipart form fields are always strings) — array of Category ids.
+    // Sent as JSON strings (multipart form fields are always strings).
     let sellingCategories = [];
     if (req.body.sellingCategories) {
       try {
@@ -18,6 +18,24 @@ exports.registerSeller = async (req, res, next) => {
         if (Array.isArray(parsed)) sellingCategories = parsed;
       } catch (e) {
         console.error('Failed to parse sellingCategories on seller registration:', e.message);
+      }
+    }
+
+    let onboarding = undefined;
+    if (req.body.onboarding) {
+      try {
+        onboarding = JSON.parse(req.body.onboarding);
+      } catch (e) {
+        console.error('Failed to parse onboarding details on seller registration:', e.message);
+      }
+    }
+
+    let bankDetails = undefined;
+    if (req.body.bankDetails) {
+      try {
+        bankDetails = JSON.parse(req.body.bankDetails);
+      } catch (e) {
+        console.error('Failed to parse bankDetails on seller registration:', e.message);
       }
     }
 
@@ -45,10 +63,15 @@ exports.registerSeller = async (req, res, next) => {
       panDoc,
       shopDoc,
       sellingCategories,
+      bankDetails,
+      onboarding,
       status: 'pending',
       termsSignature: termsSignature || '',
       termsAgreedAt: termsSignature ? new Date() : undefined,
-      termsVersion: termsVersion || ''
+      termsVersion: termsVersion || '',
+      sopSignature: sopSignature || '',
+      sopAgreedAt: sopSignature ? new Date() : undefined,
+      sopVersion: sopVersion || ''
     });
 
     const otp = seller.getVerificationOtp();

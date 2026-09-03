@@ -3,3 +3,6 @@ temp_auto_push.bat
 temp_interactive_push.bat
 GEMINI_TO_OPENAI_MIGRATION_REPORT.md
 backend/temp_uploads/
+backend/debug_products.json
+backend/db_dump.json
+

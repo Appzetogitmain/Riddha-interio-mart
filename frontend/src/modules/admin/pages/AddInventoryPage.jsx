@@ -273,7 +273,11 @@ const AddInventoryPage = () => {
       navigate('/admin/inventory');
     } catch (err) {
       console.error('Failed to add inventory product:', err);
-      alert(err.response?.data?.error || err.message || 'Error creating product.');
+      if (err.response?.status === 413) {
+        alert('Upload Failed (413 Payload Too Large):\n\nThe images/video file size is too large for the server. Please compress your images or upload smaller files (under 5MB each).');
+      } else {
+        alert(err.response?.data?.error || err.response?.data?.message || err.message || 'Error creating product.');
+      }
     } finally {
       setLoading(false);
     }
@@ -281,7 +285,7 @@ const AddInventoryPage = () => {
 
   return (
     <PageWrapper>
-      <div className="max-w-4xl mx-auto space-y-6 pb-12">
+      <div className="max-w-7xl mx-auto space-y-6 pb-12">
         {/* Header */}
         <div className="flex items-center justify-between">
           <button 
@@ -297,7 +301,7 @@ const AddInventoryPage = () => {
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
             
             {/* Image Section */}
-            <div className="lg:col-span-1 space-y-6">
+            <div className="xl:col-span-1 min-w-0 space-y-6">
               <div className="bg-white rounded-3xl p-6 border border-soft-oatmeal shadow-sm h-fit space-y-6">
                 <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest mb-4 block text-center">Product Media</label>
                 
@@ -399,7 +403,12 @@ const AddInventoryPage = () => {
                            fetch(imgSrc)
                              .then(res => res.blob())
                              .then(blob => {
-                               const file = new File([blob], `ai_generated_${Date.now()}_${idx}.jpg`, { type: 'image/jpeg' });
+                               const mimeType = blob.type || 'image/jpeg';
+                               let ext = '.jpg';
+                               if (mimeType.includes('png')) ext = '.png';
+                               else if (mimeType.includes('webp')) ext = '.webp';
+                               else if (mimeType.includes('avif')) ext = '.avif';
+                               const file = new File([blob], `ai_generated_${Date.now()}_${idx}${ext}`, { type: mimeType });
                                setImgFiles(prev => [...prev, file]);
                              })
                              .catch(err => console.error("Failed to convert base64 image to File:", err));
@@ -431,7 +440,7 @@ const AddInventoryPage = () => {
             </div>
 
             {/* Main Info Section */}
-            <div className="xl:col-span-2 space-y-6">
+            <div className="xl:col-span-2 min-w-0 space-y-6">
               <div className="bg-white rounded-3xl p-8 border border-soft-oatmeal shadow-sm space-y-6">
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

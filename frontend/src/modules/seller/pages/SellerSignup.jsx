@@ -528,35 +528,37 @@ const SellerSignup = () => {
         <motion.div
           initial={{ opacity: 0, x: -50 }}
           animate={{ opacity: 1, x: 0 }}
-          className="hidden lg:flex w-[35%] bg-[#FDF8F8] flex-col items-center justify-center p-12 relative overflow-hidden border-r border-slate-100"
+          className="hidden lg:flex w-[35%] bg-[#FDF8F8] flex-col justify-between p-10 xl:p-12 relative overflow-hidden border-r border-slate-100 shrink-0"
         >
-          <div className="relative z-10 w-full max-w-sm space-y-8">
+          <div className="relative z-10">
             <Link to="/" className="inline-block">
-              <img src={logo} alt="Logo" className="h-16 lg:h-20 w-auto object-contain" />
+              <img src={logo} alt="Riddha Mart Logo" className="h-14 xl:h-16 w-auto object-contain" />
             </Link>
-            <div className="space-y-6">
-              <h1 className="text-4xl lg:text-5xl font-semibold text-slate-900 leading-tight tracking-tighter">
-                Join the <br />
-                <span className="text-[#E36666] font-serif">Family.</span>
-              </h1>
-              <p className="text-slate-400 font-medium text-sm leading-relaxed">
-                Scale your interior business with India's most trusted partner network.
-              </p>
-            </div>
-            <div className="pt-10 border-t border-slate-200">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center text-[#E36666]">
-                  <FiCheckCircle size={24} />
-                </div>
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">Trusted By</p>
-                  <p className="text-xl font-semibold text-slate-900">5000+ Sellers</p>
-                </div>
+          </div>
+
+          <div className="relative z-10 space-y-4 my-auto py-6">
+            <h1 className="text-4xl lg:text-5xl font-semibold text-slate-900 leading-tight tracking-tighter">
+              Join the <br />
+              <span className="text-[#E36666] font-serif">Family.</span>
+            </h1>
+            <p className="text-slate-400 font-medium text-sm leading-relaxed">
+              Scale your interior business with India's most trusted partner network.
+            </p>
+          </div>
+
+          <div className="relative z-10 pt-6 border-t border-slate-200">
+            <div className="flex items-center gap-4">
+              <div className="w-11 h-11 rounded-2xl bg-white shadow-sm flex items-center justify-center text-[#E36666] shrink-0">
+                <FiCheckCircle size={22} />
+              </div>
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Trusted By</p>
+                <p className="text-lg font-black text-slate-900">5000+ Sellers</p>
               </div>
             </div>
           </div>
-          <div className="absolute top-[-10%] left-[-10%] w-60 h-60 bg-[#E36666]/5 rounded-full blur-3xl" />
-          <div className="absolute bottom-[-10%] right-[-10%] w-80 h-80 bg-[#E36666]/5 rounded-full blur-3xl" />
+          <div className="absolute top-[-10%] left-[-10%] w-60 h-60 bg-[#E36666]/5 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute bottom-[-10%] right-[-10%] w-80 h-80 bg-[#E36666]/5 rounded-full blur-3xl pointer-events-none" />
         </motion.div>
 
         {/* Right Section: Form */}
@@ -571,15 +573,20 @@ const SellerSignup = () => {
             animate={{ opacity: 1, y: 0 }}
             className="w-full lg:max-w-[760px] flex flex-col px-6 py-6 lg:py-6"
           >
-            <div className="lg:hidden flex justify-center mb-10">
-              <img src={logo} alt="Logo" className="h-24 w-auto object-contain" />
+            <div className="lg:hidden flex items-center justify-between mb-6 pb-4 border-b border-slate-100">
+              <Link to="/">
+                <img src={logo} alt="Riddha Mart Logo" className="h-12 w-auto object-contain" />
+              </Link>
+              <Link to="/seller/login-form" className="text-xs font-bold uppercase tracking-wider text-[#E36666] hover:underline">
+                Sign In
+              </Link>
             </div>
 
             <div className="mb-6 flex flex-col lg:flex-row items-center justify-between gap-2 lg:gap-0">
               <h2 className="text-2xl md:text-2xl font-semibold text-slate-900 tracking-tight text-center md:text-left">
                 {step === 'otp' ? 'Verify Phone' : 'Seller Registration'}
               </h2>
-              <Link to="/seller/login-form" className="text-xs font-semibold uppercase tracking-widest text-[#E36666] hover:underline underline-offset-4">
+              <Link to="/seller/login-form" className="hidden lg:inline-block text-xs font-semibold uppercase tracking-widest text-[#E36666] hover:underline underline-offset-4">
                 Sign In
               </Link>
             </div>

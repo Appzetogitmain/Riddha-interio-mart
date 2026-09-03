@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Sparkles, Heart, ShoppingBag, Star, Info } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../../../shared/utils/api';
 
 const RecommendationCard = ({ item, onExplain, onTrack }) => {
+  const navigate = useNavigate();
   const [isWishlisted, setIsWishlisted] = useState(false);
 
   const productId = item._id || item.id;
@@ -20,6 +21,9 @@ const RecommendationCard = ({ item, onExplain, onTrack }) => {
   const handleCardClick = () => {
     if (onTrack) onTrack(productId, 'click');
     api.post('/recommendations/track', { productId, action: 'click', context: 'homepage' }).catch(() => {});
+    if (productId) {
+      navigate(`/products/${productId}`);
+    }
   };
 
   const handleWishlist = (e) => {

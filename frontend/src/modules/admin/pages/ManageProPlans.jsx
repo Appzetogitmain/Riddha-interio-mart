@@ -28,6 +28,9 @@ const ManageProPlans = () => {
     orderIndex: 0
   });
 
+  const [purchases, setPurchases] = useState([]);
+  const [purchasesLoading, setPurchasesLoading] = useState(false);
+
   const fetchPlans = async () => {
     try {
       setLoading(true);
@@ -43,8 +46,23 @@ const ManageProPlans = () => {
     }
   };
 
+  const fetchPurchases = async () => {
+    try {
+      setPurchasesLoading(true);
+      const res = await api.get('/subscription/admin/purchases');
+      if (res.data.success) {
+        setPurchases(res.data.data || []);
+      }
+    } catch (err) {
+      console.error('Fetch purchases error:', err);
+    } finally {
+      setPurchasesLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchPlans();
+    fetchPurchases();
   }, []);
 
   const openModal = (plan = null) => {
@@ -281,6 +299,87 @@ const ManageProPlans = () => {
             ))}
           </div>
         )}
+
+        {/* Purchased Subscriptions Table List */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4 mt-8">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 pb-4 border-b border-gray-100">
+            <div>
+              <h2 className="text-xl font-black text-gray-900 tracking-tight flex items-center gap-2">
+                <LuZap className="text-[#189D91]" /> Purchased Subscriptions History (Audit Log)
+              </h2>
+              <p className="text-xs text-gray-500 font-medium mt-0.5">
+                Real-time admin view of all users who purchased or upgraded to Riddha Pro.
+              </p>
+            </div>
+            <span className="px-3 py-1 bg-teal-50 text-[#189D91] rounded-full text-xs font-bold border border-teal-100 self-start md:self-auto">
+              Total Purchases: {purchases.length}
+            </span>
+          </div>
+
+          {purchasesLoading ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#189D91] mx-auto" />
+            </div>
+          ) : purchases.length === 0 ? (
+            <div className="text-center py-10 text-gray-400 text-xs font-semibold">
+              No subscription purchases recorded yet.
+            </div>
+          ) : (
+            <div className="overflow-x-auto custom-scrollbar">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-gray-50 text-gray-500 font-bold uppercase tracking-wider text-[10px] border-b border-gray-100">
+                  <tr>
+                    <th className="py-3 px-4">User Details</th>
+                    <th className="py-3 px-4">Plan Purchased</th>
+                    <th className="py-3 px-4">Amount</th>
+                    <th className="py-3 px-4">Validity / Status</th>
+                    <th className="py-3 px-4">Razorpay Audit IDs</th>
+                    <th className="py-3 px-4">Purchased At</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50 font-medium text-gray-700">
+                  {purchases.map((sub) => {
+                    const u = sub.user || {};
+                    const isExp = new Date(sub.endDate) < new Date();
+                    return (
+                      <tr key={sub._id} className="hover:bg-gray-50/60 transition-colors">
+                        <td className="py-3 px-4">
+                          <div className="font-bold text-gray-900">{u.fullName || u.name || 'User'}</div>
+                          <div className="text-[11px] text-gray-400">{u.email || 'N/A'}</div>
+                          {u.phone && <div className="text-[10px] text-gray-400">{u.phone}</div>}
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className="font-extrabold text-slate-800">{sub.planName || sub.planId}</span>
+                          <span className="text-[10px] text-gray-400 block font-semibold">{sub.billingCycle} ({sub.durationDays} Days)</span>
+                        </td>
+                        <td className="py-3 px-4 font-black text-gray-900">
+                          ₹{sub.price ? sub.price.toLocaleString() : 0}
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                            isExp ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'
+                          }`}>
+                            {isExp ? 'EXPIRED' : 'ACTIVE'}
+                          </span>
+                          <div className="text-[10px] text-gray-500 font-semibold mt-1">
+                            Ends: {new Date(sub.endDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          </div>
+                        </td>
+                        <td className="py-3 px-4 font-mono text-[11px] text-gray-600">
+                          <div>{sub.razorpayPaymentId || 'N/A'}</div>
+                          <div className="text-[9px] text-gray-400">Ord: {sub.razorpayOrderId || 'N/A'}</div>
+                        </td>
+                        <td className="py-3 px-4 text-gray-500 font-medium">
+                          {new Date(sub.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
 
         {/* Create / Edit Plan Modal */}
         <AnimatePresence>

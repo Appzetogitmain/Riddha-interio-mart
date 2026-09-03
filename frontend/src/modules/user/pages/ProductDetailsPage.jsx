@@ -306,15 +306,15 @@ const ProductDetailsPage = () => {
         <span className="text-gray-700 font-semibold truncate max-w-[220px]">{product.name}</span>
       </nav>
 
-      <div className="bg-white md:rounded-xl md:border-2 md:border-gray-800 md:shadow-sm p-0 md:p-6">
+      <div className="bg-white p-0 md:p-6">
 
         {/* ── Top section: Gallery + Info ── */}
         <div className="flex flex-col lg:flex-row gap-0 lg:gap-10">
 
           {/* Gallery */}
-          <div className="w-full lg:w-[44%] lg:sticky lg:top-20 lg:self-start">
+          <div className="w-full lg:w-[44%]">
             {/* Main image */}
-            <div className="relative bg-gray-50 w-full h-[380px] md:h-auto md:aspect-square overflow-hidden rounded-lg border-2 border-gray-800">
+            <div className="relative bg-gray-50 w-full h-[380px] md:h-auto md:aspect-square overflow-hidden rounded-2xl border border-gray-200">
               {/* Mobile back */}
               <button
                 onClick={() => navigate(-1)}
@@ -501,7 +501,7 @@ const ProductDetailsPage = () => {
             {/* Full Specifications Table */}
             <div className="mt-6 border-t border-gray-100 pt-5 px-5 md:px-0">
               <h3 className="text-[12px] font-black text-gray-900 uppercase tracking-[0.2em] mb-4">Specifications</h3>
-              <div className="divide-y divide-gray-100 border-2 border-gray-800 rounded-xl overflow-hidden shadow-xs">
+              <div className="divide-y divide-gray-100 border border-gray-200 rounded-xl overflow-hidden shadow-xs">
                 {specItems.map(([k, v], i) => (
                   <div key={`spec-${k}`} className={`flex py-2.5 px-4 text-[13px] ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50/40'}`}>
                     <span className="w-36 text-gray-400 font-semibold uppercase text-[10px] tracking-wider shrink-0">{k}</span>

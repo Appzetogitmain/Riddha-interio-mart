@@ -289,9 +289,9 @@ const AiAssistantWidget = () => {
                   <div className="w-12 h-12 rounded-2xl overflow-hidden mx-auto border border-[#189D91]/15">
                     <img src={TEJAS_ICON} alt="Ask Tejas" className="w-full h-full object-cover" />
                   </div>
-                  <h4 className="font-bold text-slate-800 text-sm">Hi, I'm Tejas! 👋</h4>
+                  <h4 className="font-bold text-slate-800 text-sm">Hello! I am Tejas. 👋</h4>
                   <p className="text-xs text-gray-400 leading-relaxed">
-                    I am your AI design assistant. Ask me questions about product search, design pairings, styling, or track your orders!
+                    How can I assist you today? Ask me about product search, interior design pairings, styling, or track your orders!
                   </p>
                 </div>
               )}

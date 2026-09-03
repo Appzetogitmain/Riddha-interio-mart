@@ -458,7 +458,7 @@ const AddProductPage = () => {
           {/* Main Form Card */}
           <div className="bg-white rounded-3xl md:rounded-[32px] border border-soft-oatmeal shadow-xl grid grid-cols-1 xl:grid-cols-2 relative">
              {/* Left: Image Preview Area */}
-             <div className="p-6 md:p-8 bg-soft-oatmeal/10 border-b xl:border-r xl:border-b-0 border-soft-oatmeal space-y-6">
+             <div className="p-6 md:p-8 bg-soft-oatmeal/10 border-b xl:border-r xl:border-b-0 border-soft-oatmeal min-w-0 space-y-6">
                 <input 
                   type="file" 
                   multiple
@@ -608,7 +608,12 @@ const AddProductPage = () => {
                            fetch(imgSrc)
                              .then(res => res.blob())
                              .then(blob => {
-                               const file = new File([blob], `ai_generated_${Date.now()}_${idx}.jpg`, { type: 'image/jpeg' });
+                               const mimeType = blob.type || 'image/jpeg';
+                               let ext = '.jpg';
+                               if (mimeType.includes('png')) ext = '.png';
+                               else if (mimeType.includes('webp')) ext = '.webp';
+                               else if (mimeType.includes('avif')) ext = '.avif';
+                               const file = new File([blob], `ai_generated_${Date.now()}_${idx}${ext}`, { type: mimeType });
                                setImgFiles(prev => [...prev, file]);
                              })
                              .catch(err => console.error("Failed to convert base64 image to File:", err));

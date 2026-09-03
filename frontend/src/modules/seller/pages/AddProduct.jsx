@@ -1323,7 +1323,12 @@ const AddProduct = () => {
                           fetch(imgSrc)
                             .then(res => res.blob())
                             .then(blob => {
-                              const file = new File([blob], `ai_generated_${Date.now()}_${idx}.jpg`, { type: 'image/jpeg' });
+                              const mimeType = blob.type || 'image/jpeg';
+                              let ext = '.jpg';
+                              if (mimeType.includes('png')) ext = '.png';
+                              else if (mimeType.includes('webp')) ext = '.webp';
+                              else if (mimeType.includes('avif')) ext = '.avif';
+                              const file = new File([blob], `ai_generated_${Date.now()}_${idx}${ext}`, { type: mimeType });
                               setImgFiles(prev => [...prev, file]);
                             })
                             .catch(err => console.error("Failed to convert base64 image to File:", err));

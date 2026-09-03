@@ -358,12 +358,35 @@ exports.verifySubscriptionPayment = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid payment signature. Payment verification failed.' });
     }
 
-    const startDate = new Date();
-    const endDate = new Date(startDate.getTime() + plan.durationDays * 24 * 60 * 60 * 1000);
+    let user = req.user;
+    if (!user) {
+      const targetId = req.body?.userId;
+      if (targetId) {
+        user = (await User.findById(targetId)) || (await Admin.findById(targetId));
+      }
+    }
 
-    // Update User model
-    const user = await User.findById(req.user._id);
-    user.subscription = {
+    if (!user) {
+      return res.status(401).json({ success: false, message: 'User account not found. Please log in to complete purchase.' });
+    }
+
+    // Calculate start & end date with Stacking/Extension logic
+    const isCurrentlyActive = user.subscription && user.subscription.status === 'active' && user.subscription.endDate && new Date(user.subscription.endDate) > new Date();
+
+    let startDate = new Date();
+    let endDate;
+
+    if (isCurrentlyActive) {
+      // Extend from existing endDate
+      const currentEnd = new Date(user.subscription.endDate);
+      startDate = user.subscription.startDate || new Date();
+      endDate = new Date(currentEnd.getTime() + plan.durationDays * 24 * 60 * 60 * 1000);
+    } else {
+      startDate = new Date();
+      endDate = new Date(startDate.getTime() + plan.durationDays * 24 * 60 * 60 * 1000);
+    }
+
+    const subscriptionData = {
       planId: plan.planId,
       planName: plan.name,
       status: 'active',
@@ -372,11 +395,18 @@ exports.verifySubscriptionPayment = async (req, res) => {
       razorpayOrderId: razorpay_order_id,
       razorpayPaymentId: razorpay_payment_id
     };
-    await user.save();
+
+    user.subscription = subscriptionData;
+
+    // Safely update MongoDB document without triggering unselected password validation
+    await user.constructor.updateOne(
+      { _id: user._id },
+      { $set: { subscription: subscriptionData } }
+    );
 
     // Create Subscription Audit Log
     await Subscription.create({
-      user: req.user._id,
+      user: user._id,
       planId: plan.planId,
       planName: plan.name,
       price: plan.price,
@@ -389,6 +419,13 @@ exports.verifySubscriptionPayment = async (req, res) => {
       startDate,
       endDate
     });
+
+    try {
+      const cacheService = require('../services/cacheService');
+      cacheService.del(`user:profile:${user.role || 'user'}:${user._id}`);
+      cacheService.del(`user:profile:user:${user._id}`);
+      cacheService.del(`user:profile:admin:${user._id}`);
+    } catch (_) {}
 
     res.status(200).json({
       success: true,
@@ -404,5 +441,25 @@ exports.verifySubscriptionPayment = async (req, res) => {
   } catch (err) {
     console.error('[SUBSCRIPTION] Verify payment failed:', err);
     res.status(500).json({ success: false, message: err.message || 'Subscription payment verification failed' });
+  }
+};
+
+// @desc    Get All Purchased Subscriptions (Admin)
+// @route   GET /api/subscription/admin/purchases
+// @access  Private/Admin
+exports.getAdminSubscriptions = async (req, res) => {
+  try {
+    const purchases = await Subscription.find()
+      .populate('user', 'fullName email phone role avatar')
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: purchases.length,
+      data: purchases
+    });
+  } catch (err) {
+    console.error('[ADMIN SUBSCRIPTION] Get purchases failed:', err);
+    res.status(500).json({ success: false, message: err.message });
   }
 };

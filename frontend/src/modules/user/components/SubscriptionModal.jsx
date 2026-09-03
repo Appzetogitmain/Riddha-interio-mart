@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiX, FiCheck, FiZap, FiShield, FiStar, FiAward } from 'react-icons/fi';
 import { LuCrown } from 'react-icons/lu';
@@ -185,6 +186,7 @@ const SubscriptionModal = ({ isOpen, onClose, defaultPlanId = 'gold' }) => {
       if (order.id && order.id.startsWith('order_mock_')) {
         const verifyRes = await api.post('/subscription/verify-payment', {
           planId: plan.id,
+          userId: user?._id || user?.id,
           razorpay_order_id: order.id,
           razorpay_payment_id: `pay_mock_${Date.now()}`,
           razorpay_signature: 'mock_signature'
@@ -231,6 +233,7 @@ const SubscriptionModal = ({ isOpen, onClose, defaultPlanId = 'gold' }) => {
             setLoading(true);
             const verifyRes = await api.post('/subscription/verify-payment', {
               planId: plan.id,
+              userId: user?._id || user?.id,
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature
@@ -275,16 +278,16 @@ const SubscriptionModal = ({ isOpen, onClose, defaultPlanId = 'gold' }) => {
     }
   };
 
-  return (
+  const modalContent = (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[120] flex items-center justify-center p-3 md:p-6 overflow-y-auto">
+      <div className="fixed inset-0 z-[999999] flex items-center justify-center p-3 md:p-6 overflow-y-auto">
         {/* Backdrop */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
-          className="fixed inset-0 bg-black/65 backdrop-blur-md"
+          className="fixed inset-0 bg-black/75 backdrop-blur-md z-[999999]"
         />
 
         {/* Modal Window */}
@@ -292,7 +295,7 @@ const SubscriptionModal = ({ isOpen, onClose, defaultPlanId = 'gold' }) => {
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="relative w-full max-w-5xl bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100 my-auto z-10 max-h-[92vh] flex flex-col"
+          className="relative w-full max-w-5xl bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100 my-auto z-[1000000] max-h-[92vh] flex flex-col"
         >
           {/* Header Banner */}
           <div className="bg-gradient-to-r from-[#003d33] via-[#189D91] to-[#28a399] p-6 text-white text-center relative shrink-0">
@@ -303,13 +306,13 @@ const SubscriptionModal = ({ isOpen, onClose, defaultPlanId = 'gold' }) => {
               <FiX className="w-5 h-5" />
             </button>
 
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 text-xs font-bold uppercase tracking-wider mb-2 backdrop-blur-sm">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 text-white text-xs font-black uppercase tracking-wider mb-2 backdrop-blur-sm shadow-sm">
               <LuCrown className="w-4 h-4 text-amber-300" /> Unlock All AI Features
             </div>
-            <h2 className="text-2xl md:text-3xl font-black tracking-tight">
+            <h2 className="text-2xl md:text-3xl font-black tracking-tight text-white drop-shadow-sm">
               Upgrade to Riddha Pro Subscription
             </h2>
-            <p className="text-sm text-teal-100 mt-1 max-w-xl mx-auto">
+            <p className="text-sm text-white font-medium mt-1 max-w-xl mx-auto drop-shadow-sm opacity-95">
               Get full access to AI Design Persona, Project Brief Generator, BOQ Quantities, Cost Estimator & Pro Tools.
             </p>
           </div>
@@ -412,6 +415,8 @@ const SubscriptionModal = ({ isOpen, onClose, defaultPlanId = 'gold' }) => {
       </div>
     </AnimatePresence>
   );
+
+  return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : modalContent;
 };
 
 export default SubscriptionModal;

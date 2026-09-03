@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { Sparkles, TrendingUp, Compass, Flame, ArrowRight, RefreshCw } from 'lucide-react';
 import RecommendationCard from './RecommendationCard';
 import RecommendationExplanationModal from './RecommendationExplanationModal';
@@ -171,20 +172,27 @@ const RecommendationFeed = () => {
                 <h3 className="text-xl font-bold mt-2 text-white">Popular Design Trends in Riddha Mart</h3>
                 <p className="text-xs text-gray-300 mt-1">High-demand items trending in contemporary interior projects.</p>
               </div>
-              <a href="/products" className="inline-flex items-center gap-2 text-xs font-semibold text-cyan-400 hover:text-cyan-300">
+              <Link to="/category/all" className="inline-flex items-center gap-2 text-xs font-semibold text-cyan-400 hover:text-cyan-300">
                 <span>Explore All Trending</span>
                 <ArrowRight className="w-4 h-4" />
-              </a>
+              </Link>
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-              {trending.slice(0, 6).map(t => (
-                <div key={t.id || t._id} className="bg-white/10 backdrop-blur-md p-2.5 rounded-xl border border-white/10 hover:border-cyan-400/50 transition-all">
-                  <img src={t.image} alt={t.name} className="w-full h-24 object-cover rounded-lg mb-2" />
-                  <h4 className="text-xs font-semibold text-white truncate">{t.name}</h4>
-                  <p className="text-xs font-bold text-cyan-400 mt-0.5">₹{t.price?.toLocaleString()}</p>
-                </div>
-              ))}
+              {trending.slice(0, 6).map(t => {
+                const prodId = t.id || t._id;
+                return (
+                  <Link
+                    key={prodId}
+                    to={`/products/${prodId}`}
+                    className="bg-white/10 backdrop-blur-md p-2.5 rounded-xl border border-white/10 hover:border-cyan-300 hover:bg-white/20 transition-all group cursor-pointer block"
+                  >
+                    <img src={t.image} alt={t.name} className="w-full h-24 object-cover rounded-lg mb-2 group-hover:scale-105 transition-transform" />
+                    <h4 className="text-xs font-semibold text-white truncate group-hover:text-cyan-200">{t.name}</h4>
+                    <p className="text-xs font-bold text-cyan-300 mt-0.5">₹{t.price?.toLocaleString()}</p>
+                  </Link>
+                );
+              })}
             </div>
           </div>
         )}

@@ -214,7 +214,7 @@ const Navbar = () => {
       subcats,
       left: clampedLeft
     });
-    setHoveredSubcategory(subcats[0] || null);
+    setHoveredSubcategory(null);
   };
 
   const handleCategoryLeave = () => {

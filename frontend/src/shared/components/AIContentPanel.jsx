@@ -16,7 +16,7 @@ const AIContentPanel = ({
   const [errorMessage, setErrorMessage] = useState("");
 
   // Image generation is admin-only.
-  const [generateImage, setGenerateImage] = useState(false);
+  const [generateImage, setGenerateImage] = useState(true);
   const [imageCount, setImageCount] = useState(3);
   const [selectedImages, setSelectedImages] = useState(new Set());
 
@@ -261,6 +261,7 @@ const AIContentPanel = ({
                   onChange={(e) => {
                     const val = parseInt(e.target.value, 10);
                     setImageCount(Number.isFinite(val) ? Math.min(Math.max(val, 1), 10) : 1);
+                    setGenerateImage(true);
                   }}
                   className={`w-20 px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 bg-slate-50 focus:outline-none focus:ring-2 ${ringColor}`}
                 />
@@ -387,10 +388,10 @@ const AIContentPanel = ({
   const seoScore = calculateSeoScore();
 
   return (
-    <div className="bg-white rounded-[2.5rem] border border-slate-200 p-8 shadow-md space-y-8">
+    <div className="bg-white rounded-3xl border border-slate-200 p-4 sm:p-5 shadow-md space-y-6">
       {/* Header with SEO optimization score */}
-      <div className="flex flex-col sm:flex-row items-center gap-6 border-b border-slate-100 pb-6">
-        <div className="relative w-20 h-20 flex items-center justify-center shrink-0">
+      <div className="flex flex-col sm:flex-row items-center gap-4 border-b border-slate-100 pb-5">
+        <div className="relative w-16 h-16 flex items-center justify-center shrink-0">
           <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
             <circle
               className="text-slate-100"
@@ -415,16 +416,16 @@ const AIContentPanel = ({
             />
           </svg>
           <div className="absolute flex flex-col items-center">
-            <span className="text-lg font-black text-slate-800">{seoScore}</span>
-            <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest -mt-1">SEO Score</span>
+            <span className="text-base font-black text-slate-800">{seoScore}</span>
+            <span className="text-[7px] font-black text-slate-400 uppercase tracking-widest -mt-1">SEO</span>
           </div>
         </div>
 
-        <div className="space-y-2 text-center sm:text-left">
-          <h4 className="text-md font-bold text-slate-800">SEO Optimized Draft Ready</h4>
-          <div className="flex flex-wrap gap-1.5 justify-center sm:justify-start">
+        <div className="space-y-1 text-center sm:text-left min-w-0">
+          <h4 className="text-sm font-bold text-slate-800">SEO Optimized Draft Ready</h4>
+          <div className="flex flex-wrap gap-1 justify-center sm:justify-start">
             {["Keyword Usage", "Readability", "Length", "Uniqueness", "Meta Ready"].map((badge, i) => (
-              <span key={i} className="text-[9px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-100 px-2.5 py-0.5 rounded-full">
+              <span key={i} className="text-[8px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-100 px-2 py-0.5 rounded-full">
                 ✓ {badge}
               </span>
             ))}
@@ -433,23 +434,23 @@ const AIContentPanel = ({
       </div>
 
       {/* Generated SKU and HSN preview */}
-      <div className="grid grid-cols-2 gap-4">
-        <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
-          <span className="text-[9px] font-black uppercase tracking-wider text-slate-400">Generated SKU</span>
-          <p className="text-xs font-bold text-slate-800 mt-1 uppercase">{generatedData.sku || "N/A"}</p>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="bg-slate-50 rounded-2xl p-3 border border-slate-100 min-w-0">
+          <span className="text-[9px] font-black uppercase tracking-wider text-slate-400 block truncate">Generated SKU</span>
+          <p className="text-xs font-bold text-slate-800 mt-0.5 uppercase truncate">{generatedData.sku || "N/A"}</p>
         </div>
-        <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
-          <span className="text-[9px] font-black uppercase tracking-wider text-slate-400">Generated HSN</span>
-          <p className="text-xs font-bold text-slate-800 mt-1">{generatedData.hsnCode || "N/A"}</p>
+        <div className="bg-slate-50 rounded-2xl p-3 border border-slate-100 min-w-0">
+          <span className="text-[9px] font-black uppercase tracking-wider text-slate-400 block truncate">Generated HSN</span>
+          <p className="text-xs font-bold text-slate-800 mt-0.5 truncate">{generatedData.hsnCode || "N/A"}</p>
         </div>
       </div>
 
       {/* Generated Images Preview — already applied to the product; checkboxes control re-apply */}
       {generatedData.images && generatedData.images.length > 0 && (
-        <div className="space-y-3">
+        <div className="space-y-2.5">
           <div className="flex items-center justify-between">
             <label className="text-[10px] font-black uppercase tracking-wider text-slate-500">
-              Generated AI Product Images — Added to Product ({selectedImages.size}/{generatedData.images.length} selected)
+              Generated AI Product Images ({selectedImages.size}/{generatedData.images.length})
             </label>
             <button
               type="button"
@@ -459,40 +460,40 @@ const AIContentPanel = ({
               {selectedImages.size === generatedData.images.length ? "Deselect All" : "Select All"}
             </button>
           </div>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-3 gap-2">
             {generatedData.images.map((img, i) => {
               const isSelected = selectedImages.has(i);
               return (
                 <div
                   key={i}
                   onClick={() => toggleImageSelected(i)}
-                  className={`relative aspect-square rounded-2xl overflow-hidden border-2 shadow-sm cursor-pointer transition-all ${
+                  className={`relative aspect-square rounded-xl overflow-hidden border-2 shadow-sm cursor-pointer transition-all ${
                     isSelected ? "border-emerald-500" : "border-slate-200 opacity-50"
                   }`}
                 >
                   <img src={img} alt={`AI Generated ${i + 1}`} className="w-full h-full object-cover" />
-                  <div className={`absolute top-1.5 right-1.5 w-5 h-5 rounded-md flex items-center justify-center border-2 ${
+                  <div className={`absolute top-1 right-1 w-4 h-4 rounded flex items-center justify-center border ${
                     isSelected ? "bg-emerald-500 border-emerald-500" : "bg-white/80 border-slate-300"
                   }`}>
-                    {isSelected && <Check size={12} className="text-white stroke-[3]" />}
+                    {isSelected && <Check size={10} className="text-white stroke-[3]" />}
                   </div>
                 </div>
               );
             })}
           </div>
-          <p className="text-[10px] font-semibold text-slate-400">These images were added to the product's image grid automatically. Untick any you don't want here, then remove them from the image grid using its delete icon.</p>
+          <p className="text-[9px] font-semibold text-slate-400">Added to product media gallery automatically.</p>
         </div>
       )}
 
       {/* Generated Specifications Preview */}
       {generatedData.specifications && Object.keys(generatedData.specifications).length > 0 && (
-        <div className="space-y-3">
+        <div className="space-y-2.5">
           <label className="text-[10px] font-black uppercase tracking-wider text-slate-500">Generated Specifications</label>
-          <div className="grid grid-cols-2 gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-100 text-xs font-bold text-slate-700">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-2.5 p-3.5 bg-slate-50 rounded-2xl border border-slate-100 text-xs font-bold text-slate-700">
             {Object.entries(generatedData.specifications).map(([key, val]) => (
-              <div key={key} className="flex flex-col">
-                <span className="text-[9px] uppercase tracking-wider text-slate-400 font-semibold">{key}</span>
-                <span className="text-slate-800 mt-0.5">{val}</span>
+              <div key={key} className="flex flex-col min-w-0">
+                <span className="text-[9px] uppercase tracking-wider text-slate-400 font-semibold truncate">{key}</span>
+                <span className="text-slate-800 mt-0.5 break-words font-extrabold leading-snug">{val}</span>
               </div>
             ))}
           </div>
@@ -500,16 +501,16 @@ const AIContentPanel = ({
       )}
 
       {/* Keywords panel */}
-      <div className="space-y-3">
+      <div className="space-y-2.5">
         <label className="text-[10px] font-black uppercase tracking-wider text-slate-500">Primary Keywords</label>
-        <div className="flex flex-wrap gap-1.5 p-3 bg-slate-50 rounded-2xl border border-slate-100">
+        <div className="flex flex-wrap gap-1.5 p-2.5 bg-slate-50 rounded-2xl border border-slate-100">
           {generatedData.seoKeywords.map((kw, i) => (
-            <span key={i} className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-xl border ${badgeColor}`}>
-              {kw}
+            <span key={i} className={`flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-lg border ${badgeColor} max-w-full break-all`}>
+              <span className="truncate">{kw}</span>
               <button
                 type="button"
                 onClick={() => handleRemoveKeyword(kw)}
-                className="hover:text-slate-900 cursor-pointer"
+                className="hover:text-slate-900 cursor-pointer shrink-0 ml-0.5"
               >
                 <X size={10} />
               </button>
@@ -519,7 +520,7 @@ const AIContentPanel = ({
             <span className="text-xs font-semibold text-slate-400 py-1">No keywords added yet</span>
           )}
         </div>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-1.5">
           <input
             type="text"
             placeholder="Add custom keyword..."
@@ -531,12 +532,12 @@ const AIContentPanel = ({
                 handleAddKeyword();
               }
             }}
-            className={`flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 bg-white focus:outline-none focus:ring-2 focus:border-transparent ${ringColor}`}
+            className={`flex-1 min-w-0 px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 bg-white focus:outline-none focus:ring-2 focus:border-transparent ${ringColor}`}
           />
           <button
             type="button"
             onClick={handleAddKeyword}
-            className={`p-2.5 rounded-xl text-white transition-all cursor-pointer ${primaryColor}`}
+            className={`p-2 rounded-xl text-white transition-all cursor-pointer shrink-0 ${primaryColor}`}
           >
             <Plus size={16} />
           </button>
@@ -547,40 +548,40 @@ const AIContentPanel = ({
       {generatedData.shortDescription && (
         <div className="space-y-2">
           <label className="text-[10px] font-black uppercase tracking-wider text-slate-500">Short BOQ Line Description</label>
-          <p className="text-xs font-semibold text-slate-600 italic bg-slate-50 rounded-2xl p-4 border border-slate-100 leading-relaxed">
+          <p className="text-xs font-semibold text-slate-600 italic bg-slate-50 rounded-2xl p-3 border border-slate-100 leading-relaxed">
             "{generatedData.shortDescription}"
           </p>
         </div>
       )}
 
       {/* Description preview and editor */}
-      <div className="space-y-3">
+      <div className="space-y-2">
         <label className="text-[10px] font-black uppercase tracking-wider text-slate-500">Product Description</label>
         <textarea
-          rows={5}
+          rows={4}
           value={generatedData.description}
           onChange={(e) => setGeneratedData(prev => ({ ...prev, description: e.target.value }))}
-          className={`w-full p-4 rounded-2xl border border-slate-200 text-xs font-semibold text-slate-700 leading-relaxed resize-none focus:outline-none focus:ring-2 focus:border-transparent ${ringColor}`}
+          className={`w-full p-3 rounded-2xl border border-slate-200 text-xs font-semibold text-slate-700 leading-relaxed resize-none focus:outline-none focus:ring-2 focus:border-transparent ${ringColor}`}
         />
       </div>
 
       {/* Action buttons */}
-      <div className="grid grid-cols-2 gap-4">
-        <button
-          type="button"
-          onClick={handleRegenerateClick}
-          className="py-3.5 rounded-2xl border border-slate-200 font-bold text-xs text-slate-500 hover:bg-slate-50 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
-        >
-          <RefreshCw size={12} />
-          {isAdmin ? "Regenerate Image" : "Regenerate"}
-        </button>
+      <div className="flex flex-col gap-2.5 w-full pt-1">
         <button
           type="button"
           onClick={handleApplyClick}
-          className={`py-3.5 rounded-2xl text-white font-bold text-xs shadow-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer ${primaryColor}`}
+          className={`w-full py-3.5 px-4 rounded-2xl text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer ${primaryColor}`}
         >
-          <Check size={12} />
+          <Check size={14} />
           Apply SEO Optimization
+        </button>
+        <button
+          type="button"
+          onClick={handleRegenerateClick}
+          className="w-full py-3 px-4 rounded-2xl border border-slate-200 font-bold text-xs text-slate-500 hover:bg-slate-50 transition-colors flex items-center justify-center gap-2 cursor-pointer"
+        >
+          <RefreshCw size={13} />
+          {isAdmin ? "Regenerate Image" : "Regenerate"}
         </button>
       </div>
     </div>

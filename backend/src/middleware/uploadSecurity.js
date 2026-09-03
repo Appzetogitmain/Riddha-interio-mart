@@ -68,17 +68,21 @@ const validateFileSignature = (filePath, originalExt) => {
   fs.closeSync(fd);
 
   const hexSignature = buffer.toString('hex', 0, 4).toLowerCase();
-  
+  const validImageExts = ['.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif', '.avif'];
+
   // 1. Check match in static signatures (Images, PDFs) using prefix matching
   const matchingKey = Object.keys(ALLOWED_SIGNATURES).find(key => hexSignature.startsWith(key));
   if (matchingKey) {
     const config = ALLOWED_SIGNATURES[matchingKey];
+    if (config.mime.startsWith('image/') && validImageExts.includes(originalExt.toLowerCase())) {
+      return true;
+    }
     return config.ext.includes(originalExt.toLowerCase());
   }
 
   // WEBP check (starts with RIFF '52494646' and has WEBP '57454250' at index 8)
   if (buffer.toString('hex', 0, 4) === '52494646' && buffer.toString('hex', 8, 12) === '57454250') {
-    return originalExt.toLowerCase() === '.webp';
+    return validImageExts.includes(originalExt.toLowerCase());
   }
 
   // 2. Check HEIC / HEIF formats (ISO BMFF with HEIF brands)

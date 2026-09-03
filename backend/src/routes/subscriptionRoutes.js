@@ -9,7 +9,8 @@ const {
   deletePlan,
   getSubscriptionStatus,
   createSubscriptionOrder,
-  verifySubscriptionPayment
+  verifySubscriptionPayment,
+  getAdminSubscriptions
 } = require('../controllers/subscriptionController');
 
 // User facing endpoints
@@ -20,6 +21,7 @@ router.post('/verify-payment', protect, verifySubscriptionPayment);
 
 // Admin facing CRUD endpoints
 router.get('/admin/plans', protect, authorize('admin'), getAdminPlans);
+router.get('/admin/purchases', protect, authorize('admin'), getAdminSubscriptions);
 router.post('/admin/plans', protect, authorize('admin'), createPlan);
 router.put('/admin/plans/:id', protect, authorize('admin'), updatePlan);
 router.delete('/admin/plans/:id', protect, authorize('admin'), deletePlan);

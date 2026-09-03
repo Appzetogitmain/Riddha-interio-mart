@@ -427,6 +427,13 @@ const SignupPage = () => {
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent z-10" />
 
+          {/* Logo on top left */}
+          <div className="absolute top-8 left-8 z-30">
+            <Link to="/">
+              <img src={logo} alt="Riddha Mart Logo" className="h-12 w-auto object-contain drop-shadow-md" />
+            </Link>
+          </div>
+
           <div className="absolute inset-0 z-20 flex flex-col justify-end p-12 text-white">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 border border-white/30 shadow-sm w-fit mb-3">
               <span className="w-1.5 h-1.5 rounded-full bg-[#4DD9CE]" />
@@ -462,7 +469,10 @@ const SignupPage = () => {
                 </div>
 
                 {/* Mobile Header (Visible only on mobile) */}
-                <div className="md:hidden text-center space-y-1 mb-4 pt-1">
+                <div className="md:hidden flex flex-col items-center text-center space-y-2 mb-6 pt-1">
+                  <Link to="/">
+                    <img src={logo} alt="Riddha Mart Logo" className="h-12 w-auto object-contain mb-1" />
+                  </Link>
                   <h1 className="text-2xl font-display font-semibold text-deep-espresso tracking-tight">Create Account</h1>
                   <p className="text-gray-400 font-medium text-[8px] tracking-[0.2em] uppercase">
                     Join the Riddha Family

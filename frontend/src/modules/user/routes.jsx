@@ -76,19 +76,21 @@ const SellerAIContentGeneratorPage = React.lazy(() => import('./pages/SellerAICo
 const RFQPage = React.lazy(() => import('./pages/RFQPage'));
 const SamplesPage = React.lazy(() => import('./pages/SamplesPage'));
 
+import ProGateGuard from './components/ProGateGuard';
+
 const UserRoutes = () => {
   return (
     <Routes>
-      <Route path="/client-brief" element={<ClientBriefPage />} />
-      <Route path="/client-brief/:briefId" element={<ClientBriefPage />} />
-      <Route path="/projects" element={<ProjectsDashboardPage />} />
-      <Route path="/projects/:projectId" element={<ProjectDetailPage />} />
-      <Route path="/cost-estimator" element={<CostEstimatorPage />} />
-      <Route path="/cost-estimator/:estimateId" element={<CostEstimatorPage />} />
-      <Route path="/boq-generator" element={<BOQGeneratorPage />} />
-      <Route path="/boq-generator/:boqId" element={<BOQGeneratorPage />} />
-      <Route path="/quotation-generator" element={<QuotationGeneratorPage />} />
-      <Route path="/quotation-generator/:quotationId" element={<QuotationGeneratorPage />} />
+      <Route path="/client-brief" element={<ProGateGuard title="AI Project Brief Generator" description="Generate professional interior design client briefs with AI."><ClientBriefPage /></ProGateGuard>} />
+      <Route path="/client-brief/:briefId" element={<ProGateGuard title="AI Project Brief Generator" description="Generate professional interior design client briefs with AI."><ClientBriefPage /></ProGateGuard>} />
+      <Route path="/projects" element={<ProGateGuard title="Projects Dashboard" description="Manage your AI interior design projects and estimates."><ProjectsDashboardPage /></ProGateGuard>} />
+      <Route path="/projects/:projectId" element={<ProGateGuard title="Projects Dashboard" description="Manage your AI interior design projects and estimates."><ProjectDetailPage /></ProGateGuard>} />
+      <Route path="/cost-estimator" element={<ProGateGuard title="AI Cost Estimator" description="Calculate interior costs with AI precision."><CostEstimatorPage /></ProGateGuard>} />
+      <Route path="/cost-estimator/:estimateId" element={<ProGateGuard title="AI Cost Estimator" description="Calculate interior costs with AI precision."><CostEstimatorPage /></ProGateGuard>} />
+      <Route path="/boq-generator" element={<ProGateGuard title="AI BOQ Generator" description="Generate automated Bill of Quantities with AI."><BOQGeneratorPage /></ProGateGuard>} />
+      <Route path="/boq-generator/:boqId" element={<ProGateGuard title="AI BOQ Generator" description="Generate automated Bill of Quantities with AI."><BOQGeneratorPage /></ProGateGuard>} />
+      <Route path="/quotation-generator" element={<ProGateGuard title="AI Quotation Generator" description="Generate GST compliant interior quotes automatically."><QuotationGeneratorPage /></ProGateGuard>} />
+      <Route path="/quotation-generator/:quotationId" element={<ProGateGuard title="AI Quotation Generator" description="Generate GST compliant interior quotes automatically."><QuotationGeneratorPage /></ProGateGuard>} />
       <Route path="/seller/content-generator" element={<SellerAIContentGeneratorPage />} />
       <Route path="/rfq" element={<RFQPage />} />
       <Route path="/rfq/new" element={<RFQPage />} />
@@ -104,8 +106,8 @@ const UserRoutes = () => {
       <Route path="/onboarding" element={<OnboardingPage />} />
       <Route path="/" element={<RootRoute />} />
 
-      <Route path="/designer-quiz" element={<DesignerQuizPage />} />
-      <Route path="/designer-quiz/results" element={<QuizResultsPage />} />
+      <Route path="/designer-quiz" element={<ProGateGuard title="AI Designer Quiz" description="Discover your interior design persona with AI."><DesignerQuizPage /></ProGateGuard>} />
+      <Route path="/designer-quiz/results" element={<ProGateGuard title="AI Designer Quiz" description="Discover your interior design persona with AI."><QuizResultsPage /></ProGateGuard>} />
       <Route path="/contractor-registration" element={<ContractorRegistration />} />
       <Route path="/designer-registration" element={<DesignerRegistration />} />
       <Route path="/builder-registration" element={<BuilderRegistration />} />
@@ -146,11 +148,11 @@ const UserRoutes = () => {
       <Route path="/order/invoice/:id" element={<InvoicePage />} />
       <Route path="/notifications" element={<NotificationPage />} />
       <Route path="/addresses" element={<SavedAddressesPage />} />
-      <Route path="/ai-room-visualizer" element={<AiRoomVisualizerPage />} />
-      <Route path="/ai-mood-board" element={<MoodBoardGeneratorPage />} />
+      <Route path="/ai-room-visualizer" element={<ProGateGuard title="AI Room Visualizer" description="Visualize rooms with AI."><AiRoomVisualizerPage /></ProGateGuard>} />
+      <Route path="/ai-mood-board" element={<ProGateGuard title="AI Mood Board" description="Generate interior mood boards with AI."><MoodBoardGeneratorPage /></ProGateGuard>} />
       <Route path="/bundles" element={<BundlesPage />} />
       <Route path="/bundles/:id" element={<BundleDetailPage />} />
-      <Route path="/recommendations" element={<RecommendationPage />} />
+      <Route path="/recommendations" element={<ProGateGuard title="AI Recommendations" description="Get personalized interior design recommendations with AI."><RecommendationPage /></ProGateGuard>} />
       <Route path="/journey" element={<JourneyPage />} />
     </Routes>
   );

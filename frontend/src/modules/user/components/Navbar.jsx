@@ -28,7 +28,7 @@ import {
 } from "react-icons/fi";
 import { AiOutlineShop } from "react-icons/ai";
 import { motion, AnimatePresence } from "framer-motion";
-import { LuWallet, LuLayoutDashboard, LuCalculator, LuLayers } from "react-icons/lu";
+import { LuWallet, LuLayoutDashboard, LuCalculator, LuLayers, LuCrown } from "react-icons/lu";
 import { useCart } from "../data/CartContext";
 import { useUser } from "../data/UserContext";
 import { useWishlist } from "../data/WishlistContext";
@@ -36,6 +36,7 @@ import SearchBar from "./SearchBar";
 import api from '../../../shared/utils/api';
 import { getDeliveryEstimate, getCityFromPincode } from '../../../shared/utils/delivery';
 import BulkOrderModal from "./BulkOrderModal";
+import SubscriptionModal from "./SubscriptionModal";
 import NotificationDropdown from "../../../shared/components/NotificationDropdown";
 import Logo from "../../../assets/WhatsApp Image 2026-05-06 at 3.50.08 PM.jpeg";
 import TransparentLogo from "../../../assets/transparent_logo.png";
@@ -93,6 +94,7 @@ const Navbar = () => {
   const navigate = useNavigate();
   const [policiesOpen, setPoliciesOpen] = useState(false);
   const [hoveredCategory, setHoveredCategory] = useState(null);
+  const [hoveredSubcategory, setHoveredSubcategory] = useState(null);
   const [categories, setCategories] = useState([]);
   const [scrolled, setScrolled] = useState(false);
   const dropdownTimeoutRef = useRef(null);
@@ -109,6 +111,9 @@ const Navbar = () => {
   const [pincode, setPincode] = useState('700016');
   const [showMoreCategories, setShowMoreCategories] = useState(false);
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
+  const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
+
+  const isProActive = user?.subscription?.status === 'active' && user?.subscription?.endDate && new Date(user.subscription.endDate) > new Date();
 
   const activeCity = getCityFromPincode(pincode);
   const deliveryEstimate = getDeliveryEstimate(pincode);
@@ -195,21 +200,28 @@ const Navbar = () => {
     const subcats = cat.subcategories || [];
     if (subcats.length === 0) {
       setHoveredCategory(null);
+      setHoveredSubcategory(null);
       return;
     }
     const itemRect = e.currentTarget.getBoundingClientRect();
     const barRect = categoriesBarRef.current?.getBoundingClientRect();
+    const computedLeft = barRect ? itemRect.left - barRect.left : 0;
+    const maxLeft = typeof window !== 'undefined' ? window.innerWidth - 560 : 1000;
+    const clampedLeft = Math.min(Math.max(16, computedLeft), maxLeft);
+
     setHoveredCategory({
       slug,
       subcats,
-      left: barRect ? itemRect.left - barRect.left : 0
+      left: clampedLeft
     });
+    setHoveredSubcategory(subcats[0] || null);
   };
 
   const handleCategoryLeave = () => {
     dropdownTimeoutRef.current = setTimeout(() => {
       setHoveredCategory(null);
-    }, 150);
+      setHoveredSubcategory(null);
+    }, 200);
   };
 
   const handleDropdownEnter = () => {
@@ -362,22 +374,48 @@ const Navbar = () => {
         </div>
       </nav>
 
-      {/* AI Tools & Services Strip — sits between the header and the categories bar, each service shown separately */}
+      {/* AI Tools & Services Strip OR Upgrade to Pro Strip */}
       <div className="hidden md:block bg-white border-b border-gray-100 relative z-40">
         <div className="max-w-[1700px] mx-auto px-6 lg:px-8">
-          <div className="flex items-center gap-x-7 lg:gap-x-10 py-2.5 overflow-x-auto no-scrollbar scroll-smooth lg:justify-center">
-            {AI_SERVICES.map((svc) => (
-              <Link key={svc.to} to={svc.to} state={svc.state} className="flex items-center gap-2 group shrink-0">
-                <div className="w-7 h-7 rounded-lg bg-gray-50 border border-[#189D91]/20 flex items-center justify-center shadow-sm group-hover:bg-[#189D91] group-hover:border-[#189D91] transition-colors shrink-0">
-                  <svc.icon className="w-3.5 h-3.5 text-[#189D91] group-hover:text-white transition-colors" />
+          {isProActive ? (
+            <div className="flex items-center gap-x-7 lg:gap-x-10 py-2.5 overflow-x-auto no-scrollbar scroll-smooth lg:justify-center">
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gradient-to-r from-amber-500 to-yellow-600 text-white text-[10px] font-black tracking-wider uppercase shadow-sm shrink-0 mr-2">
+                <LuCrown className="w-3 h-3 text-amber-200" />
+                <span>{user?.subscription?.planName || 'PRO ACTIVE'}</span>
+              </div>
+              {AI_SERVICES.map((svc) => (
+                <Link key={svc.to} to={svc.to} state={svc.state} className="flex items-center gap-2 group shrink-0">
+                  <div className="w-7 h-7 rounded-lg bg-gray-50 border border-[#189D91]/20 flex items-center justify-center shadow-sm group-hover:bg-[#189D91] group-hover:border-[#189D91] transition-colors shrink-0">
+                    <svc.icon className="w-3.5 h-3.5 text-[#189D91] group-hover:text-white transition-colors" />
+                  </div>
+                  <div className="flex flex-col text-left">
+                    <span className="text-[10.5px] font-bold text-gray-700 leading-none group-hover:text-[#28a399] transition-colors whitespace-nowrap">{svc.label}</span>
+                    <span className="text-[9px] font-bold text-[#189D91] mt-0.5 whitespace-nowrap">{svc.sub}</span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="py-2 flex items-center justify-between gap-4 bg-gradient-to-r from-[#003d33] via-[#189D91] to-[#28a399] text-white px-5 rounded-xl my-1.5 shadow-md">
+              <div className="flex items-center gap-3 overflow-hidden">
+                <div className="p-1.5 rounded-lg bg-amber-400 text-slate-950 font-black shrink-0 shadow-sm">
+                  <LuCrown className="w-4 h-4" />
                 </div>
-                <div className="flex flex-col text-left">
-                  <span className="text-[10.5px] font-bold text-gray-700 leading-none group-hover:text-[#28a399] transition-colors whitespace-nowrap">{svc.label}</span>
-                  <span className="text-[9px] font-bold text-[#189D91] mt-0.5 whitespace-nowrap">{svc.sub}</span>
+                <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-3 truncate">
+                  <span className="font-black text-xs md:text-sm tracking-wide text-amber-300">Upgrade to Riddha Pro:</span>
+                  <span className="text-xs font-semibold text-teal-50 truncate">
+                    Silver (₹1,999), Gold (₹3,999), Platinum (₹6,999) & Diamond (₹11,999) unlock full AI features!
+                  </span>
                 </div>
-              </Link>
-            ))}
-          </div>
+              </div>
+              <button
+                onClick={() => setIsSubscriptionModalOpen(true)}
+                className="shrink-0 py-1.5 px-4 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs uppercase tracking-wider shadow-md hover:scale-105 active:scale-95 transition-all flex items-center gap-1.5"
+              >
+                <FiZap className="w-3.5 h-3.5" /> Upgrade to Pro
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -444,24 +482,81 @@ const Navbar = () => {
           </div>
         </div>
 
-        {/* Subcategories Dropdown — rendered outside the scrolling row (see handleCategoryEnter) so it isn't clipped */}
+        {/* Subcategories & Sub-subcategories Dropdown — rendered outside the scrolling row so it isn't clipped */}
         {hoveredCategory && (
           <div
             onMouseEnter={handleDropdownEnter}
             onMouseLeave={handleCategoryLeave}
             style={{ left: hoveredCategory.left }}
-            className="absolute top-full pt-2 z-50"
+            className="absolute top-full pt-2 z-50 flex items-start"
           >
-            <div className="bg-white shadow-2xl border border-gray-100 rounded-xl py-2 w-56 max-h-96 overflow-y-auto">
-              {hoveredCategory.subcats.map((sub) => (
-                <Link
-                  key={sub._id || sub.name}
-                  to={`/category/${hoveredCategory.slug}?sub=${encodeURIComponent(sub.name)}`}
-                  className="block px-5 py-2 text-[13px] font-semibold text-gray-700 hover:bg-gray-50 hover:text-[#28a399] transition-colors whitespace-nowrap"
-                >
-                  {sub.name}
-                </Link>
-              ))}
+            <div className="flex bg-white shadow-2xl border border-gray-100 rounded-2xl overflow-hidden backdrop-blur-md">
+              {/* 1st Column: Subcategories List */}
+              <div className="w-60 py-2.5 max-h-[420px] overflow-y-auto custom-scrollbar bg-white border-r border-gray-100/80">
+                {hoveredCategory.subcats.map((sub) => {
+                  const hasSubSubs = sub.subsubcategories && sub.subsubcategories.length > 0;
+                  const isSubHovered = hoveredSubcategory?.name === sub.name || hoveredSubcategory?._id === sub._id;
+
+                  return (
+                    <div
+                      key={sub._id || sub.name}
+                      onMouseEnter={() => setHoveredSubcategory(sub)}
+                      className="relative"
+                    >
+                      <Link
+                        to={`/category/${hoveredCategory.slug}?sub=${encodeURIComponent(sub.name)}`}
+                        onClick={() => {
+                          setHoveredCategory(null);
+                          setHoveredSubcategory(null);
+                        }}
+                        className={`flex items-center justify-between px-5 py-2.5 text-[13px] font-semibold transition-all whitespace-nowrap ${
+                          isSubHovered
+                            ? 'bg-[#189D91]/10 text-[#189D91] border-l-4 border-[#189D91]'
+                            : 'text-gray-700 hover:bg-gray-50 hover:text-[#28a399] border-l-4 border-transparent'
+                        }`}
+                      >
+                        <span className="truncate">{sub.name}</span>
+                        {hasSubSubs && (
+                          <FiChevronRight className={`w-4 h-4 shrink-0 transition-transform ${isSubHovered ? 'translate-x-0.5 text-[#189D91]' : 'text-gray-400'}`} />
+                        )}
+                      </Link>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* 2nd Column: Sub-subcategories Flyout Panel */}
+              {hoveredSubcategory && hoveredSubcategory.subsubcategories && hoveredSubcategory.subsubcategories.length > 0 && (
+                <div className="w-64 py-3 px-3 max-h-[420px] overflow-y-auto custom-scrollbar bg-gray-50/70 border-l border-gray-100">
+                  <div className="px-2 pb-2 mb-2 border-b border-gray-200/60 flex items-center justify-between">
+                    <span className="text-[10.5px] font-black uppercase tracking-wider text-[#189D91]">
+                      {hoveredSubcategory.name}
+                    </span>
+                    <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-[#189D91]/15 text-[#189D91]">
+                      {hoveredSubcategory.subsubcategories.length} Types
+                    </span>
+                  </div>
+                  <div className="space-y-0.5">
+                    {hoveredSubcategory.subsubcategories.map((subsub, idx) => {
+                      const subsubName = typeof subsub === 'string' ? subsub : subsub.name;
+                      return (
+                        <Link
+                          key={subsub._id || idx}
+                          to={`/category/${hoveredCategory.slug}?sub=${encodeURIComponent(hoveredSubcategory.name)}&subsub=${encodeURIComponent(subsubName)}`}
+                          onClick={() => {
+                            setHoveredCategory(null);
+                            setHoveredSubcategory(null);
+                          }}
+                          className="flex items-center justify-between px-3 py-2 text-[12.5px] font-semibold text-gray-700 hover:bg-white hover:text-[#28a399] rounded-xl border border-transparent hover:border-gray-100 hover:shadow-sm transition-all whitespace-nowrap group/subsub"
+                        >
+                          <span className="truncate">{subsubName}</span>
+                          <FiChevronRight className="w-3.5 h-3.5 opacity-0 group-hover/subsub:opacity-100 text-[#28a399] transition-opacity shrink-0 ml-1" />
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -595,6 +690,11 @@ const Navbar = () => {
       <BulkOrderModal
         isOpen={isBulkModalOpen}
         onClose={() => setIsBulkModalOpen(false)}
+      />
+
+      <SubscriptionModal
+        isOpen={isSubscriptionModalOpen}
+        onClose={() => setIsSubscriptionModalOpen(false)}
       />
 
       {/* Premium Pincode Selection Modal */}

@@ -50,7 +50,7 @@ const CategoryDetailPage = () => {
     };
     fetchData();
     window.scrollTo(0, 0);
-  }, [slug, subFilter]);
+  }, [slug, subFilter, subSubFilter]);
 
   if (loading) {
     return (

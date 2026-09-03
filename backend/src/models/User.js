@@ -95,6 +95,31 @@ const UserSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  // Subscription Details
+  subscription: {
+    planId: {
+      type: String,
+      enum: ['silver', 'gold', 'platinum', 'diamond', null],
+      default: null
+    },
+    planName: {
+      type: String,
+      default: ''
+    },
+    status: {
+      type: String,
+      enum: ['none', 'active', 'expired'],
+      default: 'none'
+    },
+    startDate: {
+      type: Date
+    },
+    endDate: {
+      type: Date
+    },
+    razorpayOrderId: String,
+    razorpayPaymentId: String
+  },
   createdAt: {
     type: Date,
     default: Date.now

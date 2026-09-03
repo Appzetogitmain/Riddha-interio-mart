@@ -228,6 +228,9 @@ app.get('/api/config/razorpay', (req, res) => {
   res.json({ key: process.env.RAZORPAY_KEY_ID });
 });
 
+const subscriptionRoutes = require('./routes/subscriptionRoutes');
+app.use('/api/subscription', subscriptionRoutes);
+
 
 
 

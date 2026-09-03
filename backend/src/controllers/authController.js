@@ -210,7 +210,8 @@ exports.getMe = async (req, res) => {
         type: req.user.type || "standard",
         permissions: req.user.permissions || {},
         referralCode: req.user.referralCode || "",
-        referralCount: req.user.referralCount || 0
+        referralCount: req.user.referralCount || 0,
+        subscription: req.user.subscription || { status: 'none', planId: null }
       }
     });
   } catch (err) {

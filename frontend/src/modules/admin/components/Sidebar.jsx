@@ -36,6 +36,7 @@ import {
   FiHelpCircle,
   FiBell
 } from "react-icons/fi";
+import { LuCrown } from "react-icons/lu";
 import logoImage from "../../../assets/transparent_logo.png";
 
 const menuGroups = [
@@ -256,6 +257,7 @@ const menuGroups = [
         ],
       },
       { path: "/admin/manage-advertisements", icon: FiStar, label: "Advertisement Plans" },
+      { path: "/admin/pro-plans", icon: LuCrown, label: "Pro AI Subscription Plans" },
       { path: "/admin/manage-bundles", icon: FiZap, label: "Smart Bundles" },
       {
         label: "Featured Highlights",

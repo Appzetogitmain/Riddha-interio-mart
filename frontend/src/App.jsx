@@ -10,7 +10,6 @@ const UserRoutes = React.lazy(() => import('./modules/user/routes'));
 const AdminRoutes = React.lazy(() => import('./modules/admin/routes'));
 const SellerRoutes = React.lazy(() => import('./modules/seller/routes'));
 const DeliveryRoutes = React.lazy(() => import('./modules/delivery/routes'));
-const ComingSoonRoutes = React.lazy(() => import('./modules/comingsoon/routes'));
 import { Toaster } from 'react-hot-toast';
 import PincodeModal from './modules/user/components/PincodeModal';
 import DeliveryBar from './modules/user/components/DeliveryBar';
@@ -44,8 +43,7 @@ function App() {
   const isAuthPath = location.pathname === '/login' || location.pathname === '/signup' ||
     location.pathname === '/forgot-password' ||
     location.pathname.endsWith('/login') || location.pathname.endsWith('/signup') ||
-    location.pathname.endsWith('/forgot-password') ||
-    location.pathname.startsWith('/coming-soon');
+    location.pathname.endsWith('/forgot-password');
   const isDashboardLayout = isAdminPath || isSellerPath || isDeliveryPath || isAuthPath || isInitPath;
   const isProductPage = location.pathname.startsWith('/product/') || location.pathname.startsWith('/products/');
   const checkoutPaths = ['/cart', '/address', '/payment'];
@@ -107,7 +105,6 @@ function App() {
               <Route path="/admin/*" element={<AdminRoutes />} />
               <Route path="/seller/*" element={<SellerRoutes />} />
               <Route path="/delivery/*" element={<DeliveryRoutes />} />
-              <Route path="/coming-soon/*" element={<ComingSoonRoutes />} />
               <Route path="/*" element={<UserRoutes />} />
             </Routes>
           </Suspense>

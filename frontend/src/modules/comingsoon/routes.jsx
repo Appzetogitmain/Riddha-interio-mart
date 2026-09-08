@@ -18,6 +18,7 @@ const ComingSoonRoutes = () => {
       <Route path="/shop" element={<ComingSoonShopPage />} />
       <Route path="/contact" element={<ComingSoonContactPage />} />
       <Route path="/:section" element={<ComingSoonSubPage />} />
+      <Route path="*" element={<ComingSoonPage />} />
     </Routes>
   );
 };

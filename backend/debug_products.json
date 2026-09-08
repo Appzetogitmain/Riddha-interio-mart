@@ -1,16 +1,31 @@
 {
-  "timestamp": "2026-09-03T13:09:27.316Z",
-  "query": {
-    "isActive": "all",
-    "isApproved": "all"
-  },
+  "timestamp": "2026-09-08T13:06:36.852Z",
+  "query": {},
   "builtFilter": {
+    "isApproved": true,
+    "isActive": true,
+    "seller": {
+      "$nin": [
+        "6a100b07a3cc06ac3f65be01",
+        "6a10057431fa10db6ebdaaff"
+      ]
+    },
     "isBundle": {
       "$ne": true
     }
   },
   "resultCount": 10,
   "results": [
+    {
+      "_id": "6a9e9523d13bfcf2a27cd33a",
+      "name": "Arci Tech",
+      "category": {
+        "_id": "6a0daaed047bdee23fc767b7",
+        "name": "Modular Kitchen"
+      },
+      "subcategory": "6a4d7691a06cf368b84a745f",
+      "subsubcategory": "6a4d7691a06cf368b84a7463"
+    },
     {
       "_id": "6a996e752bc570c7af799a0d",
       "name": "Philips LED Panel Light 18W",
@@ -100,16 +115,6 @@
       },
       "subcategory": "6a4d7691a06cf368b84a7489",
       "subsubcategory": "6a4d7691a06cf368b84a748e"
-    },
-    {
-      "_id": "6a7c7ab5f9423d7fdd08b928",
-      "name": "flooring tiles",
-      "category": {
-        "_id": "6a0d97bf804fbfd108773a6f",
-        "name": "Flooring"
-      },
-      "subcategory": "6a4d4f65a06cf368b84a7146",
-      "subsubcategory": "6a4d4f65a06cf368b84a7148"
     }
   ]
 }

@@ -425,6 +425,50 @@ async function notifyAdminDeliveryResponse(adminId, payload) {
   }
 }
 
+// Multi-device sync only (seller responded from another tab/OrderDetail.jsx) — not a new
+// alert the seller needs to be notified about, so no persisted notification or FCM push.
+async function notifySellerOrderResponseEcho(sellerId, payload) {
+  if (!io) return;
+  io.to(`seller:${sellerId}`).emit('order:seller_response', payload);
+}
+
+async function notifyAdminOrderResponse(adminId, payload) {
+  if (!io) return;
+  if (adminId) {
+    const notif = await persistNotification({
+      recipient: adminId,
+      recipientModel: 'Admin',
+      title: 'Seller Order Response',
+      message: payload.message || `Seller ${payload.sellerResponse} order.`,
+      type: 'order_update',
+      metadata: payload
+    });
+    io.to(`admin:${adminId}`).emit('order:seller_response', payload);
+    if (notif) io.to(`admin:${adminId}`).emit('notification:new', notif);
+
+    await maybePushToUser('admin', adminId, 'Admin', {
+      title: 'Seller Order Response',
+      body: payload.message || `Seller ${payload.sellerResponse} order.`,
+      data: { type: 'order_update', orderId: String(payload.orderId || '') }
+    });
+  } else {
+    const { admins, sample: notif } = await persistForAdmins({
+      title: 'Seller Order Response',
+      message: payload.message || `Seller ${payload.sellerResponse} order.`,
+      type: 'order_update',
+      metadata: payload
+    });
+    io.to('role:admin').emit('order:seller_response', payload);
+    if (notif) io.to('role:admin').emit('notification:new', notif);
+
+    await maybePushToOfflineAdmins(admins, {
+      title: 'Seller Order Response',
+      body: payload.message || `Seller ${payload.sellerResponse} order.`,
+      data: { type: 'order_update', orderId: String(payload.orderId || '') }
+    });
+  }
+}
+
 async function notifyAdminNewDelivery(payload) {
   if (!io) return;
   const { admins, sample: notif } = await persistForAdmins({
@@ -701,6 +745,8 @@ module.exports = {
   notifyDeliveryAssignment,
   notifySellerDeliveryResponse,
   notifyAdminDeliveryResponse,
+  notifySellerOrderResponseEcho,
+  notifyAdminOrderResponse,
   notifyAdminNewDelivery,
   notifyAdminNewSeller,
   notifyDeliveryApproval,

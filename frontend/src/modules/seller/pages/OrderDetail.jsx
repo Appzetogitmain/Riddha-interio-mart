@@ -40,9 +40,13 @@ const statusConfig = {
 // "Delivered" is intentionally not offered here — it must always go through a
 // verified path: the assigned in-app delivery partner's own OTP flow, or the
 // seller's "Self Delivery Updates" card below (OTP + proof photos required).
+// Pending's two actions go through /seller-response (see handleSellerResponse) — the
+// same endpoint the new-order modal in SellerNotifications.jsx uses — so there's one
+// source of truth for accepting/rejecting a fresh order. Every other transition below
+// still goes through the generic /status endpoint via handleStatusUpdate.
 const STATUS_ACTIONS = {
-  Pending:    [{ label: 'Accept Order',    next: 'Processing', style: 'bg-seller-primary text-white hover:opacity-90' },
-               { label: 'Cancel Order',    next: 'Cancelled',  style: 'bg-white border border-rose-200 text-rose-600 hover:bg-rose-50' }],
+  Pending:    [{ label: 'Accept Order',    action: 'Accepted', style: 'bg-seller-primary text-white hover:opacity-90' },
+               { label: 'Reject Order',    action: 'Rejected', style: 'bg-white border border-rose-200 text-rose-600 hover:bg-rose-50' }],
   Processing: [{ label: 'Mark as Packed',  next: 'Packed',     style: 'bg-seller-primary text-white hover:opacity-90' }],
   Packed:     [{ label: 'Mark as Shipped', next: 'Shipped',    style: 'bg-seller-primary text-white hover:opacity-90' }],
   Shipped:    [],
@@ -91,6 +95,27 @@ const OrderDetail = () => {
       toast.success(`Order marked as ${nextStatus}`);
     } catch (err) {
       toast.error(err?.response?.data?.message || 'Failed to update status');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  // Accept/Reject a brand-new order — same endpoint the incoming-order modal uses,
+  // so a seller responding from here or from that modal never double-applies effects.
+  const handleSellerResponse = async (action) => {
+    setUpdating(true);
+    try {
+      const { data } = await api.put(`/orders/${id}/seller-response`, { action });
+      await fetchOrderDetail();
+      // Idempotent endpoint — if another tab/device already resolved this order, say so
+      // instead of claiming our own click succeeded when it was actually a no-op.
+      if (data?.alreadyResolved) {
+        toast(`This order was already ${data.data.sellerResponse}.`, { icon: 'ℹ️' });
+      } else {
+        toast.success(`Order ${action}`);
+      }
+    } catch (err) {
+      toast.error(err?.response?.data?.error || err?.response?.data?.message || 'Failed to respond to order');
     } finally {
       setUpdating(false);
     }
@@ -330,49 +355,55 @@ const OrderDetail = () => {
             <span className="text-xs font-bold uppercase tracking-widest">Orders</span>
           </button>
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleGenerateOrPrintInvoice}
-              disabled={updating}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all disabled:opacity-50"
-            >
-              <LuDownload size={13} /> Download Invoice
-            </button>
-            
-            {order?.sellerInvoiceShared ? (
+          {order.status === 'Cancelled' ? (
+            <p className="text-xs font-bold text-slate-400 italic">
+              Invoice &amp; labels unavailable — this order was cancelled.
+            </p>
+          ) : (
+            <div className="flex items-center gap-2">
               <button
-                disabled
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-bold text-emerald-700 transition-all opacity-90 cursor-not-allowed"
-              >
-                Invoice Shared ✓
-              </button>
-            ) : (
-              <button
-                onClick={handleShareInvoice}
+                onClick={handleGenerateOrPrintInvoice}
                 disabled={updating}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#189D91] border border-[#189D91] text-xs font-bold text-white hover:bg-[#137A71] transition-all disabled:opacity-50"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all disabled:opacity-50"
               >
-                <LuShare2 size={13} /> Share Invoice
+                <LuDownload size={13} /> Download Invoice
               </button>
-            )}
 
-            <button
-              onClick={handleDownloadLabel}
-              disabled={(!order?.labelDownloadEnabled && !order?.sellerInvoiceShared) || updating}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
-                (!order?.labelDownloadEnabled && !order?.sellerInvoiceShared)
-                  ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'
-                  : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
-              }`}
-              title={(!order?.labelDownloadEnabled && !order?.sellerInvoiceShared) ? 'Share invoice first to unlock shipping labels & E-Way bills' : 'Download shipping labels & E-Way bills'}
-            >
-              {(!order?.labelDownloadEnabled && !order?.sellerInvoiceShared) ? (
-                <span className="text-[10px]">🔒</span>
+              {order?.sellerInvoiceShared ? (
+                <button
+                  disabled
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-bold text-emerald-700 transition-all opacity-90 cursor-not-allowed"
+                >
+                  Invoice Shared ✓
+                </button>
               ) : (
-                <LuDownload size={13} />
-              )} Download Label
-            </button>
-          </div>
+                <button
+                  onClick={handleShareInvoice}
+                  disabled={updating}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#189D91] border border-[#189D91] text-xs font-bold text-white hover:bg-[#137A71] transition-all disabled:opacity-50"
+                >
+                  <LuShare2 size={13} /> Share Invoice
+                </button>
+              )}
+
+              <button
+                onClick={handleDownloadLabel}
+                disabled={(!order?.labelDownloadEnabled && !order?.sellerInvoiceShared) || updating}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
+                  (!order?.labelDownloadEnabled && !order?.sellerInvoiceShared)
+                    ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'
+                    : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                }`}
+                title={(!order?.labelDownloadEnabled && !order?.sellerInvoiceShared) ? 'Share invoice first to unlock shipping labels & E-Way bills' : 'Download shipping labels & E-Way bills'}
+              >
+                {(!order?.labelDownloadEnabled && !order?.sellerInvoiceShared) ? (
+                  <span className="text-[10px]">🔒</span>
+                ) : (
+                  <LuDownload size={13} />
+                )} Download Label
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Page grid */}
@@ -388,9 +419,20 @@ const OrderDetail = () => {
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Order ID</p>
                   <h2 className="text-sm font-black text-slate-900 mt-0.5">#{order._id.slice(-8).toUpperCase()}</h2>
                 </div>
-                <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${cfg.color}`}>
-                  {order.status}
-                </span>
+                <div className="flex items-center gap-2">
+                  {order.sellerResponse && order.sellerResponse !== 'Pending' && (
+                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${
+                      order.sellerResponse === 'Accepted'
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                        : 'bg-rose-50 text-rose-700 border-rose-200'
+                    }`}>
+                      {order.sellerResponse}
+                    </span>
+                  )}
+                  <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${cfg.color}`}>
+                    {order.status}
+                  </span>
+                </div>
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4 pt-4 border-t border-slate-50">
@@ -509,9 +551,9 @@ const OrderDetail = () => {
                   ) : (
                     actions.map((action) => (
                       <button
-                        key={action.next}
+                        key={action.next || action.action}
                         disabled={updating}
-                        onClick={() => handleStatusUpdate(action.next)}
+                        onClick={() => action.action ? handleSellerResponse(action.action) : handleStatusUpdate(action.next)}
                         className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${action.style} disabled:opacity-50`}
                       >
                         {updating ? <LuRefreshCw size={13} className="animate-spin" /> : <LuCheck size={13} />}

@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import PageWrapper from "../components/PageWrapper";
 import api from "../../../shared/utils/api";
+import { getSocket } from "../../../shared/utils/socket";
 import {
   LuSearch,
   LuFilter,
@@ -182,6 +183,22 @@ const OrderListPage = ({ specificStatus }) => {
       setSearchTerm(search);
     }
   }, [location.search]);
+
+  // Live-patch a row's seller response the instant a seller accepts/rejects — reuses the
+  // socket connection AdminNotifications.jsx already keeps alive at the app root.
+  useEffect(() => {
+    const socket = getSocket();
+    if (!socket) return;
+    const onSellerResponse = (payload) => {
+      setOrders(prev => prev.map(o => (
+        o._id === payload.orderId
+          ? { ...o, sellerResponse: payload.sellerResponse, status: payload.status }
+          : o
+      )));
+    };
+    socket.on('order:seller_response', onSellerResponse);
+    return () => socket.off('order:seller_response', onSellerResponse);
+  }, []);
 
   const handleAssignClick = (order) => {
     setSelectedOrder(order);
@@ -467,11 +484,30 @@ const OrderListPage = ({ specificStatus }) => {
                           ₹{order.totalPrice?.toLocaleString() || 0}
                         </td>
                         <td className="px-6 py-4">
-                          <div className="flex items-center gap-2">
-                             <StatusIcon size={14} className="text-warm-sand" />
-                             <span className="text-[10px] font-bold uppercase tracking-widest text-deep-espresso/70">
-                               {order.status || 'Pending'}
-                             </span>
+                          <div className="flex flex-col gap-1">
+                            <div className="flex items-center gap-2">
+                               <StatusIcon size={14} className="text-warm-sand" />
+                               <span className="text-[10px] font-bold uppercase tracking-widest text-deep-espresso/70">
+                                 {order.status || 'Pending'}
+                               </span>
+                            </div>
+                            {order.sellerType !== 'Admin' && (
+                              order.sellerResponse && order.sellerResponse !== 'Pending' ? (
+                                <span className={`inline-flex w-fit px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest ${
+                                  order.sellerResponse === 'Accepted'
+                                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                    : 'bg-rose-50 text-rose-700 border border-rose-200'
+                                }`}>
+                                  Seller {order.sellerResponse}
+                                </span>
+                              ) : (
+                                !['Delivered', 'Cancelled'].includes(order.status) && (
+                                  <span className="inline-flex w-fit px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest bg-amber-50 text-amber-700 border border-amber-200">
+                                    Awaiting Seller
+                                  </span>
+                                )
+                              )
+                            )}
                           </div>
                         </td>
                         <td className="px-6 py-4 text-xs text-deep-espresso/70 font-medium">

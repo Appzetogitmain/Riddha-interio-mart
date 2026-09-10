@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   FiUser, FiPackage, FiMapPin, FiSettings, FiLogOut,
   FiChevronRight, FiGift, FiCopy, FiCheck, FiHeart,
-  FiShield, FiPhone, FiFileText, FiAlertCircle, FiCompass, FiTruck, FiZap, FiCheckCircle, FiClock
+  FiShield, FiPhone, FiFileText, FiAlertCircle, FiCompass, FiTruck, FiZap, FiCheckCircle, FiClock,
+  FiCreditCard
 } from 'react-icons/fi';
 import { Link, useNavigate } from 'react-router-dom';
 import { useUser } from '../data/UserContext';
@@ -12,6 +13,7 @@ import ProductCard from '../components/ProductCard';
 import { toast } from 'react-hot-toast';
 import { LuSparkles, LuPalette, LuLayoutDashboard, LuCalculator, LuCrown } from 'react-icons/lu';
 import SubscriptionModal from '../components/SubscriptionModal';
+import api from '../../../shared/utils/api';
 
 const menuItems = [
   { icon: LuSparkles, title: 'Seller AI Copywriting & Marketing Studio', subtitle: 'Auto-generate titles, SEO meta tags, social posts, email campaigns & 1-click publish', link: '/seller/content-generator', badge: 'NEW AI', isProOnly: true },
@@ -44,6 +46,13 @@ const Profile = () => {
   const { user, logout } = useUser();
   const [copied, setCopied] = useState(false);
   const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
+  const [walletBalance, setWalletBalance] = useState(null);
+
+  useEffect(() => {
+    api.get('/referrals/wallet')
+      .then(({ data }) => setWalletBalance(data?.data?.balance ?? 0))
+      .catch(() => setWalletBalance(0));
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -257,6 +266,26 @@ const Profile = () => {
               }}>{inner}</button>
             );
           })}
+        </div>
+
+        {/* Wallet Card */}
+        <div className="bg-white rounded-2xl border border-gray-100 p-4 md:p-5">
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-xl bg-[#189D91]/10 flex items-center justify-center text-[#189D91] shrink-0">
+                <FiCreditCard size={18} />
+              </div>
+              <div>
+                <p className="text-[10px] font-black text-[#189D91] uppercase tracking-widest">Riddha Wallet</p>
+                <h3 className="text-lg font-black text-slate-800">
+                  {walletBalance === null ? '...' : `₹${walletBalance.toLocaleString('en-IN')}`}
+                </h3>
+                <p className="text-[10px] text-gray-400 font-medium">
+                  Refunds from cancelled orders land here — use it at checkout on your next order.
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Referral Card */}

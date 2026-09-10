@@ -261,6 +261,44 @@ class WalletService {
   }
 
   /**
+   * Reverses a still-pending seller sale when an order is cancelled/rejected before
+   * delivery — the seller never actually earned this, so it comes out of pendingBalance
+   * entirely (unlike recordRefundDeduction, which deducts from withdrawableBalance for
+   * an already-delivered/cleared sale that's later returned).
+   */
+  async reversePendingSale(orderId, customIdempotencyKey = null) {
+    const idempotencyKey = customIdempotencyKey || `cancel_sale_${orderId}`;
+
+    return executeInTransaction(async (session) => {
+      const wallet = await SellerWallet.findOne({
+        'transactions.referenceId': orderId,
+        'transactions.status': 'pending'
+      }).session(session);
+      if (!wallet) return null;
+
+      const tx = wallet.transactions.find(t => t.referenceId.toString() === orderId.toString() && t.status === 'pending');
+      if (!tx) return wallet;
+
+      // Idempotency: verify this specific reversal has not fired already
+      const alreadyReversed = wallet.transactions.some(t => t.idempotencyKey === idempotencyKey);
+      if (alreadyReversed) return wallet;
+
+      await SellerWallet.updateOne(
+        { _id: wallet._id, 'transactions._id': tx._id },
+        {
+          $set: {
+            'transactions.$.status': 'cancelled',
+            'transactions.$.idempotencyKey': idempotencyKey
+          },
+          $inc: { pendingBalance: -tx.amount }
+        },
+        { session }
+      );
+      return wallet;
+    });
+  }
+
+  /**
    * Records a refund deduction on returned orders
    */
   async recordRefundDeduction(order, refundAmount, customIdempotencyKey = null, sessionOverride = null) {

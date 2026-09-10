@@ -10,6 +10,18 @@ const { getProductPurchaseTermsContent } = require("../utils/getProductPurchaseT
 // so an invalid/truncated id here is a routine mistake rather than a server error.
 const isOrderNotFoundError = (error) => error.name === "CastError" && error.kind === "ObjectId";
 
+// A cancelled/rejected order was never actually fulfilled — no GST-relevant invoice
+// number should ever be burned on it, and nothing should be shared with the admin or
+// the customer for a sale that didn't happen. Applies to every real-order endpoint below.
+const CANCELLED_INVOICE_ERROR = "This order was cancelled — no invoice can be generated or shared for it.";
+const rejectIfCancelled = (order, res) => {
+  if (order.status === "Cancelled") {
+    res.status(400).json({ success: false, message: CANCELLED_INVOICE_ERROR });
+    return true;
+  }
+  return false;
+};
+
 // Standard sample data for the admin's invoice-template preview — lets the admin see how
 // their template settings (logo, GST, footer text) render without needing a real order,
 // and lets them check both GST split styles by switching supply type.
@@ -75,6 +87,8 @@ const downloadSellerInvoice = async (req, res) => {
       return res.status(403).json({ success: false, message: "Not authorized to access this invoice" });
     }
 
+    if (rejectIfCancelled(order, res)) return;
+
     // Auto-generate invoice numbers if not already generated
     order = await generateInvoiceNumbers(order);
 
@@ -115,6 +129,8 @@ const shareSellerInvoice = async (req, res) => {
     if (order.seller.toString() !== req.user.id && req.user.role !== "admin") {
       return res.status(403).json({ success: false, message: "Not authorized to share this invoice" });
     }
+
+    if (rejectIfCancelled(order, res)) return;
 
     // Auto-generate invoice numbers if not already generated
     order = await generateInvoiceNumbers(order);
@@ -162,6 +178,8 @@ const downloadShippingLabels = async (req, res) => {
       return res.status(403).json({ success: false, message: "Not authorized to access these labels" });
     }
 
+    if (rejectIfCancelled(order, res)) return;
+
     // Check if label download is unlocked
     if (!order.labelDownloadEnabled && !order.sellerInvoiceShared) {
       return res.status(400).json({
@@ -207,6 +225,8 @@ const downloadCustomerInvoice = async (req, res) => {
     if (!isOwner) {
       return res.status(403).json({ success: false, message: "Not authorized to access this invoice" });
     }
+
+    if (rejectIfCancelled(order, res)) return;
 
     // Auto-generate invoice numbers if not already generated
     order = await generateInvoiceNumbers(order);

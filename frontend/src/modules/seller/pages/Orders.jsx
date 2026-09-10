@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import api from "../../../shared/utils/api";
+import { getSocket } from "../../../shared/utils/socket";
 import { motion, AnimatePresence } from "framer-motion";
 import OrderCard from "../components/OrderCard";
 import DeliveryMethodModal from "../components/DeliveryMethodModal";
@@ -126,7 +127,24 @@ const Orders = () => {
       toast.success('New order received!');
     };
     window.addEventListener('seller:new-order', onNewOrder);
-    return () => window.removeEventListener('seller:new-order', onNewOrder);
+
+    // Live-patch a row's status/sellerResponse the instant it's resolved — from this
+    // seller's own action in another tab, from OrderDetail.jsx, or from the incoming-order
+    // modal — so this list never sits showing a stale status until a manual refresh.
+    const socket = getSocket();
+    const onSellerResponse = (payload) => {
+      setOrders(prev => prev.map(o => (
+        o._id === payload.orderId
+          ? { ...o, status: payload.status, sellerResponse: payload.sellerResponse }
+          : o
+      )));
+    };
+    if (socket) socket.on('order:seller_response', onSellerResponse);
+
+    return () => {
+      window.removeEventListener('seller:new-order', onNewOrder);
+      if (socket) socket.off('order:seller_response', onSellerResponse);
+    };
   }, []);
 
   const handleAssignInit = (order) => {
@@ -347,10 +365,17 @@ const Orders = () => {
                           <p className="text-[9px] text-emerald-600 font-black uppercase tracking-widest mt-0.5">{order.paymentMethod}</p>
                         </td>
                         <td className="px-6 py-3.5">
-                          <span className={`px-2.5 py-1 rounded-lg border text-[9px] font-black uppercase tracking-widest inline-flex items-center gap-1.5 ${getStatusStyles(order.status)}`}>
-                            <div className="w-1 h-1 rounded-full bg-current" />
-                            {order.status}
-                          </span>
+                          <div className="flex flex-col items-start gap-1">
+                            <span className={`px-2.5 py-1 rounded-lg border text-[9px] font-black uppercase tracking-widest inline-flex items-center gap-1.5 ${getStatusStyles(order.status)}`}>
+                              <div className="w-1 h-1 rounded-full bg-current" />
+                              {order.status}
+                            </span>
+                            {order.status === 'Pending' && order.sellerResponse === 'Pending' && (
+                              <span className="px-2 py-0.5 rounded-md bg-amber-50 border border-amber-200 text-amber-700 text-[8px] font-black uppercase tracking-widest">
+                                Awaiting Response
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td className="px-6 py-3.5">
                           <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">

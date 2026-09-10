@@ -18,10 +18,42 @@ const SellerAssignmentModal = ({ order, onClose, onOrderUpdated }) => {
   const [assigning, setAssigning] = useState(false);
   const [sendingOfferId, setSendingOfferId] = useState(null);
 
+  // "Other Sellers" — free-text search across every approved seller, for when the
+  // admin wants to assign someone outside the auto-suggested product/category matches.
+  const [otherSearchTerm, setOtherSearchTerm] = useState('');
+  const [otherResults, setOtherResults] = useState([]);
+  const [searchingOther, setSearchingOther] = useState(false);
+
   useEffect(() => {
     fetchSuggested();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [order._id]);
+
+  useEffect(() => {
+    const term = otherSearchTerm.trim();
+    if (term.length < 2) {
+      setOtherResults([]);
+      setSearchingOther(false);
+      return;
+    }
+    setSearchingOther(true);
+    const t = setTimeout(async () => {
+      try {
+        const res = await api.get(`/bulk-orders/${order._id}/search-sellers`, { params: { q: term } });
+        setOtherResults(res.data.data || []);
+      } catch (err) {
+        console.error('Failed to search sellers:', err);
+      } finally {
+        setSearchingOther(false);
+      }
+    }, 350);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [otherSearchTerm, order._id]);
+
+  // Don't show a seller twice if they already appear in the suggested list.
+  const suggestedIds = new Set(suggested.map(s => s._id));
+  const otherResultsFiltered = otherResults.filter(s => !suggestedIds.has(s._id));
 
   const fetchSuggested = async () => {
     try {
@@ -48,6 +80,8 @@ const SellerAssignmentModal = ({ order, onClose, onOrderUpdated }) => {
       toast.success(`Assigned to ${selectedSellerIds.length} seller(s).`);
       onOrderUpdated(res.data.data);
       setSelectedSellerIds([]);
+      setOtherSearchTerm('');
+      setOtherResults([]);
       fetchSuggested();
     } catch (err) {
       console.error('Failed to assign sellers:', err);
@@ -168,6 +202,60 @@ const SellerAssignmentModal = ({ order, onClose, onOrderUpdated }) => {
                       </div>
                       <span className={`text-[10px] font-bold rounded-full px-2 py-0.5 shrink-0 ${s.matchType === 'product' ? 'bg-indigo-50 text-indigo-700' : 'bg-amber-50 text-amber-700'}`}>
                         {s.matchType === 'product' ? 'Product Match' : 'Category Match'}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Other sellers — search across everyone, for cases with no suggested match
+              or when the admin wants to bring in an extra seller for a quote anyway */}
+          <div className="space-y-2">
+            <h3 className="text-xs font-bold uppercase tracking-widest text-gray-500">Other Sellers</h3>
+            <div className="relative">
+              <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+              <input
+                type="text"
+                value={otherSearchTerm}
+                onChange={(e) => setOtherSearchTerm(e.target.value)}
+                placeholder="Search any seller by shop name, name, or email..."
+                className="w-full border border-gray-200 rounded-lg py-2 pl-9 pr-3 text-xs focus:outline-none focus:border-[#189D91]"
+              />
+            </div>
+
+            {otherSearchTerm.trim().length > 0 && otherSearchTerm.trim().length < 2 ? (
+              <p className="text-xs text-gray-400 py-2">Keep typing — at least 2 characters.</p>
+            ) : searchingOther ? (
+              <p className="text-xs text-gray-400 py-2">Searching...</p>
+            ) : otherSearchTerm.trim().length >= 2 && otherResultsFiltered.length === 0 ? (
+              <p className="text-xs text-gray-400 py-2">No matching sellers found.</p>
+            ) : (
+              <div className="space-y-2">
+                {otherResultsFiltered.map((s) => {
+                  const isSelected = selectedSellerIds.includes(s._id);
+                  return (
+                    <label
+                      key={s._id}
+                      className={`flex items-center justify-between gap-3 p-3 rounded-xl border cursor-pointer transition-all ${isSelected ? 'border-[#189D91] bg-[#189D91]/5' : 'border-gray-150 hover:border-gray-250'}`}
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <input type="checkbox" checked={isSelected} onChange={() => toggleSeller(s._id)} className="accent-[#189D91]" />
+                        <div className="min-w-0">
+                          <p className="text-sm font-bold text-gray-900 truncate">
+                            {s.shopName || s.fullName || 'Seller'}
+                          </p>
+                          {s.shopName && s.fullName && (
+                            <p className="text-[11px] text-gray-500 truncate">{s.fullName}</p>
+                          )}
+                          <p className="text-[11px] text-gray-400 truncate">
+                            {(s.sellingCategories || []).map(c => c.name).join(', ') || 'No categories set'}
+                          </p>
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-bold rounded-full px-2 py-0.5 shrink-0 bg-gray-100 text-gray-600">
+                        Other
                       </span>
                     </label>
                   );

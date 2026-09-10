@@ -16,7 +16,7 @@ import {
   ChevronRight,
   Inbox
 } from 'lucide-react';
-import { isSoundEnabled, setSoundEnabled } from '../utils/notificationSound';
+import { isSoundEnabled, setSoundEnabled } from '../../../shared/utils/notificationSound';
 import { useNotification } from '../../user/data/NotificationContext';
 import { formatDistanceToNow } from 'date-fns';
 

@@ -168,6 +168,16 @@ const OrderSchema = new mongoose.Schema({
     enum: ['None', 'Pending', 'Accepted', 'Picked', 'Out for Delivery', 'Delivered', 'Rejected'],
     default: 'None'
   },
+  // Distinct from `status` (order lifecycle) and `deliveryStatus` (delivery partner) —
+  // tracks whether the seller has acknowledged the new-order alert for this order.
+  sellerResponse: {
+    type: String,
+    enum: ['Pending', 'Accepted', 'Rejected'],
+    default: 'Pending'
+  },
+  sellerRespondedAt: {
+    type: Date
+  },
   deliveryType: {
     type: String,
     enum: ['in-app', 'seller-managed', 'shiprocket'],

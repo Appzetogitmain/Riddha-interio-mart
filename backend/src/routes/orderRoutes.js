@@ -8,6 +8,7 @@ const {
   updateOrderStatus,
   assignOrderToDeliveryBoy,
   respondToDeliveryAssignment,
+  respondToNewOrder,
   checkCodEligibility,
   calculateOrderPricing,
   verifyPayment,
@@ -62,6 +63,9 @@ router.route('/:id/seller-delivery-status')
 
 router.route('/:id/delivery-response')
   .put(authorize('delivery'), respondToDeliveryAssignment);
+
+router.route('/:id/seller-response')
+  .put(authorize('seller'), respondToNewOrder);
 
 router.route('/:id/verify-otp')
   .post(authorize('delivery'), verifyDeliveryOtp);

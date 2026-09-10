@@ -318,6 +318,13 @@ const Orders = () => {
                        })}
                     </div>
 
+                    {/* Refund note for a cancelled order that was actually paid online */}
+                    {order.status === 'Cancelled' && order.isPaid && (
+                      <p className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2 mb-3">
+                        ₹{order.totalPrice?.toLocaleString('en-IN')} refunded to your Riddha Wallet — use it on your next order.
+                      </p>
+                    )}
+
                     {/* Footer: Date & Actions */}
                     <div className="flex items-center justify-between pt-4 border-t border-gray-100">
                        <div>
@@ -325,14 +332,16 @@ const Orders = () => {
                             Placed on {new Date(order.createdAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}
                           </p>
                        </div>
-                       
+
                        <div className="flex items-center gap-4">
-                          <button
-                            onClick={() => navigate(`/order/invoice/${order._id}`)}
-                            className="text-xs font-bold text-gray-500 hover:text-teal-600 transition-colors"
-                          >
-                            Invoice
-                          </button>
+                          {order.status !== 'Cancelled' && (
+                            <button
+                              onClick={() => navigate(`/order/invoice/${order._id}`)}
+                              className="text-xs font-bold text-gray-500 hover:text-teal-600 transition-colors"
+                            >
+                              Invoice
+                            </button>
+                          )}
                            {order.status !== 'Delivered' && order.status !== 'Cancelled' && (
                              <button
                               onClick={() => navigate(`/track-order/${order._id}`)}

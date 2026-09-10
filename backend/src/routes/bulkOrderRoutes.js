@@ -7,6 +7,7 @@ const {
   updateBulkOrderStatus,
   deleteBulkOrder,
   getSuggestedSellers,
+  searchSellers,
   assignBulkOrderToSellers,
   respondToBulkOrderAssignment,
   sendOfferToCustomer,
@@ -28,6 +29,7 @@ router.put('/:id/respond', protect, authorize('seller'), respondToBulkOrderAssig
 // Protected Admin Routes
 router.get('/', protect, authorize('admin'), checkPermission('orders'), getAllBulkOrders);
 router.get('/:id/suggested-sellers', protect, authorize('admin'), checkPermission('orders'), getSuggestedSellers);
+router.get('/:id/search-sellers', protect, authorize('admin'), checkPermission('orders'), searchSellers);
 router.post('/:id/assign', protect, authorize('admin'), checkPermission('orders'), assignBulkOrderToSellers);
 router.post('/:id/send-offer', protect, authorize('admin'), checkPermission('orders'), sendOfferToCustomer);
 router.put('/:id', protect, authorize('admin'), checkPermission('orders'), updateBulkOrderStatus);

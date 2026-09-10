@@ -49,12 +49,40 @@ const buildOrderStatusMessage = (order) => {
   return `Your order #${shortId} is now ${label}.`;
 };
 
-const { 
-  notifySellerNewOrder, 
-  notifyAdminNewOrder, 
-  notifyDeliveryAssignment, 
+// Builds the payload sent to sellers/admin when a new order lands — centralized so the
+// 3 call sites (COD, verifyPayment, Razorpay webhook) below can't drift from each other.
+const buildSellerOrderNotifyPayload = (order, customerName) => ({
+  orderId: String(order._id),
+  totalPrice: order.totalPrice,
+  itemsCount: order.orderItems.reduce((sum, i) => sum + i.quantity, 0),
+  status: order.status,
+  sellerResponse: order.sellerResponse || 'Pending',
+  createdAt: order.createdAt,
+  customerName: customerName || 'Customer',
+  shippingAddress: {
+    fullName: order.shippingAddress?.fullName,
+    mobileNumber: order.shippingAddress?.mobileNumber,
+    pincode: order.shippingAddress?.pincode,
+    city: order.shippingAddress?.city,
+    fullAddress: order.shippingAddress?.fullAddress,
+    landmark: order.shippingAddress?.landmark
+  },
+  orderItems: (order.orderItems || []).map(item => ({
+    name: item.name,
+    quantity: item.quantity,
+    image: item.image,
+    price: item.price
+  }))
+});
+
+const {
+  notifySellerNewOrder,
+  notifyAdminNewOrder,
+  notifyDeliveryAssignment,
   notifySellerDeliveryResponse,
   notifyAdminDeliveryResponse,
+  notifySellerOrderResponseEcho,
+  notifyAdminOrderResponse,
   notifyUserOrderStatus,
   notifyLowStock
 } = require('../socket');
@@ -389,15 +417,7 @@ exports.addOrderItems = async (req, res) => {
       if (paymentMethod === 'COD') {
         // Fire notifications
         try {
-          const payload = {
-            orderId: String(savedOrder._id),
-            totalPrice: savedOrder.totalPrice,
-            itemsCount: savedOrder.orderItems.reduce((sum, i) => sum + i.quantity, 0),
-            status: savedOrder.status,
-            createdAt: savedOrder.createdAt,
-            customerName: req.user?.fullName,
-            shippingCity: savedOrder.shippingAddress?.city
-          };
+          const payload = buildSellerOrderNotifyPayload(savedOrder, req.user?.fullName);
 
           const group = groupedItems[savedOrder.seller.toString()];
           if (group && group.sellerType === 'Admin') {
@@ -844,6 +864,27 @@ exports.updateOrderStatus = async (req, res) => {
         for (const item of order.orderItems) {
           await inventoryService.returnStock(item.product, item.quantity);
         }
+
+        // Refund the customer's own wallet if they already paid online, and reverse
+        // the seller's pending earnings for this sale — neither happened automatically
+        // before, so a cancelled online order silently kept the customer's money and
+        // left a phantom pending payout sitting in the seller's wallet.
+        try {
+          const walletService = require('../services/walletService');
+          if (order.isPaid) {
+            await walletService.creditUserWallet(
+              order.user,
+              order.totalPrice,
+              'refund_credit',
+              `Refund for cancelled Order #${order._id.toString().slice(-8).toUpperCase()}`,
+              order._id,
+              `order_refund_${order._id}`
+            );
+          }
+          await walletService.reversePendingSale(order._id);
+        } catch (refundErr) {
+          console.error('Failed to process cancellation refund/reversal:', refundErr.message);
+        }
       }
 
       const updatedOrder = await order.save();
@@ -1149,6 +1190,91 @@ exports.respondToDeliveryAssignment = async (req, res) => {
   }
 };
 
+// @desc    Seller accepts or rejects a newly received order notification
+// @route   PUT /api/orders/:id/seller-response
+// @access  Private/Seller
+exports.respondToNewOrder = async (req, res) => {
+  try {
+    const { action } = req.body; // 'Accepted' | 'Rejected'
+    if (!['Accepted', 'Rejected'].includes(action)) {
+      return res.status(400).json({ success: false, error: 'action must be "Accepted" or "Rejected".' });
+    }
+
+    const order = await Order.findById(req.params.id);
+    if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+
+    if (order.seller.toString() !== req.user.id) {
+      return res.status(403).json({ success: false, error: 'Not authorized: You do not own this order.' });
+    }
+
+    // Already responded (e.g. from another tab/device) — don't double-apply side effects.
+    // alreadyResolved tells the caller the requested action was NOT what actually happened,
+    // so the UI can show the true outcome instead of just assuming its own click won.
+    if (order.sellerResponse !== 'Pending') {
+      return res.status(200).json({ success: true, data: order, alreadyResolved: true, message: `Already ${order.sellerResponse}.` });
+    }
+
+    order.sellerResponse = action;
+    order.sellerRespondedAt = Date.now();
+
+    if (action === 'Accepted') {
+      // Matches the existing OrderDetail.jsx "Accept Order" transition — no-op if the
+      // order already moved on some other way in the meantime.
+      if (order.status === 'Pending') {
+        order.status = 'Processing';
+        order.processingAt = order.processingAt || Date.now();
+      }
+    } else if (order.status !== 'Cancelled' && order.status !== 'Delivered') {
+      // Reject -> auto-cancel + restore stock, same as the existing Cancelled branch above.
+      order.status = 'Cancelled';
+      const inventoryService = require('../services/inventoryService');
+      for (const item of order.orderItems) {
+        await inventoryService.returnStock(item.product, item.quantity);
+      }
+
+      // Refund the customer's own wallet if they already paid online, and reverse the
+      // seller's pending earnings — same as the generic /status Cancelled branch, so a
+      // seller-rejected order refunds and reverses exactly like an admin-cancelled one.
+      try {
+        const walletService = require('../services/walletService');
+        if (order.isPaid) {
+          await walletService.creditUserWallet(
+            order.user,
+            order.totalPrice,
+            'refund_credit',
+            `Refund for cancelled Order #${order._id.toString().slice(-8).toUpperCase()}`,
+            order._id,
+            `order_refund_${order._id}`
+          );
+        }
+        await walletService.reversePendingSale(order._id);
+      } catch (refundErr) {
+        console.error('Failed to process rejection refund/reversal:', refundErr.message);
+      }
+    }
+
+    const updatedOrder = await order.save();
+
+    try {
+      const responsePayload = {
+        orderId: String(updatedOrder._id),
+        sellerResponse: updatedOrder.sellerResponse,
+        status: updatedOrder.status,
+        customerName: order.shippingAddress?.fullName,
+        totalPrice: updatedOrder.totalPrice
+      };
+      notifyAdminOrderResponse(null, responsePayload);
+      notifySellerOrderResponseEcho(updatedOrder.seller, responsePayload);
+    } catch (e) {
+      console.error('Socket notify failed in respondToNewOrder:', e.message);
+    }
+
+    res.status(200).json({ success: true, data: updatedOrder });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 const RESTRICTED_COD_PINCODES = ['110001', '400001', '700001'];
 
 const getCodEligibility = async (orderItems, pincode) => {
@@ -1321,15 +1447,7 @@ exports.verifyPayment = async (req, res) => {
 
     for (const order of orders) {
       try {
-        const payload = {
-          orderId: String(order._id),
-          totalPrice: order.totalPrice,
-          itemsCount: order.orderItems.reduce((sum, i) => sum + i.quantity, 0),
-          status: order.status,
-          createdAt: order.createdAt,
-          customerName: req.user?.fullName,
-          shippingCity: order.shippingAddress?.city
-        };
+        const payload = buildSellerOrderNotifyPayload(order, req.user?.fullName);
 
         if (order.sellerType === 'Admin') {
           notifyAdminNewOrder(null, payload);
@@ -1480,15 +1598,8 @@ exports.handleRazorpayWebhook = async (req, res) => {
 
     for (const order of orders) {
       try {
-        const socketPayload = {
-          orderId: String(order._id),
-          totalPrice: order.totalPrice,
-          itemsCount: order.orderItems.reduce((sum, i) => sum + i.quantity, 0),
-          status: order.status,
-          createdAt: order.createdAt,
-          customerName: 'Customer', // Webhooks lack active req.user context
-          shippingCity: order.shippingAddress?.city
-        };
+        // Webhooks lack active req.user context, so customerName falls back inside the helper.
+        const socketPayload = buildSellerOrderNotifyPayload(order, 'Customer');
 
         if (order.sellerType === 'Admin') {
           notifyAdminNewOrder(null, socketPayload);

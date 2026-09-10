@@ -176,6 +176,40 @@ exports.getSuggestedSellers = async (req, res) => {
   }
 };
 
+// ── Admin: free-text search across all approved sellers to manually assign someone
+//    outside the auto-suggested (product/category match) list ────────────────────
+exports.searchSellers = async (req, res) => {
+  try {
+    const q = (req.query.q || '').trim();
+    if (q.length < 2) {
+      return res.status(200).json({ success: true, data: [] });
+    }
+
+    const bulkOrder = await BulkOrder.findById(req.params.id).select('assignments').lean();
+    if (!bulkOrder) {
+      return res.status(404).json({ success: false, message: 'Bulk order not found' });
+    }
+    const alreadyAssigned = (bulkOrder.assignments || []).map(a => a.seller);
+
+    const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const pattern = new RegExp(escapeRegex(q), 'i');
+
+    const sellers = await Seller.find({
+      _id: { $nin: alreadyAssigned },
+      status: 'approved',
+      $or: [{ shopName: pattern }, { fullName: pattern }, { email: pattern }]
+    })
+      .select('fullName shopName email phone shopAddress sellingCategories')
+      .populate('sellingCategories', 'name')
+      .limit(20)
+      .lean();
+
+    res.status(200).json({ success: true, data: sellers.map(s => ({ ...s, matchType: 'search' })) });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
+
 // ── Admin: assign the bulk order to one or more sellers for a quote ───────
 exports.assignBulkOrderToSellers = async (req, res) => {
   try {

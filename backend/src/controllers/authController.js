@@ -196,9 +196,12 @@ exports.getMe = async (req, res) => {
       success: true,
       user: {
         id: req.user._id,
-        fullName: req.user.fullName,
+        name: req.user.fullName || req.user.name || "",
+        fullName: req.user.fullName || req.user.name || "",
         email: req.user.email,
         role: req.user.role,
+        userType: req.user.userType || "customer",
+        businessDetails: req.user.businessDetails || {},
         avatar: req.user.avatar || "",
         phone: req.user.phone || "",
         shopName: req.user.shopName || "",

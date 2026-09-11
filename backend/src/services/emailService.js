@@ -18,6 +18,10 @@ class EmailService {
     const user = process.env.SMTP_USER || '';
     const pass = process.env.SMTP_PASS || '';
 
+    if (!user || !pass) {
+      console.warn('[EmailService] ⚠️ WARNING: SMTP_USER or SMTP_PASS is missing in backend/.env. Real emails will NOT be delivered. OTPs will be logged to the server terminal output in development.');
+    }
+
     this.primaryTransporter = nodemailer.createTransport({
       host,
       port,
@@ -105,7 +109,7 @@ class EmailService {
       const subject = `Riddha Mart - ${roleLabel} Terms & Conditions and Privacy Policy`;
       const htmlContent = `
         <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
-          <div style="background-color: #718096; padding: 20px; text-align: center;">
+          <div style="background-color: #ffffff; padding: 20px; text-align: center; border-bottom: 1px solid #e2e8f0;">
             <img src="cid:riddhalogo" alt="Riddha Interior Mart" style="max-height: 60px; max-width: 100%; object-fit: contain; margin: 0 auto; display: block;" />
           </div>
           <div style="padding: 30px;">

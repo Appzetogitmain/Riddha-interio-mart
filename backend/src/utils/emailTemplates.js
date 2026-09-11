@@ -28,9 +28,10 @@ const getBaseTemplate = (title, bodyContent) => `
       border: 1px solid #edf2f7;
     }
     .header {
-      background: linear-gradient(135deg, #718096 0%, #4a5568 100%);
-      padding: 30px;
+      background-color: #ffffff;
+      padding: 24px 30px;
       text-align: center;
+      border-bottom: 1px solid #edf2f7;
     }
     .header h1 {
       color: #ffffff;

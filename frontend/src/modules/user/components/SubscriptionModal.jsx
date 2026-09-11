@@ -307,13 +307,16 @@ const SubscriptionModal = ({ isOpen, onClose, defaultPlanId = 'gold' }) => {
             </button>
 
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 text-white text-xs font-black uppercase tracking-wider mb-2 backdrop-blur-sm shadow-sm">
-              <LuCrown className="w-4 h-4 text-amber-300" /> Unlock All AI Features
+              <LuCrown className="w-4 h-4 text-amber-300" />
+              {user?.userType === 'enterpriser' ? 'Unlock All AI Features' : 'Unlock Express & Fastest Delivery'}
             </div>
             <h2 className="text-2xl md:text-3xl font-black tracking-tight text-white drop-shadow-sm">
               Upgrade to Riddha Pro Subscription
             </h2>
             <p className="text-sm text-white font-medium mt-1 max-w-xl mx-auto drop-shadow-sm opacity-95">
-              Get full access to AI Design Persona, Project Brief Generator, BOQ Quantities, Cost Estimator & Pro Tools.
+              {user?.userType === 'enterpriser'
+                ? 'Get full access to AI Design Persona, Project Brief Generator, BOQ Quantities, Cost Estimator & Pro Tools.'
+                : 'Get priority order dispatch, express 24-48h fastest delivery, zero shipping fees & exclusive customer perks.'}
             </p>
           </div>
 

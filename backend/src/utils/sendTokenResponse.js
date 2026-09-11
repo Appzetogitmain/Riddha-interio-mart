@@ -100,8 +100,12 @@ const sendTokenResponse = async (user, statusCode, res) => {
         user: {
           id: user._id,
           name: user.fullName || user.name || "",
+          fullName: user.fullName || user.name || "",
           phone: user.phone || "",
           email: user.email,
+          userType: user.userType || "customer",
+          businessDetails: user.businessDetails || {},
+          subscription: user.subscription || { status: 'none', planId: null },
           walletAmount: walletAmount,
           refCode: user.referralCode || "",
           status: user.isBlocked ? "Blocked" : (user.status || "Active"),

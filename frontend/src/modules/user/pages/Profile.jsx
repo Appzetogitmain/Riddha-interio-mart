@@ -211,13 +211,15 @@ const Profile = () => {
                 </div>
                 <div>
                   <span className="text-[10px] font-black text-amber-300 uppercase tracking-widest bg-amber-400/10 px-2 py-0.5 rounded-full border border-amber-400/20">
-                    PRO MEMBERSHIP REQUIRED
+                    {user?.userType === 'enterpriser' ? 'PRO MEMBERSHIP REQUIRED • AI FEATURES' : 'PRO MEMBERSHIP REQUIRED • FASTEST DELIVERY'}
                   </span>
                   <h3 className="text-base md:text-lg font-black tracking-tight text-white mt-1">
-                    Unlock All Riddha AI Interior Tools
+                    {user?.userType === 'enterpriser' ? 'Unlock All Riddha AI Interior Tools' : 'Upgrade to Pro for Express & Fastest Delivery'}
                   </h3>
                   <p className="text-xs text-gray-300 font-medium max-w-md mt-0.5">
-                    Subscribe to Silver (₹1,999), Gold (₹3,999), Platinum (₹6,999) or Diamond (₹11,999) to unlock AI Design Quiz, Cost Estimator, BOQ & Project Tools!
+                    {user?.userType === 'enterpriser'
+                      ? 'Subscribe to Silver (₹1,999), Gold (₹3,999), Platinum (₹6,999) or Diamond (₹11,999) to unlock AI Design Quiz, Cost Estimator, BOQ & Project Tools!'
+                      : 'Subscribe to Silver (₹1,999), Gold (₹3,999), Platinum (₹6,999) or Diamond (₹11,999) to get priority order processing, fastest delivery, zero shipping fees & exclusive customer perks!'}
                   </p>
                 </div>
               </div>
@@ -226,7 +228,7 @@ const Profile = () => {
                 onClick={() => setIsSubscriptionModalOpen(true)}
                 className="px-5 py-3 bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 shrink-0"
               >
-                <FiZap className="w-4 h-4" /> Explore Plans & Upgrade 👑
+                <FiZap className="w-4 h-4" /> {user?.userType === 'enterpriser' ? 'Explore Plans & Upgrade 👑' : 'Upgrade for Fastest Delivery 👑'}
               </button>
             </div>
           </div>

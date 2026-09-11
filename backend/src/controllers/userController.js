@@ -12,13 +12,54 @@ exports.registerUser = async (req, res, next) => {
   try {
     const { fullName, email, password, userType, businessDetails, referralCode, termsSignature, termsVersion } = req.body;
 
-    if (await checkEmailExists(email)) {
-      return res.status(400).json({ success: false, error: 'Email already registered' });
+    const normalizedEmail = (email || '').trim().toLowerCase();
+
+    // Check if user already exists in User collection
+    let existingUser = await User.findOne({ email: normalizedEmail });
+
+    if (existingUser) {
+      if (existingUser.isEmailVerified) {
+        return res.status(400).json({ success: false, error: 'Email already registered. Please log in.' });
+      }
+
+      // User exists but is UNVERIFIED — allow re-registration by updating details and issuing new OTP
+      existingUser.fullName = fullName || existingUser.fullName;
+      existingUser.password = password; // Will trigger bcrypt pre-save hash
+      existingUser.userType = userType || 'customer';
+      existingUser.businessDetails = userType === 'enterpriser' ? businessDetails : undefined;
+      existingUser.termsSignature = termsSignature || existingUser.termsSignature;
+      existingUser.termsAgreedAt = termsSignature ? new Date() : existingUser.termsAgreedAt;
+      existingUser.termsVersion = termsVersion || existingUser.termsVersion;
+
+      const otp = existingUser.getVerificationOtp();
+      existingUser.otpLastSentAt = Date.now();
+      await existingUser.save();
+
+      console.log(`\n==========================================`);
+      console.log(`🔑 [DEV OTP] Re-registration OTP for ${existingUser.email}: ${otp}`);
+      console.log(`==========================================\n`);
+
+      try {
+        const emailService = require('../services/emailService');
+        await emailService.queueEmail(existingUser.email, 'Riddha Mart - Verify Your Email', 'otp', { otp });
+      } catch (err) {
+        console.error('Failed to enqueue registration OTP email:', err.message);
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: 'Registration updated. Please verify your email with the new OTP.',
+        email: existingUser.email
+      });
+    }
+
+    if (await checkEmailExists(normalizedEmail)) {
+      return res.status(400).json({ success: false, error: 'Email already registered under another account type.' });
     }
 
     const user = await User.create({ 
       fullName, 
-      email, 
+      email: normalizedEmail, 
       password,
       userType: userType || 'customer',
       businessDetails: userType === 'enterpriser' ? businessDetails : undefined,
@@ -44,6 +85,10 @@ exports.registerUser = async (req, res, next) => {
     const otp = user.getVerificationOtp();
     user.otpLastSentAt = Date.now();
     await user.save({ validateBeforeSave: false });
+
+    console.log(`\n==========================================`);
+    console.log(`🔑 [DEV OTP] Registration OTP for ${user.email}: ${otp}`);
+    console.log(`==========================================\n`);
 
     // Enqueue transactional verification email job
     try {
@@ -81,7 +126,8 @@ exports.loginUser = async (req, res, next) => {
     const { email, password } = req.body;
     if (!email || !password) return res.status(400).json({ success: false, error: 'Please provide email and password' });
 
-    const user = await User.findOne({ email: email.trim() }).select('+password');
+    const normalizedEmail = email.trim().toLowerCase();
+    const user = await User.findOne({ email: normalizedEmail }).select('+password');
     if (!user) {
       return res.status(401).json({ success: false, error: 'this email is not registered first register then login' });
     }
@@ -254,6 +300,10 @@ exports.resendVerificationOtp = async (req, res, next) => {
     user.otpLastSentAt = Date.now();
     await user.save({ validateBeforeSave: false });
 
+    console.log(`\n==========================================`);
+    console.log(`🔑 [DEV OTP] Resend OTP for ${user.email}: ${otp}`);
+    console.log(`==========================================\n`);
+
     // Enqueue Resend Job
     try {
       const emailService = require('../services/emailService');
@@ -288,6 +338,10 @@ exports.forgotPassword = async (req, res, next) => {
     const otp = user.getResetPasswordOtp();
     user.otpLastSentAt = Date.now();
     await user.save({ validateBeforeSave: false });
+
+    console.log(`\n==========================================`);
+    console.log(`🔑 [DEV OTP] Password Reset OTP for ${user.email}: ${otp}`);
+    console.log(`==========================================\n`);
 
     // Enqueue transactional password reset email job
     try {

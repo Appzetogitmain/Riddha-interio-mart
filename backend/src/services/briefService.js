@@ -1,6 +1,7 @@
 const openaiClient = require('./openaiService');
 const OpenAIErrorHandler = require('../utils/openaiErrorHandler');
 const OpenAIUsageTracker = require('./openaiUsageTracker');
+const { appendAdditionalInstructions } = require('../utils/promptHelper');
 
 class BriefService {
   /**
@@ -72,8 +73,8 @@ class BriefService {
   /**
    * Generate complete Project Brief (8 sections)
    */
-  async generateFullBrief(formAnswers, userId = null) {
-    const ctx = this.extractFormContext(formAnswers);
+  async generateFullBrief(formAnswers, userId = null, additionalInstructions = '') {
+    const ctx = { ...this.extractFormContext(formAnswers), additionalInstructions };
 
     const sections = {
       executiveSummary: '',
@@ -149,8 +150,10 @@ Create a compelling, professional Executive Summary (2-3 sentences) for a client
 
 Write directly in clear, inspiring, professional prose as an introduction to the design project. Do not include markdown codeblocks or headings.`;
 
+    const finalPrompt = appendAdditionalInstructions(prompt, ctx.additionalInstructions);
+
     try {
-      const response = await openaiClient.generateText(prompt, {
+      const response = await openaiClient.generateText(finalPrompt, {
         modelType: 'general',
         expectJson: false,
         temperature: 0.8,
@@ -197,8 +200,10 @@ Cover:
 
 Write professionally in plain paragraph form.`;
 
+    const finalPrompt = appendAdditionalInstructions(prompt, ctx.additionalInstructions);
+
     try {
-      const response = await openaiClient.generateText(prompt, {
+      const response = await openaiClient.generateText(finalPrompt, {
         modelType: 'general',
         expectJson: false,
         temperature: 0.8,
@@ -258,8 +263,10 @@ Return ONLY a valid JSON object matching this schema:
   }
 }`;
 
+    const finalPrompt = appendAdditionalInstructions(prompt, ctx.additionalInstructions);
+
     try {
-      const response = await openaiClient.generateText(prompt, {
+      const response = await openaiClient.generateText(finalPrompt, {
         modelType: 'general',
         expectJson: true,
         temperature: 0.7,
@@ -307,8 +314,10 @@ Return ONLY a valid JSON object:
   "timeline": ["Requirement 1", "Requirement 2"]
 }`;
 
+    const finalPrompt = appendAdditionalInstructions(prompt, ctx.additionalInstructions);
+
     try {
-      const response = await openaiClient.generateText(prompt, {
+      const response = await openaiClient.generateText(finalPrompt, {
         modelType: 'general',
         expectJson: true,
         temperature: 0.7,
@@ -375,8 +384,10 @@ Return ONLY a valid JSON object:
   ]
 }`;
 
+    const finalPrompt = appendAdditionalInstructions(prompt, ctx.additionalInstructions);
+
     try {
-      const response = await openaiClient.generateText(prompt, {
+      const response = await openaiClient.generateText(finalPrompt, {
         modelType: 'general',
         expectJson: true,
         temperature: 0.7,
@@ -424,8 +435,10 @@ Return ONLY a valid JSON object:
   ]
 }`;
 
+    const finalPrompt = appendAdditionalInstructions(prompt, ctx.additionalInstructions);
+
     try {
-      const response = await openaiClient.generateText(prompt, {
+      const response = await openaiClient.generateText(finalPrompt, {
         modelType: 'general',
         expectJson: true,
         temperature: 0.7,
@@ -475,8 +488,10 @@ Return ONLY a valid JSON array of objects:
   }
 ]`;
 
+    const finalPrompt = appendAdditionalInstructions(prompt, ctx.additionalInstructions);
+
     try {
-      const response = await openaiClient.generateText(prompt, {
+      const response = await openaiClient.generateText(finalPrompt, {
         modelType: 'general',
         expectJson: true,
         temperature: 0.7,
@@ -540,8 +555,10 @@ Return ONLY a valid JSON array of objects:
   }
 ]`;
 
+    const finalPrompt = appendAdditionalInstructions(prompt, ctx.additionalInstructions);
+
     try {
-      const response = await openaiClient.generateText(prompt, {
+      const response = await openaiClient.generateText(finalPrompt, {
         modelType: 'general',
         expectJson: true,
         temperature: 0.7,

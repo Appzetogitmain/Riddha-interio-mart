@@ -54,6 +54,7 @@ const MoodBoardGeneratorPage = () => {
   const [selectedRoom, setSelectedRoom] = useState('Living Room');
   const [selectedBudget, setSelectedBudget] = useState('₹ 2 - 5 Lakhs');
   const [selectedSize, setSelectedSize] = useState('1200 - 1800 sq.ft');
+  const [additionalInstructions, setAdditionalInstructions] = useState('');
 
   // Loading animation items check list
   const [loadingCheckIndex, setLoadingCheckIndex] = useState(0);
@@ -107,7 +108,8 @@ const MoodBoardGeneratorPage = () => {
         style: selectedStyle,
         budget: selectedBudget,
         roomSize: selectedSize,
-        preferredColors: selectedColors
+        preferredColors: selectedColors,
+        additionalInstructions
       });
 
       if (res.data && res.data.moodBoard) {
@@ -365,6 +367,18 @@ const MoodBoardGeneratorPage = () => {
                   <option key={s} value={s}>{s}</option>
                 ))}
               </select>
+            </div>
+
+            {/* Additional Instructions */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-700">Additional Instructions for AI <span className="text-slate-400 font-normal">(Optional)</span></label>
+              <textarea
+                rows="2"
+                placeholder="e.g. Include a reading nook, avoid glossy finishes, pet-friendly fabrics..."
+                value={additionalInstructions}
+                onChange={(e) => setAdditionalInstructions(e.target.value)}
+                className="w-full p-3.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 outline-none focus:border-orange-500 shadow-sm resize-none"
+              />
             </div>
 
             <button

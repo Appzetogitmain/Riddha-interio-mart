@@ -56,6 +56,7 @@ const BOQGeneratorPage = () => {
   const [drawingFile, setDrawingFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState('');
   const [extractingDrawing, setExtractingDrawing] = useState(false);
+  const [additionalInstructions, setAdditionalInstructions] = useState('');
 
   // Email State
   const [emailInput, setEmailInput] = useState('');
@@ -179,6 +180,7 @@ const BOQGeneratorPage = () => {
       toast.loading('AI extracting items from drawing...', { id: 'boq-vision-toast' });
       const formData = new FormData();
       formData.append('drawing', drawingFile);
+      if (additionalInstructions.trim()) formData.append('additionalInstructions', additionalInstructions.trim());
 
       const res = await boqService.extractFromDrawing(formData);
       if (res.success && res.data) {
@@ -201,7 +203,7 @@ const BOQGeneratorPage = () => {
 
     try {
       toast.loading('AI generating BOQ from brief...', { id: 'boq-brief-toast' });
-      const res = await boqService.generateFromBrief(selectedBriefId);
+      const res = await boqService.generateFromBrief(selectedBriefId, additionalInstructions.trim());
       if (res.success && res.data) {
         toast.success('BOQ generated from Client Brief!', { id: 'boq-brief-toast' });
         setCurrentBOQ(res.data);
@@ -729,6 +731,17 @@ const BOQGeneratorPage = () => {
                   )}
                 </div>
 
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1 text-xs">Additional Instructions for AI (Optional)</label>
+                  <textarea
+                    rows="2"
+                    placeholder="e.g. Focus on modular office furniture, use premium material specs, exclude flooring items..."
+                    value={additionalInstructions}
+                    onChange={(e) => setAdditionalInstructions(e.target.value)}
+                    className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+                  />
+                </div>
+
                 <div className="flex justify-end">
                   <button
                     type="submit"
@@ -773,6 +786,17 @@ const BOQGeneratorPage = () => {
                         </option>
                       ))}
                     </select>
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">Additional Instructions for AI (Optional)</label>
+                    <textarea
+                      rows="2"
+                      placeholder="e.g. Prioritize budget-friendly items, include a false ceiling line item..."
+                      value={additionalInstructions}
+                      onChange={(e) => setAdditionalInstructions(e.target.value)}
+                      className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+                    />
                   </div>
 
                   <button

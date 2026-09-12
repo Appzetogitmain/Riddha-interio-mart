@@ -52,8 +52,8 @@ export const boqService = {
   },
 
   // Auto-Generate BOQ from Client Brief (Req #8)
-  generateFromBrief: async (briefId) => {
-    const res = await api.post(`/boqs/from-brief/${briefId}`);
+  generateFromBrief: async (briefId, additionalInstructions = '') => {
+    const res = await api.post(`/boqs/from-brief/${briefId}`, { additionalInstructions });
     return res.data;
   },
 

@@ -2,6 +2,7 @@
 const OpenAIErrorHandler = require('../utils/openaiErrorHandler');
 const OpenAIUsageTracker = require('./openaiUsageTracker');
 const AI_PROMPTS = require('../utils/aiPrompts');
+const { appendAdditionalInstructions } = require('../utils/promptHelper');
 
 class ProfileService {
   /**
@@ -10,8 +11,8 @@ class ProfileService {
    * @param {string} [userId]
    */
   async generateProfileNarrative(designProfile, userId = null) {
-    const prompt = AI_PROMPTS.profileNarrative(designProfile);
-    
+    const prompt = appendAdditionalInstructions(AI_PROMPTS.profileNarrative(designProfile), designProfile.additionalInstructions);
+
     try {
       const response = await openaiClient.generateText(prompt, {
         modelType: 'general',
@@ -49,8 +50,8 @@ class ProfileService {
    * @param {string} [userId]
    */
   async generateDesignerPersonality(designProfile, userId = null) {
-    const prompt = AI_PROMPTS.designerPersonality(designProfile);
-    
+    const prompt = appendAdditionalInstructions(AI_PROMPTS.designerPersonality(designProfile), designProfile.additionalInstructions);
+
     try {
       const response = await openaiClient.generateText(prompt, {
         modelType: 'general',

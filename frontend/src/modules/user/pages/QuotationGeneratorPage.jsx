@@ -71,6 +71,7 @@ const QuotationGeneratorPage = () => {
 
   // AI Enhancements State
   const [aiGenerating, setAiGenerating] = useState(false);
+  const [aiAdditionalInstructions, setAiAdditionalInstructions] = useState('');
   const [openingMsg, setOpeningMsg] = useState('');
   const [closingMsg, setClosingMsg] = useState('');
 
@@ -244,7 +245,8 @@ const QuotationGeneratorPage = () => {
         projectName: clientInfo.projectName,
         grandTotal: currentQuote.pricing?.grandTotal || 0,
         items: currentQuote.items || [],
-        type: 'all'
+        type: 'all',
+        additionalInstructions: aiAdditionalInstructions
       });
 
       if (res.success && res.data) {
@@ -831,6 +833,16 @@ const QuotationGeneratorPage = () => {
               </div>
 
               <div className="space-y-4 text-xs">
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Additional Instructions for AI (Optional)</label>
+                  <textarea
+                    rows="2"
+                    placeholder="e.g. Mention the festive discount, keep tone concise, address the client by first name..."
+                    value={aiAdditionalInstructions}
+                    onChange={(e) => setAiAdditionalInstructions(e.target.value)}
+                    className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl"
+                  ></textarea>
+                </div>
                 <div>
                   <label className="block font-bold text-slate-700 mb-1">AI Opening Introduction</label>
                   <textarea

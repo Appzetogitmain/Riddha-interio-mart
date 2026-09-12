@@ -126,7 +126,8 @@ exports.generateBrief = async (req, res, next) => {
     await brief.save();
 
     const userId = req.user ? req.user.id : null;
-    const result = await briefService.generateFullBrief(brief.formAnswers, userId);
+    const { additionalInstructions } = req.body;
+    const result = await briefService.generateFullBrief(brief.formAnswers, userId, additionalInstructions);
 
     brief.briefContent = result.briefContent;
     brief.status = 'finalized';

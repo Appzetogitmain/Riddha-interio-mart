@@ -278,7 +278,8 @@ exports.extractFromDrawing = async (req, res, next) => {
       }
     }
 
-    const { items: extractedItems, detectedSpaceType, roomsIdentified } = await boqService.extractItemsFromDrawing(images, userId);
+    const { additionalInstructions } = req.body;
+    const { items: extractedItems, detectedSpaceType, roomsIdentified } = await boqService.extractItemsFromDrawing(images, userId, additionalInstructions);
     const summary = calculateBOQSummary(extractedItems);
     const analysis = await boqService.analyzeMissingItems(extractedItems, detectedSpaceType || 'Living Room', userId);
     summary.completenessScore = analysis.completenessScore || 85;
@@ -326,11 +327,14 @@ exports.generateFromBrief = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Client Brief not found' });
     }
 
+    const { additionalInstructions } = req.body;
+
     const briefData = {
       roomType: brief.roomType || 'Living Room',
       area: brief.roomDimensions?.totalArea || 400,
       designStyle: brief.designStyle || 'Modern',
-      scope: brief.functionalScope || []
+      scope: brief.functionalScope || [],
+      additionalInstructions
     };
 
     const generatedItems = await boqService.generateBOQFromBrief(briefData, userId);

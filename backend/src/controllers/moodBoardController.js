@@ -2,6 +2,7 @@ const crypto = require('crypto');
 const openaiClient = require('../services/openaiService');
 const OpenAIErrorHandler = require('../utils/openaiErrorHandler');
 const OpenAIUsageTracker = require('../services/openaiUsageTracker');
+const { appendAdditionalInstructions } = require('../utils/promptHelper');
 const Product = require('../models/Product');
 const Category = require('../models/Category');
 
@@ -37,8 +38,8 @@ const roomKeywords = {
 // @access  Public
 exports.generateAiMoodBoard = async (req, res, next) => {
   try {
-    const { roomType = 'Living Room', style = 'Modern Luxury', budget = '₹ 2 - 5 Lakhs', roomSize = '1000 - 1500 sq.ft', preferredColors = [] } = req.body;
-    const cacheKey = getCacheKey(`${roomType}_${style}_${budget}_${roomSize}`, preferredColors.join('-'));
+    const { roomType = 'Living Room', style = 'Modern Luxury', budget = '₹ 2 - 5 Lakhs', roomSize = '1000 - 1500 sq.ft', preferredColors = [], additionalInstructions = '' } = req.body;
+    const cacheKey = getCacheKey(`${roomType}_${style}_${budget}_${roomSize}_${additionalInstructions}`, preferredColors.join('-'));
 
     if (moodBoardCache.has(cacheKey)) {
       console.log(`[AI Mood Board] Cache HIT for key: ${cacheKey}`);
@@ -85,8 +86,10 @@ Provide structured JSON output with:
 
 Output ONLY valid JSON.`;
 
+        const finalPromptText = appendAdditionalInstructions(promptText, additionalInstructions);
+
         const aiResponse = await OpenAIErrorHandler.callWithRetry(() =>
-          openaiClient.generateText(promptText, {
+          openaiClient.generateText(finalPromptText, {
             modelType: 'general',
             expectJson: true,
             temperature: 0.8,
@@ -123,7 +126,10 @@ Output ONLY valid JSON.`;
     // Synthesize a fresh AI interior room concept image via the OpenAI images API
     if (process.env.OPENAI_API_KEY) {
       try {
-        const imageGenPrompt = `A fully furnished, high-resolution interior photography of a ${style} ${roomType} featuring elegant decor, warm lighting, and luxury material finishes.`;
+        const imageGenPrompt = appendAdditionalInstructions(
+          `A fully furnished, high-resolution interior photography of a ${style} ${roomType} featuring elegant decor, warm lighting, and luxury material finishes.`,
+          additionalInstructions
+        );
 
         const imgResult = await openaiClient.generateImage(imageGenPrompt, {
           size: '1024x1024',

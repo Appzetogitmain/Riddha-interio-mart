@@ -405,7 +405,7 @@ const Navbar = () => {
       {isProActive && (
         <div className="hidden md:block bg-white border-b border-gray-100 relative z-40">
           <div className="max-w-[1700px] mx-auto px-6 lg:px-8">
-            <div className="flex items-center gap-x-7 lg:gap-x-10 py-2.5 overflow-x-auto no-scrollbar scroll-smooth lg:justify-center">
+            <div className="flex items-center gap-x-7 lg:gap-x-10 py-2.5 overflow-x-auto no-scrollbar scroll-smooth">
               <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gradient-to-r from-amber-500 to-yellow-600 text-white text-[10px] font-black tracking-wider uppercase shadow-sm shrink-0 mr-2">
                 <LuCrown className="w-3 h-3 text-amber-200" />
                 <span>{user?.subscription?.planName || 'PRO ACTIVE'}</span>

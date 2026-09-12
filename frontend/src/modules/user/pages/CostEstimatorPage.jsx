@@ -99,6 +99,7 @@ const CostEstimatorPage = () => {
   const [materialTier, setMaterialTier] = useState('standard');
   const [timeline, setTimeline] = useState('soon');
   const [additionalServices, setAdditionalServices] = useState(['Professional installation', '3D rendering']);
+  const [additionalInstructions, setAdditionalInstructions] = useState('');
 
   // Modal / Action States
   const [emailInput, setEmailInput] = useState('');
@@ -175,7 +176,8 @@ const CostEstimatorPage = () => {
         scope: selectedScope,
         materialTier,
         timeline,
-        additionalServices
+        additionalServices,
+        additionalInstructions
       });
 
       if (res.success && res.data) {
@@ -269,6 +271,7 @@ const CostEstimatorPage = () => {
                 setAreaInput(400);
                 setSelectedScope(['Furniture Selection', 'Color Scheme & Painting', 'Lighting Design']);
                 setMaterialTier('standard');
+                setAdditionalInstructions('');
                 setCurrentEstimate(null);
               }}
               className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-xs sm:text-sm transition-all border border-white/20 inline-flex items-center gap-2"
@@ -478,6 +481,18 @@ const CostEstimatorPage = () => {
               </div>
 
             </div>
+          </div>
+
+          {/* Additional Instructions for AI */}
+          <div className="pt-4 border-t border-slate-100">
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Additional Instructions for AI (Optional)</label>
+            <textarea
+              rows="2"
+              placeholder="e.g. Prioritize eco-friendly materials, keep contingency under 5%, focus savings on lighting..."
+              value={additionalInstructions}
+              onChange={(e) => setAdditionalInstructions(e.target.value)}
+              className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+            />
           </div>
 
           {/* Submit Calculation Button */}

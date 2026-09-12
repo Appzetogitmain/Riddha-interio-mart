@@ -1,13 +1,14 @@
 const openaiClient = require('./openaiService');
 const OpenAIErrorHandler = require('../utils/openaiErrorHandler');
 const OpenAIUsageTracker = require('./openaiUsageTracker');
+const { appendAdditionalInstructions } = require('../utils/promptHelper');
 
 class QuotationService {
   /**
    * 1. Professional Opening Introduction
    */
   async generateOpeningMessage(data = {}, userId = null) {
-    const { clientName = 'Client', projectName = 'Interior Design Project', grandTotal = 0 } = data;
+    const { clientName = 'Client', projectName = 'Interior Design Project', grandTotal = 0, additionalInstructions = '' } = data;
 
     const prompt = `Generate a warm, professional opening introduction for an interior design quotation:
 Client Name: ${clientName}
@@ -21,8 +22,10 @@ Create a warm, professional 2-3 sentence introduction that:
 
 Return ONLY plain text text string (no quotes around output).`;
 
+    const finalPrompt = appendAdditionalInstructions(prompt, additionalInstructions);
+
     try {
-      const response = await openaiClient.generateText(prompt, {
+      const response = await openaiClient.generateText(finalPrompt, {
         modelType: 'general',
         expectJson: false,
         temperature: 0.8,
@@ -56,7 +59,7 @@ Return ONLY plain text text string (no quotes around output).`;
   /**
    * 2. Payment Terms Recommendation
    */
-  async suggestPaymentTerms(grandTotal = 0, timeline = '30 days', userId = null) {
+  async suggestPaymentTerms(grandTotal = 0, timeline = '30 days', userId = null, additionalInstructions = '') {
     const prompt = `Suggest optimal payment milestone terms for an interior project costing Rs. ${grandTotal} over ${timeline}:
 
 Return ONLY a valid JSON object:
@@ -70,8 +73,10 @@ Return ONLY a valid JSON object:
   ]
 }`;
 
+    const finalPrompt = appendAdditionalInstructions(prompt, additionalInstructions);
+
     try {
-      const response = await openaiClient.generateText(prompt, {
+      const response = await openaiClient.generateText(finalPrompt, {
         modelType: 'general',
         expectJson: true,
         temperature: 0.7,
@@ -119,7 +124,7 @@ Return ONLY a valid JSON object:
    * 3. Delivery Terms Language Generator
    */
   async generateDeliveryTerms(data = {}, userId = null) {
-    const { mode = 'site-delivery', itemCount = 5, timeline = '2-3 weeks' } = data;
+    const { mode = 'site-delivery', itemCount = 5, timeline = '2-3 weeks', additionalInstructions = '' } = data;
 
     const prompt = `Generate professional delivery & installation terms:
 Delivery Mode: ${mode}
@@ -131,8 +136,10 @@ Create a clear, professional 3-bullet point delivery overview explaining transit
 Return ONLY a valid JSON array of 3 strings:
 ["Term 1", "Term 2", "Term 3"]`;
 
+    const finalPrompt = appendAdditionalInstructions(prompt, additionalInstructions);
+
     try {
-      const response = await openaiClient.generateText(prompt, {
+      const response = await openaiClient.generateText(finalPrompt, {
         modelType: 'general',
         expectJson: true,
         temperature: 0.7,
@@ -172,7 +179,7 @@ Return ONLY a valid JSON array of 3 strings:
   /**
    * 4. Executive Quotation Summary
    */
-  async summarizeQuotation(items = [], grandTotal = 0, userId = null) {
+  async summarizeQuotation(items = [], grandTotal = 0, userId = null, additionalInstructions = '') {
     const prompt = `Summarize this interior design quotation totaling Rs. ${grandTotal}:
 Items: ${JSON.stringify(items.map(i => ({ name: i.description, cost: i.totalAmount })))}
 
@@ -184,8 +191,10 @@ Return ONLY a valid JSON object:
   "nextSteps": "1-sentence call to action"
 }`;
 
+    const finalPrompt = appendAdditionalInstructions(prompt, additionalInstructions);
+
     try {
-      const response = await openaiClient.generateText(prompt, {
+      const response = await openaiClient.generateText(finalPrompt, {
         modelType: 'general',
         expectJson: true,
         temperature: 0.7,
@@ -234,7 +243,7 @@ Return ONLY a valid JSON object:
    * 5. Personalized Closing Statement
    */
   async generateClosingMessage(data = {}, userId = null) {
-    const { clientName = 'Client', contactPerson = 'Riddha Team' } = data;
+    const { clientName = 'Client', contactPerson = 'Riddha Team', additionalInstructions = '' } = data;
 
     const prompt = `Generate a warm, professional closing message for an interior quotation:
 Client Name: ${clientName}
@@ -242,8 +251,10 @@ Contact Person: ${contactPerson}
 
 Return ONLY plain text string.`;
 
+    const finalPrompt = appendAdditionalInstructions(prompt, additionalInstructions);
+
     try {
-      const response = await openaiClient.generateText(prompt, {
+      const response = await openaiClient.generateText(finalPrompt, {
         modelType: 'general',
         expectJson: false,
         temperature: 0.8,

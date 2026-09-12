@@ -143,6 +143,7 @@ const DesignerQuizPage = () => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(-1); // -1 is intro screen
   const [answers, setAnswers] = useState({});
+  const [additionalInstructions, setAdditionalInstructions] = useState('');
   const [loading, setLoading] = useState(false);
   const [loadingStepIndex, setLoadingStepIndex] = useState(0);
 
@@ -200,7 +201,8 @@ const DesignerQuizPage = () => {
       });
 
       const response = await api.post(`/quiz/${sessId}/complete`, {
-        answers: formattedAnswers
+        answers: formattedAnswers,
+        additionalInstructions
       });
 
       if (response.data?.success) {
@@ -413,6 +415,21 @@ const DesignerQuizPage = () => {
                 );
               })}
             </div>
+
+            {currentStep === QUESTIONS.length - 1 && (
+              <div className="mt-6">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+                  Additional Instructions for AI (Optional)
+                </label>
+                <textarea
+                  rows="3"
+                  placeholder="e.g. I have a small apartment, prefer pet-friendly fabrics, avoid dark colors..."
+                  value={additionalInstructions}
+                  onChange={(e) => setAdditionalInstructions(e.target.value)}
+                  className="w-full p-4 bg-white border border-slate-200 rounded-2xl text-sm text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#189D91]/20 resize-none"
+                />
+              </div>
+            )}
           </motion.div>
         </AnimatePresence>
       </div>

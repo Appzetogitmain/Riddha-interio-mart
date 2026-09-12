@@ -625,14 +625,17 @@ exports.getProjectHealth = async (req, res, next) => {
 exports.generateReport = async (req, res, next) => {
   try {
     const { projectId } = req.params;
-    const { reportType = 'status' } = req.body;
+    const { reportType = 'status', additionalInstructions } = req.body;
 
     const project = await Project.findById(projectId);
     if (!project) {
       return res.status(404).json({ success: false, message: 'Project not found' });
     }
 
-    const summaryContent = await projectService.generateReportSummary(project, req.user?._id || project.userId);
+    const summaryContent = await projectService.generateReportSummary(
+      { ...(project.toObject ? project.toObject() : project), additionalInstructions },
+      req.user?._id || project.userId
+    );
 
     const report = await ProjectReport.create({
       projectId: project._id,

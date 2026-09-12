@@ -45,7 +45,7 @@ const mapBudget = (b) => {
 exports.submitQuiz = async (req, res) => {
   try {
     const { sessionId } = req.params;
-    const { answers } = req.body;
+    const { answers, additionalInstructions } = req.body;
     const userId = req.user ? req.user._id : null;
 
     if (!sessionId) {
@@ -73,7 +73,8 @@ exports.submitQuiz = async (req, res) => {
       budget,
       lighting,
       boldness,
-      materials
+      materials,
+      additionalInstructions
     };
 
     // 2. Fetch products to perform personalization matching

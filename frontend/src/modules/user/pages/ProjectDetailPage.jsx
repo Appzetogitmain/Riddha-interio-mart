@@ -26,6 +26,7 @@ const ProjectDetailPage = () => {
 
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportType, setReportType] = useState('status');
+  const [reportAdditionalInstructions, setReportAdditionalInstructions] = useState('');
   const [generatedReport, setGeneratedReport] = useState(null);
   const [emailInput, setEmailInput] = useState('');
   const [sendingEmail, setSendingEmail] = useState(false);
@@ -113,10 +114,10 @@ const ProjectDetailPage = () => {
     }
   };
 
-  const handleGenerateReport = async () => {
+  const handleGenerateReport = async (additionalInstructions = '') => {
     try {
       toast.loading('Gemini AI generating report...', { id: 'report-toast' });
-      const res = await projectService.generateReport(projectId, reportType);
+      const res = await projectService.generateReport(projectId, reportType, additionalInstructions);
       if (res.success) {
         toast.success('Report generated successfully!', { id: 'report-toast' });
         setGeneratedReport(res.data);
@@ -570,12 +571,25 @@ const ProjectDetailPage = () => {
                 <h3 className="text-lg font-bold text-slate-900 font-display">Generate Project Report (PDF / Email)</h3>
                 <p className="text-xs text-slate-500">Create Gemini AI status summaries for client handover or progress updates.</p>
               </div>
-              <button
-                onClick={handleGenerateReport}
-                className="px-5 py-2.5 bg-deep-espresso hover:bg-slate-800 text-white rounded-xl text-xs font-semibold shadow-md inline-flex items-center gap-2"
-              >
-                <LuSparkles className="text-amber-300" /> Generate AI Report
-              </button>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold text-slate-700">Additional Instructions for AI (Optional)</label>
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                <textarea
+                  rows="1"
+                  placeholder="e.g. Emphasize budget savings, highlight upcoming installation milestone..."
+                  value={reportAdditionalInstructions}
+                  onChange={(e) => setReportAdditionalInstructions(e.target.value)}
+                  className="w-full sm:flex-1 px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500/20 resize-none"
+                />
+                <button
+                  onClick={() => handleGenerateReport(reportAdditionalInstructions)}
+                  className="px-5 py-2.5 bg-deep-espresso hover:bg-slate-800 text-white rounded-xl text-xs font-semibold shadow-md inline-flex items-center gap-2 shrink-0"
+                >
+                  <LuSparkles className="text-amber-300" /> Generate AI Report
+                </button>
+              </div>
             </div>
 
             {generatedReport && (

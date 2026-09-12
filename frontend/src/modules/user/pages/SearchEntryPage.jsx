@@ -73,51 +73,64 @@ const SearchEntryPage = () => {
   // AI Image Search Logic
   const [aiData, setAiData] = useState(null);
   const [activeLookGroup, setActiveLookGroup] = useState('all');
+  const [scannedFile, setScannedFile] = useState(null);
+  const [imageSearchInstructions, setImageSearchInstructions] = useState('');
   const imageSearchCacheRef = React.useRef(new Map());
+
+  const runImageSearch = async (file, additionalInstructions = '') => {
+    const fileCacheKey = `${file.name}_${file.size}_${file.lastModified}_${additionalInstructions}`;
+
+    if (imageSearchCacheRef.current.has(fileCacheKey)) {
+      const cachedRes = imageSearchCacheRef.current.get(fileCacheKey);
+      setAiData(cachedRes);
+      setQuery(cachedRes.aiAnalysis?.primaryItem || 'AI Visual Match');
+      return;
+    }
+
+    setIsScanning(true);
+    setAiData(null);
+    setActiveLookGroup('all');
+
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      if (additionalInstructions.trim()) formData.append('additionalInstructions', additionalInstructions.trim());
+
+      const res = await api.post('/products/ai-image-search', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      if (res.data.success) {
+        imageSearchCacheRef.current.set(fileCacheKey, res.data);
+        setAiData(res.data);
+        setQuery(res.data.aiAnalysis?.primaryItem || 'AI Visual Match');
+      }
+    } catch (err) {
+      console.error('AI Image search failed:', err);
+    } finally {
+      setIsScanning(false);
+    }
+  };
 
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    const fileCacheKey = `${file.name}_${file.size}_${file.lastModified}`;
+    setScannedFile(file);
+    setImageSearchInstructions('');
 
     const reader = new FileReader();
-    reader.onload = async (event) => {
-      const dataUrl = event.target.result;
-      setScannedImage(dataUrl);
-
-      // Check client-side cache
-      if (imageSearchCacheRef.current.has(fileCacheKey)) {
-        const cachedRes = imageSearchCacheRef.current.get(fileCacheKey);
-        setAiData(cachedRes);
-        setQuery(cachedRes.aiAnalysis?.primaryItem || 'AI Visual Match');
-        return;
-      }
-
-      setIsScanning(true);
-      setAiData(null);
-      setActiveLookGroup('all');
-
-      try {
-        const formData = new FormData();
-        formData.append('image', file);
-
-        const res = await api.post('/products/ai-image-search', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
-
-        if (res.data.success) {
-          imageSearchCacheRef.current.set(fileCacheKey, res.data);
-          setAiData(res.data);
-          setQuery(res.data.aiAnalysis?.primaryItem || 'AI Visual Match');
-        }
-      } catch (err) {
-        console.error('AI Image search failed:', err);
-      } finally {
-        setIsScanning(false);
-      }
+    reader.onload = (event) => {
+      setScannedImage(event.target.result);
     };
     reader.readAsDataURL(file);
+
+    runImageSearch(file, '');
+  };
+
+  const handleRefineImageSearch = () => {
+    if (!scannedFile) return;
+    runImageSearch(scannedFile, imageSearchInstructions);
   };
 
   // Debounced Search Logic
@@ -339,6 +352,25 @@ const SearchEntryPage = () => {
                     )}
                   </div>
                 </div>
+              </div>
+
+              {/* Refine AI Search with Additional Instructions */}
+              <div className="mt-4 relative z-10 flex items-center gap-2">
+                <input
+                  type="text"
+                  value={imageSearchInstructions}
+                  onChange={(e) => setImageSearchInstructions(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleRefineImageSearch()}
+                  placeholder="Add instructions e.g. focus on the rug, not the sofa..."
+                  className="flex-1 min-w-0 px-3 py-2 rounded-xl bg-white/10 border border-white/20 text-white text-xs placeholder:text-teal-100/60 focus:outline-none focus:border-white/40"
+                />
+                <button
+                  onClick={handleRefineImageSearch}
+                  disabled={isScanning}
+                  className="px-3 py-2 rounded-xl bg-white/20 hover:bg-white/30 text-white text-xs font-bold shrink-0 transition-colors disabled:opacity-50"
+                >
+                  Refine
+                </button>
               </div>
             </div>
 

@@ -34,6 +34,7 @@ const AiRoomVisualizerPage = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [selectedRoom, setSelectedRoom] = useState('Living Room');
   const [selectedStyle, setSelectedStyle] = useState('Modern Luxury');
+  const [additionalInstructions, setAdditionalInstructions] = useState('');
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [visualizerResult, setVisualizerResult] = useState(null);
@@ -105,6 +106,7 @@ const AiRoomVisualizerPage = () => {
       formData.append('image', selectedFile);
       formData.append('roomType', selectedRoom);
       formData.append('style', selectedStyle);
+      if (additionalInstructions.trim()) formData.append('additionalInstructions', additionalInstructions.trim());
 
       const res = await api.post('/products/ai-room-visualize', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
@@ -365,6 +367,20 @@ const AiRoomVisualizerPage = () => {
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* Additional Instructions */}
+          <div className="space-y-2">
+            <span className="text-[11px] font-black uppercase tracking-[0.2em] text-[#127F75]">
+              Additional Instructions (Optional)
+            </span>
+            <textarea
+              rows="2"
+              placeholder="e.g. Keep the window wall as-is, add a reading corner, use walnut wood tones..."
+              value={additionalInstructions}
+              onChange={(e) => setAdditionalInstructions(e.target.value)}
+              className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-2xl text-xs font-semibold text-slate-700 outline-none focus:border-[#189D91] resize-none"
+            />
           </div>
 
           {/* Generate Button */}

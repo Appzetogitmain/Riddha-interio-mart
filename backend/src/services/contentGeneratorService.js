@@ -1,6 +1,7 @@
 ﻿const openaiClient = require('./openaiService');
 const OpenAIErrorHandler = require('../utils/openaiErrorHandler');
 const OpenAIUsageTracker = require('./openaiUsageTracker');
+const { appendAdditionalInstructions } = require('../utils/promptHelper');
 
 class ContentGeneratorService {
 
@@ -26,8 +27,10 @@ Generate JSON response:
 Return strictly valid JSON.
 `;
 
+    const finalPrompt = appendAdditionalInstructions(prompt, data.additionalInstructions);
+
     try {
-      const response = await openaiClient.generateText(prompt, {
+      const response = await openaiClient.generateText(finalPrompt, {
         modelType: 'general',
         expectJson: true,
         temperature: 0.8,
@@ -90,8 +93,10 @@ Generate JSON response:
 Return strictly valid JSON.
 `;
 
+    const finalPrompt = appendAdditionalInstructions(prompt, data.additionalInstructions);
+
     try {
-      const response = await openaiClient.generateText(prompt, {
+      const response = await openaiClient.generateText(finalPrompt, {
         modelType: 'general',
         expectJson: true,
         temperature: 0.8,
@@ -150,8 +155,10 @@ Return JSON:
 Return strictly valid JSON.
 `;
 
+    const finalPrompt = appendAdditionalInstructions(prompt, data.additionalInstructions);
+
     try {
-      const response = await openaiClient.generateText(prompt, {
+      const response = await openaiClient.generateText(finalPrompt, {
         modelType: 'general',
         expectJson: true,
         temperature: 0.7,
@@ -204,8 +211,10 @@ Generate JSON:
 Return strictly valid JSON.
 `;
 
+    const finalPrompt = appendAdditionalInstructions(prompt, data.additionalInstructions);
+
     try {
-      const response = await openaiClient.generateText(prompt, {
+      const response = await openaiClient.generateText(finalPrompt, {
         modelType: 'general',
         expectJson: true,
         temperature: 0.7,
@@ -258,8 +267,10 @@ Generate JSON:
 Return strictly valid JSON.
 `;
 
+    const finalPrompt = appendAdditionalInstructions(prompt, data.additionalInstructions);
+
     try {
-      const response = await openaiClient.generateText(prompt, {
+      const response = await openaiClient.generateText(finalPrompt, {
         modelType: 'general',
         expectJson: true,
         temperature: 0.8,
@@ -316,8 +327,10 @@ Generate JSON:
 Return strictly valid JSON.
 `;
 
+    const finalPrompt = appendAdditionalInstructions(prompt, data.additionalInstructions);
+
     try {
-      const response = await openaiClient.generateText(prompt, {
+      const response = await openaiClient.generateText(finalPrompt, {
         modelType: 'general',
         expectJson: true,
         temperature: 0.8,
@@ -375,8 +388,10 @@ Generate JSON:
 Return strictly valid JSON.
 `;
 
+    const finalPrompt = appendAdditionalInstructions(prompt, data.additionalInstructions);
+
     try {
-      const response = await openaiClient.generateText(prompt, {
+      const response = await openaiClient.generateText(finalPrompt, {
         modelType: 'general',
         expectJson: true,
         temperature: 0.8,
@@ -437,8 +452,10 @@ Generate JSON:
 Return strictly valid JSON.
 `;
 
+    const finalPrompt = appendAdditionalInstructions(prompt, data.additionalInstructions);
+
     try {
-      const response = await openaiClient.generateText(prompt, {
+      const response = await openaiClient.generateText(finalPrompt, {
         modelType: 'general',
         expectJson: true,
         temperature: 0.8,

@@ -20,7 +20,8 @@ exports.createEstimate = async (req, res, next) => {
       timeline = 'soon',
       additionalServices = [],
       projectId,
-      clientEmail
+      clientEmail,
+      additionalInstructions
     } = req.body;
 
     // Calculate itemized costs
@@ -50,11 +51,11 @@ exports.createEstimate = async (req, res, next) => {
       timelineImpact,
       riskAssessment
     ] = await Promise.all([
-      estimatorService.analyzeCostBreakdown({ roomType, area, materialTier, costBreakdown: calculatedCosts }, userId),
-      estimatorService.suggestOptimizations({ roomType, area, materialTier, costBreakdown: calculatedCosts }, userId),
-      estimatorService.compareTiers(tierCompTotals.economy, tierCompTotals.standard, tierCompTotals.premium, roomType, area, userId),
-      estimatorService.analyzeTimelineImpact(timeline, calculatedCosts.timelineAdjustment, calculatedCosts.grandTotal, userId),
-      estimatorService.assessRisksAndContingency({ roomType, scope, costBreakdown: calculatedCosts }, userId)
+      estimatorService.analyzeCostBreakdown({ roomType, area, materialTier, costBreakdown: calculatedCosts, additionalInstructions }, userId),
+      estimatorService.suggestOptimizations({ roomType, area, materialTier, costBreakdown: calculatedCosts, additionalInstructions }, userId),
+      estimatorService.compareTiers(tierCompTotals.economy, tierCompTotals.standard, tierCompTotals.premium, roomType, area, userId, additionalInstructions),
+      estimatorService.analyzeTimelineImpact(timeline, calculatedCosts.timelineAdjustment, calculatedCosts.grandTotal, userId, additionalInstructions),
+      estimatorService.assessRisksAndContingency({ roomType, scope, costBreakdown: calculatedCosts, additionalInstructions }, userId)
     ]);
 
     const estimate = await CostEstimate.create({

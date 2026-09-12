@@ -50,8 +50,8 @@ export const projectService = {
   },
 
   // Generate project report
-  generateReport: async (projectId, reportType = 'status') => {
-    const res = await api.post(`/projects/${projectId}/report`, { reportType });
+  generateReport: async (projectId, reportType = 'status', additionalInstructions = '') => {
+    const res = await api.post(`/projects/${projectId}/report`, { reportType, additionalInstructions });
     return res.data;
   },
 

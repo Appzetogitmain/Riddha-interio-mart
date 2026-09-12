@@ -1,13 +1,14 @@
 const openaiClient = require('./openaiService');
 const OpenAIErrorHandler = require('../utils/openaiErrorHandler');
 const OpenAIUsageTracker = require('./openaiUsageTracker');
+const { appendAdditionalInstructions } = require('../utils/promptHelper');
 
 class EstimatorService {
   /**
    * 1. Cost Breakdown Analysis
    */
   async analyzeCostBreakdown(estimateData, userId = null) {
-    const { roomType, area, materialTier, costBreakdown } = estimateData;
+    const { roomType, area, materialTier, costBreakdown, additionalInstructions } = estimateData;
     const { grandTotal, furniture, flooring, lighting, decor, paint, labor, contingency } = costBreakdown || {};
 
     const prompt = `Analyze this interior design cost breakdown:
@@ -29,8 +30,10 @@ Generate an insightful 2-paragraph analysis:
 1. Assessment of budget allocation balance across categories.
 2. Value-for-money assessment and strategic investment recommendation.`;
 
+    const finalPrompt = appendAdditionalInstructions(prompt, additionalInstructions);
+
     try {
-      const response = await openaiClient.generateText(prompt, {
+      const response = await openaiClient.generateText(finalPrompt, {
         modelType: 'general',
         expectJson: false,
         temperature: 0.7,
@@ -64,7 +67,7 @@ Generate an insightful 2-paragraph analysis:
    * 2. Budget Optimization Suggestions (JSON array)
    */
   async suggestOptimizations(estimateData, userId = null) {
-    const { roomType, area, materialTier, costBreakdown } = estimateData;
+    const { roomType, area, materialTier, costBreakdown, additionalInstructions } = estimateData;
     const { grandTotal, furniture, flooring, lighting, labor } = costBreakdown || {};
 
     const prompt = `Suggest cost optimizations for this interior design estimate:
@@ -78,8 +81,10 @@ Return a valid JSON array of 3-4 specific optimization objects:
   { "suggestion": "Clear actionable advice", "savings": 15000, "impact": "low|medium|high" }
 ]`;
 
+    const finalPrompt = appendAdditionalInstructions(prompt, additionalInstructions);
+
     try {
-      const response = await openaiClient.generateText(prompt, {
+      const response = await openaiClient.generateText(finalPrompt, {
         modelType: 'general',
         expectJson: true,
         temperature: 0.7,
@@ -119,7 +124,7 @@ Return a valid JSON array of 3-4 specific optimization objects:
   /**
    * 3. Tier Comparison Analysis
    */
-  async compareTiers(economyData, standardData, premiumData, roomType, area, userId = null) {
+  async compareTiers(economyData, standardData, premiumData, roomType, area, userId = null, additionalInstructions = '') {
     const prompt = `Compare interior design cost tiers for a ${area} sq ft ${roomType}:
 
 Economy Tier Total: ₹${economyData.grandTotal.toLocaleString()} (₹${economyData.costPerSqFt}/sq ft)
@@ -128,8 +133,10 @@ Premium Tier Total: ₹${premiumData.grandTotal.toLocaleString()} (₹${premiumD
 
 Write a concise comparison narrative highlighting key material differences, value gains between tiers, and a recommendation based on space utilization.`;
 
+    const finalPrompt = appendAdditionalInstructions(prompt, additionalInstructions);
+
     try {
-      const response = await openaiClient.generateText(prompt, {
+      const response = await openaiClient.generateText(finalPrompt, {
         modelType: 'general',
         expectJson: false,
         temperature: 0.7,
@@ -162,7 +169,7 @@ Write a concise comparison narrative highlighting key material differences, valu
   /**
    * 4. Timeline vs Cost Impact Analysis
    */
-  async analyzeTimelineImpact(timeline, timelineAdjustment, grandTotal, userId = null) {
+  async analyzeTimelineImpact(timeline, timelineAdjustment, grandTotal, userId = null, additionalInstructions = '') {
     const prompt = `Analyze timeline impact on this interior project cost:
 
 Selected Timeline: ${timeline}
@@ -171,8 +178,10 @@ Total Estimate: ₹${grandTotal.toLocaleString()}
 
 Write a 2-sentence trade-off analysis explaining how the project timeline affects vendor lead times, labor costs, and overall savings.`;
 
+    const finalPrompt = appendAdditionalInstructions(prompt, additionalInstructions);
+
     try {
-      const response = await openaiClient.generateText(prompt, {
+      const response = await openaiClient.generateText(finalPrompt, {
         modelType: 'general',
         expectJson: false,
         temperature: 0.7,
@@ -206,7 +215,7 @@ Write a 2-sentence trade-off analysis explaining how the project timeline affect
    * 5. Risk & Contingency Assessment
    */
   async assessRisksAndContingency(estimateData, userId = null) {
-    const { roomType, scope, costBreakdown } = estimateData;
+    const { roomType, scope, costBreakdown, additionalInstructions } = estimateData;
     const contingency = costBreakdown?.contingency || 0;
 
     const prompt = `Assess contingency and project risk for an interior project:
@@ -217,8 +226,10 @@ Allocated Contingency: ₹${contingency.toLocaleString()} (10%)
 
 Provide 3 bulleted risk factors (unforeseen structural repairs, material lead time fluctuation, custom fabrication variations) and how to manage the contingency buffer.`;
 
+    const finalPrompt = appendAdditionalInstructions(prompt, additionalInstructions);
+
     try {
-      const response = await openaiClient.generateText(prompt, {
+      const response = await openaiClient.generateText(finalPrompt, {
         modelType: 'general',
         expectJson: false,
         temperature: 0.7,

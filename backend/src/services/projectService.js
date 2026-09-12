@@ -1,5 +1,6 @@
 const openaiClient = require('./openaiService');
 const OpenAIErrorHandler = require('../utils/openaiErrorHandler');
+const { appendAdditionalInstructions } = require('../utils/promptHelper');
 const OpenAIUsageTracker = require('./openaiUsageTracker');
 
 class ProjectService {
@@ -212,7 +213,7 @@ Respond in valid JSON format:
    * 5. Generate Project Report Summary
    */
   async generateReportSummary(projectData, userId = null) {
-    const { projectName, clientName, completionPercentage, overallStatus, budget, phases, deliverables } = projectData;
+    const { projectName, clientName, completionPercentage, overallStatus, budget, phases, deliverables, additionalInstructions } = projectData;
     const spent = budget?.categories?.reduce((acc, cat) => acc + (cat.spent || 0), 0) || 0;
     const totalBudget = budget?.total || 100000;
 
@@ -228,8 +229,10 @@ Deliverables Completed: ${deliverables?.filter(d => d.status === 'completed').le
 
 Write a structured 3-paragraph executive summary detailing progress, key milestones reached, financial tracking, and outlook for project handover.`;
 
+    const finalPrompt = appendAdditionalInstructions(prompt, additionalInstructions);
+
     try {
-      const response = await openaiClient.generateText(prompt, {
+      const response = await openaiClient.generateText(finalPrompt, {
         modelType: 'general',
         expectJson: false,
         temperature: 0.7,

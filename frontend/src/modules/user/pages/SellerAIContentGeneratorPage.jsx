@@ -35,6 +35,7 @@ const SellerAIContentGeneratorPage = () => {
   const [tone, setTone] = useState('luxury');
   const [length, setLength] = useState('medium');
   const [targetAudience, setTargetAudience] = useState('Modern homeowners & villa luxury interiors');
+  const [additionalInstructions, setAdditionalInstructions] = useState('');
 
   // Output Generated Content
   const [generatedOutput, setGeneratedOutput] = useState(null);
@@ -87,7 +88,8 @@ const SellerAIContentGeneratorPage = () => {
         contentType: selectedType === 'ab_test' ? 'description' : selectedType,
         tone,
         length,
-        generateVariants: selectedType === 'ab_test'
+        generateVariants: selectedType === 'ab_test',
+        additionalInstructions
       });
 
       if (res.success && res.data) {
@@ -266,6 +268,17 @@ const SellerAIContentGeneratorPage = () => {
                       type="text"
                       value={targetAudience}
                       onChange={(e) => setTargetAudience(e.target.value)}
+                      className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">Additional Instructions for AI (Optional)</label>
+                    <textarea
+                      rows="2"
+                      placeholder="e.g. Emphasize the 5-year warranty, avoid mentioning price, write in a playful tone..."
+                      value={additionalInstructions}
+                      onChange={(e) => setAdditionalInstructions(e.target.value)}
                       className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl"
                     />
                   </div>

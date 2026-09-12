@@ -326,10 +326,10 @@ exports.loadFromBOQ = async (req, res, next) => {
 // 8. Gemini AI Enhancements
 exports.generateAIEnhancements = async (req, res, next) => {
   try {
-    const { clientName, projectName, grandTotal, items = [], type = 'all' } = req.body;
+    const { clientName, projectName, grandTotal, items = [], type = 'all', additionalInstructions } = req.body;
     const userId = req.user._id;
 
-    const data = { clientName, projectName, grandTotal };
+    const data = { clientName, projectName, grandTotal, additionalInstructions };
 
     let openingMessage = '';
     let paymentSuggestions = null;
@@ -341,13 +341,13 @@ exports.generateAIEnhancements = async (req, res, next) => {
       openingMessage = await quotationService.generateOpeningMessage(data, userId);
     }
     if (type === 'payment' || type === 'all') {
-      paymentSuggestions = await quotationService.suggestPaymentTerms(grandTotal, '30 days', userId);
+      paymentSuggestions = await quotationService.suggestPaymentTerms(grandTotal, '30 days', userId, additionalInstructions);
     }
     if (type === 'delivery' || type === 'all') {
-      deliveryTerms = await quotationService.generateDeliveryTerms({ itemCount: items.length }, userId);
+      deliveryTerms = await quotationService.generateDeliveryTerms({ itemCount: items.length, additionalInstructions }, userId);
     }
     if (type === 'summary' || type === 'all') {
-      summaryData = await quotationService.summarizeQuotation(items, grandTotal, userId);
+      summaryData = await quotationService.summarizeQuotation(items, grandTotal, userId, additionalInstructions);
     }
     if (type === 'closing' || type === 'all') {
       closingMessage = await quotationService.generateClosingMessage(data, userId);

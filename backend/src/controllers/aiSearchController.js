@@ -2,6 +2,7 @@ const crypto = require('crypto');
 const openaiClient = require('../services/openaiService');
 const OpenAIErrorHandler = require('../utils/openaiErrorHandler');
 const OpenAIUsageTracker = require('../services/openaiUsageTracker');
+const { appendAdditionalInstructions } = require('../utils/promptHelper');
 const Product = require('../models/Product');
 const Category = require('../models/Category');
 const Brand = require('../models/Brand');
@@ -11,8 +12,8 @@ const Brand = require('../models/Brand');
 const aiAnalysisCache = new Map();
 const MAX_CACHE_SIZE = 500;
 
-const getCacheKey = (buffer) => {
-  return crypto.createHash('sha256').update(buffer).digest('hex');
+const getCacheKey = (buffer, additionalInstructions = '') => {
+  return `${crypto.createHash('sha256').update(buffer).digest('hex')}_${additionalInstructions}`;
 };
 
 // @desc    Perform AI Image Recognition & Visual Search via OpenAI vision
@@ -34,8 +35,10 @@ exports.aiImageSearch = async (req, res, next) => {
       });
     }
 
+    const { additionalInstructions } = req.body;
+
     // 1. Calculate SHA-256 Hash of uploaded image file to detect duplicate uploads
-    const imageHash = getCacheKey(req.file.buffer);
+    const imageHash = getCacheKey(req.file.buffer, additionalInstructions);
     let cachedAnalysis = aiAnalysisCache.get(imageHash);
 
     const base64Image = req.file.buffer.toString('base64');
@@ -75,11 +78,13 @@ Provide a structured JSON output with the following fields:
 
 Output ONLY valid JSON. No markdown codeblocks surrounding it.`;
 
+    const finalPromptText = appendAdditionalInstructions(promptText, additionalInstructions);
+
     let rawText = '{}';
     try {
       const aiResponse = await OpenAIErrorHandler.callWithRetry(() =>
         openaiClient.generateWithVision(
-          promptText,
+          finalPromptText,
           [{ base64: base64Image, mimeType, detail: 'auto' }],
           { modelType: 'vision', expectJson: true, temperature: 0.3, maxTokens: 800 }
         )

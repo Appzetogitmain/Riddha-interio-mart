@@ -2,6 +2,7 @@ const openaiClient = require('./openaiService');
 const OpenAIErrorHandler = require('../utils/openaiErrorHandler');
 const OpenAIUsageTracker = require('./openaiUsageTracker');
 const Product = require('../models/Product');
+const { appendAdditionalInstructions } = require('../utils/promptHelper');
 
 class BoqService {
   /**
@@ -47,7 +48,7 @@ class BoqService {
    * `images`: array of { base64, mimeType } — one entry per page for multi-page PDF uploads,
    * so a floor plan page can be cross-referenced against a schedule/legend table on another page.
    */
-  async extractItemsFromDrawing(images = [], userId = null) {
+  async extractItemsFromDrawing(images = [], userId = null, additionalInstructions = '') {
     const BOQ_CATEGORIES = ['Furniture', 'Flooring', 'Lighting', 'Paint', 'Hardware', 'Decor', 'Custom', 'Labor & Services'];
 
     const prompt = `You are analyzing ${images.length > 1 ? `${images.length} pages of` : 'an'} uploaded interior/architectural drawing${images.length > 1 ? ' set' : ''}.
@@ -82,6 +83,8 @@ Return ONLY a valid JSON object with this exact schema:
 }
 The "category" field MUST be exactly one of the listed values — map anything else (e.g. signage, HVAC, partitions) into the closest one ("Custom" or "Hardware").`;
 
+    const finalPrompt = appendAdditionalInstructions(prompt, additionalInstructions);
+
     let extractedItems = null;
     let detectedSpaceType = null;
     let roomsIdentified = [];
@@ -89,7 +92,7 @@ The "category" field MUST be exactly one of the listed values — map anything e
     if (Array.isArray(images) && images.length > 0) {
       try {
         const response = await openaiClient.generateWithVision(
-          prompt,
+          finalPrompt,
           images.map(img => ({ base64: img.base64, mimeType: img.mimeType })),
           {
             modelType: 'vision',
@@ -153,7 +156,7 @@ The "category" field MUST be exactly one of the listed values — map anything e
    * 2. Auto-Generate BOQ from Client Brief
    */
   async generateBOQFromBrief(briefData, userId = null) {
-    const { roomType = 'Living Room', area = 400, designStyle = 'Modern', scope = [] } = briefData;
+    const { roomType = 'Living Room', area = 400, designStyle = 'Modern', scope = [], additionalInstructions = '' } = briefData;
 
     const prompt = `Generate a comprehensive interior Bill of Quantities (BOQ) list for a project:
 
@@ -174,10 +177,12 @@ Return ONLY a valid JSON array of 6-8 item objects required for a complete setup
   }
 ]`;
 
+    const finalPrompt = appendAdditionalInstructions(prompt, additionalInstructions);
+
     let generatedItems = null;
 
     try {
-      const response = await openaiClient.generateText(prompt, {
+      const response = await openaiClient.generateText(finalPrompt, {
         modelType: 'general',
         expectJson: true,
         temperature: 0.7,

@@ -2,6 +2,7 @@ const crypto = require('crypto');
 const openaiClient = require('../services/openaiService');
 const OpenAIErrorHandler = require('../utils/openaiErrorHandler');
 const OpenAIUsageTracker = require('../services/openaiUsageTracker');
+const { appendAdditionalInstructions } = require('../utils/promptHelper');
 const Product = require('../models/Product');
 const Category = require('../models/Category');
 
@@ -9,9 +10,9 @@ const Category = require('../models/Category');
 const visualizerCache = new Map();
 const MAX_CACHE_SIZE = 200;
 
-const getCacheKey = (buffer, roomType, style) => {
+const getCacheKey = (buffer, roomType, style, additionalInstructions = '') => {
   const hash = crypto.createHash('sha256').update(buffer).digest('hex');
-  return `${hash}_${roomType}_${style}`;
+  return `${hash}_${roomType}_${style}_${additionalInstructions}`;
 };
 
 // High quality curated interior design transformations for visualizer fallback
@@ -76,8 +77,8 @@ exports.aiRoomVisualize = async (req, res, next) => {
       });
     }
 
-    const { roomType = 'Living Room', style = 'Modern Luxury', promptDetails = '' } = req.body;
-    const cacheKey = getCacheKey(req.file.buffer, roomType, style);
+    const { roomType = 'Living Room', style = 'Modern Luxury', promptDetails = '', additionalInstructions = '' } = req.body;
+    const cacheKey = getCacheKey(req.file.buffer, roomType, style, additionalInstructions);
 
     if (visualizerCache.has(cacheKey)) {
       console.log(`[AI Room Visualizer] Cache HIT for key: ${cacheKey.substring(0, 16)}...`);
@@ -116,9 +117,11 @@ Provide structured JSON:
 
 Output ONLY valid JSON.`;
 
+        const finalPromptText = appendAdditionalInstructions(promptText, additionalInstructions);
+
         const aiResponse = await OpenAIErrorHandler.callWithRetry(() =>
           openaiClient.generateWithVision(
-            promptText,
+            finalPromptText,
             [{ base64: base64Image, mimeType, detail: 'auto' }],
             { modelType: 'vision', expectJson: true, temperature: 0.5, maxTokens: 600 }
           )
@@ -154,7 +157,10 @@ Output ONLY valid JSON.`;
 
     if (process.env.OPENAI_API_KEY) {
       try {
-        const imageGenPrompt = `Redesign and furnish this room photo as a fully decorated, modern ${roomType} in ${style} interior style. Add plush furniture, elegant lighting, wall art, marble/wood flooring, and decor. Preserve the original room's perspective, camera angle, window and door placement, and overall geometry.`;
+        const imageGenPrompt = appendAdditionalInstructions(
+          `Redesign and furnish this room photo as a fully decorated, modern ${roomType} in ${style} interior style. Add plush furniture, elegant lighting, wall art, marble/wood flooring, and decor. Preserve the original room's perspective, camera angle, window and door placement, and overall geometry.`,
+          additionalInstructions
+        );
 
         const imgResult = await openaiClient.editImage(
           imageGenPrompt,

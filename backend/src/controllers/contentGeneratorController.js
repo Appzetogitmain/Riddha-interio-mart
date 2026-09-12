@@ -18,7 +18,8 @@ exports.generateContent = async (req, res, next) => {
       tone = 'professional',
       style = 'sales',
       length = 'medium',
-      generateVariants = true
+      generateVariants = true,
+      additionalInstructions
     } = req.body;
 
     const sellerId = req.user._id;
@@ -32,37 +33,37 @@ exports.generateContent = async (req, res, next) => {
 
     // Route to proper Gemini AI prompt generator
     if (contentType === 'title') {
-      const titles = await contentGeneratorService.generateProductTitle({ name, category, features, tone }, sellerId);
+      const titles = await contentGeneratorService.generateProductTitle({ name, category, features, tone, additionalInstructions }, sellerId);
       title = titles.seoTitle;
       generatedBody = titles.marketingTitle;
       metadata = titles;
     } else if (contentType === 'description') {
-      const desc = await contentGeneratorService.generateProductDescription({ name, category, features, materials, targetAudience, tone, length }, sellerId);
+      const desc = await contentGeneratorService.generateProductDescription({ name, category, features, materials, targetAudience, tone, length, additionalInstructions }, sellerId);
       title = desc.openingHook;
       generatedBody = desc.bodyDescription;
       metadata = desc;
     } else if (contentType === 'meta_description') {
-      const meta = await contentGeneratorService.generateMetaDescription({ name, price: req.body.price }, sellerId);
+      const meta = await contentGeneratorService.generateMetaDescription({ name, price: req.body.price, additionalInstructions }, sellerId);
       generatedBody = meta.metaDescription;
       metadata = meta;
     } else if (contentType === 'hashtags_keywords') {
-      const hk = await contentGeneratorService.generateHashtagsAndKeywords({ name, category, style }, sellerId);
+      const hk = await contentGeneratorService.generateHashtagsAndKeywords({ name, category, style, additionalInstructions }, sellerId);
       hashtags = hk.instagramHashtags || [];
       keywords = hk.seoKeywords || [];
       generatedBody = `Instagram Hashtags:\n${hashtags.join(' ')}\n\nSEO Keywords:\n${keywords.join(', ')}`;
       metadata = hk;
     } else if (contentType === 'social_post') {
-      const social = await contentGeneratorService.generateSocialMediaPost({ name, platform }, sellerId);
+      const social = await contentGeneratorService.generateSocialMediaPost({ name, platform, additionalInstructions }, sellerId);
       generatedBody = social.instagramCaption || social.facebookPost;
       hashtags = social.recommendedHashtags || [];
       metadata = social;
     } else if (contentType === 'email_subject' || contentType === 'email_body') {
-      const email = await contentGeneratorService.generateEmailCampaign({ name, offer: req.body.offer }, sellerId);
+      const email = await contentGeneratorService.generateEmailCampaign({ name, offer: req.body.offer, additionalInstructions }, sellerId);
       title = email.subjectLines?.[0] || 'Promotional Offer';
       generatedBody = email.emailHtml;
       metadata = email;
     } else if (contentType === 'blog_post') {
-      const blog = await contentGeneratorService.generateBlogArticle({ name, keyword: req.body.keyword }, sellerId);
+      const blog = await contentGeneratorService.generateBlogArticle({ name, keyword: req.body.keyword, additionalInstructions }, sellerId);
       title = blog.title;
       generatedBody = blog.articleMarkdown;
       metadata = blog;
@@ -70,7 +71,7 @@ exports.generateContent = async (req, res, next) => {
 
     // Generate A/B Variants if requested
     if (generateVariants) {
-      const ab = await contentGeneratorService.generateABTestVariants({ name }, sellerId);
+      const ab = await contentGeneratorService.generateABTestVariants({ name, additionalInstructions }, sellerId);
       if (ab.variantA && ab.variantB) {
         variants = [
           { variantId: 'Variant A', content: ab.variantA.content, tone: 'professional', style: ab.variantA.approach, predictedCtr: ab.variantA.predictedCtr },

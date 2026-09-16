@@ -17,6 +17,7 @@ const ManageCategoryGrid = React.lazy(() => import('./pages/ManageCategoryGrid')
 const ManageBrands = React.lazy(() => import('./pages/ManageBrands'));
 const ManageAdvertisementPlans = React.lazy(() => import('./pages/ManageAdvertisementPlans'));
 const ManageProPlans = React.lazy(() => import('./pages/ManageProPlans'));
+const ManageB2CPlans = React.lazy(() => import('./pages/ManageB2CPlans'));
 const OffersListPage = React.lazy(() => import('./pages/OffersListPage'));
 const OfferFormPage = React.lazy(() => import('./pages/OfferFormPage'));
 const BundleManagementPage = React.lazy(() => import('./pages/BundleManagementPage'));
@@ -176,6 +177,7 @@ const AdminRoutes = () => {
           <Route element={<ProtectedRoute permission="settings" />}>
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/pro-plans" element={<ManageProPlans />} />
+            <Route path="/b2c-plans" element={<ManageB2CPlans />} />
             <Route path="/invoice-templates" element={<InvoiceTemplatesPage />} />
             <Route path="/feedback" element={<FeedbackManagement />} />
             <Route path="/seller-recommendations" element={<SellerRecommendationManagement />} />

@@ -28,7 +28,7 @@ import {
 } from "react-icons/fi";
 import { AiOutlineShop } from "react-icons/ai";
 import { motion, AnimatePresence } from "framer-motion";
-import { LuWallet, LuLayoutDashboard, LuCalculator, LuLayers, LuCrown } from "react-icons/lu";
+import { LuWallet, LuLayoutDashboard, LuCalculator, LuLayers, LuCrown, LuPalette, LuHammer, LuBuilding2 } from "react-icons/lu";
 import { useCart } from "../data/CartContext";
 import { useUser } from "../data/UserContext";
 import { useWishlist } from "../data/WishlistContext";
@@ -37,6 +37,7 @@ import api from '../../../shared/utils/api';
 import { getDeliveryEstimate, getCityFromPincode } from '../../../shared/utils/delivery';
 import BulkOrderModal from "./BulkOrderModal";
 import SubscriptionModal from "./SubscriptionModal";
+import B2CSubscriptionModal from "./B2CSubscriptionModal";
 import NotificationDropdown from "../../../shared/components/NotificationDropdown";
 import Logo from "../../../assets/WhatsApp Image 2026-05-06 at 3.50.08 PM.jpeg";
 import TransparentLogo from "../../../assets/transparent_logo.png";
@@ -51,7 +52,7 @@ const getCategorySlug = (name) => {
   return name.toLowerCase().replace(/\s+/g, '-');
 };
 
-// AI-powered tools & services — shown in their own strip between the header and the categories bar
+// AI-powered tools & services — shown for Enterpriser / AI Pro members
 const AI_SERVICES = [
   { to: '/designer-quiz', icon: FiCompass, label: 'Design Quiz', sub: 'AI Persona' },
   { to: '/recommendations', icon: FiZap, label: 'AI Recommendations', sub: 'For You' },
@@ -62,6 +63,16 @@ const AI_SERVICES = [
   { to: '/quotation-generator', icon: FiFileText, label: 'Quotation Gen', sub: 'GST & Quotes' },
   { to: '/orders/track', icon: FiTruck, label: 'Order Tracking', sub: 'Live GPS & AI' },
   { to: '/rfq/new', icon: FiPercent, label: 'Get a Quote', sub: 'Request Pricing', state: { source: 'header-ai-strip' } }
+];
+
+// B2C Customer Pro benefits strip — shown for B2C Pro plan members
+const B2C_SERVICES = [
+  { to: '/plans', icon: FiZap, label: 'Fastest Delivery', sub: '24-48h Express', key: 'fastestDelivery' },
+  { to: '/plans', icon: FiPercent, label: 'EMI Options', sub: 'Flexible Payment', key: 'emiAvailable' },
+  { to: '/designer-registration', icon: LuPalette, label: 'Hire Designer', sub: 'Verified Pros', key: 'hireDesigner' },
+  { to: '/contractor-registration', icon: LuHammer, label: 'Hire Contractor', sub: 'Certified Builders', key: 'hireContractor' },
+  { to: '/builder-registration', icon: LuBuilding2, label: 'Hire Architect', sub: 'Licensed Experts', key: 'hireArchitect' },
+  { to: '/orders/track', icon: FiTruck, label: 'Order Tracking', sub: 'Live GPS', key: 'always' }
 ];
 
 const SidebarLink = ({ to, icon: Icon, label, onClick }) => (
@@ -85,6 +96,27 @@ const SidebarLink = ({ to, icon: Icon, label, onClick }) => (
         {isActive && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-[#189D91]" />}
       </>
     )}
+  </NavLink>
+);
+
+const SidebarProLink = ({ to, icon: Icon, label, onClick }) => (
+  <NavLink
+    to={to}
+    onClick={onClick}
+    className={({ isActive }) =>
+      `flex items-center gap-3 px-3 py-2 rounded-lg transition-all group ${isActive
+        ? 'bg-amber-500/10 text-amber-800 border border-amber-300/40'
+        : 'text-gray-600 hover:bg-amber-50/80 hover:text-amber-900 border border-transparent'
+      }`
+    }
+  >
+    <div className="p-1.5 rounded-md bg-amber-100/80 border border-amber-200/80 text-amber-700 group-hover:bg-amber-500 group-hover:text-white transition-colors">
+      <Icon size={14} />
+    </div>
+    <span className="text-[12.5px] font-semibold tracking-tight">{label}</span>
+    <span className="ml-auto flex items-center gap-1 text-[8.5px] font-extrabold px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-500 to-yellow-600 text-white shadow-xs">
+      <LuCrown size={9} /> PRO
+    </span>
   </NavLink>
 );
 
@@ -119,8 +151,19 @@ const Navbar = () => {
   const [showMoreCategories, setShowMoreCategories] = useState(false);
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
   const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
+  const [isB2CSubscriptionModalOpen, setIsB2CSubscriptionModalOpen] = useState(false);
 
-  const isProActive = user?.subscription?.status === 'active' && user?.subscription?.endDate && new Date(user.subscription.endDate) > new Date();
+  const isB2CProActive = user?.userType === 'customer' &&
+    user?.b2cSubscription?.status === 'active' &&
+    user?.b2cSubscription?.endDate &&
+    new Date(user.b2cSubscription.endDate) > new Date();
+
+  const isAIProActive = user?.userType === 'enterpriser' &&
+    user?.subscription?.status === 'active' &&
+    user?.subscription?.endDate &&
+    new Date(user.subscription.endDate) > new Date();
+
+  const isProActive = isB2CProActive || isAIProActive;
 
   const activeCity = getCityFromPincode(pincode);
   const deliveryEstimate = getDeliveryEstimate(pincode);
@@ -314,16 +357,28 @@ const Navbar = () => {
 
               {/* Upgrade to Pro */}
               <button
-                onClick={() => setIsSubscriptionModalOpen(true)}
+                onClick={() => {
+                  if (user?.userType === 'enterpriser') {
+                    setIsSubscriptionModalOpen(true);
+                  } else {
+                    setIsB2CSubscriptionModalOpen(true);
+                  }
+                }}
                 className="flex items-center gap-1.5 group border-l border-gray-200 pl-2 lg:pl-3 xl:pl-4 text-left"
               >
                 <div className="w-5 h-5 rounded-md bg-amber-400/20 text-amber-600 group-hover:bg-amber-400 group-hover:text-slate-950 flex items-center justify-center transition-all shadow-sm">
                   <LuCrown className="w-3.5 h-3.5" />
                 </div>
                 <div className="flex flex-col text-left">
-                  <span className="text-[10px] font-bold text-gray-700 leading-none group-hover:text-amber-600 transition-colors">Upgrade to Pro</span>
+                  <span className="text-[10px] font-bold text-gray-700 leading-none group-hover:text-amber-600 transition-colors">
+                    {isB2CProActive ? 'B2C Pro Active' : isAIProActive ? 'AI Pro Active' : 'Upgrade to Pro'}
+                  </span>
                   <span className="text-[9px] font-extrabold text-amber-500 mt-0.5">
-                    {user?.userType === 'enterpriser' ? 'AI Features' : 'Fastest Delivery'}
+                    {isB2CProActive
+                      ? (user?.b2cSubscription?.planName || 'Silver Pro')
+                      : isAIProActive
+                        ? (user?.subscription?.planName || 'AI Pro')
+                        : user?.userType === 'enterpriser' ? 'AI Features' : 'Fastest Delivery'}
                   </span>
                 </div>
               </button>
@@ -401,26 +456,62 @@ const Navbar = () => {
         </div>
       </nav>
 
-      {/* AI Tools & Services Strip — Only displayed when user is upgraded to Riddha Pro */}
+      {/* Pro Active Strip — Displayed when user has an active Pro subscription */}
       {isProActive && (
         <div className="hidden md:block bg-white border-b border-gray-100 relative z-40">
           <div className="max-w-[1700px] mx-auto px-6 lg:px-8">
             <div className="flex items-center gap-x-7 lg:gap-x-10 py-2.5 overflow-x-auto no-scrollbar scroll-smooth">
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gradient-to-r from-amber-500 to-yellow-600 text-white text-[10px] font-black tracking-wider uppercase shadow-sm shrink-0 mr-2">
-                <LuCrown className="w-3 h-3 text-amber-200" />
-                <span>{user?.subscription?.planName || 'PRO ACTIVE'}</span>
-              </div>
-              {AI_SERVICES.map((svc) => (
-                <Link key={svc.to} to={svc.to} state={svc.state} className="flex items-center gap-2 group shrink-0">
-                  <div className="w-7 h-7 rounded-lg bg-gray-50 border border-[#189D91]/20 flex items-center justify-center shadow-sm group-hover:bg-[#189D91] group-hover:border-[#189D91] transition-colors shrink-0">
-                    <svc.icon className="w-3.5 h-3.5 text-[#189D91] group-hover:text-white transition-colors" />
+              
+              {/* IF B2C PRO ACTIVE: Show B2C Unlocked Features Strip */}
+              {isB2CProActive && (
+                <>
+                  <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 text-white text-[10px] font-black tracking-wider uppercase shadow-sm shrink-0 mr-2">
+                    <LuCrown className="w-3.5 h-3.5 text-white" />
+                    <span>👑 {user?.b2cSubscription?.planName?.toUpperCase() || 'B2C'} PRO</span>
                   </div>
-                  <div className="flex flex-col text-left">
-                    <span className="text-[10.5px] font-bold text-gray-700 leading-none group-hover:text-[#28a399] transition-colors whitespace-nowrap">{svc.label}</span>
-                    <span className="text-[9px] font-bold text-[#189D91] mt-0.5 whitespace-nowrap">{svc.sub}</span>
+                  {B2C_SERVICES.filter(svc => {
+                    if (svc.key === 'always') return true;
+                    if (svc.key === 'fastestDelivery') return user?.b2cSubscription?.fastestDelivery !== false;
+                    if (svc.key === 'emiAvailable') return user?.b2cSubscription?.emiAvailable !== false;
+                    if (svc.key === 'hireDesigner') return user?.b2cSubscription?.hireDesigner !== false;
+                    if (svc.key === 'hireContractor') return user?.b2cSubscription?.hireContractor;
+                    if (svc.key === 'hireArchitect') return user?.b2cSubscription?.hireArchitect;
+                    return true;
+                  }).map((svc) => (
+                    <Link key={svc.label} to={svc.to} className="flex items-center gap-2 group shrink-0">
+                      <div className="w-7 h-7 rounded-lg bg-amber-50 border border-amber-200 flex items-center justify-center shadow-sm group-hover:bg-amber-500 group-hover:border-amber-500 transition-colors shrink-0">
+                        <svc.icon className="w-3.5 h-3.5 text-amber-600 group-hover:text-white transition-colors" />
+                      </div>
+                      <div className="flex flex-col text-left">
+                        <span className="text-[10.5px] font-bold text-gray-800 leading-none group-hover:text-amber-600 transition-colors whitespace-nowrap">{svc.label}</span>
+                        <span className="text-[9px] font-bold text-amber-600 mt-0.5 whitespace-nowrap">{svc.sub}</span>
+                      </div>
+                    </Link>
+                  ))}
+                </>
+              )}
+
+              {/* IF AI PRO ACTIVE (and not B2C): Show AI Services Strip */}
+              {isAIProActive && !isB2CProActive && (
+                <>
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-[10px] font-black tracking-wider uppercase shadow-sm shrink-0 mr-2">
+                    <LuCrown className="w-3 h-3 text-emerald-200" />
+                    <span>👑 {user?.subscription?.planName?.toUpperCase() || 'AI'} PRO</span>
                   </div>
-                </Link>
-              ))}
+                  {AI_SERVICES.map((svc) => (
+                    <Link key={svc.to} to={svc.to} state={svc.state} className="flex items-center gap-2 group shrink-0">
+                      <div className="w-7 h-7 rounded-lg bg-gray-50 border border-[#189D91]/20 flex items-center justify-center shadow-sm group-hover:bg-[#189D91] group-hover:border-[#189D91] transition-colors shrink-0">
+                        <svc.icon className="w-3.5 h-3.5 text-[#189D91] group-hover:text-white transition-colors" />
+                      </div>
+                      <div className="flex flex-col text-left">
+                        <span className="text-[10.5px] font-bold text-gray-700 leading-none group-hover:text-[#28a399] transition-colors whitespace-nowrap">{svc.label}</span>
+                        <span className="text-[9px] font-bold text-[#189D91] mt-0.5 whitespace-nowrap">{svc.sub}</span>
+                      </div>
+                    </Link>
+                  ))}
+                </>
+              )}
+
             </div>
           </div>
         </div>
@@ -781,26 +872,141 @@ const Navbar = () => {
                 </div>
 
                 <div className="px-3 py-3 space-y-1 shrink-0">
-                  {/* Primary Nav */}
+                  {/* Standard B2C Navigation Links */}
                   <div className="pb-3 mb-3 border-b border-gray-50">
                     <SidebarLink to="/" icon={FiHome} label="Home" onClick={closeMobile} />
-                    <SidebarLink to="/cost-estimator" icon={LuCalculator} label="AI Cost Estimator" onClick={closeMobile} />
-                    <SidebarLink to="/boq-generator" icon={FiList} label="BOQ Generator" onClick={closeMobile} />
-                    <SidebarLink to="/quotation-generator" icon={FiFileText} label="Quotation Generator" onClick={closeMobile} />
-                    <SidebarLink to="/orders/track" icon={FiTruck} label="Real-Time Order Tracking" onClick={closeMobile} />
-                    <SidebarLink to="/projects" icon={LuLayoutDashboard} label="My Projects Studio" onClick={closeMobile} />
-                    <SidebarLink to="/client-brief" icon={FiFileText} label="AI Project Brief" onClick={closeMobile} />
                     <SidebarLink to="/products" icon={FiGrid} label="Shop Products" onClick={closeMobile} />
                     <SidebarLink to="/bundles" icon={FiZap} label="Smart Bundles" onClick={closeMobile} />
+                    <SidebarLink to="/orders/track" icon={FiTruck} label="Real-Time Order Tracking" onClick={closeMobile} />
                     <SidebarLink to="/journey" icon={FiCompass} label="My Journey" onClick={closeMobile} />
-                    <SidebarLink to="/recommendations" icon={FiZap} label="AI Recommendations Feed" onClick={closeMobile} />
-                    <SidebarLink to="/designer-quiz" icon={FiCompass} label="Designer Quiz" onClick={closeMobile} />
                     <SidebarLink to="/referral-rewards" icon={LuWallet} label="Riddha Wallet" onClick={closeMobile} />
                     <SidebarLink to="/rfq" icon={FiFileText} label="My Quotation Requests" onClick={closeMobile} />
                     <SidebarLink to="/samples" icon={LuLayers} label="My Sample Requests" onClick={closeMobile} />
                     <SidebarLink to="/orders" icon={FiShoppingBag} label="My Orders" onClick={closeMobile} />
                     {user && <SidebarLink to="/wishlist" icon={FiHeart} label="My Wishlist" onClick={closeMobile} />}
                     <SidebarLink to="/profile" icon={FiUser} label="My Account" onClick={closeMobile} />
+                  </div>
+
+                  {/* Conditional Pro Section based on userType */}
+                  <div className="pb-3 mb-3 border-b border-gray-50">
+                    {user?.userType === 'enterpriser' ? (
+                      /* ENTERPRISE USER: Show AI Features */
+                      isProActive ? (
+                        <div>
+                          <div className="flex items-center justify-between px-3 mb-2">
+                            <p className="text-[9px] font-black uppercase tracking-[0.15em] text-amber-600 flex items-center gap-1">
+                              <LuCrown className="w-3.5 h-3.5 text-amber-500" /> Riddha Pro AI Features
+                            </p>
+                            <span className="text-[8px] font-extrabold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 uppercase">
+                              {user?.subscription?.planName || 'Active Plan'}
+                            </span>
+                          </div>
+                          <SidebarLink to="/cost-estimator" icon={LuCalculator} label="AI Cost Estimator" onClick={closeMobile} />
+                          <SidebarLink to="/boq-generator" icon={FiList} label="BOQ Generator" onClick={closeMobile} />
+                          <SidebarLink to="/quotation-generator" icon={FiFileText} label="Quotation Generator" onClick={closeMobile} />
+                          <SidebarLink to="/projects" icon={LuLayoutDashboard} label="My Projects Studio" onClick={closeMobile} />
+                          <SidebarLink to="/client-brief" icon={FiFileText} label="AI Project Brief" onClick={closeMobile} />
+                          <SidebarLink to="/recommendations" icon={FiZap} label="AI Recommendations Feed" onClick={closeMobile} />
+                          <SidebarLink to="/designer-quiz" icon={FiCompass} label="Designer Quiz" onClick={closeMobile} />
+                        </div>
+                      ) : (
+                        <div>
+                          <div className="mx-1 mb-2.5 p-3 rounded-xl bg-gradient-to-r from-amber-50 via-yellow-50/50 to-teal-50/30 border border-amber-200/80 shadow-xs">
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-amber-800">
+                                <LuCrown className="w-3.5 h-3.5 text-amber-500" /> Enterprise AI Features
+                              </span>
+                              <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-amber-500 text-white uppercase tracking-wider">
+                                Upgrade Required
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-gray-600 font-medium leading-tight mb-2">
+                              Cost Estimator, BOQ Generator & Projects Studio are available for Enterprise Pro members.
+                            </p>
+                            <button
+                              onClick={() => {
+                                closeMobile();
+                                setIsSubscriptionModalOpen(true);
+                              }}
+                              className="w-full py-1.5 px-3 rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 text-white font-bold text-[11px] flex items-center justify-center gap-1.5 shadow-xs hover:brightness-105 transition-all cursor-pointer"
+                            >
+                              <FiZap size={12} /> Upgrade Enterprise Plan
+                            </button>
+                          </div>
+                          <div className="space-y-0.5">
+                            <SidebarProLink to="/cost-estimator" icon={LuCalculator} label="AI Cost Estimator" onClick={closeMobile} />
+                            <SidebarProLink to="/boq-generator" icon={FiList} label="BOQ Generator" onClick={closeMobile} />
+                            <SidebarProLink to="/quotation-generator" icon={FiFileText} label="Quotation Generator" onClick={closeMobile} />
+                            <SidebarProLink to="/projects" icon={LuLayoutDashboard} label="My Projects Studio" onClick={closeMobile} />
+                            <SidebarProLink to="/client-brief" icon={FiFileText} label="AI Project Brief" onClick={closeMobile} />
+                            <SidebarProLink to="/recommendations" icon={FiZap} label="AI Recommendations" onClick={closeMobile} />
+                            <SidebarProLink to="/designer-quiz" icon={FiCompass} label="Designer Quiz" onClick={closeMobile} />
+                          </div>
+                        </div>
+                      )
+                    ) : (
+                      /* NORMAL B2C USER: Do NOT show AI features. Show B2C Upgrade to Pro Plan with requested features */
+                      <div>
+                        <div className="mx-1 mb-2.5 p-3.5 rounded-2xl bg-gradient-to-br from-amber-50 via-teal-50/30 to-amber-100/50 border border-amber-200/90 shadow-sm">
+                          <div className="flex items-center justify-between mb-1.5">
+                            <span className="flex items-center gap-1 text-[11px] font-black uppercase tracking-wider text-amber-900">
+                              <LuCrown className="w-4 h-4 text-amber-500" /> B2C Pro Customer Plan
+                            </span>
+                            <span className="text-[8px] font-extrabold px-2 py-0.5 rounded-full bg-amber-500 text-white uppercase tracking-wider">
+                              {isB2CProActive ? (user?.b2cSubscription?.planName || 'Pro Active') : 'Upgrade Available'}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-gray-700 font-bold mb-2">
+                            {isB2CProActive ? 'Your active B2C plan features:' : 'Upgrade to Pro Plan for B2C users:'}
+                          </p>
+                          <ul className="text-[11px] text-gray-700 space-y-1.5 mb-3 font-semibold">
+                            <li className="flex items-center gap-1.5">
+                              <span className="text-amber-600 font-bold">⚡</span> Fastest Express Delivery
+                            </li>
+                            <li className="flex items-center gap-1.5">
+                              <span className="text-amber-600 font-bold">💳</span> Flexible EMI options
+                            </li>
+                            <li className="flex items-center gap-1.5">
+                              <span className="text-amber-600 font-bold">🎨</span> Hire Verified Designer
+                            </li>
+                            <li className="flex items-center gap-1.5">
+                              <span className="text-amber-600 font-bold">👷</span> Hire Certified Contractor
+                            </li>
+                            <li className="flex items-center gap-1.5">
+                              <span className="text-amber-600 font-bold">🏛️</span> Hire Licensed Architect
+                            </li>
+                          </ul>
+                          {!isB2CProActive ? (
+                            <button
+                              onClick={() => {
+                                closeMobile();
+                                setIsB2CSubscriptionModalOpen(true);
+                              }}
+                              className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-amber-500 via-amber-600 to-yellow-600 text-white font-black text-[11px] flex items-center justify-center gap-1.5 shadow-sm hover:brightness-105 transition-all cursor-pointer"
+                            >
+                              <FiZap size={13} /> Upgrade to B2C Pro Plan
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => {
+                                closeMobile();
+                                navigate('/plans');
+                              }}
+                              className="w-full py-2 px-3 rounded-xl bg-amber-500 text-white font-black text-[11px] flex items-center justify-center gap-1.5 shadow-sm hover:bg-amber-600 transition-all cursor-pointer"
+                            >
+                              <FiCheck size={13} /> View Plan Details
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Direct Links for Hire Professionals */}
+                        <div className="space-y-0.5">
+                          <SidebarLink to="/designer-registration" icon={FiCompass} label="Hire Designer" onClick={closeMobile} />
+                          <SidebarLink to="/contractor-registration" icon={LuLayers} label="Hire Contractor" onClick={closeMobile} />
+                          <SidebarLink to="/builder-registration" icon={FiHome} label="Hire Architect" onClick={closeMobile} />
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Information & Support */}
@@ -846,6 +1052,11 @@ const Navbar = () => {
       <SubscriptionModal
         isOpen={isSubscriptionModalOpen}
         onClose={() => setIsSubscriptionModalOpen(false)}
+      />
+
+      <B2CSubscriptionModal
+        isOpen={isB2CSubscriptionModalOpen}
+        onClose={() => setIsB2CSubscriptionModalOpen(false)}
       />
 
       {/* Premium Pincode Selection Modal */}

@@ -11,8 +11,9 @@ import { useUser } from '../data/UserContext';
 import { useWishlist } from '../data/WishlistContext';
 import ProductCard from '../components/ProductCard';
 import { toast } from 'react-hot-toast';
-import { LuSparkles, LuPalette, LuLayoutDashboard, LuCalculator, LuCrown } from 'react-icons/lu';
+import { LuSparkles, LuPalette, LuLayoutDashboard, LuCalculator, LuCrown, LuHammer, LuBuilding2 } from 'react-icons/lu';
 import SubscriptionModal from '../components/SubscriptionModal';
+import B2CSubscriptionModal from '../components/B2CSubscriptionModal';
 import api from '../../../shared/utils/api';
 
 const menuItems = [
@@ -46,6 +47,7 @@ const Profile = () => {
   const { user, logout } = useUser();
   const [copied, setCopied] = useState(false);
   const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
+  const [isB2CModalOpen, setIsB2CModalOpen] = useState(false);
   const [walletBalance, setWalletBalance] = useState(null);
 
   useEffect(() => {
@@ -87,9 +89,24 @@ const Profile = () => {
   const initials = (user.fullName || user.name || 'U').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
   const memberSince = new Date(user.createdAt || Date.now()).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
 
-  const isProActive = user?.subscription?.status === 'active' && user?.subscription?.endDate && new Date(user.subscription.endDate) > new Date();
+  const isProActive = user?.userType === 'enterpriser' && user?.subscription?.status === 'active' && user?.subscription?.endDate && new Date(user.subscription.endDate) > new Date();
   const daysRemaining = isProActive ? Math.max(0, Math.ceil((new Date(user.subscription.endDate) - new Date()) / (1000 * 60 * 60 * 24))) : 0;
-  const visibleMenuItems = menuItems.filter(item => !item.isProOnly || isProActive);
+
+  // B2C subscription state
+  const isB2CActive = user?.userType === 'customer' && user?.b2cSubscription?.status === 'active' && user?.b2cSubscription?.endDate && new Date(user.b2cSubscription.endDate) > new Date();
+  const b2cDaysRemaining = isB2CActive ? Math.max(0, Math.ceil((new Date(user.b2cSubscription.endDate) - new Date()) / (1000 * 60 * 60 * 24))) : 0;
+  const isCustomer = user?.userType === 'customer';
+
+  // Build menu items dynamically
+  const allMenuItems = [
+    ...menuItems,
+    // Hire services only for customer B2C subscribers
+    ...(isCustomer && isB2CActive && user?.b2cSubscription?.hireDesigner ? [{ icon: LuPalette, title: 'Hire Designer', subtitle: 'Connect with verified interior designers for your project', link: '/designer-registration', badge: 'B2C PRO' }] : []),
+    ...(isCustomer && isB2CActive && user?.b2cSubscription?.hireContractor ? [{ icon: LuHammer, title: 'Hire Contractor', subtitle: 'Hire certified contractors for renovation & civil work', link: '/contractor-registration', badge: 'B2C PRO' }] : []),
+    ...(isCustomer && isB2CActive && user?.b2cSubscription?.hireArchitect ? [{ icon: LuBuilding2, title: 'Hire Architect', subtitle: 'Work with licensed architects for floor plans & design blueprints', link: '/builder-registration', badge: 'B2C PRO' }] : []),
+  ];
+
+  const visibleMenuItems = allMenuItems.filter(item => !item.isProOnly || isProActive);
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="min-h-screen bg-[#F8F9FB] pb-28 md:pb-12">
@@ -117,14 +134,26 @@ const Profile = () => {
             </h1>
             <p className="text-xs text-gray-400 font-medium truncate mt-0.5">{user.email}</p>
             <div className="flex items-center gap-2 mt-2 flex-wrap">
-              {isProActive ? (
-                <span className="text-[9px] font-black uppercase tracking-widest bg-amber-400 text-slate-950 px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm">
-                  <LuCrown className="w-3 h-3" /> {user.subscription?.planName || 'PRO MEMBER'}
-                </span>
+              {isCustomer ? (
+                isB2CActive ? (
+                  <span className="text-[9px] font-black uppercase tracking-widest bg-gradient-to-r from-orange-500 to-amber-500 text-white px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm">
+                    <LuCrown className="w-3 h-3 text-white" /> {user.b2cSubscription?.planName || 'B2C PRO MEMBER'}
+                  </span>
+                ) : (
+                  <span className="text-[9px] font-black uppercase tracking-widest bg-[#189D91]/10 text-[#189D91] px-2.5 py-1 rounded-full border border-[#189D91]/15">
+                    Standard Customer
+                  </span>
+                )
               ) : (
-                <span className="text-[9px] font-black uppercase tracking-widest bg-[#189D91]/10 text-[#189D91] px-2.5 py-1 rounded-full border border-[#189D91]/15">
-                  Standard Member
-                </span>
+                isProActive ? (
+                  <span className="text-[9px] font-black uppercase tracking-widest bg-gradient-to-r from-teal-600 to-emerald-600 text-white px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm">
+                    <LuCrown className="w-3 h-3 text-amber-300" /> {user.subscription?.planName || 'AI PRO MEMBER'}
+                  </span>
+                ) : (
+                  <span className="text-[9px] font-black uppercase tracking-widest bg-[#189D91]/10 text-[#189D91] px-2.5 py-1 rounded-full border border-[#189D91]/15">
+                    Standard Enterpriser
+                  </span>
+                )
               )}
               <span className="text-[9px] font-semibold text-gray-400 uppercase tracking-wider">
                 Since {memberSince}
@@ -136,102 +165,209 @@ const Profile = () => {
 
       <div className="max-w-3xl mx-auto px-4 md:px-8 space-y-4 pt-4">
 
-        {/* Pro Subscription & AI Services Card */}
-        {isProActive ? (
-          <div className="bg-gradient-to-r from-[#003d33] via-[#189D91] to-[#28a399] rounded-2xl p-5 md:p-6 text-white shadow-xl relative overflow-hidden">
-            <div className="absolute -top-10 -right-10 w-36 h-36 bg-amber-400/20 rounded-full blur-2xl" />
-            
-            <div className="flex flex-wrap items-center justify-between gap-4 relative z-10">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-amber-400 text-slate-950 flex items-center justify-center font-black shadow-md shrink-0">
-                  <LuCrown className="w-6 h-6" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-black text-amber-300 uppercase tracking-widest">
-                      {user.subscription?.planName || 'RIDDHA PRO'}
-                    </span>
-                    <span className="px-2 py-0.5 rounded-full bg-emerald-400/20 text-emerald-300 border border-emerald-400/30 text-[9px] font-black uppercase tracking-wider">
-                      ACTIVE
-                    </span>
+        {/* ENTERPRISER USERS ONLY: AI Pro Membership Card */}
+        {!isCustomer && (
+          isProActive ? (
+            <div className="bg-gradient-to-r from-[#003d33] via-[#189D91] to-[#28a399] rounded-2xl p-5 md:p-6 text-white shadow-xl relative overflow-hidden">
+              <div className="absolute -top-10 -right-10 w-36 h-36 bg-amber-400/20 rounded-full blur-2xl" />
+              
+              <div className="flex flex-wrap items-center justify-between gap-4 relative z-10">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-amber-400 text-slate-950 flex items-center justify-center font-black shadow-md shrink-0">
+                    <LuCrown className="w-6 h-6" />
                   </div>
-                  <h3 className="text-base md:text-lg font-black tracking-tight text-white mt-0.5">
-                    Pro AI Membership Active
-                  </h3>
-                  <p className="text-xs text-teal-100 font-medium flex items-center gap-1 mt-0.5">
-                    <FiClock className="w-3.5 h-3.5 text-amber-300" />
-                    Valid until {new Date(user.subscription.endDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} ({daysRemaining} days left)
-                  </p>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-black text-amber-300 uppercase tracking-widest">
+                        {user.subscription?.planName || 'RIDDHA AI PRO'}
+                      </span>
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-400/20 text-emerald-300 border border-emerald-400/30 text-[9px] font-black uppercase tracking-wider">
+                        ACTIVE
+                      </span>
+                    </div>
+                    <h3 className="text-base md:text-lg font-black tracking-tight text-white mt-0.5">
+                      Pro AI Membership Active
+                    </h3>
+                    <p className="text-xs text-teal-100 font-medium flex items-center gap-1 mt-0.5">
+                      <FiClock className="w-3.5 h-3.5 text-amber-300" />
+                      Valid until {new Date(user.subscription.endDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} ({daysRemaining} days left)
+                    </p>
+                  </div>
                 </div>
+
+                <button
+                  onClick={() => setIsSubscriptionModalOpen(true)}
+                  className="px-4 py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl shadow-md transition-all active:scale-95 flex items-center gap-1.5 shrink-0"
+                >
+                  <FiZap className="w-4 h-4" /> Upgrade / Extend AI Plan
+                </button>
               </div>
 
-              <button
-                onClick={() => setIsSubscriptionModalOpen(true)}
-                className="px-4 py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl shadow-md transition-all active:scale-95 flex items-center gap-1.5 shrink-0"
-              >
-                <FiZap className="w-4 h-4" /> Upgrade / Extend Plan
-              </button>
+              {/* Quick Access Grid of Unlocked AI Tools */}
+              <div className="mt-5 pt-4 border-t border-white/15">
+                <p className="text-[10.5px] font-black text-amber-300 uppercase tracking-widest mb-3 flex items-center gap-1.5">
+                  <LuSparkles className="w-3.5 h-3.5" /> Your Unlocked AI Tools & Services
+                </p>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {[
+                    { title: 'AI Design Quiz', link: '/designer-quiz', icon: '🧭' },
+                    { title: 'AI Recommendations', link: '/recommendations', icon: '⚡' },
+                    { title: 'AI Project Brief', link: '/client-brief', icon: '📄' },
+                    { title: 'Projects Studio', link: '/projects', icon: '📊' },
+                    { title: 'AI Cost Estimator', link: '/cost-estimator', icon: '🧮' },
+                    { title: 'BOQ Generator', link: '/boq-generator', icon: '📋' },
+                    { title: 'Quotation Gen', link: '/quotation-generator', icon: '📜' },
+                    { title: 'Live Order Tracking', link: '/orders/track', icon: '🚚' },
+                    { title: 'Request Pricing RFQ', link: '/rfq/new', icon: '🏷️' }
+                  ].map((ai, idx) => (
+                    <Link
+                      key={idx}
+                      to={ai.link}
+                      className="flex items-center gap-2 p-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 transition-all text-white group"
+                    >
+                      <span className="text-base">{ai.icon}</span>
+                      <span className="text-xs font-bold truncate group-hover:text-amber-200">{ai.title}</span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
             </div>
+          ) : (
+            <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-teal-950 rounded-2xl p-5 md:p-6 text-white shadow-xl relative overflow-hidden">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-amber-400/20 border border-amber-400/40 text-amber-300 flex items-center justify-center font-black shrink-0 mt-1">
+                    <LuCrown className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-black text-amber-300 uppercase tracking-widest bg-amber-400/10 px-2 py-0.5 rounded-full border border-amber-400/20">
+                      PRO MEMBERSHIP REQUIRED • AI FEATURES
+                    </span>
+                    <h3 className="text-base md:text-lg font-black tracking-tight text-white mt-1">
+                      Unlock All Riddha AI Interior Tools
+                    </h3>
+                    <p className="text-xs text-gray-300 font-medium max-w-md mt-0.5">
+                      Subscribe to Silver (₹1,999), Gold (₹3,999), Platinum (₹6,999) or Diamond (₹11,999) to unlock AI Design Quiz, Cost Estimator, BOQ & Project Tools!
+                    </p>
+                  </div>
+                </div>
 
-            {/* Quick Access Grid of Unlocked AI Tools */}
-            <div className="mt-5 pt-4 border-t border-white/15">
-              <p className="text-[10.5px] font-black text-amber-300 uppercase tracking-widest mb-3 flex items-center gap-1.5">
-                <LuSparkles className="w-3.5 h-3.5" /> Your Unlocked AI Tools & Services
-              </p>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                {[
-                  { title: 'AI Design Quiz', link: '/designer-quiz', icon: '🧭' },
-                  { title: 'AI Recommendations', link: '/recommendations', icon: '⚡' },
-                  { title: 'AI Project Brief', link: '/client-brief', icon: '📄' },
-                  { title: 'Projects Studio', link: '/projects', icon: '📊' },
-                  { title: 'AI Cost Estimator', link: '/cost-estimator', icon: '🧮' },
-                  { title: 'BOQ Generator', link: '/boq-generator', icon: '📋' },
-                  { title: 'Quotation Gen', link: '/quotation-generator', icon: '📜' },
-                  { title: 'Live Order Tracking', link: '/orders/track', icon: '🚚' },
-                  { title: 'Request Pricing RFQ', link: '/rfq/new', icon: '🏷️' }
-                ].map((ai, idx) => (
-                  <Link
-                    key={idx}
-                    to={ai.link}
-                    className="flex items-center gap-2 p-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 transition-all text-white group"
+                <button
+                  onClick={() => setIsSubscriptionModalOpen(true)}
+                  className="px-5 py-3 bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 shrink-0"
+                >
+                  <FiZap className="w-4 h-4" /> Explore AI Plans & Upgrade 👑
+                </button>
+              </div>
+            </div>
+          )
+        )}
+
+        {/* CUSTOMER USERS ONLY: B2C Subscription Card */}
+        {isCustomer && (
+          isB2CActive ? (
+            <div className="bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-400 rounded-2xl p-5 md:p-6 text-white shadow-xl relative overflow-hidden">
+              <div className="absolute -top-10 -right-10 w-36 h-36 bg-white/10 rounded-full blur-2xl" />
+              <div className="flex flex-wrap items-center justify-between gap-4 relative z-10">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-white text-orange-500 flex items-center justify-center font-black shadow-md shrink-0">
+                    <LuCrown className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-black text-white/90 uppercase tracking-widest">{user.b2cSubscription?.planName || 'B2C PRO'}</span>
+                      <span className="px-2 py-0.5 rounded-full bg-white/20 text-white border border-white/30 text-[9px] font-black uppercase">ACTIVE</span>
+                    </div>
+                    <h3 className="text-base font-black text-white mt-0.5">B2C Pro Plan Active</h3>
+                    <p className="text-xs text-white/80 font-medium flex items-center gap-1 mt-0.5">
+                      <FiClock className="w-3.5 h-3.5" />
+                      Valid until {new Date(user.b2cSubscription.endDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} ({b2cDaysRemaining} days left)
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setIsB2CModalOpen(true)}
+                  className="px-4 py-2.5 bg-white hover:bg-orange-50 text-orange-600 font-black text-xs uppercase tracking-wider rounded-xl shadow-md transition-all active:scale-95 flex items-center gap-1.5 shrink-0"
+                >
+                  <FiZap className="w-4 h-4" /> Upgrade / Extend B2C Plan
+                </button>
+              </div>
+
+              {/* Unlocked B2C Services Grid */}
+              <div className="mt-5 pt-4 border-t border-white/20">
+                <p className="text-[10px] font-black text-white/80 uppercase tracking-widest mb-3">🎉 Your Unlocked B2C Services</p>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {user?.b2cSubscription?.fastestDelivery !== false && (
+                    <div className="flex items-center gap-2 p-2.5 rounded-xl bg-white/15 border border-white/20">
+                      <span className="text-base">⚡</span>
+                      <span className="text-xs font-bold text-white">Fastest Delivery (24-48h)</span>
+                    </div>
+                  )}
+                  {user?.b2cSubscription?.emiAvailable !== false && (
+                    <div className="flex items-center gap-2 p-2.5 rounded-xl bg-white/15 border border-white/20">
+                      <span className="text-base">💳</span>
+                      <span className="text-xs font-bold text-white">EMI Options</span>
+                    </div>
+                  )}
+                  {user?.b2cSubscription?.hireDesigner !== false && (
+                    <Link to="/designer-registration" className="flex items-center gap-2 p-2.5 rounded-xl bg-white/15 hover:bg-white/25 border border-white/20 transition-all">
+                      <span className="text-base">🎨</span>
+                      <span className="text-xs font-bold text-white">Hire Designer</span>
+                    </Link>
+                  )}
+                  {user?.b2cSubscription?.hireContractor !== false && (
+                    <Link to="/contractor-registration" className="flex items-center gap-2 p-2.5 rounded-xl bg-white/15 hover:bg-white/25 border border-white/20 transition-all">
+                      <span className="text-base">👷</span>
+                      <span className="text-xs font-bold text-white">Hire Contractor</span>
+                    </Link>
+                  )}
+                  {user?.b2cSubscription?.hireArchitect !== false && (
+                    <Link to="/builder-registration" className="flex items-center gap-2 p-2.5 rounded-xl bg-white/15 hover:bg-white/25 border border-white/20 transition-all">
+                      <span className="text-base">🏛️</span>
+                      <span className="text-xs font-bold text-white">Hire Architect</span>
+                    </Link>
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : (
+            // B2C Upgrade Card (customer not subscribed)
+            <div className="bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 rounded-2xl p-5 md:p-6 border-2 border-amber-200 shadow-lg relative overflow-hidden">
+              <div className="absolute -top-6 -right-6 w-24 h-24 bg-amber-400/10 rounded-full blur-xl" />
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
+                <div className="flex items-start gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-400 to-amber-500 text-white flex items-center justify-center font-black shrink-0">
+                    <LuCrown className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-black text-orange-700 uppercase tracking-widest bg-orange-100 px-2 py-0.5 rounded-full border border-orange-200">
+                      B2C UPGRADE TO PRO PLAN
+                    </span>
+                    <h3 className="text-base font-black text-gray-900 mt-1">Unlock Fastest Delivery & Hire Services</h3>
+                    <p className="text-xs text-gray-500 font-medium max-w-md mt-0.5">
+                      Get Fastest Delivery, EMI options, and access to Hire Designer, Contractor & Architect.
+                    </p>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {['⚡ Fastest Delivery', '💳 EMI Options', '🎨 Hire Designer', '👷 Hire Contractor', '🏛️ Hire Architect'].map(f => (
+                        <span key={f} className="text-[10px] font-bold text-orange-700 bg-orange-50 border border-orange-200 px-2 py-0.5 rounded-full">{f}</span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex flex-col gap-2 shrink-0">
+                  <button
+                    onClick={() => setIsB2CModalOpen(true)}
+                    className="px-5 py-3 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 shrink-0"
                   >
-                    <span className="text-base">{ai.icon}</span>
-                    <span className="text-xs font-bold truncate group-hover:text-amber-200">{ai.title}</span>
+                    <FiZap className="w-4 h-4" /> Upgrade to Pro Plan 👑
+                  </button>
+                  <Link to="/plans" className="text-center text-xs font-bold text-orange-600 hover:text-orange-700 hover:underline">
+                    View All Plans →
                   </Link>
-                ))}
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-teal-950 rounded-2xl p-5 md:p-6 text-white shadow-xl relative overflow-hidden">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div className="flex items-start gap-3">
-                <div className="w-12 h-12 rounded-xl bg-amber-400/20 border border-amber-400/40 text-amber-300 flex items-center justify-center font-black shrink-0 mt-1">
-                  <LuCrown className="w-6 h-6" />
-                </div>
-                <div>
-                  <span className="text-[10px] font-black text-amber-300 uppercase tracking-widest bg-amber-400/10 px-2 py-0.5 rounded-full border border-amber-400/20">
-                    {user?.userType === 'enterpriser' ? 'PRO MEMBERSHIP REQUIRED • AI FEATURES' : 'PRO MEMBERSHIP REQUIRED • FASTEST DELIVERY'}
-                  </span>
-                  <h3 className="text-base md:text-lg font-black tracking-tight text-white mt-1">
-                    {user?.userType === 'enterpriser' ? 'Unlock All Riddha AI Interior Tools' : 'Upgrade to Pro for Express & Fastest Delivery'}
-                  </h3>
-                  <p className="text-xs text-gray-300 font-medium max-w-md mt-0.5">
-                    {user?.userType === 'enterpriser'
-                      ? 'Subscribe to Silver (₹1,999), Gold (₹3,999), Platinum (₹6,999) or Diamond (₹11,999) to unlock AI Design Quiz, Cost Estimator, BOQ & Project Tools!'
-                      : 'Subscribe to Silver (₹1,999), Gold (₹3,999), Platinum (₹6,999) or Diamond (₹11,999) to get priority order processing, fastest delivery, zero shipping fees & exclusive customer perks!'}
-                  </p>
                 </div>
               </div>
-
-              <button
-                onClick={() => setIsSubscriptionModalOpen(true)}
-                className="px-5 py-3 bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 shrink-0"
-              >
-                <FiZap className="w-4 h-4" /> {user?.userType === 'enterpriser' ? 'Explore Plans & Upgrade 👑' : 'Upgrade for Fastest Delivery 👑'}
-              </button>
             </div>
-          </div>
+          )
         )}
 
         {/* Main Menu */}
@@ -349,10 +485,16 @@ const Profile = () => {
       {/* Wishlist */}
       <WishlistSection />
 
-      {/* Pro Subscription Modal */}
+      {/* AI Pro Subscription Modal (for enterpriser AI features) */}
       <SubscriptionModal
         isOpen={isSubscriptionModalOpen}
         onClose={() => setIsSubscriptionModalOpen(false)}
+      />
+
+      {/* B2C Subscription Modal (for customer fastest delivery + hire services) */}
+      <B2CSubscriptionModal
+        isOpen={isB2CModalOpen}
+        onClose={() => setIsB2CModalOpen(false)}
       />
     </motion.div>
   );

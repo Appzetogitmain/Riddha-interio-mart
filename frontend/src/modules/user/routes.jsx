@@ -47,6 +47,7 @@ const DesignerQuizPage = React.lazy(() => import('./pages/DesignerQuizPage'));
 const QuizResultsPage = React.lazy(() => import('./pages/QuizResultsPage'));
 const RecommendationPage = React.lazy(() => import('./pages/RecommendationPage'));
 const JourneyPage = React.lazy(() => import('./pages/JourneyPage'));
+const SubscriptionPlansPage = React.lazy(() => import('./pages/SubscriptionPlansPage'));
 
 import { Navigate } from 'react-router-dom';
 import { useUser } from './data/UserContext';
@@ -154,6 +155,7 @@ const UserRoutes = () => {
       <Route path="/bundles/:id" element={<BundleDetailPage />} />
       <Route path="/recommendations" element={<ProGateGuard title="AI Recommendations" description="Get personalized interior design recommendations with AI."><RecommendationPage /></ProGateGuard>} />
       <Route path="/journey" element={<JourneyPage />} />
+      <Route path="/plans" element={<SubscriptionPlansPage />} />
     </Routes>
   );
 };

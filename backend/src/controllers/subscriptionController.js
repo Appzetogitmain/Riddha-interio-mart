@@ -398,11 +398,8 @@ exports.verifySubscriptionPayment = async (req, res) => {
 
     user.subscription = subscriptionData;
 
-    // Safely update MongoDB document without triggering unselected password validation
-    await user.constructor.updateOne(
-      { _id: user._id },
-      { $set: { subscription: subscriptionData } }
-    );
+    // Safely update MongoDB document triggering post-save cache hooks
+    await user.save({ validateModifiedOnly: true });
 
     // Create Subscription Audit Log
     await Subscription.create({

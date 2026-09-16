@@ -9,7 +9,7 @@ const ProGateGuard = ({ children, title = "Pro AI Feature", description = "Upgra
   const { user } = useUser();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const isProActive = user?.subscription?.status === 'active' && user?.subscription?.endDate && new Date(user.subscription.endDate) > new Date();
+  const isProActive = user?.userType === 'enterpriser' && user?.subscription?.status === 'active' && user?.subscription?.endDate && new Date(user.subscription.endDate) > new Date();
 
   if (isProActive) {
     return children;

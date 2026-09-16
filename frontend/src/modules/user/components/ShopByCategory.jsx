@@ -8,7 +8,7 @@ const getCategorySlug = (name) => {
   return name.toLowerCase().replace(/\s+/g, '-');
 };
 
-const AUTO_SLIDE_INTERVAL = 3500;
+const AUTO_SLIDE_INTERVAL = 4000;
 
 const ShopByCategory = () => {
   const [categories, setCategories] = useState([]);
@@ -18,14 +18,9 @@ const ShopByCategory = () => {
     const fetchCategories = async () => {
       try {
         const response = await api.get('/categories');
-        // Filter to categories that have a valid http image, or just take all
-        const validCategories = response.data.data.filter(c => c.image && c.image.startsWith('http'));
-        // If not enough with http images, fallback to the rest
-        const displayCategories = validCategories.length >= 6
-          ? validCategories
-          : response.data.data;
-
-        setCategories(displayCategories.slice(0, 10)); // Display up to 10, slidable
+        if (response.data && response.data.data) {
+          setCategories(response.data.data);
+        }
       } catch (err) {
         console.error('Failed to fetch categories:', err);
       }
@@ -33,31 +28,28 @@ const ShopByCategory = () => {
     fetchCategories();
   }, []);
 
-  const scrollByCard = useCallback((direction) => {
+  const scrollBySlide = useCallback((direction) => {
     const el = scrollRef.current;
     if (!el) return;
-    const card = el.querySelector('[data-category-card]');
-    const amount = card ? card.offsetWidth + 12 : el.clientWidth * 0.25;
-    el.scrollBy({ left: direction * amount, behavior: 'smooth' });
-  }, []);
+    const amount = el.clientWidth * 0.8;
+    const atEnd = direction > 0 && (el.scrollLeft + el.clientWidth >= el.scrollWidth - 16);
+    const atStart = direction < 0 && el.scrollLeft <= 16;
 
-  const goNext = useCallback(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const atEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 4;
     if (atEnd) {
       el.scrollTo({ left: 0, behavior: 'smooth' });
+    } else if (atStart) {
+      el.scrollTo({ left: el.scrollWidth, behavior: 'smooth' });
     } else {
-      scrollByCard(1);
+      el.scrollBy({ left: direction * amount, behavior: 'smooth' });
     }
-  }, [scrollByCard]);
+  }, []);
 
   // Auto-slide
   useEffect(() => {
     if (categories.length <= 4) return;
-    const timer = setInterval(goNext, AUTO_SLIDE_INTERVAL);
+    const timer = setInterval(() => scrollBySlide(1), AUTO_SLIDE_INTERVAL);
     return () => clearInterval(timer);
-  }, [categories.length, goNext]);
+  }, [categories.length, scrollBySlide]);
 
   return (
     <section className="py-4 md:py-8 bg-white overflow-hidden">
@@ -76,16 +68,16 @@ const ShopByCategory = () => {
             {categories.length > 4 && (
               <>
                 <button
-                  onClick={() => scrollByCard(-1)}
+                  onClick={() => scrollBySlide(-1)}
                   aria-label="Previous categories"
-                  className="w-7 h-7 md:w-8 md:h-8 rounded-full border border-gray-200 bg-white hover:bg-[#28a399] hover:border-[#28a399] hover:text-white text-gray-500 flex items-center justify-center transition-colors shadow-sm"
+                  className="w-7 h-7 md:w-8 md:h-8 rounded-full border border-gray-200 bg-white hover:bg-[#28a399] hover:border-[#28a399] hover:text-white text-gray-500 flex items-center justify-center transition-colors shadow-sm cursor-pointer"
                 >
                   <FiChevronLeft size={14} />
                 </button>
                 <button
-                  onClick={() => scrollByCard(1)}
+                  onClick={() => scrollBySlide(1)}
                   aria-label="Next categories"
-                  className="w-7 h-7 md:w-8 md:h-8 rounded-full border border-gray-200 bg-white hover:bg-[#28a399] hover:border-[#28a399] hover:text-white text-gray-500 flex items-center justify-center transition-colors shadow-sm"
+                  className="w-7 h-7 md:w-8 md:h-8 rounded-full border border-gray-200 bg-white hover:bg-[#28a399] hover:border-[#28a399] hover:text-white text-gray-500 flex items-center justify-center transition-colors shadow-sm cursor-pointer"
                 >
                   <FiChevronRight size={14} />
                 </button>
@@ -94,23 +86,27 @@ const ShopByCategory = () => {
           </div>
         </div>
 
-        {/* Auto-sliding carousel — 4 cards visible on mobile, 6+ on desktop */}
+        {/* Auto-sliding carousel — 4 cards visible on mobile, 6 on md, 8 on lg */}
         <div
           ref={scrollRef}
-          className="flex gap-3 md:gap-4 overflow-x-auto no-scrollbar scroll-smooth snap-x snap-mandatory"
+          className="flex gap-3 md:gap-4 overflow-x-auto no-scrollbar scroll-smooth snap-x snap-proximity"
         >
           {categories.map((cat, idx) => (
             <Link
-              key={idx}
+              key={cat._id || idx}
               data-category-card
               to={`/category/${getCategorySlug(cat.name)}`}
               className="group flex flex-col items-center shrink-0 snap-start w-[calc(25%-9px)] md:w-[calc(16.666%-14px)] lg:w-[calc(12.5%-14px)]"
             >
               <div className="relative w-full aspect-square rounded-lg md:rounded-xl overflow-hidden mb-1 md:mb-2 shadow-sm transition-all duration-300 group-hover:shadow-md group-hover:-translate-y-1">
                 <img
-                  src={cat.image || 'https://via.placeholder.com/400x400?text=No+Image'}
+                  src={cat.image || 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=400&q=80'}
                   alt={cat.name}
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=400&q=80';
+                  }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>

@@ -231,6 +231,12 @@ app.get('/api/config/razorpay', (req, res) => {
 const subscriptionRoutes = require('./routes/subscriptionRoutes');
 app.use('/api/subscription', subscriptionRoutes);
 
+// B2C Customer Subscription Plans (separate from AI/Enterpriser subscription)
+const b2cSubscriptionRoutes = require('./routes/b2cSubscriptionRoutes');
+app.use('/api/b2c-subscription', b2cSubscriptionRoutes);
+
+
+
 
 
 

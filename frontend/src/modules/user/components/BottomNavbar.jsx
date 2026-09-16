@@ -1,12 +1,15 @@
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { FiHome, FiGrid, FiShoppingCart, FiUser } from 'react-icons/fi';
+import { FiHome, FiGrid, FiShoppingCart, FiUser, FiShoppingBag } from 'react-icons/fi';
 import { LuLayoutDashboard } from 'react-icons/lu';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '../data/CartContext';
+import { useUser } from '../data/UserContext';
 
 const BottomNavbar = () => {
   const { cartCount } = useCart();
+  const { user } = useUser();
+  const isProActive = user?.userType === 'enterpriser' && user?.subscription?.status === 'active' && user?.subscription?.endDate && new Date(user.subscription.endDate) > new Date();
 
   const location = useLocation();
   const hideOnRoutes = ['/cart', '/checkout', '/address', '/payment', '/splash', '/onboarding'];
@@ -40,7 +43,7 @@ const BottomNavbar = () => {
 
   const navItems = [
     { name: 'Home', path: '/', icon: FiHome },
-    { name: 'Projects', path: '/projects', icon: LuLayoutDashboard },
+    { name: isProActive ? 'Projects' : 'Shop', path: isProActive ? '/projects' : '/products', icon: isProActive ? LuLayoutDashboard : FiShoppingBag },
     { name: 'Categories', path: '/categories', icon: FiGrid },
     { name: 'Cart', path: '/cart', icon: FiShoppingCart, badge: cartCount },
     { name: 'Profile', path: '/profile', icon: FiUser },

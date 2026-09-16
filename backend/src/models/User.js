@@ -95,7 +95,7 @@ const UserSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
-  // Subscription Details
+  // AI / Enterpriser Subscription Details (unchanged)
   subscription: {
     planId: {
       type: String,
@@ -119,6 +119,26 @@ const UserSchema = new mongoose.Schema({
     },
     razorpayOrderId: String,
     razorpayPaymentId: String
+  },
+  // B2C Customer Subscription (separate from AI subscription)
+  b2cSubscription: {
+    planId: { type: String, default: null },
+    planName: { type: String, default: '' },
+    status: {
+      type: String,
+      enum: ['none', 'active', 'expired'],
+      default: 'none'
+    },
+    startDate: { type: Date },
+    endDate: { type: Date },
+    razorpayOrderId: { type: String, default: '' },
+    razorpayPaymentId: { type: String, default: '' },
+    // Feature flags unlocked by the plan
+    hireDesigner: { type: Boolean, default: false },
+    hireContractor: { type: Boolean, default: false },
+    hireArchitect: { type: Boolean, default: false },
+    emiAvailable: { type: Boolean, default: false },
+    fastestDelivery: { type: Boolean, default: false }
   },
   createdAt: {
     type: Date,

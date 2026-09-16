@@ -150,7 +150,7 @@ exports.loginUser = async (req, res, next) => {
 exports.getUserMe = async (req, res, next) => {
   try {
     const user = await User.findById(req.user.id);
-    res.status(200).json({ success: true, data: user });
+    res.status(200).json({ success: true, data: user, user: user });
   } catch (err) {
     next(err);
   }

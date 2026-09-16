@@ -36,6 +36,7 @@ const OfferFormPage = React.lazy(() => import('./pages/OfferFormPage'));
 // Requirement A — RFQ inbox and sample queue
 const SellerRFQs = React.lazy(() => import('./pages/SellerRFQs'));
 const SellerSamples = React.lazy(() => import('./pages/SellerSamples'));
+const SellerBOQRequests = React.lazy(() => import('./pages/SellerBOQRequests'));
 
 const SellerRoutes = () => {
   return (
@@ -74,6 +75,7 @@ const SellerRoutes = () => {
         <Route path="/help" element={<HelpCenter />} />
         <Route path="/bulk-orders" element={<SellerBulkOrders />} />
         <Route path="/rfqs" element={<SellerRFQs />} />
+        <Route path="/boq-requests" element={<SellerBOQRequests />} />
         <Route path="/samples" element={<SellerSamples />} />
         <Route path="/advertisement-plans" element={<AdvertisementPlans />} />
         <Route path="/my-advertisements" element={<MyAdvertisements />} />

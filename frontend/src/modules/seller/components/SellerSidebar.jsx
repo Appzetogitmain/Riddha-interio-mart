@@ -54,6 +54,7 @@ const menuItems = [
       { path: "/seller/bulk-orders",  label: "Bulk Orders"  },
       // Requirement A — B2B quote & sample queues
       { path: "/seller/rfqs",         label: "Quotation Requests" },
+      { path: "/seller/boq-requests", label: "BOQ Sourcing Requests" },
       { path: "/seller/samples",      label: "Sample Requests" },
     ]
   },

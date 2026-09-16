@@ -20,7 +20,10 @@ const {
   requestItemSourcing,
   requestAllUnlistedSourcing,
   getAdminSourcingRequests,
-  updateAdminSourcingStatus
+  updateAdminSourcingStatus,
+  assignBOQItemToSellers,
+  getSellerBOQRequests,
+  respondToBOQAssignment
 } = require('../controllers/boqController');
 
 const storage = multer.memoryStorage();
@@ -42,6 +45,11 @@ router.use(protect);
 // Admin Procurement Sourcing Routes
 router.get('/admin/sourcing-requests', getAdminSourcingRequests);
 router.put('/admin/sourcing-requests/:boqId/items/:itemId', updateAdminSourcingStatus);
+router.post('/admin/sourcing-requests/:boqId/items/:itemId/route', assignBOQItemToSellers);
+
+// Seller Sourcing Routes
+router.get('/seller/sourcing-requests', getSellerBOQRequests);
+router.put('/seller/sourcing-requests/:boqId/items/:itemId/quote', respondToBOQAssignment);
 
 router.post('/', createBOQ);
 router.get('/', getBOQs);

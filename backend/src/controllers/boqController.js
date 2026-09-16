@@ -570,6 +570,7 @@ exports.getAdminSourcingRequests = async (req, res, next) => {
   try {
     const boqs = await BOQ.find({ 'items.isSourcingRequested': true })
       .populate('userId', 'fullName name email phone')
+      .populate('items.routedTo.sellerId', 'shopName fullName email phone')
       .sort({ updatedAt: -1 });
 
     const requests = [];
@@ -624,13 +625,138 @@ exports.updateAdminSourcingStatus = async (req, res, next) => {
     }
     if (notes) item.sourcingNotes = notes;
 
+    // Accept Seller Quote if provided
+    if (acceptedSellerId) {
+      item.sourcingStatus = 'sourced'; // auto-mark as sourced
+      item.routedTo.forEach(assignment => {
+        if (assignment.sellerId.toString() === acceptedSellerId.toString()) {
+          assignment.status = 'accepted';
+          item.unitCost = assignment.unitPrice; // Update BOQ item cost
+          item.totalCost = (item.quantity || 1) * assignment.unitPrice;
+        } else if (assignment.status === 'quoted' || assignment.status === 'pending') {
+          assignment.status = 'declined';
+        }
+      });
+    }
+
+    const summary = calculateBOQSummary(boq.items);
+    boq.summary = summary;
+
     await boq.save();
 
     res.status(200).json({
       success: true,
-      message: `Sourcing status updated to ${sourcingStatus}`,
+      message: `Sourcing status updated to ${item.sourcingStatus}`,
       data: boq
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// 19. Admin: Assign BOQ Item to Sellers
+exports.assignBOQItemToSellers = async (req, res, next) => {
+  try {
+    const { boqId, itemId } = req.params;
+    const { sellerIds } = req.body;
+
+    if (!Array.isArray(sellerIds) || sellerIds.length === 0) {
+      return res.status(400).json({ success: false, message: 'Please select at least one seller.' });
+    }
+
+    const boq = await BOQ.findById(boqId);
+    if (!boq) return res.status(404).json({ success: false, message: 'BOQ not found' });
+
+    const item = boq.items.id(itemId);
+    if (!item) return res.status(404).json({ success: false, message: 'BOQ item not found' });
+
+    item.routedTo = item.routedTo || [];
+    
+    let addedCount = 0;
+    sellerIds.forEach(sId => {
+      if (!item.routedTo.some(r => r.sellerId.toString() === sId)) {
+        item.routedTo.push({ sellerId: sId, status: 'pending' });
+        addedCount++;
+      }
+    });
+
+    if (addedCount > 0) {
+      item.sourcingStatus = 'in-review';
+      await boq.save();
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `Routed item to ${addedCount} sellers`,
+      data: boq
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// 20. Seller: Get BOQ Requests routed to them
+exports.getSellerBOQRequests = async (req, res, next) => {
+  try {
+    const sellerId = req.user.role === 'seller' ? req.user.sellerProfile : null;
+    if (!sellerId) return res.status(403).json({ success: false, message: 'Only sellers can access this' });
+
+    const boqs = await BOQ.find({ 'items.routedTo.sellerId': sellerId })
+      .populate('userId', 'fullName name')
+      .sort({ updatedAt: -1 });
+
+    const requests = [];
+    boqs.forEach(boq => {
+      boq.items.forEach(item => {
+        const assignment = item.routedTo.find(r => r.sellerId.toString() === sellerId.toString());
+        if (assignment) {
+          requests.push({
+            boqId: boq._id,
+            boqName: boq.boqName,
+            client: boq.userId ? { name: boq.userId.fullName || boq.userId.name } : { name: 'Client' },
+            item,
+            assignment
+          });
+        }
+      });
+    });
+
+    res.status(200).json({ success: true, data: requests });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// 21. Seller: Respond to BOQ Assignment
+exports.respondToBOQAssignment = async (req, res, next) => {
+  try {
+    const { boqId, itemId } = req.params;
+    const { unitPrice, availableQuantity, deliveryEstimate, status } = req.body;
+    
+    const sellerId = req.user.role === 'seller' ? req.user.sellerProfile : null;
+    if (!sellerId) return res.status(403).json({ success: false, message: 'Only sellers can perform this action' });
+
+    const boq = await BOQ.findById(boqId);
+    if (!boq) return res.status(404).json({ success: false, message: 'BOQ not found' });
+
+    const item = boq.items.id(itemId);
+    if (!item) return res.status(404).json({ success: false, message: 'BOQ item not found' });
+
+    const assignment = item.routedTo.find(r => r.sellerId.toString() === sellerId.toString());
+    if (!assignment) return res.status(404).json({ success: false, message: 'You are not assigned to this item' });
+
+    assignment.unitPrice = Number(unitPrice) || 0;
+    assignment.availableQuantity = Number(availableQuantity) || 0;
+    assignment.deliveryEstimate = deliveryEstimate || '';
+    assignment.status = status || 'quoted';
+    assignment.respondedAt = new Date();
+
+    const summary = calculateBOQSummary(boq.items);
+    boq.summary = summary;
+
+    await boq.save();
+
+    res.status(200).json({ success: true, message: 'Quote submitted successfully' });
   } catch (error) {
     next(error);
   }

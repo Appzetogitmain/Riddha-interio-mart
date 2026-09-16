@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FiDownload, FiSearch, FiTrash2, FiUsers, FiX, FiCheckCircle, FiXCircle, FiSend, FiClock } from 'react-icons/fi';
+import { FiDownload, FiSearch, FiTrash2, FiUsers, FiX, FiCheckCircle, FiXCircle, FiSend, FiClock, FiEye } from 'react-icons/fi';
 import api from '../../../shared/utils/api';
 import { toast } from 'react-hot-toast';
 
@@ -15,6 +15,7 @@ const SellerAssignmentModal = ({ order, onClose, onOrderUpdated }) => {
   const [suggested, setSuggested] = useState([]);
   const [loadingSuggested, setLoadingSuggested] = useState(true);
   const [selectedSellerIds, setSelectedSellerIds] = useState([]);
+  const [selectedItemIds, setSelectedItemIds] = useState(order.items.map(i => i._id));
   const [assigning, setAssigning] = useState(false);
   const [sendingOfferId, setSendingOfferId] = useState(null);
 
@@ -72,11 +73,22 @@ const SellerAssignmentModal = ({ order, onClose, onOrderUpdated }) => {
     setSelectedSellerIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
   };
 
+  const toggleItem = (id) => {
+    setSelectedItemIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  };
+
   const handleAssign = async () => {
     if (selectedSellerIds.length === 0) return;
+    if (selectedItemIds.length === 0) {
+      toast.error('Please select at least one item to assign.');
+      return;
+    }
     try {
       setAssigning(true);
-      const res = await api.post(`/bulk-orders/${order._id}/assign`, { sellerIds: selectedSellerIds });
+      const res = await api.post(`/bulk-orders/${order._id}/assign`, { 
+        sellerIds: selectedSellerIds,
+        itemIds: selectedItemIds
+      });
       toast.success(`Assigned to ${selectedSellerIds.length} seller(s).`);
       onOrderUpdated(res.data.data);
       setSelectedSellerIds([]);
@@ -138,10 +150,34 @@ const SellerAssignmentModal = ({ order, onClose, onOrderUpdated }) => {
                       <p className="text-[11px] text-gray-400 truncate capitalize">
                         {a.seller?.shopName && a.seller?.fullName ? `${a.seller.fullName} · ` : ''}{a.matchType} match
                       </p>
-                      {a.status === 'accepted' && (
-                        <p className="text-[11px] text-gray-600 mt-1">
-                          Qty: <span className="font-bold">{a.availableQuantity}</span> · Rs. <span className="font-bold">{a.unitPrice}</span>/unit · ETA: <span className="font-bold">{a.deliveryEstimate}</span>
-                        </p>
+                      {a.status === 'accepted' ? (
+                        <div className="mt-2 space-y-1 bg-gray-50 rounded-lg p-2 border border-gray-100">
+                          <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1">
+                            ETA: {a.deliveryEstimate}
+                          </p>
+                          {(a.items || []).map((ai, idx) => {
+                            const itemDetail = order.items.find(i => String(i._id) === String(ai.itemId));
+                            return (
+                              <div key={idx} className="flex justify-between items-center text-[10px]">
+                                <span className="text-gray-700 truncate pr-2 max-w-[120px] font-semibold">{itemDetail?.name || 'Item'}</span>
+                                <span className="text-gray-600 shrink-0">
+                                  {ai.availableQuantity} qty · Rs. <span className="font-bold">{ai.unitPrice}</span>
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div className="mt-2 flex flex-wrap gap-1">
+                          {(a.items || []).map((ai, idx) => {
+                            const itemDetail = order.items.find(i => String(i._id) === String(ai.itemId));
+                            return (
+                              <span key={idx} className="text-[9px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded truncate max-w-[100px]">
+                                {itemDetail?.name || 'Item'}
+                              </span>
+                            );
+                          })}
+                        </div>
                       )}
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
@@ -167,6 +203,27 @@ const SellerAssignmentModal = ({ order, onClose, onOrderUpdated }) => {
               </div>
             </div>
           )}
+
+          {/* Items selection */}
+          <div className="space-y-2">
+            <h3 className="text-xs font-bold uppercase tracking-widest text-gray-500">Items to Assign</h3>
+            <div className="space-y-1 bg-gray-50 p-3 rounded-xl border border-gray-150">
+              {order.items.map(item => (
+                <label key={item._id} className="flex items-center gap-3 cursor-pointer p-1">
+                  <input 
+                    type="checkbox" 
+                    checked={selectedItemIds.includes(item._id)} 
+                    onChange={() => toggleItem(item._id)}
+                    className="accent-[#189D91]"
+                  />
+                  <span className="text-sm text-gray-800">
+                    <span className="font-bold">{item.name}</span> <span className="text-gray-500">({item.quantity} qty)</span>
+                    {item.category && <span className="ml-2 text-[10px] bg-gray-200 px-2 py-0.5 rounded-full">{item.category}</span>}
+                  </span>
+                </label>
+              ))}
+            </div>
+          </div>
 
           {/* Suggested sellers to assign */}
           <div className="space-y-2">
@@ -286,6 +343,8 @@ const BulkOrdersPage = () => {
   const [deletingId, setDeletingId] = useState(null);
   const [updatingId, setUpdatingId] = useState(null);
   const [assigningOrder, setAssigningOrder] = useState(null);
+  const [viewingProductsOrder, setViewingProductsOrder] = useState(null);
+  const [viewingMessage, setViewingMessage] = useState(null);
 
   useEffect(() => {
     fetchOrders();
@@ -450,18 +509,34 @@ const BulkOrdersPage = () => {
                       <td className="px-4 py-3 text-gray-600 align-top whitespace-nowrap">{order.phone}</td>
                       <td className="px-4 py-3 text-gray-600 align-top">{order.email}</td>
                       <td className="px-4 py-3 align-top">
-                        <div className="max-w-[220px] max-h-[110px] overflow-y-auto pr-1">
-                          {order.items.map((item, i) => (
-                            <div key={i} className="text-[11px] text-gray-600 leading-tight mb-1">
-                              • {item.name} <span className="text-gray-400">({item.quantity})</span>
-                            </div>
-                          ))}
+                        <div className="flex flex-col items-start gap-1">
+                          <span className="text-xs font-semibold text-gray-700">
+                            {order.items.length} Product{order.items.length !== 1 ? 's' : ''}
+                          </span>
+                          <button
+                            onClick={() => setViewingProductsOrder(order)}
+                            className="flex items-center gap-1 text-[11px] font-bold text-[#189D91] hover:underline"
+                          >
+                            <FiEye size={12} /> View Items
+                          </button>
                         </div>
                       </td>
-                      <td className="px-4 py-3 align-top">
-                        <p className="text-gray-500 text-xs max-w-[130px] truncate" title={order.message}>
-                          {order.message || '-'}
-                        </p>
+                      <td className="px-4 py-3 align-top max-w-[200px]">
+                        {order.message ? (
+                          <div className="flex flex-col items-start gap-1">
+                            <p className="text-gray-500 text-xs truncate w-full" title={order.message}>
+                              {order.message}
+                            </p>
+                            <button
+                              onClick={() => setViewingMessage(order.message)}
+                              className="flex items-center gap-1 text-[11px] font-bold text-[#189D91] hover:underline"
+                            >
+                              <FiEye size={12} /> View Message
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="text-gray-400 text-xs">-</span>
+                        )}
                       </td>
                       <td className="px-4 py-3 align-top">
                         <button
@@ -521,6 +596,57 @@ const BulkOrdersPage = () => {
           onClose={() => setAssigningOrder(null)}
           onOrderUpdated={handleOrderUpdated}
         />
+      )}
+
+      {viewingProductsOrder && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/50 p-4" onClick={() => setViewingProductsOrder(null)}>
+          <div
+            className="bg-white rounded-2xl w-full max-w-md max-h-[85vh] overflow-hidden shadow-2xl flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 shrink-0">
+              <div>
+                <h2 className="text-base font-bold text-gray-900">Requested Items</h2>
+                <p className="text-xs text-gray-400">{viewingProductsOrder.name}'s Inquiry</p>
+              </div>
+              <button onClick={() => setViewingProductsOrder(null)} className="p-1.5 text-gray-400 hover:text-gray-700 rounded-lg hover:bg-gray-100">
+                <FiX size={18} />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-6 space-y-3 custom-scrollbar">
+              {viewingProductsOrder.items.map((item, i) => (
+                <div key={i} className="flex justify-between items-center bg-gray-50 p-3 rounded-xl border border-gray-100">
+                  <div className="min-w-0 pr-3">
+                    <p className="text-sm font-bold text-gray-800">{item.name}</p>
+                    {item.category && <p className="text-xs text-gray-500 mt-0.5">{item.category}</p>}
+                  </div>
+                  <div className="shrink-0 bg-[#189D91]/10 text-[#189D91] text-xs font-bold px-2.5 py-1 rounded-lg border border-[#189D91]/20">
+                    ×{item.quantity}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {viewingMessage && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/50 p-4" onClick={() => setViewingMessage(null)}>
+          <div
+            className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+              <h2 className="text-base font-bold text-gray-900">Customer Message</h2>
+              <button onClick={() => setViewingMessage(null)} className="p-1.5 text-gray-400 hover:text-gray-700 rounded-lg hover:bg-gray-100">
+                <FiX size={18} />
+              </button>
+            </div>
+            <div className="p-6">
+              <p className="text-sm text-gray-700 whitespace-pre-wrap">{viewingMessage}</p>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

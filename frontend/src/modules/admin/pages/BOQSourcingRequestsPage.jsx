@@ -21,9 +21,24 @@ const BOQSourcingRequestsPage = () => {
   const [modalNotes, setModalNotes] = useState('');
   const [updating, setUpdating] = useState(false);
 
+  const [activeSellers, setActiveSellers] = useState([]);
+  const [selectedSellersForRoute, setSelectedSellersForRoute] = useState([]);
+
   useEffect(() => {
     fetchSourcingRequests();
+    fetchActiveSellers();
   }, []);
+
+  const fetchActiveSellers = async () => {
+    try {
+      const res = await api.get('/auth/admin/sellers/active');
+      if (res.data?.success) {
+        setActiveSellers(res.data.data);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   const fetchSourcingRequests = async () => {
     setLoading(true);
@@ -44,6 +59,44 @@ const BOQSourcingRequestsPage = () => {
     setModalStatus(req.sourcingStatus === 'pending' ? 'in-review' : req.sourcingStatus);
     setModalPrice(req.item.unitCost || '');
     setModalNotes(req.item.sourcingNotes || '');
+    setSelectedSellersForRoute([]);
+  };
+
+  const handleRouteToSellers = async () => {
+    if (selectedSellersForRoute.length === 0) return toast.error('Select at least one seller.');
+    setUpdating(true);
+    try {
+      const res = await api.post(`/boqs/admin/sourcing-requests/${selectedReq.boqId}/items/${selectedReq.item._id}/route`, {
+        sellerIds: selectedSellersForRoute
+      });
+      if (res.data?.success) {
+        toast.success('Routed successfully');
+        fetchSourcingRequests();
+        setSelectedReq(null);
+      }
+    } catch (e) {
+      toast.error('Failed to route');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleAcceptSellerQuote = async (assignment) => {
+    setUpdating(true);
+    try {
+      const res = await api.put(`/boqs/admin/sourcing-requests/${selectedReq.boqId}/items/${selectedReq.item._id}`, {
+        acceptedSellerId: assignment.sellerId._id || assignment.sellerId
+      });
+      if (res.data?.success) {
+        toast.success('Quote accepted!');
+        fetchSourcingRequests();
+        setSelectedReq(null);
+      }
+    } catch (e) {
+      toast.error('Failed to accept quote');
+    } finally {
+      setUpdating(false);
+    }
   };
 
   const handleUpdateSourcing = async (e) => {
@@ -241,59 +294,110 @@ const BOQSourcingRequestsPage = () => {
                 <div className="text-slate-500">Qty: {selectedReq.item.quantity} {selectedReq.item.unit}</div>
               </div>
 
-              <form onSubmit={handleUpdateSourcing} className="space-y-3">
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Sourcing Status</label>
-                  <select
-                    value={modalStatus}
-                    onChange={(e) => setModalStatus(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-xl font-semibold"
-                  >
-                    <option value="pending">Pending</option>
-                    <option value="in-review">In Review / Procuring</option>
-                    <option value="sourced">Sourced & Confirmed</option>
-                    <option value="unavailable">Unavailable</option>
-                  </select>
-                </div>
+              {/* AUTOMATED SELLER ROUTING */}
+              <div className="border border-slate-200 rounded-xl p-4 space-y-3">
+                <h4 className="font-bold text-slate-800 border-b border-slate-100 pb-2">Seller Quotations</h4>
+                
+                {selectedReq.item.routedTo && selectedReq.item.routedTo.length > 0 ? (
+                  <div className="space-y-2">
+                    {selectedReq.item.routedTo.map((a, i) => (
+                      <div key={i} className="flex justify-between items-center bg-white p-2 border border-slate-100 rounded-lg">
+                        <div>
+                          <p className="font-bold text-slate-800">{a.sellerId?.shopName || 'Seller'}</p>
+                          <p className="text-[10px] text-slate-500 capitalize">Status: {a.status}</p>
+                        </div>
+                        {a.status === 'quoted' ? (
+                          <div className="flex items-center gap-2">
+                            <span className="text-emerald-700 font-bold">Rs. {a.unitPrice}</span>
+                            <button onClick={() => handleAcceptSellerQuote(a)} className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded text-[10px] font-bold hover:bg-emerald-200">Accept</button>
+                          </div>
+                        ) : a.status === 'accepted' ? (
+                          <span className="text-emerald-700 font-bold px-2 py-1 bg-emerald-50 rounded text-[10px]">Accepted (Rs. {a.unitPrice})</span>
+                        ) : (
+                          <span className="text-slate-400 text-[10px] font-semibold">{a.status}</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-[11px] text-slate-400">Not routed to any sellers yet.</p>
+                )}
 
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Vendor Quoted Unit Price (Rs.)</label>
-                  <input
-                    type="number"
-                    value={modalPrice}
-                    onChange={(e) => setModalPrice(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-xl font-bold"
-                  />
+                {/* Assign to new sellers */}
+                <div className="pt-2 border-t border-slate-100 space-y-2">
+                  <p className="text-[10px] font-bold text-slate-500 uppercase">Route to New Sellers</p>
+                  <div className="max-h-24 overflow-y-auto space-y-1 custom-scrollbar">
+                    {activeSellers.filter(s => !(selectedReq.item.routedTo || []).some(r => r.sellerId._id === s._id)).map(s => (
+                      <label key={s._id} className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer">
+                        <input type="checkbox" className="rounded border-slate-300"
+                          checked={selectedSellersForRoute.includes(s._id)}
+                          onChange={(e) => {
+                            if (e.target.checked) setSelectedSellersForRoute([...selectedSellersForRoute, s._id]);
+                            else setSelectedSellersForRoute(selectedSellersForRoute.filter(id => id !== s._id));
+                          }}
+                        />
+                        {s.shopName}
+                      </label>
+                    ))}
+                  </div>
+                  {selectedSellersForRoute.length > 0 && (
+                    <button onClick={handleRouteToSellers} className="w-full py-1.5 bg-slate-900 text-white rounded-lg text-[10px] font-bold">
+                      Route to {selectedSellersForRoute.length} Sellers
+                    </button>
+                  )}
                 </div>
+              </div>
 
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Procurement Notes / Vendor Info</label>
-                  <textarea
-                    rows="2"
-                    placeholder="Enter vendor details or catalog SKU link..."
-                    value={modalNotes}
-                    onChange={(e) => setModalNotes(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-xl"
-                  ></textarea>
-                </div>
+              {/* MANUAL SOURCING ENTRY */}
+              <div className="border border-slate-200 rounded-xl p-4">
+                <h4 className="font-bold text-slate-800 border-b border-slate-100 pb-2 mb-3">Manual Override</h4>
+                <form onSubmit={handleUpdateSourcing} className="space-y-3">
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1 text-[10px] uppercase">Status</label>
+                    <select
+                      value={modalStatus}
+                      onChange={(e) => setModalStatus(e.target.value)}
+                      className="w-full px-3 py-1.5 border border-slate-200 rounded-xl font-semibold"
+                    >
+                      <option value="pending">Pending</option>
+                      <option value="in-review">In Review / Procuring</option>
+                      <option value="sourced">Sourced & Confirmed</option>
+                      <option value="unavailable">Unavailable</option>
+                    </select>
+                  </div>
 
-                <div className="flex justify-end space-x-2 pt-2 border-t border-slate-100">
-                  <button
-                    type="button"
-                    onClick={() => setSelectedReq(null)}
-                    className="px-4 py-2 border border-slate-200 rounded-xl font-semibold text-slate-600"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={updating}
-                    className="px-5 py-2 bg-amber-500 hover:bg-amber-400 text-deep-espresso font-bold rounded-xl shadow-sm"
-                  >
-                    {updating ? 'Updating...' : 'Save Sourcing Update'}
-                  </button>
-                </div>
-              </form>
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1 text-[10px] uppercase">Quoted Unit Price (Rs.)</label>
+                    <input
+                      type="number"
+                      value={modalPrice}
+                      onChange={(e) => setModalPrice(e.target.value)}
+                      className="w-full px-3 py-1.5 border border-slate-200 rounded-xl font-bold"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1 text-[10px] uppercase">Procurement Notes</label>
+                    <textarea
+                      rows="1"
+                      placeholder="Enter vendor details..."
+                      value={modalNotes}
+                      onChange={(e) => setModalNotes(e.target.value)}
+                      className="w-full px-3 py-1.5 border border-slate-200 rounded-xl"
+                    ></textarea>
+                  </div>
+
+                  <div className="flex justify-end pt-2">
+                    <button
+                      type="submit"
+                      disabled={updating}
+                      className="px-4 py-1.5 bg-amber-500 hover:bg-amber-400 text-deep-espresso font-bold rounded-lg shadow-sm text-xs"
+                    >
+                      {updating ? 'Saving...' : 'Save Manual Override'}
+                    </button>
+                  </div>
+                </form>
+              </div>
             </div>
           </div>
         )}

@@ -121,6 +121,8 @@ const menuGroups = [
         label: "Order Management",
         icon: FiClipboard,
         path: "/admin/orders/all",
+        showBadge: true,
+        badgeType: "orderManagement",
         children: [
           { path: "/admin/orders/all", icon: FiGrid, label: "All Orders" },
           {
@@ -372,6 +374,7 @@ const NavItem = ({
       : item.badgeType === 'product' ? productCount
       : item.badgeType === 'return' ? returnCount
       : item.badgeType === 'bulk' ? bulkCount
+      : item.badgeType === 'orderManagement' ? (bulkCount + returnCount)
       : sellersCount)
     : 0;
 

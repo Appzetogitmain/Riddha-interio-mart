@@ -26,17 +26,43 @@ const assignmentStatusColor = (status) => {
 
 // ── Assignment response form: quote qty/price/ETA to accept, or decline ───
 const AssignmentResponseCard = ({ order, myAssignment, onResponded }) => {
-  const [form, setForm] = useState({ availableQuantity: '', unitPrice: '', deliveryEstimate: '', notes: '' });
+  const assignedItems = myAssignment?.items || [];
+  
+  const [itemQuotes, setItemQuotes] = useState(
+    assignedItems.map(ai => ({
+      itemId: ai.itemId,
+      unitPrice: ai.unitPrice || '',
+      availableQuantity: ai.availableQuantity || ''
+    }))
+  );
+  const [form, setForm] = useState({ 
+    deliveryEstimate: myAssignment?.deliveryEstimate || '', 
+    notes: myAssignment?.notes || '' 
+  });
   const [submitting, setSubmitting] = useState(null); // 'accepted' | 'rejected'
 
+  const handleItemChange = (index, field, value) => {
+    const newQuotes = [...itemQuotes];
+    newQuotes[index][field] = value;
+    setItemQuotes(newQuotes);
+  };
+
   const submit = async (decision) => {
-    if (decision === 'accepted' && (!form.availableQuantity || !form.unitPrice || !form.deliveryEstimate)) {
-      toast.error('Available quantity, unit price, and delivery estimate are required to accept.');
-      return;
+    if (decision === 'accepted') {
+      const hasInvalidItem = itemQuotes.some(q => !q.unitPrice || !q.availableQuantity);
+      if (hasInvalidItem || !form.deliveryEstimate) {
+        toast.error('Pricing/Quantity for all assigned items and a delivery estimate are required to accept.');
+        return;
+      }
     }
     try {
       setSubmitting(decision);
-      const res = await api.put(`/bulk-orders/${order._id}/respond`, { decision, ...form });
+      const res = await api.put(`/bulk-orders/${order._id}/respond`, { 
+        decision, 
+        items: itemQuotes,
+        deliveryEstimate: form.deliveryEstimate,
+        notes: form.notes
+      });
       toast.success(decision === 'accepted' ? 'Quote sent to admin!' : 'Request declined.');
       onResponded(res.data.data);
     } catch (err) {
@@ -56,9 +82,24 @@ const AssignmentResponseCard = ({ order, myAssignment, onResponded }) => {
           </span>
         </div>
         {myAssignment.status === 'accepted' && (
-          <p className="text-sm text-slate-700">
-            Qty: <span className="font-bold">{myAssignment.availableQuantity}</span> · Rs. <span className="font-bold">{myAssignment.unitPrice}</span>/unit · ETA: <span className="font-bold">{myAssignment.deliveryEstimate}</span>
-          </p>
+          <div className="space-y-2 mt-2">
+            <p className="text-sm text-slate-700">
+              ETA: <span className="font-bold">{myAssignment.deliveryEstimate}</span>
+            </p>
+            <div className="bg-white rounded-xl border border-slate-100 divide-y divide-slate-100">
+              {myAssignment.items.map((ai, idx) => {
+                const itemDetail = order.items.find(i => String(i._id) === String(ai.itemId));
+                return (
+                  <div key={idx} className="p-2 flex justify-between items-center text-xs">
+                    <span className="font-semibold text-slate-800 truncate pr-2">{itemDetail?.name || 'Item'}</span>
+                    <span className="text-slate-600 shrink-0">
+                      Qty: <span className="font-bold">{ai.availableQuantity}</span> · Rs. <span className="font-bold">{ai.unitPrice}</span>
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         )}
       </div>
     );
@@ -67,25 +108,37 @@ const AssignmentResponseCard = ({ order, myAssignment, onResponded }) => {
   return (
     <div className="bg-amber-50 rounded-2xl p-4 border border-amber-100 space-y-3">
       <p className="text-[10px] font-black uppercase tracking-widest text-amber-700">Respond to this Bulk Order Request</p>
-      <div className="grid grid-cols-2 gap-2">
-        <div>
-          <label className="text-[10px] font-bold text-slate-500 uppercase">Available Qty</label>
-          <input
-            type="number"
-            value={form.availableQuantity}
-            onChange={(e) => setForm({ ...form, availableQuantity: e.target.value })}
-            className="w-full mt-0.5 px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:border-[#189D91]"
-          />
-        </div>
-        <div>
-          <label className="text-[10px] font-bold text-slate-500 uppercase">Unit Price (Rs)</label>
-          <input
-            type="number"
-            value={form.unitPrice}
-            onChange={(e) => setForm({ ...form, unitPrice: e.target.value })}
-            className="w-full mt-0.5 px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:border-[#189D91]"
-          />
-        </div>
+      <div className="space-y-2">
+        {assignedItems.map((ai, idx) => {
+          const itemDetail = order.items.find(i => String(i._id) === String(ai.itemId));
+          return (
+            <div key={idx} className="bg-white rounded-xl p-3 border border-amber-200/60 shadow-sm">
+              <p className="text-xs font-bold text-slate-800 mb-2 truncate">
+                {itemDetail?.name || 'Assigned Item'} <span className="text-slate-400 font-normal">(Requested: {itemDetail?.quantity || ai.requestedQuantity})</span>
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-[9px] font-bold text-slate-500 uppercase">My Available Qty</label>
+                  <input
+                    type="number"
+                    value={itemQuotes[idx].availableQuantity}
+                    onChange={(e) => handleItemChange(idx, 'availableQuantity', e.target.value)}
+                    className="w-full mt-0.5 px-3 py-1.5 rounded-lg border border-slate-200 text-xs focus:outline-none focus:border-[#189D91]"
+                  />
+                </div>
+                <div>
+                  <label className="text-[9px] font-bold text-slate-500 uppercase">Unit Price (Rs)</label>
+                  <input
+                    type="number"
+                    value={itemQuotes[idx].unitPrice}
+                    onChange={(e) => handleItemChange(idx, 'unitPrice', e.target.value)}
+                    className="w-full mt-0.5 px-3 py-1.5 rounded-lg border border-slate-200 text-xs focus:outline-none focus:border-[#189D91]"
+                  />
+                </div>
+              </div>
+            </div>
+          );
+        })}
       </div>
       <div>
         <label className="text-[10px] font-bold text-slate-500 uppercase">Delivery Estimate</label>

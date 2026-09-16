@@ -213,9 +213,12 @@ exports.searchSellers = async (req, res) => {
 // ── Admin: assign the bulk order to one or more sellers for a quote ───────
 exports.assignBulkOrderToSellers = async (req, res) => {
   try {
-    const { sellerIds } = req.body;
+    const { sellerIds, itemIds = [] } = req.body;
     if (!Array.isArray(sellerIds) || sellerIds.length === 0) {
       return res.status(400).json({ success: false, message: 'Select at least one seller to assign.' });
+    }
+    if (!Array.isArray(itemIds) || itemIds.length === 0) {
+      return res.status(400).json({ success: false, message: 'Select at least one item to assign.' });
     }
 
     const bulkOrder = await BulkOrder.findById(req.params.id);
@@ -233,12 +236,20 @@ exports.assignBulkOrderToSellers = async (req, res) => {
     const existingSellerIds = new Set((bulkOrder.assignments || []).map(a => String(a.seller)));
     const newlyAssignedIds = [];
 
+    const itemsToAssign = bulkOrder.items
+      .filter(i => itemIds.includes(String(i._id)))
+      .map(i => ({
+        itemId: i._id,
+        requestedQuantity: i.quantity
+      }));
+
     for (const sellerId of sellerIds) {
       if (existingSellerIds.has(String(sellerId))) continue; // don't double-assign
       bulkOrder.assignments.push({
         seller: sellerId,
         matchType: directSellerIds.has(String(sellerId)) ? 'product' : 'category',
-        status: 'pending'
+        status: 'pending',
+        items: itemsToAssign
       });
       newlyAssignedIds.push(sellerId);
     }
@@ -269,13 +280,14 @@ exports.assignBulkOrderToSellers = async (req, res) => {
 exports.respondToBulkOrderAssignment = async (req, res) => {
   try {
     const sellerId = req.user._id;
-    const { decision, availableQuantity, unitPrice, deliveryEstimate, notes } = req.body;
+    // items: [{ itemId, unitPrice, availableQuantity }]
+    const { decision, deliveryEstimate, notes, items } = req.body;
 
     if (!['accepted', 'rejected'].includes(decision)) {
       return res.status(400).json({ success: false, message: 'Decision must be "accepted" or "rejected".' });
     }
-    if (decision === 'accepted' && (!availableQuantity || !unitPrice || !deliveryEstimate)) {
-      return res.status(400).json({ success: false, message: 'Available quantity, unit price, and delivery estimate are required to accept.' });
+    if (decision === 'accepted' && (!items || items.length === 0 || !deliveryEstimate)) {
+      return res.status(400).json({ success: false, message: 'Pricing for items and delivery estimate are required to accept.' });
     }
 
     const bulkOrder = await BulkOrder.findById(req.params.id);
@@ -290,10 +302,17 @@ exports.respondToBulkOrderAssignment = async (req, res) => {
 
     assignment.status = decision;
     if (decision === 'accepted') {
-      assignment.availableQuantity = availableQuantity;
-      assignment.unitPrice = unitPrice;
       assignment.deliveryEstimate = deliveryEstimate;
       assignment.notes = notes || '';
+      
+      // Update item level pricing
+      for (const reqItem of items) {
+        const assignedItem = assignment.items.find(i => String(i.itemId) === String(reqItem.itemId));
+        if (assignedItem) {
+          assignedItem.unitPrice = reqItem.unitPrice;
+          assignedItem.availableQuantity = reqItem.availableQuantity;
+        }
+      }
     }
     assignment.respondedAt = new Date();
 
@@ -304,8 +323,6 @@ exports.respondToBulkOrderAssignment = async (req, res) => {
       customerName: bulkOrder.name,
       sellerName: seller?.shopName || seller?.fullName || 'Seller',
       decision,
-      availableQuantity: assignment.availableQuantity,
-      unitPrice: assignment.unitPrice,
       deliveryEstimate: assignment.deliveryEstimate,
       orderId: String(bulkOrder._id)
     }).catch(() => {});

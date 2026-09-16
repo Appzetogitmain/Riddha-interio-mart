@@ -1,14 +1,20 @@
 const mongoose = require('mongoose');
 
-// One seller's slot in the bulk-order distribution: admin assigns, seller responds with
-// their own availability/pricing/delivery estimate (or rejects), admin then picks the
-// best response to send back to the customer as the final offer.
+// An individual item assigned to this seller
+const AssignedItemSchema = new mongoose.Schema({
+  itemId: { type: mongoose.Schema.Types.ObjectId, required: true },
+  requestedQuantity: { type: Number, required: true },
+  unitPrice: { type: Number, default: 0 },
+  availableQuantity: { type: Number, default: 0 },
+  notes: { type: String, default: '' }
+}, { _id: false });
+
+// One seller's slot in the bulk-order distribution
 const AssignmentSchema = new mongoose.Schema({
   seller: { type: mongoose.Schema.Types.ObjectId, ref: 'Seller', required: true },
   matchType: { type: String, enum: ['product', 'category'], default: 'category' },
   status: { type: String, enum: ['pending', 'accepted', 'rejected'], default: 'pending' },
-  availableQuantity: { type: Number },
-  unitPrice: { type: Number },
+  items: { type: [AssignedItemSchema], default: [] },
   deliveryEstimate: { type: String },
   notes: { type: String },
   assignedAt: { type: Date, default: Date.now },

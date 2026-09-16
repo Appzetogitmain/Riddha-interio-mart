@@ -22,7 +22,19 @@ const BOQItemSchema = new mongoose.Schema({
   sourcingStatus: { type: String, enum: ['none', 'pending', 'in-review', 'sourced', 'unavailable'], default: 'none' },
   sourcingNotes: { type: String, default: '' },
   sourcingRequestedAt: { type: Date },
-  addedAt: { type: Date, default: Date.now }
+  addedAt: { type: Date, default: Date.now },
+  routedTo: {
+    type: [new mongoose.Schema({
+      sellerId: { type: mongoose.Schema.ObjectId, ref: 'Seller', required: true },
+      routedAt: { type: Date, default: Date.now },
+      unitPrice: { type: Number, default: 0 },
+      availableQuantity: { type: Number, default: 0 },
+      deliveryEstimate: { type: String, default: '' },
+      status: { type: String, enum: ['pending', 'quoted', 'declined'], default: 'pending' },
+      respondedAt: { type: Date, default: null }
+    }, { _id: false })],
+    default: []
+  }
 });
 
 const BOQSchema = new mongoose.Schema({

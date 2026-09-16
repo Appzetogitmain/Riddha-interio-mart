@@ -258,6 +258,7 @@ const menuGroups = [
       },
       { path: "/admin/manage-advertisements", icon: FiStar, label: "Advertisement Plans" },
       { path: "/admin/pro-plans", icon: LuCrown, label: "Pro AI Subscription Plans" },
+      { path: "/admin/b2c-plans", icon: LuCrown, label: "B2C Subscription Plans" },
       { path: "/admin/manage-bundles", icon: FiZap, label: "Smart Bundles" },
       {
         label: "Featured Highlights",

@@ -162,6 +162,8 @@ app.use('/api/address', addressRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/home-banner', homeBannerRoutes);
 app.use('/api/promo-banner', promoBannerRoutes);
+const promoCardRoutes = require('./routes/promoCardRoutes');
+app.use('/api/promo-cards', promoCardRoutes);
 app.use('/api/sections', sectionRoutes);
 app.use('/api/favourite-section', favouriteSectionRoutes);
 app.use('/api/brands', brandRoutes);

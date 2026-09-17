@@ -129,6 +129,7 @@ router.post('/', protect, uploadRateLimiter, uploadParser.single('image'), valid
     const isImage = req.file.mimetype.startsWith('image');
     const result = await cloudinary.uploader.upload(req.file.path, {
       folder: 'riddha_mart/images',
+      resource_type: 'auto',
       image_metadata: false, // strips EXIF metadata
       transformation: isImage ? [
         { width: 1200, height: 1200, crop: 'limit', quality: 'auto', fetch_format: 'auto' }

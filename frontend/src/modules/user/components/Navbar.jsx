@@ -315,9 +315,28 @@ const Navbar = () => {
               </div>
 
               {/* Delivery Time */}
-              <div className="flex items-center gap-2 text-gray-900 border-l border-gray-100 pl-2 lg:pl-4">
-                <FiTruck className="text-[#28a399] w-5 h-5 shrink-0" />
-                <div className="flex flex-col">
+              <div className="flex items-center gap-2 text-gray-900 border-l border-gray-100 pl-2 lg:pl-4 overflow-hidden relative">
+                <motion.div
+                  initial={{ x: -100, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ 
+                    type: "tween",
+                    duration: 1.5,
+                    ease: "easeOut",
+                    delay: 0.5,
+                    repeat: Infinity,
+                    repeatDelay: 3
+                  }}
+                  className="relative shrink-0 flex items-center justify-center"
+                >
+                  <FiTruck className="text-[#28a399] w-6 h-6" strokeWidth={1.5} />
+                  <img 
+                    src={TransparentLogo} 
+                    alt="Riddha" 
+                    className="absolute w-[10px] h-[10px] object-contain left-[3px] top-[6px] opacity-80" 
+                  />
+                </motion.div>
+                <div className="flex flex-col relative z-10 bg-white md:bg-transparent px-1 rounded">
                   <span className="text-[10px] font-medium text-gray-400 leading-none">Delivery in</span>
                   <span className="text-[11.5px] font-extrabold text-[#EA580C] mt-0.5">
                     {deliveryEstimate.time}

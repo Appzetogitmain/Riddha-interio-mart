@@ -63,11 +63,15 @@ const inp = "w-full bg-gray-50 border border-gray-200 focus:border-teal-400 focu
 const BannerPreview = ({ form, height = 'h-[260px] md:h-[420px]' }) => (
   <div className={`relative ${height} w-full overflow-hidden rounded-2xl bg-gray-100`}>
     {form.bgImage?.src ? (
-      <img src={form.bgImage.src} alt={form.bgImage?.alt || 'Banner'} className="absolute inset-0 h-full w-full object-cover" />
+      form.bgImage.src.match(/\.(mp4|webm|ogg|mov)$/i) || form.bgImage.src.startsWith('data:video') ? (
+        <video src={form.bgImage.src} autoPlay loop muted playsInline className="absolute inset-0 h-full w-full object-cover" />
+      ) : (
+        <img src={form.bgImage.src} alt={form.bgImage?.alt || 'Banner'} className="absolute inset-0 h-full w-full object-cover" />
+      )
     ) : (
       <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-300 gap-2">
         <LuMonitor size={40} />
-        <span className="text-xs font-semibold">No image selected</span>
+        <span className="text-xs font-semibold">No media selected</span>
       </div>
     )}
     <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/30 to-transparent flex items-center">
@@ -124,6 +128,20 @@ const ManageHeroBanner = () => {
   /* Load image dimensions from any src (URL or data URL) */
   const loadImageMeta = useCallback((src, file = null) => {
     if (!src) { setImgMeta(null); return; }
+    if (src.match(/\.(mp4|webm|ogg|mov)$/i) || src.startsWith('data:video')) {
+      const video = document.createElement('video');
+      video.onloadedmetadata = () => {
+        setImgMeta({
+          width: video.videoWidth,
+          height: video.videoHeight,
+          sizeKb: file ? Math.round(file.size / 1024) : null,
+          fileName: file ? file.name : null,
+        });
+      };
+      video.onerror = () => setImgMeta(null);
+      video.src = src;
+      return;
+    }
     const img = new Image();
     img.onload = () => {
       setImgMeta({
@@ -311,7 +329,11 @@ const ManageHeroBanner = () => {
                 >
                   {bannerForm.bgImage.src ? (
                     <div className="relative h-28 rounded-lg overflow-hidden">
-                      <img src={bannerForm.bgImage.src} className="w-full h-full object-cover" alt="preview" />
+                      {bannerForm.bgImage.src.match(/\.(mp4|webm|ogg|mov)$/i) || bannerForm.bgImage.src.startsWith('data:video') ? (
+                        <video src={bannerForm.bgImage.src} autoPlay loop muted playsInline className="w-full h-full object-cover" />
+                      ) : (
+                        <img src={bannerForm.bgImage.src} className="w-full h-full object-cover" alt="preview" />
+                      )}
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                         <span className="text-white text-xs font-bold">Click to change</span>
                       </div>
@@ -319,14 +341,13 @@ const ManageHeroBanner = () => {
                   ) : (
                     <div className="py-4 flex flex-col items-center gap-2 text-gray-400">
                       <LuUpload size={22} className="group-hover:text-teal-500 transition-colors" />
-                      <p className="text-xs font-semibold">Click to upload image</p>
-                      <p className="text-[10px]">JPG, PNG, WebP — recommended 1920×600px</p>
+                      <p className="text-xs font-semibold">Click to upload image or video</p>
+                      <p className="text-[10px]">JPG, PNG, WebP, MP4, MOV</p>
                     </div>
                   )}
                 </div>
-                <input type="file" className="hidden" ref={fileInputRef} onChange={handleImageUpload} accept="image/*" />
+                <input type="file" className="hidden" ref={fileInputRef} onChange={handleImageUpload} accept="image/*,video/mp4,video/quicktime" />
 
-                {/* URL paste */}
                 <div className="flex items-center gap-2">
                   <div className="relative flex-1">
                     <LuLink className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={13} />
@@ -335,7 +356,7 @@ const ManageHeroBanner = () => {
                       value={bannerForm.bgImage.src.startsWith('data:') ? '' : bannerForm.bgImage.src}
                       onChange={e => handleChange('bgImage.src', e.target.value)}
                       className={`${inp} pl-8`}
-                      placeholder="…or paste image URL"
+                      placeholder="…or paste image/video URL"
                     />
                   </div>
                 </div>

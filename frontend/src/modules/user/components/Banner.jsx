@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import { Link } from 'react-router-dom';
 
 // Fallback high-quality static hero images
 import HeroBG1 from "../../../assets/hero_banner_interior.png";
@@ -46,11 +47,12 @@ const Banner = ({ banners }) => {
   if (!slides.length) return null;
 
   const currentImage = slides[currentSlide]?.image || slides[currentSlide]?.bg || slides[currentSlide]?.bgImage?.src || (typeof slides[currentSlide] === 'string' ? slides[currentSlide] : HeroBG1);
+  const isVideo = currentImage.match(/\.(mp4|webm|ogg|mov)$/i) || currentImage.startsWith('data:video') || currentImage.includes('/video/upload/');
 
   return (
     <section className="py-2 md:py-4 bg-white">
       <div className="max-w-[1700px] mx-auto px-2 md:px-10">
-        <div className="relative w-full aspect-[2.4/1] md:aspect-[3.8/1] overflow-hidden bg-gray-50 rounded-2xl md:rounded-[32px] shadow-sm">
+        <div className="relative w-full aspect-[2.4/1] md:aspect-[4.5/1] overflow-hidden bg-gray-50 rounded-2xl md:rounded-[32px] shadow-sm">
 
           <AnimatePresence mode="wait">
             <motion.div
@@ -61,15 +63,60 @@ const Banner = ({ banners }) => {
               transition={{ duration: 0.8 }}
               className="absolute inset-0"
             >
-              <img 
-                src={currentImage} 
-                alt="Riddha Mart Premium Banner" 
-                className="w-full h-full object-cover object-center"
-                onError={(e) => {
-                  e.target.onerror = null;
-                  e.target.src = HeroBG1;
-                }}
-              />
+              {isVideo ? (
+                <video 
+                  src={currentImage} 
+                  autoPlay 
+                  loop 
+                  muted 
+                  playsInline
+                  className="w-full h-full object-cover object-center"
+                />
+              ) : (
+                <img 
+                  src={currentImage} 
+                  alt={slides[currentSlide]?.title || "Riddha Mart Premium Banner"} 
+                  className="w-full h-full object-cover object-center"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = HeroBG1;
+                  }}
+                />
+              )}
+
+              {/* Overlay Content */}
+              {(slides[currentSlide]?.title || slides[currentSlide]?.subtitle || slides[currentSlide]?.primaryBtnText || slides[currentSlide]?.secondaryBtnText) ? (
+                <div className="absolute inset-0 bg-black/40 flex flex-col justify-center px-8 md:px-20 z-10 text-white">
+                  {slides[currentSlide]?.title && (
+                    <h2 className="text-lg md:text-3xl lg:text-4xl font-black mb-2 md:mb-3 tracking-tight drop-shadow-md max-w-2xl text-[var(--color-primary)]">
+                      {slides[currentSlide].title}
+                    </h2>
+                  )}
+                  {slides[currentSlide]?.subtitle && (
+                    <p className="text-[11px] md:text-base lg:text-lg font-semibold mb-4 md:mb-6 text-gray-100 max-w-2xl drop-shadow-sm">
+                      {slides[currentSlide].subtitle}
+                    </p>
+                  )}
+                  <div className="flex items-center gap-3 md:gap-4">
+                    {slides[currentSlide]?.primaryBtnText && (
+                      <Link 
+                        to={slides[currentSlide].primaryBtnLink || '#'} 
+                        className="px-5 py-2.5 md:px-7 md:py-3 bg-teal-600 hover:bg-teal-700 text-white rounded-full text-[10px] md:text-xs font-black shadow-lg transition-all hover:-translate-y-1 border-2 border-teal-600 hover:border-teal-700"
+                      >
+                        {slides[currentSlide].primaryBtnText}
+                      </Link>
+                    )}
+                    {slides[currentSlide]?.secondaryBtnText && (
+                      <Link 
+                        to={slides[currentSlide].secondaryBtnLink || '#'} 
+                        className="px-5 py-2.5 md:px-7 md:py-3 bg-white/10 hover:bg-white text-white hover:text-slate-900 backdrop-blur-md rounded-full text-[10px] md:text-xs font-black shadow-lg transition-all hover:-translate-y-1 border-2 border-white/70 hover:border-white"
+                      >
+                        {slides[currentSlide].secondaryBtnText}
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              ) : null}
             </motion.div>
           </AnimatePresence>
 

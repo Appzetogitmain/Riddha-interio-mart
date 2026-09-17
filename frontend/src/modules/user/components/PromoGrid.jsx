@@ -9,7 +9,7 @@ import DesignerImg from '../../../assets/2 (2).png';
 import BuildingImg from '../../../assets/4.png';
 import GiftImg from '../../../assets/1 (2).png';
 
-const PromoCard = ({ title, items, btnText, bg, textColor, btnColor, img, link }) => (
+const PromoCard = ({ title, items, btnText, bg, textColor, btnColor, img, link, index = 0 }) => (
   <motion.div
     whileHover={{ y: -3 }}
     className={`${bg} rounded-[14px] md:rounded-[24px] p-3 md:p-6 flex items-center justify-between overflow-hidden relative group h-[110px] md:h-[210px] border border-gray-100/50 shadow-sm hover:shadow-lg transition-all duration-500`}
@@ -37,65 +37,100 @@ const PromoCard = ({ title, items, btnText, bg, textColor, btnColor, img, link }
     </div>
 
     <div className="absolute right-0 top-0 bottom-0 w-[44%] md:w-[48%] h-full flex items-end justify-end pointer-events-none overflow-hidden">
-      <img
+      <motion.img
         src={img}
         alt={title}
-        className="w-full h-full object-cover md:object-contain group-hover:scale-105 transition-transform duration-500 origin-bottom-right"
+        animate={{ y: [0, -10, 0] }}
+        transition={{
+          duration: 3 + (index % 2),
+          repeat: Infinity,
+          ease: "easeInOut",
+          delay: index * 0.4
+        }}
+        className="w-full h-full object-cover md:object-contain transition-transform duration-500 origin-bottom-right"
       />
     </div>
   </motion.div>
 );
 
+import api from '../../../shared/utils/api';
+
+const defaultPromos = [
+  {
+    title: "Contractor Benefits",
+    items: ["Special Pricing", "Bulk Deals", "Priority Support"],
+    btnText: "Join Now",
+    bg: "bg-[#F4F9F8]",
+    textColor: "text-[#28a399]",
+    btnColor: "text-[#28a399]",
+    img: ContractorImg,
+    link: "/contractor-registration"
+  },
+  {
+    title: "Interior Designer Zone",
+    items: ["Premium Materials", "For Your Projects"],
+    btnText: "Join Now",
+    bg: "bg-[#FFF4F7]",
+    textColor: "text-[#D81B60]",
+    btnColor: "text-[#D81B60]",
+    img: DesignerImg,
+    link: "/designer-registration"
+  },
+  {
+    title: "Builder Benefits",
+    items: ["Reliable Supplies", "At Best Prices"],
+    btnText: "Join Now",
+    bg: "bg-[#FFF8F2]",
+    textColor: "text-[#F57C00]",
+    btnColor: "text-[#F57C00]",
+    img: BuildingImg,
+    link: "/builder-registration"
+  },
+  {
+    title: "Refer & Earn",
+    items: ["Refer Your Friends", "& Earn Rewards"],
+    btnText: "Know More",
+    bg: "bg-[#F8F4FF]",
+    textColor: "text-[#7E57C2]",
+    btnColor: "text-[#7E57C2]",
+    img: GiftImg,
+    link: "/referral"
+  }
+];
+
 const PromoGrid = () => {
-  const promos = [
-    {
-      title: "Contractor Benefits",
-      items: ["Special Pricing", "Bulk Deals", "Priority Support"],
-      btnText: "Join Now",
-      bg: "bg-[#F4F9F8]",
-      textColor: "text-[#28a399]",
-      btnColor: "text-[#28a399]",
-      img: ContractorImg,
-      link: "/contractor-registration"
-    },
-    {
-      title: "Interior Designer Zone",
-      items: ["Premium Materials", "For Your Projects"],
-      btnText: "Join Now",
-      bg: "bg-[#FFF4F7]",
-      textColor: "text-[#D81B60]",
-      btnColor: "text-[#D81B60]",
-      img: DesignerImg,
-      link: "/designer-registration"
-    },
-    {
-      title: "Builder Benefits",
-      items: ["Reliable Supplies", "At Best Prices"],
-      btnText: "Join Now",
-      bg: "bg-[#FFF8F2]",
-      textColor: "text-[#F57C00]",
-      btnColor: "text-[#F57C00]",
-      img: BuildingImg,
-      link: "/builder-registration"
-    },
-    {
-      title: "Refer & Earn",
-      items: ["Refer Your Friends", "& Earn Rewards"],
-      btnText: "Know More",
-      bg: "bg-[#F8F4FF]",
-      textColor: "text-[#7E57C2]",
-      btnColor: "text-[#7E57C2]",
-      img: GiftImg,
-      link: "/referral"
-    }
-  ];
+  const [promos, setPromos] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    const fetchPromos = async () => {
+      try {
+        const res = await api.get('/promo-cards');
+        if (res.data.success && res.data.data.length > 0) {
+          setPromos(res.data.data);
+        } else {
+          setPromos(defaultPromos);
+        }
+      } catch (err) {
+        console.error("Failed to fetch dynamic promos, using fallback");
+        setPromos(defaultPromos);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPromos();
+  }, []);
+
+  if (loading) {
+    return <div className="py-10 flex justify-center"><div className="w-6 h-6 border-2 border-teal-500 border-t-transparent rounded-full animate-spin"></div></div>;
+  }
 
   return (
     <section className="pt-2 pb-2 md:pt-2 md:pb-4 bg-white">
       <div className="max-w-[1920px] mx-auto px-2 md:px-4">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3">
           {promos.map((promo, idx) => (
-            <PromoCard key={idx} {...promo} />
+            <PromoCard key={promo._id || idx} index={idx} {...promo} />
           ))}
         </div>
       </div>

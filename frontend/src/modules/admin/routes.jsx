@@ -11,6 +11,7 @@ const ManageFeaturedProducts = React.lazy(() => import('./pages/ManageFeaturedPr
 const AddFeaturedProductPage = React.lazy(() => import('./pages/AddFeaturedProductPage'));
 const ManageHeroBanner = React.lazy(() => import('./pages/ManageHeroBanner'));
 const ManagePromoBanner = React.lazy(() => import('./pages/ManagePromoBanner'));
+const ManagePromoCards = React.lazy(() => import('./pages/ManagePromoCards'));
 const ManageSection = React.lazy(() => import('./pages/ManageSection'));
 const ManageFavouriteCategories = React.lazy(() => import('./pages/ManageFavouriteCategories'));
 const ManageCategoryGrid = React.lazy(() => import('./pages/ManageCategoryGrid'));
@@ -148,6 +149,7 @@ const AdminRoutes = () => {
           <Route element={<ProtectedRoute permission="content" />}>
             <Route path="/manage-hero" element={<ManageHeroBanner />} />
             <Route path="/manage-promo" element={<ManagePromoBanner />} />
+            <Route path="/manage-promo-cards" element={<ManagePromoCards />} />
             <Route path="/manage-section" element={<ManageSection />} />
             <Route path="/manage-section/create" element={<ManageSection />} />
             <Route path="/manage-favourites" element={<ManageFavouriteCategories />} />

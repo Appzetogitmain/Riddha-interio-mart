@@ -17,6 +17,7 @@ import AiAssistantWidget from './modules/user/components/AiAssistantWidget';
 import UserNotifications from './modules/user/components/UserNotifications';
 import AdminNotifications from './modules/admin/components/AdminNotifications';
 import SellerNotifications from './modules/seller/components/SellerNotifications';
+import BroadcastNotificationModal from './modules/user/components/BroadcastNotificationModal';
 import { useUser } from './modules/user/data/UserContext';
 import { useJourneyPageTracking } from './modules/user/data/useJourney';
 
@@ -81,6 +82,11 @@ function App() {
         <SellerNotifications token={user.token || 'cookie'} />
       ) : (
         user && <UserNotifications token={user.token || 'cookie'} />
+      )}
+
+      {/* Global Professional Broadcast Notification Modal */}
+      {user?.professionalProfile?.isProfessional && (
+        <BroadcastNotificationModal user={user} />
       )}
 
       {!shouldHideHeader && (

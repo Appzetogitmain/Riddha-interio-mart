@@ -140,6 +140,20 @@ const UserSchema = new mongoose.Schema({
     emiAvailable: { type: Boolean, default: false },
     fastestDelivery: { type: Boolean, default: false }
   },
+  // Professional Profile (for Designers, Contractors, Architects)
+  professionalProfile: {
+    isProfessional: { type: Boolean, default: false },
+    category: { 
+      type: String, 
+      enum: ['Designer', 'Contractor', 'Architect', ''], 
+      default: '' 
+    },
+    hourlyRate: { type: Number, default: 0 },
+    fixedRate: { type: Number, default: 0 },
+    portfolio: [{ type: String }],
+    rating: { type: Number, default: 5.0 },
+    availabilityStatus: { type: Boolean, default: true }
+  },
   createdAt: {
     type: Date,
     default: Date.now

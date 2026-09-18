@@ -198,6 +198,8 @@ const projectRoutes = require('./routes/projectRoutes');
 app.use('/api/projects', projectRoutes);
 const estimateRoutes = require('./routes/estimateRoutes');
 app.use('/api/estimates', estimateRoutes);
+const serviceRequestRoutes = require('./routes/serviceRequestRoutes');
+app.use('/api/v1/service-requests', serviceRequestRoutes);
 const boqRoutes = require('./routes/boqRoutes');
 app.use('/api/boqs', boqRoutes);
 const quotationRoutes = require('./routes/quotationRoutes');

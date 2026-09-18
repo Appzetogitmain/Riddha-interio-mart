@@ -119,7 +119,11 @@ exports.refreshToken = async (req, res, next) => {
         isVerified: user.isVerified || false,
         approvalStatus: user.approvalStatus || "",
         type: user.type || "standard",
-        permissions: user.permissions || {}
+        permissions: user.permissions || {},
+        userType: user.userType || "customer",
+        subscription: user.subscription || { status: 'none', planId: null },
+        b2cSubscription: user.b2cSubscription || { status: 'none', planId: null },
+        professionalProfile: user.professionalProfile || { isProfessional: false }
       }
     });
   } catch (err) {
@@ -192,29 +196,39 @@ exports.logout = async (req, res, next) => {
  */
 exports.getMe = async (req, res) => {
   try {
+    // Always fetch fresh from DB to ensure b2cSubscription and subscription are current
+    const freshUser = await User.findById(req.user._id);
+    if (!freshUser) {
+      return res.status(404).json({ success: false, error: 'User not found' });
+    }
     res.status(200).json({
       success: true,
       user: {
-        id: req.user._id,
-        name: req.user.fullName || req.user.name || "",
-        fullName: req.user.fullName || req.user.name || "",
-        email: req.user.email,
-        role: req.user.role,
-        userType: req.user.userType || "customer",
-        businessDetails: req.user.businessDetails || {},
-        avatar: req.user.avatar || "",
-        phone: req.user.phone || "",
-        shopName: req.user.shopName || "",
-        shopAddress: req.user.shopAddress || "",
-        vehicleType: req.user.vehicleType || "",
-        vehicleNumber: req.user.vehicleNumber || "",
-        isVerified: req.user.isVerified || false,
-        approvalStatus: req.user.approvalStatus || "",
-        type: req.user.type || "standard",
-        permissions: req.user.permissions || {},
-        referralCode: req.user.referralCode || "",
-        referralCount: req.user.referralCount || 0,
-        subscription: req.user.subscription || { status: 'none', planId: null }
+        id: freshUser._id,
+        name: freshUser.fullName || freshUser.name || "",
+        fullName: freshUser.fullName || freshUser.name || "",
+        email: freshUser.email,
+        role: freshUser.role,
+        userType: freshUser.userType || "customer",
+        businessDetails: freshUser.businessDetails || {},
+        avatar: freshUser.avatar || "",
+        phone: freshUser.phone || "",
+        shopName: freshUser.shopName || "",
+        shopAddress: freshUser.shopAddress || "",
+        vehicleType: freshUser.vehicleType || "",
+        vehicleNumber: freshUser.vehicleNumber || "",
+        isVerified: freshUser.isVerified || false,
+        approvalStatus: freshUser.approvalStatus || "",
+        type: freshUser.type || "standard",
+        permissions: freshUser.permissions || {},
+        referralCode: freshUser.referralCode || "",
+        referralCount: freshUser.referralCount || 0,
+        createdAt: freshUser.createdAt,
+        // Subscription data — required so profile page correctly gates B2C features
+        subscription: freshUser.subscription || { status: 'none', planId: null },
+        b2cSubscription: freshUser.b2cSubscription || { status: 'none', planId: null },
+        // Professional profile — controls the dashboard banner shown to designers / contractors
+        professionalProfile: freshUser.professionalProfile || { isProfessional: false }
       }
     });
   } catch (err) {

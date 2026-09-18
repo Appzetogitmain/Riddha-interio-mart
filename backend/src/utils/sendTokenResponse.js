@@ -106,6 +106,8 @@ const sendTokenResponse = async (user, statusCode, res) => {
           userType: user.userType || "customer",
           businessDetails: user.businessDetails || {},
           subscription: user.subscription || { status: 'none', planId: null },
+          b2cSubscription: user.b2cSubscription || { status: 'none', planId: null },
+          professionalProfile: user.professionalProfile || { isProfessional: false },
           walletAmount: walletAmount,
           refCode: user.referralCode || "",
           status: user.isBlocked ? "Blocked" : (user.status || "Active"),

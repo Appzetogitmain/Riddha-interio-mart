@@ -69,9 +69,9 @@ const AI_SERVICES = [
 const B2C_SERVICES = [
   { to: '/plans', icon: FiZap, label: 'Fastest Delivery', sub: '24-48h Express', key: 'fastestDelivery' },
   { to: '/plans', icon: FiPercent, label: 'EMI Options', sub: 'Flexible Payment', key: 'emiAvailable' },
-  { to: '/designer-registration', icon: LuPalette, label: 'Hire Designer', sub: 'Verified Pros', key: 'hireDesigner' },
-  { to: '/contractor-registration', icon: LuHammer, label: 'Hire Contractor', sub: 'Certified Builders', key: 'hireContractor' },
-  { to: '/builder-registration', icon: LuBuilding2, label: 'Hire Architect', sub: 'Licensed Experts', key: 'hireArchitect' },
+  { to: '/hire/Designer', icon: LuPalette, label: 'Hire Designer', sub: 'Verified Pros', key: 'hireDesigner' },
+  { to: '/hire/Contractor', icon: LuHammer, label: 'Hire Contractor', sub: 'Certified Builders', key: 'hireContractor' },
+  { to: '/hire/Architect', icon: LuBuilding2, label: 'Hire Architect', sub: 'Licensed Experts', key: 'hireArchitect' },
   { to: '/orders/track', icon: FiTruck, label: 'Order Tracking', sub: 'Live GPS', key: 'always' }
 ];
 
@@ -401,6 +401,26 @@ const Navbar = () => {
                   </span>
                 </div>
               </button>
+
+              {/* Professional Portal Link (If User is Professional) */}
+              {user?.professionalProfile?.isProfessional && (
+                <Link
+                  to="/professional/dashboard"
+                  className="flex items-center gap-1.5 group border-l border-gray-200 pl-2 lg:pl-3 xl:pl-4 text-left"
+                >
+                  <div className="w-5 h-5 rounded-md bg-[#189D91]/20 text-[#189D91] group-hover:bg-[#189D91] group-hover:text-white flex items-center justify-center transition-all shadow-sm">
+                    <LuLayoutDashboard className="w-3.5 h-3.5" />
+                  </div>
+                  <div className="flex flex-col text-left">
+                    <span className="text-[10px] font-bold text-gray-700 leading-none group-hover:text-[#189D91] transition-colors">
+                      Pro Dashboard
+                    </span>
+                    <span className="text-[9px] font-extrabold text-[#189D91] mt-0.5">
+                      Lead Portal
+                    </span>
+                  </div>
+                </Link>
+              )}
             </div>
 
             <div className="h-8 w-[1px] bg-gray-200 shrink-0 mx-1"></div>
@@ -1020,9 +1040,9 @@ const Navbar = () => {
 
                         {/* Direct Links for Hire Professionals */}
                         <div className="space-y-0.5">
-                          <SidebarLink to="/designer-registration" icon={FiCompass} label="Hire Designer" onClick={closeMobile} />
-                          <SidebarLink to="/contractor-registration" icon={LuLayers} label="Hire Contractor" onClick={closeMobile} />
-                          <SidebarLink to="/builder-registration" icon={FiHome} label="Hire Architect" onClick={closeMobile} />
+                          <SidebarLink to="/hire/Designer" icon={FiCompass} label="Hire Designer" onClick={closeMobile} />
+                          <SidebarLink to="/hire/Contractor" icon={LuLayers} label="Hire Contractor" onClick={closeMobile} />
+                          <SidebarLink to="/hire/Architect" icon={FiHome} label="Hire Architect" onClick={closeMobile} />
                         </div>
                       </div>
                     )}

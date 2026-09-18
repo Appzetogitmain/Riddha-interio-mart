@@ -144,8 +144,8 @@ router.post('/', protect, uploadRateLimiter, uploadParser.single('image'), valid
       public_id: result.public_id
     });
   } catch (error) {
-    console.error('[Secure Upload] Single upload failed:', error.message);
-    res.status(500).json({ success: false, error: 'File upload processing failed.' });
+    console.error('[Secure Upload] Single upload failed:', error);
+    res.status(500).json({ success: false, error: error.message || 'File upload processing failed.' });
   } finally {
     cleanupLocalFiles(req.file);
   }

@@ -12,7 +12,7 @@ const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
     folder: 'riddha_mart',
-    allowed_formats: ['jpg', 'png', 'jpeg', 'webp', 'mp4', 'mov', 'avi', 'pdf'],
+    allowed_formats: ['jpg', 'png', 'jpeg', 'webp', 'gif', 'mp4', 'mov', 'avi', 'pdf'],
     resource_type: 'auto',
     transformation: [{ width: 1000, height: 1000, crop: 'limit' }],
   },

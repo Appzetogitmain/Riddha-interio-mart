@@ -101,9 +101,9 @@ const Profile = () => {
   const allMenuItems = [
     ...menuItems,
     // Hire services only for customer B2C subscribers
-    ...(isCustomer && isB2CActive && user?.b2cSubscription?.hireDesigner ? [{ icon: LuPalette, title: 'Hire Designer', subtitle: 'Connect with verified interior designers for your project', link: '/designer-registration', badge: 'B2C PRO' }] : []),
-    ...(isCustomer && isB2CActive && user?.b2cSubscription?.hireContractor ? [{ icon: LuHammer, title: 'Hire Contractor', subtitle: 'Hire certified contractors for renovation & civil work', link: '/contractor-registration', badge: 'B2C PRO' }] : []),
-    ...(isCustomer && isB2CActive && user?.b2cSubscription?.hireArchitect ? [{ icon: LuBuilding2, title: 'Hire Architect', subtitle: 'Work with licensed architects for floor plans & design blueprints', link: '/builder-registration', badge: 'B2C PRO' }] : []),
+    ...(isCustomer && isB2CActive && user?.b2cSubscription?.hireDesigner ? [{ icon: LuPalette, title: 'Hire Designer', subtitle: 'Connect with verified interior designers for your project', link: '/hire/Designer', badge: 'B2C PRO' }] : []),
+    ...(isCustomer && isB2CActive && user?.b2cSubscription?.hireContractor ? [{ icon: LuHammer, title: 'Hire Contractor', subtitle: 'Hire certified contractors for renovation & civil work', link: '/hire/Contractor', badge: 'B2C PRO' }] : []),
+    ...(isCustomer && isB2CActive && user?.b2cSubscription?.hireArchitect ? [{ icon: LuBuilding2, title: 'Hire Architect', subtitle: 'Work with licensed architects for floor plans & design blueprints', link: '/hire/Architect', badge: 'B2C PRO' }] : []),
   ];
 
   const visibleMenuItems = allMenuItems.filter(item => !item.isProOnly || isProActive);
@@ -310,19 +310,19 @@ const Profile = () => {
                     </div>
                   )}
                   {user?.b2cSubscription?.hireDesigner !== false && (
-                    <Link to="/designer-registration" className="flex items-center gap-2 p-2.5 rounded-xl bg-white/15 hover:bg-white/25 border border-white/20 transition-all">
+                    <Link to="/hire/Designer" className="flex items-center gap-2 p-2.5 rounded-xl bg-white/15 hover:bg-white/25 border border-white/20 transition-all">
                       <span className="text-base">🎨</span>
                       <span className="text-xs font-bold text-white">Hire Designer</span>
                     </Link>
                   )}
                   {user?.b2cSubscription?.hireContractor !== false && (
-                    <Link to="/contractor-registration" className="flex items-center gap-2 p-2.5 rounded-xl bg-white/15 hover:bg-white/25 border border-white/20 transition-all">
+                    <Link to="/hire/Contractor" className="flex items-center gap-2 p-2.5 rounded-xl bg-white/15 hover:bg-white/25 border border-white/20 transition-all">
                       <span className="text-base">👷</span>
                       <span className="text-xs font-bold text-white">Hire Contractor</span>
                     </Link>
                   )}
                   {user?.b2cSubscription?.hireArchitect !== false && (
-                    <Link to="/builder-registration" className="flex items-center gap-2 p-2.5 rounded-xl bg-white/15 hover:bg-white/25 border border-white/20 transition-all">
+                    <Link to="/hire/Architect" className="flex items-center gap-2 p-2.5 rounded-xl bg-white/15 hover:bg-white/25 border border-white/20 transition-all">
                       <span className="text-base">🏛️</span>
                       <span className="text-xs font-bold text-white">Hire Architect</span>
                     </Link>

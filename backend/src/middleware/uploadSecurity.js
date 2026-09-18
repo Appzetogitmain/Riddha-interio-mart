@@ -48,6 +48,8 @@ const ALLOWED_SIGNATURES = {
   '89504e47': { mime: 'image/png', ext: ['.png'] },
   // WEBP
   '52494646': { mime: 'image/webp', ext: ['.webp'] }, // RIFF header for webp
+  // GIF (GIF87a / GIF89a -> "47494638")
+  '47494638': { mime: 'image/gif', ext: ['.gif'] },
   // PDF
   '25504446': { mime: 'application/pdf', ext: ['.pdf'] }
 };
@@ -68,7 +70,7 @@ const validateFileSignature = (filePath, originalExt) => {
   fs.closeSync(fd);
 
   const hexSignature = buffer.toString('hex', 0, 4).toLowerCase();
-  const validImageExts = ['.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif', '.avif'];
+  const validImageExts = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.heic', '.heif', '.avif'];
 
   // 1. Check match in static signatures (Images, PDFs) using prefix matching
   const matchingKey = Object.keys(ALLOWED_SIGNATURES).find(key => hexSignature.startsWith(key));
@@ -109,11 +111,11 @@ const uploadParser = multer({
   },
   fileFilter: (req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();
-    const allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif', '.avif', '.mp4', '.mov', '.avi', '.pdf'];
+    const allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.heic', '.heif', '.avif', '.mp4', '.mov', '.avi', '.pdf'];
 
     // Extension validation
     if (!allowedExtensions.includes(ext)) {
-      return cb(new Error(`Extension not allowed: ${ext}. Supported types: Images (JPG, PNG, WEBP, HEIC, HEIF, AVIF), Videos (MP4, MOV), and PDFs.`), false);
+      return cb(new Error(`Extension not allowed: ${ext}. Supported types: Images (JPG, PNG, WEBP, GIF, HEIC, HEIF, AVIF), Videos (MP4, MOV), and PDFs.`), false);
     }
     cb(null, true);
   }

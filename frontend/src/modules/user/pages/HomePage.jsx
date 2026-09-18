@@ -164,6 +164,7 @@ const SectionGrid = ({ products, loading, containerVariants, autoSlide = false }
 };
 
 import RecommendationFeed from '../components/RecommendationFeed';
+import { useUser } from '../data/UserContext';
 
 const HomePage = () => {
   const [products, setProducts] = useState([]);
@@ -171,6 +172,7 @@ const HomePage = () => {
   const [banners, setBanners] = useState([]);
   const [loading, setLoading] = useState(true);
   const [whatsappNumber, setWhatsappNumber] = useState("9111661100");
+  const { user } = useUser();
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -241,6 +243,28 @@ const HomePage = () => {
       <section className="w-full">
         <Banner banners={banners} />
       </section>
+
+      {/* Professional Dashboard Link */}
+      {user?.professionalProfile?.isProfessional && (
+        <section className="px-4 md:px-8 py-4 bg-[#189D91] text-white">
+          <div className="flex flex-col md:flex-row justify-between items-center bg-white/10 rounded-xl p-4 md:p-6 backdrop-blur-sm border border-white/20">
+            <div>
+              <h2 className="text-xl md:text-2xl font-black tracking-tight mb-1">
+                Welcome back, {user.professionalProfile.category}
+              </h2>
+              <p className="text-sm md:text-base text-white/90">
+                View your active requests, manage consultations, and track earnings.
+              </p>
+            </div>
+            <Link 
+              to="/professional-dashboard" 
+              className="mt-4 md:mt-0 bg-white text-[#189D91] px-6 py-2.5 rounded-lg font-bold shadow-md hover:bg-gray-50 transition-colors whitespace-nowrap"
+            >
+              Go to Professional Dashboard
+            </Link>
+          </div>
+        </section>
+      )}
 
       {/* Featured Advertisements */}
       {(advertisedProducts.length > 0) && (

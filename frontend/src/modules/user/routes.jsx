@@ -48,7 +48,9 @@ const QuizResultsPage = React.lazy(() => import('./pages/QuizResultsPage'));
 const RecommendationPage = React.lazy(() => import('./pages/RecommendationPage'));
 const JourneyPage = React.lazy(() => import('./pages/JourneyPage'));
 const SubscriptionPlansPage = React.lazy(() => import('./pages/SubscriptionPlansPage'));
-
+const ProfessionalDashboard = React.lazy(() => import('./pages/ProfessionalDashboard'));
+const HireProfessionalPage = React.lazy(() => import('./pages/HireProfessionalPage'));
+const CustomerServiceRequestsPage = React.lazy(() => import('./pages/CustomerServiceRequestsPage'));
 import { Navigate } from 'react-router-dom';
 import { useUser } from './data/UserContext';
 
@@ -105,6 +107,10 @@ const UserRoutes = () => {
       <Route path="/orders/:orderId/track" element={<OrderTrackingPage />} />
       <Route path="/splash" element={<SplashPage />} />
       <Route path="/onboarding" element={<OnboardingPage />} />
+      <Route path="/professional-dashboard" element={<ProfessionalDashboard />} />
+      <Route path="/professional/dashboard" element={<ProfessionalDashboard />} />
+      <Route path="/hire/:category" element={<HireProfessionalPage />} />
+      <Route path="/my-service-requests" element={<CustomerServiceRequestsPage />} />
       <Route path="/" element={<RootRoute />} />
 
       <Route path="/designer-quiz" element={<ProGateGuard title="AI Designer Quiz" description="Discover your interior design persona with AI."><DesignerQuizPage /></ProGateGuard>} />

@@ -145,7 +145,7 @@ const DashboardPage = () => {
   const recentActivity = data?.recentActivity || [];
   
   const totalOrders = stats.statusBreakdown?.reduce((sum, item) => sum + item.count, 0) || 0;
-  const platformProfit = Math.round((stats.totalRevenue || 0) * 0.12);
+  const platformProfit = Math.round((stats.totalRevenue || 0) * 0.10);
 
   const statusPieData = (stats.statusBreakdown || []).map(item => ({
     name: item._id,
@@ -238,7 +238,7 @@ const DashboardPage = () => {
       title: 'Platform Profit',
       value: loading ? '...' : `₹${platformProfit.toLocaleString()}`,
       trend: stats.trends?.profit || '+0.0%',
-      compareText: '12% system share',
+      compareText: '10% system share',
       icon: LuTrendingUp,
       color: '#2A458A',
       sparkData: stats.sparklines?.profit || [0, 0, 0, 0, 0, 0, 0],

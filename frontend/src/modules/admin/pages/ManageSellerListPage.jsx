@@ -13,11 +13,23 @@ import {
   LuTrash2,
   LuArrowLeft,
   LuChevronRight,
-  LuCircleCheck
+  LuCircleCheck,
+  LuFileText,
+  LuDownload,
+  LuPenTool
 } from "react-icons/lu";
 import { FiMoreVertical } from "react-icons/fi";
 import api from "../../../shared/utils/api";
 import { toast } from "react-hot-toast";
+
+const getDocumentUrl = (path) => {
+  if (!path) return '';
+  if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('data:')) return path;
+  const cleanPath = path.replace(/\\/g, '/');
+  const apiBase = api.defaults.baseURL || `http://${window.location.hostname}:5000/api`;
+  const backendBase = apiBase.replace(/\/api$/, '');
+  return `${backendBase}/${cleanPath}`;
+};
 
 const VERIFICATION_OPTIONS = [
   { value: 'unverified', label: 'Unverified' },
@@ -39,6 +51,7 @@ const ManageSellerListPage = () => {
   const [loading, setLoading] = useState(true);
   const [activeMenu, setActiveMenu] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [pdfLoading, setPdfLoading] = useState(null);
   
   // 📱 Interactive Mobile states matching mock reference
   const [selectedSeller, setSelectedSeller] = useState(null);
@@ -47,6 +60,47 @@ const ManageSellerListPage = () => {
   // Live seller portfolio product fetching
   const [sellerProducts, setSellerProducts] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
+
+  const handleDownloadPdf = async (sellerId, shopName) => {
+    try {
+      setPdfLoading(sellerId);
+      const response = await api.get(`/auth/admin/sellers/${sellerId}/pdf`, {
+        responseType: 'blob'
+      });
+      
+      if (response.data.type === 'application/json') {
+        const text = await response.data.text();
+        const json = JSON.parse(text);
+        throw new Error(json.error || 'Failed to generate PDF');
+      }
+
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Seller_Agreement_${(shopName || 'Seller').replace(/[^a-zA-Z0-9_-]/g, '_')}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('PDF download error:', err);
+      let errMsg = 'Failed to download seller agreement PDF';
+      if (err.response && err.response.data instanceof Blob) {
+        try {
+          const text = await err.response.data.text();
+          const parsed = JSON.parse(text);
+          if (parsed.error) errMsg = parsed.error;
+        } catch (e) {
+          // keep fallback
+        }
+      } else if (err.message) {
+        errMsg = err.message;
+      }
+      toast.error(errMsg);
+    } finally {
+      setPdfLoading(null);
+    }
+  };
 
   const fetchSellers = async () => {
     try {
@@ -400,6 +454,331 @@ const ManageSellerListPage = () => {
                   <span className="text-slate-455 uppercase tracking-wider text-[9px]">Registered Date</span>
                   <span className="text-slate-800">{new Date(selectedSeller.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
                 </div>
+              </div>
+            </div>
+
+            {/* KYC Documents & Statutory Consents */}
+            <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-4">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-50">
+                <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                  <LuFileText className="text-[#189D91]" size={14} /> KYC Documents & Consents
+                </h3>
+                <button
+                  onClick={() => handleDownloadPdf(selectedSeller._id, selectedSeller.shopName)}
+                  disabled={pdfLoading === selectedSeller._id}
+                  className="px-3 py-1.5 bg-[#189D91] hover:bg-[#15887D] text-white text-[10px] font-bold rounded-xl transition-all shadow-sm flex items-center gap-1.5 disabled:opacity-50"
+                >
+                  <LuDownload size={12} />
+                  {pdfLoading === selectedSeller._id ? 'Generating...' : 'Download PDF'}
+                </button>
+              </div>
+
+              {/* Uploaded Documents */}
+              <div className="space-y-2">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Uploaded Documents</span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between">
+                    <div>
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">GST Number</p>
+                      <p className="text-xs font-bold text-slate-800">{selectedSeller.gstNumber || 'Not Provided'}</p>
+                    </div>
+                    {(selectedSeller.gstCertificateUrl || selectedSeller.gstDoc) ? (
+                      <a
+                        href={getDocumentUrl(selectedSeller.gstCertificateUrl || selectedSeller.gstDoc)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="px-2.5 py-1 bg-white border border-slate-200 text-deep-espresso hover:bg-slate-100 text-[10px] font-bold rounded-lg transition-colors flex items-center gap-1"
+                      >
+                        <LuFileText size={12} className="text-[#189D91]" /> View GST
+                      </a>
+                    ) : (
+                      <span className="text-[9px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded">No Doc</span>
+                    )}
+                  </div>
+
+                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between">
+                    <div>
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">PAN Number</p>
+                      <p className="text-xs font-bold text-slate-800">{selectedSeller.panNumber || 'Not Provided'}</p>
+                    </div>
+                    {(selectedSeller.panCardUrl || selectedSeller.panDoc) ? (
+                      <a
+                        href={getDocumentUrl(selectedSeller.panCardUrl || selectedSeller.panDoc)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="px-2.5 py-1 bg-white border border-slate-200 text-deep-espresso hover:bg-slate-100 text-[10px] font-bold rounded-lg transition-colors flex items-center gap-1"
+                      >
+                        <LuFileText size={12} className="text-[#189D91]" /> View PAN
+                      </a>
+                    ) : (
+                      <span className="text-[9px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded">No Doc</span>
+                    )}
+                  </div>
+                </div>
+
+                {(selectedSeller.shopLicenseUrl || selectedSeller.shopDoc) && (
+                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between mt-2">
+                    <div>
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Shop License / Udyam Certificate</p>
+                      <p className="text-xs font-bold text-slate-800">Verified Business License</p>
+                    </div>
+                    <a
+                      href={getDocumentUrl(selectedSeller.shopLicenseUrl || selectedSeller.shopDoc)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="px-2.5 py-1 bg-white border border-slate-200 text-deep-espresso hover:bg-slate-100 text-[10px] font-bold rounded-lg transition-colors flex items-center gap-1"
+                    >
+                      <LuFileText size={12} className="text-[#189D91]" /> View License
+                    </a>
+                  </div>
+                )}
+              </div>
+
+              {/* Statutory Consents & Digital Signature */}
+              <div className="space-y-2 pt-2 border-t border-slate-50">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Statutory Consents & Signature</span>
+                <div className="flex flex-wrap gap-2">
+                  <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border flex items-center gap-1 ${
+                    selectedSeller.onboarding?.consentLogoUse !== false
+                      ? 'text-emerald-700 bg-emerald-50 border-emerald-200'
+                      : 'text-slate-500 bg-slate-50 border-slate-200'
+                  }`}>
+                    <LuCircleCheck size={12} />
+                    {selectedSeller.onboarding?.consentLogoUse !== false ? 'Logo Usage Granted' : 'Logo Usage Pending'}
+                  </span>
+
+                  <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border flex items-center gap-1 ${
+                    selectedSeller.onboarding?.consentSop !== false
+                      ? 'text-emerald-700 bg-emerald-50 border-emerald-200'
+                      : 'text-slate-500 bg-slate-50 border-slate-200'
+                  }`}>
+                    <LuCircleCheck size={12} />
+                    {selectedSeller.onboarding?.consentSop !== false ? 'SOP Agreement Accepted' : 'SOP Pending'}
+                  </span>
+
+                  {(selectedSeller.digitalSignatureUrl || selectedSeller.signatureImage || selectedSeller.sopSignature) ? (
+                    <span className="text-[10px] font-bold px-2.5 py-1 rounded-full border text-emerald-700 bg-emerald-50 border-emerald-200 flex items-center gap-1">
+                      <LuPenTool size={12} /> Digital Signature Captured
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-bold px-2.5 py-1 rounded-full border text-amber-700 bg-amber-50 border-amber-200 flex items-center gap-1">
+                      <LuPenTool size={12} /> Signature Pending
+                    </span>
+                  )}
+                </div>
+
+                {(selectedSeller.digitalSignatureUrl || selectedSeller.signatureImage || selectedSeller.sopSignature) && (
+                  <div className="mt-3 p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between">
+                    <div>
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Canvas Signature Preview</p>
+                      <p className="text-[10px] text-slate-500 font-medium">Digitally Signed during Onboarding</p>
+                    </div>
+                    <div className="h-10 px-3 bg-white border border-slate-200 rounded-lg flex items-center justify-center overflow-hidden">
+                      <img
+                        src={getDocumentUrl(selectedSeller.digitalSignatureUrl || selectedSeller.signatureImage || selectedSeller.sopSignature)}
+                        alt="Digital Signature"
+                        className="max-h-8 object-contain"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Legal Entity & Business Info */}
+            <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-3">
+              <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest pb-2 border-b border-slate-50">
+                Legal & Entity Details
+              </h3>
+              <div className="space-y-3 text-xs">
+                <div className="flex items-center justify-between font-bold">
+                  <span className="text-slate-400 uppercase tracking-wider text-[9px]">Legal Entity Name</span>
+                  <span className="text-slate-800">{selectedSeller.onboarding?.legalEntityName || selectedSeller.fullName}</span>
+                </div>
+                <div className="flex items-center justify-between font-bold">
+                  <span className="text-slate-400 uppercase tracking-wider text-[9px]">Entity Type</span>
+                  <span className="text-slate-800">{selectedSeller.onboarding?.entityType || 'Proprietorship'}</span>
+                </div>
+                {selectedSeller.onboarding?.natureOfBusiness && (
+                  <div className="flex items-center justify-between font-bold">
+                    <span className="text-slate-400 uppercase tracking-wider text-[9px]">Nature of Business</span>
+                    <span className="text-slate-800">{selectedSeller.onboarding?.natureOfBusiness}</span>
+                  </div>
+                )}
+                {selectedSeller.onboarding?.yearsInBusiness && (
+                  <div className="flex items-center justify-between font-bold">
+                    <span className="text-slate-400 uppercase tracking-wider text-[9px]">Years in Business</span>
+                    <span className="text-slate-800">{selectedSeller.onboarding?.yearsInBusiness} Years</span>
+                  </div>
+                )}
+                {selectedSeller.onboarding?.website && (
+                  <div className="flex items-center justify-between font-bold">
+                    <span className="text-slate-400 uppercase tracking-wider text-[9px]">Website</span>
+                    <a href={selectedSeller.onboarding.website.startsWith('http') ? selectedSeller.onboarding.website : `https://${selectedSeller.onboarding.website}`} target="_blank" rel="noreferrer" className="text-[#189D91] hover:underline">
+                      {selectedSeller.onboarding.website}
+                    </a>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Tax, Registration & Compliance Details */}
+            <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-3">
+              <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest pb-2 border-b border-slate-50">
+                Tax, Compliance & Registrations
+              </h3>
+              <div className="space-y-3 text-xs">
+                <div className="flex items-center justify-between font-bold">
+                  <span className="text-slate-400 uppercase tracking-wider text-[9px]">GSTIN Number</span>
+                  <span className="text-slate-800 font-mono font-bold">{selectedSeller.gstNumber || 'Not Provided'}</span>
+                </div>
+                {selectedSeller.onboarding?.gstRegistrationState && (
+                  <div className="flex items-center justify-between font-bold">
+                    <span className="text-slate-400 uppercase tracking-wider text-[9px]">GST State</span>
+                    <span className="text-slate-800">{selectedSeller.onboarding.gstRegistrationState}</span>
+                  </div>
+                )}
+                <div className="flex items-center justify-between font-bold">
+                  <span className="text-slate-400 uppercase tracking-wider text-[9px]">PAN Number</span>
+                  <span className="text-slate-800 font-mono font-bold">{selectedSeller.panNumber || 'Not Provided'}</span>
+                </div>
+                {selectedSeller.hsnNumber && (
+                  <div className="flex items-center justify-between font-bold">
+                    <span className="text-slate-400 uppercase tracking-wider text-[9px]">HSN / SAC Code</span>
+                    <span className="text-slate-800 font-mono">{selectedSeller.hsnNumber}</span>
+                  </div>
+                )}
+                {selectedSeller.onboarding?.udyamMsmeNo && (
+                  <div className="flex items-center justify-between font-bold">
+                    <span className="text-slate-400 uppercase tracking-wider text-[9px]">UDYAM MSME No.</span>
+                    <span className="text-slate-800 font-mono">{selectedSeller.onboarding.udyamMsmeNo}</span>
+                  </div>
+                )}
+                {selectedSeller.onboarding?.cinLlpinNo && (
+                  <div className="flex items-center justify-between font-bold">
+                    <span className="text-slate-400 uppercase tracking-wider text-[9px]">CIN / LLPIN</span>
+                    <span className="text-slate-800 font-mono">{selectedSeller.onboarding.cinLlpinNo}</span>
+                  </div>
+                )}
+                {selectedSeller.onboarding?.tradeLicenceNo && (
+                  <div className="flex items-center justify-between font-bold">
+                    <span className="text-slate-400 uppercase tracking-wider text-[9px]">Trade License No.</span>
+                    <span className="text-slate-800 font-mono">{selectedSeller.onboarding.tradeLicenceNo}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Authorized Representative & Contact Info */}
+            <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-3">
+              <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest pb-2 border-b border-slate-50">
+                Authorized Person & Contact
+              </h3>
+              <div className="space-y-3 text-xs">
+                <div className="flex items-center justify-between font-bold">
+                  <span className="text-slate-400 uppercase tracking-wider text-[9px]">Authorized Person</span>
+                  <span className="text-slate-800">{selectedSeller.onboarding?.authorizedPersonName || selectedSeller.fullName}</span>
+                </div>
+                {selectedSeller.onboarding?.designation && (
+                  <div className="flex items-center justify-between font-bold">
+                    <span className="text-slate-400 uppercase tracking-wider text-[9px]">Designation</span>
+                    <span className="text-slate-800">{selectedSeller.onboarding.designation}</span>
+                  </div>
+                )}
+                {selectedSeller.onboarding?.aadhaarLast4 && (
+                  <div className="flex items-center justify-between font-bold">
+                    <span className="text-slate-400 uppercase tracking-wider text-[9px]">Aadhaar (Last 4)</span>
+                    <span className="text-slate-800 font-mono">XXXX-XXXX-{selectedSeller.onboarding.aadhaarLast4}</span>
+                  </div>
+                )}
+                {selectedSeller.onboarding?.alternateContactPerson && (
+                  <div className="flex items-center justify-between font-bold">
+                    <span className="text-slate-400 uppercase tracking-wider text-[9px]">Alt. Contact Person</span>
+                    <span className="text-slate-800">{selectedSeller.onboarding.alternateContactPerson}</span>
+                  </div>
+                )}
+                {selectedSeller.onboarding?.alternateContactDetail && (
+                  <div className="flex items-center justify-between font-bold">
+                    <span className="text-slate-400 uppercase tracking-wider text-[9px]">Alt. Contact Detail</span>
+                    <span className="text-slate-800">{selectedSeller.onboarding.alternateContactDetail}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Product & Operational Capabilities */}
+            <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-3">
+              <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest pb-2 border-b border-slate-50">
+                Product & Operational Details
+              </h3>
+              <div className="space-y-3 text-xs">
+                {selectedSeller.onboarding?.primaryProductCategory && (
+                  <div className="flex items-center justify-between font-bold">
+                    <span className="text-slate-400 uppercase tracking-wider text-[9px]">Primary Category</span>
+                    <span className="text-slate-800">{selectedSeller.onboarding.primaryProductCategory}</span>
+                  </div>
+                )}
+                {selectedSeller.onboarding?.brandsProductLines && (
+                  <div className="flex items-center justify-between font-bold">
+                    <span className="text-slate-400 uppercase tracking-wider text-[9px]">Brands / Product Lines</span>
+                    <span className="text-slate-800">{selectedSeller.onboarding.brandsProductLines}</span>
+                  </div>
+                )}
+                {selectedSeller.onboarding?.serviceDeliveryLocations && (
+                  <div className="flex items-center justify-between font-bold">
+                    <span className="text-slate-400 uppercase tracking-wider text-[9px]">Delivery Locations</span>
+                    <span className="text-slate-800">{selectedSeller.onboarding.serviceDeliveryLocations}</span>
+                  </div>
+                )}
+                {selectedSeller.onboarding?.standardLeadTime && (
+                  <div className="flex items-center justify-between font-bold">
+                    <span className="text-slate-400 uppercase tracking-wider text-[9px]">Standard Lead Time</span>
+                    <span className="text-slate-800">{selectedSeller.onboarding.standardLeadTime}</span>
+                  </div>
+                )}
+                {selectedSeller.onboarding?.minOrderValueMoq && (
+                  <div className="flex items-center justify-between font-bold">
+                    <span className="text-slate-400 uppercase tracking-wider text-[9px]">MOQ / Min Order</span>
+                    <span className="text-slate-800">{selectedSeller.onboarding.minOrderValueMoq}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Bank Details & Settlement */}
+            <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-3">
+              <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest pb-2 border-b border-slate-50">
+                Bank & Payout Information
+              </h3>
+              <div className="space-y-3 text-xs font-bold">
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400 uppercase tracking-wider text-[9px]">Account Holder</span>
+                  <span className="text-slate-800">{selectedSeller.bankDetails?.accountHolderName || selectedSeller.fullName}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400 uppercase tracking-wider text-[9px]">Bank Name</span>
+                  <span className="text-slate-800">{selectedSeller.bankDetails?.bankName || 'Not Provided'}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400 uppercase tracking-wider text-[9px]">Account Number</span>
+                  <span className="text-slate-800 font-mono">{selectedSeller.bankDetails?.accountNumber || 'Not Provided'}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400 uppercase tracking-wider text-[9px]">IFSC Code</span>
+                  <span className="text-slate-800 font-mono">{selectedSeller.bankDetails?.ifscCode || 'Not Provided'}</span>
+                </div>
+                {selectedSeller.bankDetails?.branch && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-400 uppercase tracking-wider text-[9px]">Branch Name</span>
+                    <span className="text-slate-800">{selectedSeller.bankDetails.branch}</span>
+                  </div>
+                )}
+                {selectedSeller.bankDetails?.accountType && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-400 uppercase tracking-wider text-[9px]">Account Type</span>
+                    <span className="text-slate-800">{selectedSeller.bankDetails.accountType}</span>
+                  </div>
+                )}
               </div>
             </div>
 

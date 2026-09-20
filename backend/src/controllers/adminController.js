@@ -214,6 +214,31 @@ exports.deleteSeller = async (req, res, next) => {
   }
 };
 
+// @desc    Download complete single PDF for a seller (Onboarding details, Consents, SOP & Digital Signatures)
+// @route   GET /api/auth/admin/sellers/:id/pdf
+// @access  Private/Admin
+exports.downloadSellerAgreementPDF = async (req, res, next) => {
+  try {
+    const seller = await Seller.findById(req.params.id);
+    if (!seller) return res.status(404).json({ success: false, error: 'Seller not found' });
+
+    const SystemSettings = require('../models/SystemSettings');
+    const { generateSellerFullAgreementPDF } = require('../utils/documentPdfGenerator');
+
+    const settings = await SystemSettings.findOne();
+    const docSettings = settings?.documentTemplateSettings;
+
+    const pdfBuffer = await generateSellerFullAgreementPDF(seller, docSettings);
+
+    const safeFilename = (seller.shopName || seller.fullName || 'Seller').replace(/[^a-zA-Z0-9_-]/g, '_');
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="Seller_Agreement_${safeFilename}.pdf"`);
+    res.send(pdfBuffer);
+  } catch (err) {
+    next(err);
+  }
+};
+
 // @desc    Suspend a seller account
 // @route   PUT /api/auth/admin/sellers/:id/suspend
 // @access  Private/Admin

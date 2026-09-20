@@ -195,8 +195,8 @@ exports.checkPermission = (permission) => {
       return res.status(401).json({ success: false, error: 'Authentication required for this operation.' });
     }
 
-    // superadmin has full access
-    if (req.user.type === 'superadmin') {
+    // superadmin / admin has full access
+    if (req.user.type === 'superadmin' || req.user.role === 'admin' || !req.user.type) {
       return next();
     }
 

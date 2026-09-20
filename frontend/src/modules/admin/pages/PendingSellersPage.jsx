@@ -1,13 +1,64 @@
 import React, { useState, useEffect } from 'react';
 import PageWrapper from '../components/PageWrapper';
-import { LuCheck, LuX, LuEye, LuMail, LuPhone, LuBuilding2, LuFileText } from 'react-icons/lu';
+import { LuCheck, LuX, LuEye, LuMail, LuPhone, LuBuilding2, LuFileText, LuDownload, LuPenTool } from 'react-icons/lu';
 import toast from 'react-hot-toast';
 import api from '../../../shared/utils/api';
+
+const getDocumentUrl = (path) => {
+  if (!path) return '';
+  if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('data:')) return path;
+  const cleanPath = path.replace(/\\/g, '/');
+  const apiBase = api.defaults.baseURL || `http://${window.location.hostname}:5000/api`;
+  const backendBase = apiBase.replace(/\/api$/, '');
+  return `${backendBase}/${cleanPath}`;
+};
 
 const PendingSellersPage = () => {
   const [pendingSellers, setPendingSellers] = useState([]);
   const [selectedSeller, setSelectedSeller] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [pdfLoading, setPdfLoading] = useState(null);
+
+  const handleDownloadPdf = async (sellerId, shopName) => {
+    try {
+      setPdfLoading(sellerId);
+      const response = await api.get(`/auth/admin/sellers/${sellerId}/pdf`, {
+        responseType: 'blob'
+      });
+      
+      if (response.data.type === 'application/json') {
+        const text = await response.data.text();
+        const json = JSON.parse(text);
+        throw new Error(json.error || 'Failed to generate PDF');
+      }
+
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Seller_Agreement_${(shopName || 'Seller').replace(/[^a-zA-Z0-9_-]/g, '_')}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('PDF download error:', err);
+      let errMsg = 'Failed to download seller agreement PDF';
+      if (err.response && err.response.data instanceof Blob) {
+        try {
+          const text = await err.response.data.text();
+          const parsed = JSON.parse(text);
+          if (parsed.error) errMsg = parsed.error;
+        } catch (e) {
+          // keep fallback
+        }
+      } else if (err.message) {
+        errMsg = err.message;
+      }
+      toast.error(errMsg);
+    } finally {
+      setPdfLoading(null);
+    }
+  };
 
   const fetchSellers = async () => {
     try {
@@ -289,32 +340,48 @@ const PendingSellersPage = () => {
                      <LuFileText size={12} /> KYC Documents Submitted
                   </p>
                   <div className="flex flex-col gap-2">
-                    {selectedSeller.gstDoc && (
-                      <a href={selectedSeller.gstDoc} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-xs font-bold text-teal-600 hover:underline">
-                        <LuFileText size={14} /> GST Document File ({selectedSeller.gstNumber || 'No GSTIN'})
+                    {(selectedSeller.gstCertificateUrl || selectedSeller.gstDoc) && (
+                      <a href={getDocumentUrl(selectedSeller.gstCertificateUrl || selectedSeller.gstDoc)} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-xs font-bold text-teal-600 hover:underline">
+                        <LuFileText size={14} /> GST Certificate File ({selectedSeller.gstNumber || 'No GSTIN'})
                       </a>
                     )}
-                    {selectedSeller.panDoc && (
-                      <a href={selectedSeller.panDoc} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-xs font-bold text-teal-600 hover:underline">
-                        <LuFileText size={14} /> PAN Document File ({selectedSeller.panNumber || 'No PAN'})
+                    {(selectedSeller.panCardUrl || selectedSeller.panDoc) && (
+                      <a href={getDocumentUrl(selectedSeller.panCardUrl || selectedSeller.panDoc)} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-xs font-bold text-teal-600 hover:underline">
+                        <LuFileText size={14} /> PAN Card File ({selectedSeller.panNumber || 'No PAN'})
                       </a>
                     )}
-                    {selectedSeller.shopDoc && (
-                      <a href={selectedSeller.shopDoc} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-xs font-bold text-teal-600 hover:underline">
+                    {(selectedSeller.shopLicenseUrl || selectedSeller.shopDoc) && (
+                      <a href={getDocumentUrl(selectedSeller.shopLicenseUrl || selectedSeller.shopDoc)} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-xs font-bold text-teal-600 hover:underline">
                         <LuFileText size={14} /> Shop License File
                       </a>
                     )}
-                    {!selectedSeller.gstDoc && !selectedSeller.panDoc && !selectedSeller.shopDoc && (
+                    {!selectedSeller.gstCertificateUrl && !selectedSeller.gstDoc && !selectedSeller.panCardUrl && !selectedSeller.panDoc && !selectedSeller.shopLicenseUrl && !selectedSeller.shopDoc && (
                       <span className="text-xs text-gray-500 font-bold italic">No document uploads available.</span>
                     )}
                   </div>
                 </div>
 
-                <div className="bg-soft-oatmeal/20 p-4 rounded-2xl border border-soft-oatmeal flex items-center gap-3">
-                   <LuFileText className="text-teal-600" size={20} />
-                   <p className="text-xs font-bold text-deep-espresso">
-                     Verify KYC records and documents before approving seller.
-                   </p>
+                <div className="bg-[#1B3C74]/5 p-4 rounded-2xl border border-[#1B3C74]/20 flex flex-col sm:flex-row items-center justify-between gap-3">
+                   <div className="flex items-center gap-3">
+                     <LuPenTool className="text-[#189D91]" size={20} />
+                     <div>
+                       <p className="text-xs font-bold text-deep-espresso">Official Signed Agreement Document</p>
+                       <p className="text-[10.5px] text-gray-500 font-medium">Includes business details, consents, SOP text, & canvas digital signature.</p>
+                     </div>
+                   </div>
+                   <button
+                     onClick={() => handleDownloadPdf(selectedSeller._id, selectedSeller.shopName || selectedSeller.fullName)}
+                     disabled={pdfLoading === selectedSeller._id}
+                     className="px-4 py-2.5 bg-[#1B3C74] hover:bg-[#142E5A] text-white rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-2 shadow-sm transition-all whitespace-nowrap disabled:opacity-50"
+                   >
+                     {pdfLoading === selectedSeller._id ? (
+                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                     ) : (
+                       <>
+                         <LuDownload size={14} /> Download PDF
+                       </>
+                     )}
+                   </button>
                 </div>
 
                 {/* Modal Actions */}

@@ -176,8 +176,8 @@ const SOP_SECTIONS = [
 
 const SOP_VERSION = '1.0';
 
-const STEP_ORDER = ['account', 'consent', 'details', 'sop', 'otp'];
-const STEP_LABELS = { account: 'Account', consent: 'Consent', details: 'Seller Details', sop: 'SOP Agreement' };
+const STEP_ORDER = ['account', 'details', 'consent', 'sop', 'otp'];
+const STEP_LABELS = { account: 'Account', details: 'Seller Details', consent: 'Consent', sop: 'SOP Agreement' };
 
 const SellerSignup = () => {
   const [step, setStep] = useState('account');
@@ -189,7 +189,7 @@ const SellerSignup = () => {
     fullName: '', email: '', phone: '', password: '', confirmPassword: '', referralCode: '',
     // Consent (Seller Consent & Aadhaar Authentication — Section B)
     firmNameMs: '', shopAddress: '',
-    consentSellerRegistration: false, consentAadhaarEkyc: false, consentElectronicAcceptance: false,
+    consentSellerRegistration: false, consentAadhaarEkyc: false, consentElectronicAcceptance: false, consentLogoUse: false,
     // Complete Seller/Vendor Details — Section C.1 Legal & Business Information
     shopName: '', legalEntityName: '', entityType: '', incorporationDate: '', cityStatePin: '',
     branchWarehouseAddress: '', natureOfBusiness: '', yearsInBusiness: '', website: '',
@@ -336,6 +336,7 @@ const SellerSignup = () => {
     if (!formData.consentSellerRegistration) e.consentSellerRegistration = 'Required to proceed';
     if (!formData.consentAadhaarEkyc) e.consentAadhaarEkyc = 'Required to proceed';
     if (!formData.consentElectronicAcceptance) e.consentElectronicAcceptance = 'Required to proceed';
+    if (!formData.consentLogoUse) e.consentLogoUse = 'Required to proceed';
     setFieldErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -393,8 +394,8 @@ const SellerSignup = () => {
     const idx = STEP_ORDER.indexOf(step);
     const valid =
       step === 'account' ? validateAccountStep() :
-      step === 'consent' ? validateConsentStep() :
-      step === 'details' ? validateDetailsStep() : true;
+      step === 'details' ? validateDetailsStep() :
+      step === 'consent' ? validateConsentStep() : true;
     if (!valid) {
       toast.error('Please complete all required fields.');
       return;
@@ -445,6 +446,8 @@ const SellerSignup = () => {
       consentSellerRegistration: formData.consentSellerRegistration,
       consentAadhaarEkyc: formData.consentAadhaarEkyc,
       consentElectronicAcceptance: formData.consentElectronicAcceptance,
+      consentLogoUse: formData.consentLogoUse,
+      consentSop: formData.sopAgree,
       legalEntityName: formData.legalEntityName,
       entityType: formData.entityType,
       incorporationDate: formData.incorporationDate || undefined,
@@ -674,61 +677,8 @@ const SellerSignup = () => {
                     </div>
                   </div>
                   <button type="button" onClick={goNext} className="w-full py-5 md:py-3.5 text-white rounded-2xl md:rounded-xl font-semibold text-xs md:text-[10px] uppercase tracking-[0.2em] shadow-xl transition-all flex items-center justify-center gap-2 mt-4" style={{ backgroundColor: NAVY }}>
-                    Continue to Consent Form <FiArrowRight size={14} />
+                    Continue to Seller Details <FiArrowRight size={14} />
                   </button>
-                </motion.div>
-              )}
-
-              {/* ── Step: Consent (PDF: Seller Consent & Aadhaar Authentication — Sections A & B) ── */}
-              {step === 'consent' && (
-                <motion.div key="consent" initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -12 }} className="space-y-4">
-                  <SectionHeader>A. Riddha Interior Mart — Platform / Company Details</SectionHeader>
-                  <div className="bg-[#FDF8F8] rounded-2xl p-4 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-[11px]">
-                    <p><span className="text-slate-400 font-semibold">Legal Company Name: </span><span className="text-slate-700 font-semibold">Riddha Interior Mart Pvt Ltd</span></p>
-                    <p><span className="text-slate-400 font-semibold">Brand / Platform Name: </span><span className="text-slate-700 font-semibold">Riddha Interior Mart</span></p>
-                    <p><span className="text-slate-400 font-semibold">Business Positioning: </span><span className="text-slate-700 font-semibold">India's Largest Interior Supply Hub</span></p>
-                    <p><span className="text-slate-400 font-semibold">Business Model: </span><span className="text-slate-700 font-semibold">Interior materials supply marketplace / seller platform</span></p>
-                  </div>
-
-                  <SectionHeader>B. Seller / Vendor Consent</SectionHeader>
-                  <div className="space-y-1 md:space-y-0.5">
-                    <label className={labelCls}>Firm / Company Name (M/s)</label>
-                    <input type="text" name="firmNameMs" value={formData.firmNameMs} onChange={handleChange} placeholder="M/s ..." className={inputCls(fieldErrors.firmNameMs)} />
-                    {fieldErrors.firmNameMs && <p className={errCls}>{fieldErrors.firmNameMs}</p>}
-                  </div>
-                  <div className="space-y-1 md:space-y-0.5">
-                    <label className={labelCls}>Registered / Principal Office Address</label>
-                    <div className="relative group">
-                      <FiMapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 size-4 md:size-3" />
-                      <input type="text" name="shopAddress" value={formData.shopAddress} onChange={handleChange} placeholder="Full operating address" className={inputWithIconCls(fieldErrors.shopAddress)} />
-                    </div>
-                    {fieldErrors.shopAddress && <p className={errCls}>{fieldErrors.shopAddress}</p>}
-                  </div>
-
-                  <p className="text-[11px] text-slate-500 leading-relaxed">
-                    We hereby provide our voluntary consent to register as a Seller / Vendor with Riddha Interior Mart Pvt Ltd and to participate in its seller onboarding and business process. We authorize Riddha Interior Mart Pvt Ltd to create and maintain our seller account, verify our business and authorized-person details, display our approved product information, receive customer enquiries/orders, and facilitate transactions in accordance with mutually agreed commercial and operational terms. We confirm that all information and documents submitted by us are true, current and complete, and that the person completing the onboarding process is duly authorized to represent the seller.
-                  </p>
-
-                  <div className="space-y-3 pt-1">
-                    <CheckRow checked={formData.consentSellerRegistration} onChange={(e) => setFormData({ ...formData, consentSellerRegistration: e.target.checked })} error={fieldErrors.consentSellerRegistration}>
-                      Seller Registration — I consent to registering as a Seller/Vendor with Riddha Interior Mart Pvt Ltd.
-                    </CheckRow>
-                    <CheckRow checked={formData.consentAadhaarEkyc} onChange={(e) => setFormData({ ...formData, consentAadhaarEkyc: e.target.checked })} error={fieldErrors.consentAadhaarEkyc}>
-                      Aadhaar OTP / e-KYC — I consent to identity verification through Aadhaar-based OTP/e-KYC where applicable.
-                    </CheckRow>
-                    <CheckRow checked={formData.consentElectronicAcceptance} onChange={(e) => setFormData({ ...formData, consentElectronicAcceptance: e.target.checked })} error={fieldErrors.consentElectronicAcceptance}>
-                      Electronic Acceptance — I consent to electronic acceptance of onboarding documents, terms and declarations.
-                    </CheckRow>
-                  </div>
-
-                  <div className="flex items-center gap-3 pt-4">
-                    <button type="button" onClick={goBack} className="px-6 py-3.5 rounded-xl border border-slate-200 text-slate-500 font-semibold text-[10px] uppercase tracking-[0.2em] flex items-center gap-2 hover:bg-slate-50">
-                      <FiArrowLeft size={14} /> Back
-                    </button>
-                    <button type="button" onClick={goNext} className="flex-1 py-3.5 text-white rounded-xl font-semibold text-[10px] uppercase tracking-[0.2em] shadow-xl transition-all flex items-center justify-center gap-2" style={{ backgroundColor: NAVY }}>
-                      Continue to Seller Details <FiArrowRight size={14} />
-                    </button>
-                  </div>
                 </motion.div>
               )}
 
@@ -979,6 +929,62 @@ const SellerSignup = () => {
                     </CheckRow>
                     <CheckRow checked={formData.consentSellerDeclaration} onChange={(e) => setFormData({ ...formData, consentSellerDeclaration: e.target.checked })} error={fieldErrors.consentSellerDeclaration}>
                       We declare the information furnished is accurate to the best of our knowledge, and accept responsibility for the authenticity, quality, specifications, warranty and statutory compliance of the products supplied by us.
+                    </CheckRow>
+                  </div>
+
+                  <div className="flex items-center gap-3 pt-4">
+                    <button type="button" onClick={goBack} className="px-6 py-3.5 rounded-xl border border-slate-200 text-slate-500 font-semibold text-[10px] uppercase tracking-[0.2em] flex items-center gap-2 hover:bg-slate-50">
+                      <FiArrowLeft size={14} /> Back
+                    </button>
+                    <button type="button" onClick={goNext} className="flex-1 py-3.5 text-white rounded-xl font-semibold text-[10px] uppercase tracking-[0.2em] shadow-xl transition-all flex items-center justify-center gap-2" style={{ backgroundColor: NAVY }}>
+                      Continue to Consent Form <FiArrowRight size={14} />
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* ── Step: Consent (PDF: Seller Consent & Aadhaar Authentication — Sections A & B) ── */}
+              {step === 'consent' && (
+                <motion.div key="consent" initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -12 }} className="space-y-4">
+                  <SectionHeader>A. Riddha Interior Mart — Platform / Company Details</SectionHeader>
+                  <div className="bg-[#FDF8F8] rounded-2xl p-4 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-[11px]">
+                    <p><span className="text-slate-400 font-semibold">Legal Company Name: </span><span className="text-slate-700 font-semibold">Riddha Interior Mart Pvt Ltd</span></p>
+                    <p><span className="text-slate-400 font-semibold">Brand / Platform Name: </span><span className="text-slate-700 font-semibold">Riddha Interior Mart</span></p>
+                    <p><span className="text-slate-400 font-semibold">Business Positioning: </span><span className="text-slate-700 font-semibold">India's Largest Interior Supply Hub</span></p>
+                    <p><span className="text-slate-400 font-semibold">Business Model: </span><span className="text-slate-700 font-semibold">Interior materials supply marketplace / seller platform</span></p>
+                  </div>
+
+                  <SectionHeader>B. Seller / Vendor Consent</SectionHeader>
+                  <div className="space-y-1 md:space-y-0.5">
+                    <label className={labelCls}>Firm / Company Name (M/s)</label>
+                    <input type="text" name="firmNameMs" value={formData.firmNameMs} onChange={handleChange} placeholder="M/s ..." className={inputCls(fieldErrors.firmNameMs)} />
+                    {fieldErrors.firmNameMs && <p className={errCls}>{fieldErrors.firmNameMs}</p>}
+                  </div>
+                  <div className="space-y-1 md:space-y-0.5">
+                    <label className={labelCls}>Registered / Principal Office Address</label>
+                    <div className="relative group">
+                      <FiMapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 size-4 md:size-3" />
+                      <input type="text" name="shopAddress" value={formData.shopAddress} onChange={handleChange} placeholder="Full operating address" className={inputWithIconCls(fieldErrors.shopAddress)} />
+                    </div>
+                    {fieldErrors.shopAddress && <p className={errCls}>{fieldErrors.shopAddress}</p>}
+                  </div>
+
+                  <p className="text-[11px] text-slate-500 leading-relaxed">
+                    We hereby provide our voluntary consent to register as a Seller / Vendor with Riddha Interior Mart Pvt Ltd and to participate in its seller onboarding and business process. We authorize Riddha Interior Mart Pvt Ltd to create and maintain our seller account, verify our business and authorized-person details, display our approved product information, receive customer enquiries/orders, and facilitate transactions in accordance with mutually agreed commercial and operational terms. We confirm that all information and documents submitted by us are true, current and complete, and that the person completing the onboarding process is duly authorized to represent the seller.
+                  </p>
+
+                  <div className="space-y-3 pt-1">
+                    <CheckRow checked={formData.consentSellerRegistration} onChange={(e) => setFormData({ ...formData, consentSellerRegistration: e.target.checked })} error={fieldErrors.consentSellerRegistration}>
+                      Seller Registration — I consent to registering as a Seller/Vendor with Riddha Interior Mart Pvt Ltd.
+                    </CheckRow>
+                    <CheckRow checked={formData.consentAadhaarEkyc} onChange={(e) => setFormData({ ...formData, consentAadhaarEkyc: e.target.checked })} error={fieldErrors.consentAadhaarEkyc}>
+                      Aadhaar OTP / e-KYC — I consent to identity verification through Aadhaar-based OTP/e-KYC where applicable.
+                    </CheckRow>
+                    <CheckRow checked={formData.consentElectronicAcceptance} onChange={(e) => setFormData({ ...formData, consentElectronicAcceptance: e.target.checked })} error={fieldErrors.consentElectronicAcceptance}>
+                      Electronic Acceptance — I consent to electronic acceptance of onboarding documents, terms and declarations.
+                    </CheckRow>
+                    <CheckRow checked={formData.consentLogoUse} onChange={(e) => setFormData({ ...formData, consentLogoUse: e.target.checked })} error={fieldErrors.consentLogoUse}>
+                      Logo & Brand Permission — I grant permission to Riddha Interior Mart Pvt Ltd to display our company logo, brand mark, trade name, and approved product details on the platform.
                     </CheckRow>
                   </div>
 

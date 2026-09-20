@@ -177,6 +177,8 @@ const SellerSchema = new mongoose.Schema({
     consentSellerRegistration: { type: Boolean, default: false },
     consentAadhaarEkyc: { type: Boolean, default: false },
     consentElectronicAcceptance: { type: Boolean, default: false },
+    consentLogoUse: { type: Boolean, default: false },
+    consentSop: { type: Boolean, default: false },
 
     // Legal & Business Information (Section C.1)
     legalEntityName: { type: String, default: '' },

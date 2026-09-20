@@ -149,6 +149,54 @@ class EmailService {
   }
 
   /**
+   * Generates and sends complete Seller Onboarding, SOP & Consents agreement PDF to seller
+   */
+  async sendSellerFullAgreementEmail(seller) {
+    try {
+      const SystemSettings = require('../models/SystemSettings');
+      const { generateSellerFullAgreementPDF } = require('../utils/documentPdfGenerator');
+
+      const settings = await SystemSettings.findOne();
+      const docSettings = settings?.documentTemplateSettings;
+
+      const pdfBuffer = await generateSellerFullAgreementPDF(seller, docSettings);
+
+      const subject = `Riddha Mart - Signed Seller Onboarding & SOP Agreement (${seller.shopName || seller.fullName})`;
+      const htmlContent = `
+        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
+          <div style="background-color: #1B3C74; padding: 20px; text-align: center;">
+            <span style="color: #ffffff; font-size: 20px; font-weight: bold; letter-spacing: 1px;">RIDDHA INTERIOR MART</span>
+          </div>
+          <div style="padding: 30px;">
+            <p>Dear ${seller.fullName},</p>
+            <p>Welcome to Riddha Interior Mart! Your seller registration details and digital signature have been processed successfully.</p>
+            <p>Attached to this email is your complete, digitally signed <strong>Seller Onboarding & SOP Agreement Document</strong> (Doc. No. RIM/SOP/SELLER/001).</p>
+            <p>This PDF includes your business details, statutory consents (including logo/brand usage permissions), standard operating procedures, and your embedded digital canvas signature.</p>
+            <p>Your account is currently under review by our seller verification team. Once approved, you will receive full access to list products and fulfill customer orders.</p>
+            <br/>
+            <p>Best regards,<br/><strong>Seller Onboarding Team<br/>Riddha Interior Mart Pvt Ltd</strong></p>
+          </div>
+          <div style="background-color: #f7fafc; padding: 15px; text-align: center; font-size: 12px; color: #718096; border-top: 1px solid #e2e8f0;">
+            This is an automated email with your legal seller agreement attached.
+          </div>
+        </div>
+      `;
+
+      const attachments = [
+        {
+          filename: `Riddha_Seller_Onboarding_And_SOP_Agreement.pdf`,
+          content: pdfBuffer
+        }
+      ];
+
+      await this.sendMailDirect(seller.email, subject, htmlContent, attachments);
+      console.log(`[EmailService] Sent signed Seller Onboarding & SOP Agreement PDF to ${seller.email}`);
+    } catch (err) {
+      console.error(`[EmailService] Failed to send seller agreement PDF to ${seller.email}:`, err.message);
+    }
+  }
+
+  /**
    * Generates and sends customer tax invoice (Bill C) via email
    */
   async sendCustomerInvoiceEmail(to, order, pdfBuffer) {

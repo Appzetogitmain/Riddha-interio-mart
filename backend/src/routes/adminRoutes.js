@@ -9,6 +9,7 @@ const {
   getActiveSellers,
   approveSeller,
   deleteSeller,
+  downloadSellerAgreementPDF,
   suspendSeller,
   unsuspendSeller,
   getDashboardStats,
@@ -52,6 +53,7 @@ router.get('/orders/search', protect, authorize('admin'), checkPermission('order
 // Seller Management routes (Admin only)
 router.get('/sellers/pending', protect, authorize('admin'), checkPermission('sellers'), getPendingSellers);
 router.get('/sellers/active', protect, authorize('admin'), checkPermission('sellers'), getActiveSellers);
+router.get('/sellers/:id/pdf', protect, authorize('admin'), checkPermission('sellers'), downloadSellerAgreementPDF);
 router.put('/sellers/:id/approve', protect, authorize('admin'), checkPermission('sellers'), approveSeller);
 router.delete('/sellers/:id', protect, authorize('admin'), checkPermission('sellers'), deleteSeller);
 router.put('/sellers/:id/suspend', protect, authorize('admin'), checkPermission('sellers'), suspendSeller);

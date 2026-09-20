@@ -94,9 +94,9 @@ exports.registerSeller = async (req, res, next) => {
       const emailService = require('../services/emailService');
       await emailService.queueEmail(seller.email, 'Riddha Mart - Verify Your Registration', 'otp', { otp });
       
-      // Send Terms & Conditions & Privacy Policy PDF (with embedded signature)
-      emailService.sendRegistrationDocuments(seller.email, seller.fullName, 'seller', termsSignature || '').catch(err => {
-        console.error('Error sending registration documents to seller:', err);
+      // Send Full Onboarding & SOP Agreement PDF with embedded canvas signature to seller
+      emailService.sendSellerFullAgreementEmail(seller).catch(err => {
+        console.error('Error sending seller onboarding agreement PDF:', err);
       });
     } catch (e) {
       console.error('Failed to queue seller verification email:', e);

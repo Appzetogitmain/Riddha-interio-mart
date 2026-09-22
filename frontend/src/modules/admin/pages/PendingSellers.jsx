@@ -15,9 +15,11 @@ import {
   LuEye, 
   LuBuilding2, 
   LuFileText, 
-  LuCircleCheck 
+  LuCircleCheck,
+  LuAlertTriangle
 } from 'react-icons/lu';
 import api from '../../../shared/utils/api';
+import toast from 'react-hot-toast';
 
 const getDocumentUrl = (path) => {
   if (!path) return '';
@@ -34,6 +36,13 @@ const PendingSellers = () => {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(null);
   const [pdfLoading, setPdfLoading] = useState(null);
+
+  // Custom confirmation modal state (replaces browser window.confirm)
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    type: 'approve', // 'approve' | 'reject'
+    seller: null
+  });
 
   useEffect(() => {
     fetchPendingSellers();
@@ -86,35 +95,41 @@ const PendingSellers = () => {
       } else if (err.message) {
         errMsg = err.message;
       }
-      alert(errMsg);
+      toast.error(errMsg);
     } finally {
       setPdfLoading(null);
     }
   };
 
-  const handleApprove = async (id) => {
-    if (!window.confirm('Approve this seller registration?')) return;
-    try {
-      setActionLoading(id);
-      await api.put(`/auth/admin/sellers/${id}/approve`);
-      setSellers(sellers.filter(s => s._id !== id));
-      if (selectedSeller?._id === id) setSelectedSeller(null);
-    } catch (err) {
-      alert('Failed to approve seller');
-    } finally {
-      setActionLoading(null);
-    }
+  const openConfirmModal = (seller, type) => {
+    setConfirmModal({
+      isOpen: true,
+      type,
+      seller
+    });
   };
 
-  const handleReject = async (id) => {
-    if (!window.confirm('Reject and delete this seller request?')) return;
+  const handleExecuteAction = async () => {
+    if (!confirmModal.seller) return;
+    const { _id: id, fullName, shopName } = confirmModal.seller;
+    const isApprove = confirmModal.type === 'approve';
+
     try {
       setActionLoading(id);
-      await api.delete(`/auth/admin/sellers/${id}`);
-      setSellers(sellers.filter(s => s._id !== id));
+      if (isApprove) {
+        await api.put(`/auth/admin/sellers/${id}/approve`);
+        toast.success(`Seller "${shopName || fullName}" approved successfully!`);
+      } else {
+        await api.delete(`/auth/admin/sellers/${id}`);
+        toast.success(`Seller application for "${shopName || fullName}" rejected.`);
+      }
+
+      setSellers(prev => prev.filter(s => s._id !== id));
       if (selectedSeller?._id === id) setSelectedSeller(null);
+      setConfirmModal({ isOpen: false, type: 'approve', seller: null });
     } catch (err) {
-      alert('Failed to reject seller');
+      console.error(`Failed to ${confirmModal.type} seller:`, err);
+      toast.error(err.response?.data?.error || `Failed to ${confirmModal.type} seller`);
     } finally {
       setActionLoading(null);
     }
@@ -171,7 +186,7 @@ const PendingSellers = () => {
                         </button>
                         <button 
                           type="button"
-                          onClick={() => handleApprove(seller._id)}
+                          onClick={() => openConfirmModal(seller, 'approve')}
                           disabled={actionLoading === seller._id}
                           className="p-3 bg-emerald-50 text-emerald-600 rounded-xl hover:bg-emerald-600 hover:text-white transition-all shadow-sm active:scale-95"
                           title="Approve Seller"
@@ -182,7 +197,7 @@ const PendingSellers = () => {
                         </button>
                         <button 
                           type="button"
-                          onClick={() => handleReject(seller._id)}
+                          onClick={() => openConfirmModal(seller, 'reject')}
                           disabled={actionLoading === seller._id}
                           className="p-3 bg-red-50 text-red-600 rounded-xl hover:bg-red-600 hover:text-white transition-all shadow-sm active:scale-95"
                           title="Reject Request"
@@ -535,7 +550,7 @@ const PendingSellers = () => {
               <div className="p-6 bg-slate-50 border-t border-slate-200 flex gap-3 shrink-0">
                 <button
                   type="button"
-                  onClick={() => handleReject(selectedSeller._id)}
+                  onClick={() => openConfirmModal(selectedSeller, 'reject')}
                   disabled={actionLoading === selectedSeller._id}
                   className="flex-1 py-3 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white rounded-xl font-bold text-xs uppercase tracking-wider transition-all border border-red-200 disabled:opacity-50"
                 >
@@ -543,7 +558,7 @@ const PendingSellers = () => {
                 </button>
                 <button
                   type="button"
-                  onClick={() => handleApprove(selectedSeller._id)}
+                  onClick={() => openConfirmModal(selectedSeller, 'approve')}
                   disabled={actionLoading === selectedSeller._id}
                   className="flex-1 py-3 bg-[#189D91] hover:bg-[#15887D] text-white rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-md disabled:opacity-50"
                 >
@@ -553,6 +568,89 @@ const PendingSellers = () => {
             </div>
           </div>
         )}
+
+        {/* 🛡️ CUSTOM CONFIRMATION MODAL (Replaces Browser Dialog) */}
+        <AnimatePresence>
+          {confirmModal.isOpen && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-deep-espresso/60 backdrop-blur-sm">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0"
+                onClick={() => !actionLoading && setConfirmModal({ ...confirmModal, isOpen: false })}
+              />
+
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                className="relative bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden z-10 border border-soft-oatmeal p-6 md:p-8 text-center space-y-5"
+              >
+                {/* Icon header */}
+                <div className={`w-16 h-16 rounded-2xl mx-auto flex items-center justify-center ${
+                  confirmModal.type === 'approve'
+                    ? 'bg-emerald-50 text-emerald-600 border border-emerald-100'
+                    : 'bg-red-50 text-red-600 border border-red-100'
+                }`}>
+                  {confirmModal.type === 'approve' ? (
+                    <LuCircleCheck size={32} />
+                  ) : (
+                    <LuAlertTriangle size={32} />
+                  )}
+                </div>
+
+                {/* Text Content */}
+                <div className="space-y-2">
+                  <h3 className="text-xl font-display font-bold text-deep-espresso">
+                    {confirmModal.type === 'approve' ? 'Approve Seller Registration?' : 'Reject Seller Application?'}
+                  </h3>
+                  <p className="text-xs font-semibold text-deep-espresso/70 leading-relaxed">
+                    {confirmModal.type === 'approve' ? (
+                      <>
+                        Are you sure you want to approve <span className="font-bold text-deep-espresso">{confirmModal.seller?.fullName}</span> (<span className="font-bold text-[#189D91]">{confirmModal.seller?.shopName}</span>)? This will activate their seller account and notify them.
+                      </>
+                    ) : (
+                      <>
+                        Are you sure you want to reject and delete the application for <span className="font-bold text-deep-espresso">{confirmModal.seller?.fullName}</span> (<span className="font-bold text-red-600">{confirmModal.seller?.shopName}</span>)? This action cannot be undone.
+                      </>
+                    )}
+                  </p>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="button"
+                    disabled={!!actionLoading}
+                    onClick={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+                    className="flex-1 py-3 px-4 rounded-xl border border-soft-oatmeal text-deep-espresso font-bold text-xs uppercase tracking-wider hover:bg-soft-oatmeal/20 transition-all disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    disabled={!!actionLoading}
+                    onClick={handleExecuteAction}
+                    className={`flex-1 py-3 px-4 rounded-xl font-bold text-xs uppercase tracking-wider text-white shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-50 ${
+                      confirmModal.type === 'approve'
+                        ? 'bg-[#189D91] hover:bg-[#15887D]'
+                        : 'bg-red-600 hover:bg-red-700'
+                    }`}
+                  >
+                    {actionLoading ? (
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    ) : confirmModal.type === 'approve' ? (
+                      'Approve Seller'
+                    ) : (
+                      'Reject Application'
+                    )}
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
       </div>
     </PageWrapper>
   );

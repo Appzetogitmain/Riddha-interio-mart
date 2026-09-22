@@ -90,15 +90,10 @@ exports.registerUser = async (req, res, next) => {
     console.log(`🔑 [DEV OTP] Registration OTP for ${user.email}: ${otp}`);
     console.log(`==========================================\n`);
 
-    // Enqueue transactional verification email job
+    // Enqueue transactional verification email job (OTP only)
     try {
       const emailService = require('../services/emailService');
       await emailService.queueEmail(user.email, 'Riddha Mart - Verify Your Email', 'otp', { otp });
-      
-      // Send Terms & Conditions & Privacy Policy PDF (with embedded signature)
-      emailService.sendRegistrationDocuments(user.email, user.fullName, 'user', termsSignature || '').catch(err => {
-        console.error('Error sending registration documents to user:', err);
-      });
 
       res.status(201).json({ 
         success: true, 
@@ -137,7 +132,7 @@ exports.loginUser = async (req, res, next) => {
     }
 
     if (!user.isEmailVerified) {
-      return res.status(401).json({ success: false, error: 'Please verify your email', unverified: true, email: user.email });
+      return res.status(401).json({ success: false, error: 'Please verify your email OTP before logging in.', unverified: true, email: user.email });
     }
 
     sendTokenResponse(user, 200, res);
@@ -250,9 +245,14 @@ exports.verifyEmailOtp = async (req, res, next) => {
     user.otpLockedUntil = undefined;
     await user.save({ validateBeforeSave: false });
 
-    // Queue Welcome Email
+    // 1. Send Terms & Conditions & Privacy Policy PDF (with embedded signature) AFTER OTP verification
+    const emailService = require('../services/emailService');
+    emailService.sendRegistrationDocuments(user.email, user.fullName, 'user', user.termsSignature || '').catch(err => {
+      console.error('Error sending registration documents to user after OTP verification:', err);
+    });
+
+    // 2. Queue Welcome Email AFTER OTP verification
     try {
-      const emailService = require('../services/emailService');
       await emailService.queueEmail(user.email, 'Welcome to Riddha Mart!', 'welcome', { fullName: user.fullName });
     } catch (welcomeErr) {
       console.error('Welcome email queue failed:', welcomeErr.message);

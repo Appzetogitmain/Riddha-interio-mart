@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import NotificationDropdown from '../../../shared/components/NotificationDropdown';
 import { motion, AnimatePresence } from 'framer-motion';
+import AiAssistantWidget from '../../user/components/AiAssistantWidget';
 
 const SellerLayout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -88,6 +89,19 @@ const SellerLayout = () => {
 
           {/* Right Actions */}
           <div className="flex items-center gap-2 md:gap-5">
+            {/* Ask Tejas Header Quick Launch */}
+            <button
+              onClick={() => {
+                const tejasBtn = document.querySelector('[aria-label="Ask Tejas"]');
+                if (tejasBtn) tejasBtn.click();
+              }}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-teal-50 hover:bg-teal-100 text-[#189D91] border border-teal-200/60 font-black text-xs transition-all shadow-sm cursor-pointer"
+              title="Ask Tejas AI Assistant"
+            >
+              <img src="/ask tejas final icon.png" alt="Tejas" className="w-5 h-5 rounded-full object-cover" />
+              <span className="hidden sm:inline">Ask Tejas</span>
+            </button>
+
             {/* Action Buttons */}
             <div className="flex items-center gap-1 md:gap-2 mr-2">
               <NotificationDropdown 
@@ -167,6 +181,7 @@ const SellerLayout = () => {
           <Outlet />
         </main>
       </div>
+      <AiAssistantWidget />
     </div>
   );
 };

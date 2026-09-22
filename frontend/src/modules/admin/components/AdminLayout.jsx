@@ -10,6 +10,7 @@ import {
 } from "react-icons/fi";
 import NotificationDropdown from "../../../shared/components/NotificationDropdown";
 import { useRBAC } from "../data/RBACContext";
+import AiAssistantWidget from "../../user/components/AiAssistantWidget";
 
 const AdminLayoutContent = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -84,6 +85,19 @@ const AdminLayoutContent = () => {
 
           {/* Right: Notifications & Profile */}
           <div className="flex items-center gap-4">
+            {/* Ask Tejas AI Assistant Quick Header Launch */}
+            <button
+              onClick={() => {
+                const tejasBtn = document.querySelector('[aria-label="Ask Tejas"]');
+                if (tejasBtn) tejasBtn.click();
+              }}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-teal-50 hover:bg-teal-100 text-[#189D91] border border-teal-200/60 font-black text-xs transition-all shadow-sm cursor-pointer"
+              title="Ask Tejas AI Assistant"
+            >
+              <img src="/ask tejas final icon.png" alt="Tejas" className="w-5 h-5 rounded-full object-cover" />
+              <span className="hidden sm:inline">Ask Tejas</span>
+            </button>
+
             <NotificationDropdown
               isMobile={false}
               buttonClassName="p-2 text-slate-500 hover:text-slate-850 hover:bg-slate-100 rounded-xl transition-colors relative"
@@ -161,6 +175,7 @@ const AdminLayoutContent = () => {
           <Outlet />
         </main>
       </div>
+      <AiAssistantWidget />
     </div>
   );
 };

@@ -920,14 +920,14 @@ const ManageSellerListPage = () => {
         </div>
 
         {/* Sellers Table */}
-        <div className="bg-white rounded-2xl border border-soft-oatmeal shadow-md overflow-hidden min-h-[400px]">
+        <div className="bg-white rounded-2xl border border-soft-oatmeal shadow-md overflow-hidden min-h-[420px]">
           {loading ? (
              <div className="flex flex-col items-center justify-center py-24 gap-4">
                <div className="w-12 h-12 border-4 border-warm-sand border-t-deep-espresso rounded-full animate-spin"></div>
                <p className="text-xs font-black uppercase tracking-[0.2em] text-warm-sand">Fetching Seller Records...</p>
              </div>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto min-h-[380px] pb-32">
               <table className="w-full text-left border-collapse">
                 <thead className="bg-soft-oatmeal/20 border-b border-soft-oatmeal">
                   <tr>
@@ -972,7 +972,7 @@ const ManageSellerListPage = () => {
                     </tr>
                   ) : (
                     paginatedSellers.map((seller, idx) => {
-                      const isLastRows = paginatedSellers.length > 2 && idx >= paginatedSellers.length - 2;
+                      const isLastRows = paginatedSellers.length > 3 && idx >= paginatedSellers.length - 2;
                       return (
                         <tr
                         key={seller._id}
@@ -1066,8 +1066,8 @@ const ManageSellerListPage = () => {
 
                           {activeMenu === seller._id && (
                             <>
-                              <div className="fixed inset-0 z-10" onClick={() => setActiveMenu(null)}></div>
-                              <div className={`absolute right-6 w-52 bg-white rounded-2xl shadow-2xl border border-soft-oatmeal py-2 z-20 overflow-hidden animate-in fade-in zoom-in duration-200 ${isLastRows ? 'bottom-12' : 'top-14'}`}>
+                              <div className="fixed inset-0 z-30" onClick={() => setActiveMenu(null)}></div>
+                              <div className={`absolute right-6 w-52 bg-white rounded-2xl shadow-2xl border border-soft-oatmeal py-2 z-50 overflow-hidden animate-in fade-in zoom-in duration-200 ${isLastRows ? 'bottom-12' : 'top-14'}`}>
                                 {seller.status === 'Pending' && (
                                   <button 
                                     onClick={() => handleStatusUpdate(seller._id, 'approve')}

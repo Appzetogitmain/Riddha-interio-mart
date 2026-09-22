@@ -238,6 +238,86 @@ class EmailService {
   }
 
   /**
+   * Sends the official Seller Welcome Email with embedded Userwellcome.png banner
+   * Idempotent: Skips sending if welcome email has already succeeded.
+   */
+  async sendSellerWelcomeEmail(seller) {
+    if (!seller || !seller.email) {
+      return { success: false, error: 'Invalid seller object or missing email address.' };
+    }
+
+    const Seller = require('../models/Seller');
+    const AssetResolver = require('../utils/assetResolver');
+
+    // 1. Idempotency Check: Prevent duplicate emails
+    if (seller.welcomeNotifications?.email?.status === 'sent') {
+      console.log(`[EmailService] ℹ️ Seller welcome email already sent to ${seller.email} at ${seller.welcomeNotifications.email.sentAt}. Skipping duplicate.`);
+      return { success: true, skipped: true, reason: 'already_sent' };
+    }
+
+    const portalUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const welcomeImagePath = AssetResolver.getWelcomeImagePath();
+    const logoPath = AssetResolver.getLogoPath();
+
+    const subject = `Welcome to Riddha Interior Mart, ${seller.fullName || 'Partner'}! 🎉`;
+    const htmlContent = templates.getSellerWelcomeTemplate({
+      fullName: seller.fullName,
+      shopName: seller.shopName,
+      email: seller.email,
+      portalUrl
+    });
+
+    const attachments = [];
+    if (welcomeImagePath) {
+      attachments.push({
+        filename: 'Userwellcome.png',
+        path: welcomeImagePath,
+        cid: 'userwelcome'
+      });
+    }
+    if (logoPath) {
+      attachments.push({
+        filename: 'logo.png',
+        path: logoPath,
+        cid: 'riddhalogo'
+      });
+    }
+
+    try {
+      const sendResult = await this.sendMailDirect(seller.email, subject, htmlContent, attachments);
+      
+      // Update Seller DB Notification Status
+      await Seller.findByIdAndUpdate(seller._id, {
+        $set: {
+          'welcomeNotifications.email.status': 'sent',
+          'welcomeNotifications.email.sentAt': new Date(),
+          'welcomeNotifications.email.error': null,
+          'welcomeNotifications.email.messageId': sendResult?.provider || 'smtp'
+        }
+      });
+
+      console.log(`[EmailService] ✅ Successfully delivered Seller Welcome Email to ${seller.email} (${seller.shopName})`);
+      return { success: true, provider: sendResult?.provider };
+    } catch (err) {
+      console.error(`[EmailService] ❌ Failed to deliver Seller Welcome Email to ${seller.email}:`, err.message);
+
+      // Record Failure Status in DB gracefully
+      try {
+        await Seller.findByIdAndUpdate(seller._id, {
+          $set: {
+            'welcomeNotifications.email.status': 'failed',
+            'welcomeNotifications.email.error': err.message
+          }
+        });
+      } catch (dbErr) {
+        console.error('[EmailService] Failed to update email error status in DB:', dbErr.message);
+      }
+
+      return { success: false, error: err.message };
+    }
+  }
+
+  /**
    * Enqueues a new transactional email job
    */
   async queueEmail(to, subject, templateName, templateData) {

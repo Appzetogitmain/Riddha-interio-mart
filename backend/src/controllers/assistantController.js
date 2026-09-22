@@ -8,7 +8,7 @@ const mongoose = require('mongoose');
 // @access  Public (Guest & Authenticated Users)
 exports.startOrContinueChat = async (req, res, next) => {
   try {
-    const { message, conversationId, guestSessionId } = req.body;
+    const { message, conversationId, guestSessionId, roleContext = 'user' } = req.body;
 
     if (!message || message.trim().length === 0) {
       return res.status(400).json({ success: false, error: 'Message content is required.' });
@@ -19,6 +19,18 @@ exports.startOrContinueChat = async (req, res, next) => {
     }
 
     const userId = req.user ? req.user.id : null;
+    const userRole = req.user ? (req.user.role || req.user.type || 'user') : 'guest';
+
+    // Verify security boundaries for roleContext
+    if (roleContext === 'seller' && userRole !== 'seller') {
+      return res.status(403).json({ success: false, error: 'Access denied. Seller Assistant is restricted to authenticated sellers.' });
+    }
+    if (roleContext === 'delivery' && userRole !== 'delivery') {
+      return res.status(403).json({ success: false, error: 'Access denied. Delivery Assistant is restricted to delivery partners.' });
+    }
+    if (roleContext === 'admin' && (userRole !== 'admin' && userRole !== 'assistant')) {
+      return res.status(403).json({ success: false, error: 'Access denied. Admin Assistant is restricted to administrators and assistant staff.' });
+    }
 
     let conversation = null;
 
@@ -37,11 +49,12 @@ exports.startOrContinueChat = async (req, res, next) => {
       }
     }
 
-    // 2. If conversation doesn't exist, create a new one
+    // 2. If conversation doesn't exist, create a new one for this role context
     if (!conversation) {
       const createData = {
         status: 'active',
-        messages: []
+        messages: [],
+        roleContext: roleContext
       };
 
       if (userId) {
@@ -72,8 +85,8 @@ exports.startOrContinueChat = async (req, res, next) => {
       });
     }
 
-    // 4. Run Assistant Service Gemini Loop
-    const response = await assistantService.getAiResponse(conversation, message, userId);
+    // 4. Run Assistant Service OpenAI Loop with roleContext and user profile
+    const response = await assistantService.getAiResponse(conversation, message, userId, roleContext, req.user);
 
     return res.status(200).json({
       success: true,
@@ -92,10 +105,10 @@ exports.startOrContinueChat = async (req, res, next) => {
 // @access  Public
 exports.getConversations = async (req, res, next) => {
   try {
-    const { guestSessionId } = req.query;
+    const { guestSessionId, roleContext = 'user' } = req.query;
     const userId = req.user ? req.user.id : null;
 
-    let query = {};
+    let query = { roleContext };
     if (userId) {
       query.user = userId;
     } else if (guestSessionId) {
@@ -106,7 +119,7 @@ exports.getConversations = async (req, res, next) => {
 
     const conversations = await ChatConversation.find(query)
       .sort({ updatedAt: -1 })
-      .select('status messages updatedAt');
+      .select('status messages updatedAt roleContext');
 
     // Clean outputs: return id, status, and last message snippet
     const result = conversations.map(c => {
@@ -115,6 +128,7 @@ exports.getConversations = async (req, res, next) => {
         conversationId: c._id,
         status: c.status,
         updatedAt: c.updatedAt,
+        roleContext: c.roleContext,
         lastMessage: lastMessage ? {
           role: lastMessage.role,
           content: lastMessage.content.length > 60 ? lastMessage.content.substring(0, 60) + '...' : lastMessage.content

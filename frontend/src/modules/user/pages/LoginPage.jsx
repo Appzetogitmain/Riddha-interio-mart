@@ -108,9 +108,9 @@ const LoginPage = () => {
         else navigate("/");
       }
     } catch (err) {
-      if (err.response?.data?.unverified) {
-        setUnverifiedEmail(err.response.data.email);
-        setError("Please verify your email to continue.");
+      if (err.response?.data?.unverified || err.response?.data?.isUnverified) {
+        setUnverifiedEmail(err.response.data.email || identifier);
+        setError("Please verify your account OTP to continue.");
       } else {
         setError(
           err.response?.data?.error || "Invalid credentials. Please try again.",
@@ -124,8 +124,9 @@ const LoginPage = () => {
   const handleResendAndVerify = async () => {
     try {
       setLoading(true);
-      await api.post("/auth/resend-otp", { email: unverifiedEmail });
-      navigate("/verify-email", { state: { email: unverifiedEmail } });
+      const resendUrl = role === "seller" ? "/auth/seller/resend-otp" : "/auth/resend-otp";
+      await api.post(resendUrl, { email: unverifiedEmail });
+      navigate(role === "seller" ? "/seller/login-form" : "/verify-email", { state: { email: unverifiedEmail } });
     } catch (err) {
       setError(err.response?.data?.error || "Failed to resend OTP");
     } finally {

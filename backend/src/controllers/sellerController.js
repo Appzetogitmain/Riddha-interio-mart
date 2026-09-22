@@ -2,6 +2,7 @@ const Seller = require('../models/Seller');
 const sendTokenResponse = require('../utils/sendTokenResponse');
 const checkEmailExists = require('../utils/checkEmailExists');
 const { notifyAdminNewSeller } = require('../socket');
+const sellerNotificationService = require('../services/sellerNotificationService');
 
 // @desc    Register Seller
 // @route   POST /api/auth/seller/register
@@ -90,14 +91,10 @@ exports.registerSeller = async (req, res, next) => {
       console.error('Failed to send admin notification for new seller registration:', e);
     }
 
+    // 1. Send OTP Verification Email ONLY (Agreement PDF & Welcome will be sent after OTP verification)
     try {
       const emailService = require('../services/emailService');
       await emailService.queueEmail(seller.email, 'Riddha Mart - Verify Your Registration', 'otp', { otp });
-      
-      // Send Full Onboarding & SOP Agreement PDF with embedded canvas signature to seller
-      emailService.sendSellerFullAgreementEmail(seller).catch(err => {
-        console.error('Error sending seller onboarding agreement PDF:', err);
-      });
     } catch (e) {
       console.error('Failed to queue seller verification email:', e);
     }
@@ -116,13 +113,14 @@ exports.registerSeller = async (req, res, next) => {
 // @access  Public
 exports.verifySellerOtp = async (req, res, next) => {
   try {
-    const { phone, otp } = req.body;
+    const { phone, email, otp } = req.body;
     
-    if (!phone || !otp) {
-      return res.status(400).json({ success: false, error: 'Please provide phone number and OTP' });
+    if ((!phone && !email) || !otp) {
+      return res.status(400).json({ success: false, error: 'Please provide email/phone and verification OTP' });
     }
 
-    const seller = await Seller.findOne({ phone });
+    const query = email ? { email: email.trim().toLowerCase() } : { phone };
+    const seller = await Seller.findOne(query);
     if (!seller) {
       return res.status(404).json({ success: false, error: 'Seller account not found' });
     }
@@ -142,10 +140,72 @@ exports.verifySellerOtp = async (req, res, next) => {
     seller.phoneVerificationOtpExpire = undefined;
     await seller.save();
 
+    // 1. Send Full Onboarding & SOP Agreement PDF (with embedded canvas signature) AFTER OTP verification
+    const emailService = require('../services/emailService');
+    emailService.sendSellerFullAgreementEmail(seller).catch(err => {
+      console.error('Error sending seller onboarding agreement PDF after OTP verification:', err);
+    });
+
+    // 2. Trigger Official Seller Welcome Notification Flow AFTER OTP verification
+    // (Email with Userwellcome.png + WhatsApp Cloud API)
+    sellerNotificationService.triggerSellerWelcomeNotifications(seller).catch(err => {
+      console.error('[SellerController] Welcome notification trigger error on OTP verification:', err.message);
+    });
+
     res.status(200).json({
       success: true,
-      message: 'Phone number verified successfully! Your account is pending admin approval.'
+      message: 'Account verified successfully! Your application is pending admin approval.'
     });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// @desc    Resend Seller Verification OTP
+// @route   POST /api/auth/seller/resend-otp
+// @access  Public
+exports.resendSellerOtp = async (req, res, next) => {
+  try {
+    const { email, phone } = req.body;
+    if (!email && !phone) {
+      return res.status(400).json({ success: false, error: 'Please provide email or phone number' });
+    }
+
+    const query = email ? { email: email.trim().toLowerCase() } : { phone };
+    const seller = await Seller.findOne(query);
+    if (!seller) {
+      return res.status(200).json({ success: true, message: 'If registered, a new verification code has been dispatched.' });
+    }
+
+    if (seller.isVerified) {
+      return res.status(400).json({ success: false, error: 'Seller account is already verified. Please proceed to login.' });
+    }
+
+    // Cooldown check (60 seconds)
+    if (seller.otpLastSentAt && (Date.now() - new Date(seller.otpLastSentAt).getTime()) < 60000) {
+      const secondsLeft = Math.ceil((60000 - (Date.now() - new Date(seller.otpLastSentAt).getTime())) / 1000);
+      return res.status(429).json({
+        success: false,
+        error: `Please wait ${secondsLeft} second(s) before requesting another OTP.`
+      });
+    }
+
+    const otp = seller.getVerificationOtp();
+    seller.otpLastSentAt = Date.now();
+    await seller.save({ validateBeforeSave: false });
+
+    console.log(`\n==========================================`);
+    console.log(`🔑 [DEV OTP] Resend Seller OTP for ${seller.email}: ${otp}`);
+    console.log(`==========================================\n`);
+
+    try {
+      const emailService = require('../services/emailService');
+      await emailService.queueEmail(seller.email, 'Riddha Mart - Verify Your Registration', 'otp', { otp });
+      res.status(200).json({ success: true, message: 'Verification OTP sent to your registered email.' });
+    } catch (err) {
+      console.error('Failed to enqueue seller resend OTP email:', err.message);
+      res.status(200).json({ success: true, message: 'OTP requested. Please check your inbox shortly.' });
+    }
   } catch (err) {
     next(err);
   }
@@ -162,6 +222,17 @@ exports.loginSeller = async (req, res, next) => {
     const seller = await Seller.findOne({ email }).select('+password');
     if (!seller || !(await seller.matchPassword(password))) {
       return res.status(401).json({ success: false, error: 'Invalid credentials' });
+    }
+
+    // Check Verification Status
+    if (!seller.isVerified) {
+      return res.status(403).json({ 
+        success: false, 
+        error: 'Please verify your phone/email OTP before logging in.',
+        isUnverified: true,
+        phone: seller.phone,
+        email: seller.email
+      });
     }
 
     // Check Seller Status
@@ -337,3 +408,44 @@ exports.getSellerCustomers = async (req, res, next) => {
     next(err);
   }
 };
+
+// @desc    Retry pending or failed seller welcome notifications
+// @route   POST /api/auth/seller/welcome-notifications/retry
+// @access  Private (Seller/Admin)
+exports.retrySellerWelcomeNotifications = async (req, res, next) => {
+  try {
+    const targetSellerId = req.body.sellerId || req.user?.id;
+    if (!targetSellerId) {
+      return res.status(400).json({ success: false, error: 'Seller ID is required' });
+    }
+
+    const result = await sellerNotificationService.retryPendingNotifications(targetSellerId);
+    res.status(200).json({
+      success: true,
+      data: result
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// @desc    Get seller welcome notification status
+// @route   GET /api/auth/seller/welcome-notifications/status/:sellerId?
+// @access  Private (Seller/Admin)
+exports.getSellerNotificationStatus = async (req, res, next) => {
+  try {
+    const targetSellerId = req.params.sellerId || req.user?.id;
+    if (!targetSellerId) {
+      return res.status(400).json({ success: false, error: 'Seller ID is required' });
+    }
+
+    const status = await sellerNotificationService.getNotificationStatus(targetSellerId);
+    res.status(200).json({
+      success: true,
+      data: status
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+

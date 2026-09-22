@@ -214,3 +214,53 @@ exports.getRefundTemplate = (order, refundAmount) =>
   </div>
   `,
   );
+
+exports.getSellerWelcomeTemplate = ({ fullName, shopName, email, portalUrl }) =>
+  getBaseTemplate(
+    "Welcome to Riddha Interior Mart - Seller Onboarding",
+    `
+  <div style="text-align: center; margin-bottom: 24px;">
+    <img src="cid:userwelcome" alt="Welcome to Riddha Interior Mart" style="width: 100%; max-width: 560px; height: auto; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); display: block; margin: 0 auto;" />
+  </div>
+
+  <h2 style="color: #1a202c; font-size: 22px; font-weight: 800; margin-top: 10px; margin-bottom: 6px;">Welcome aboard, ${fullName || 'Partner'}! 🎉</h2>
+  <p style="color: #4a5568; font-size: 15px; margin-top: 0; line-height: 1.6;">
+    Congratulations on successfully onboarding <strong>${shopName || 'your store'}</strong> with <strong>Riddha Interior Mart</strong> — India's largest B2B and consumer marketplace for premium interior and construction supplies!
+  </p>
+
+  <div class="highlight-box" style="background-color: #f0fdfa; border-left: 4px solid #189D91; padding: 18px 20px; border-radius: 0 10px 10px 0; margin: 24px 0;">
+    <p style="margin: 0 0 8px 0; font-size: 15px; font-weight: 700; color: #115e59;">✨ What you can do next as a verified seller:</p>
+    <ul style="margin: 0; padding-left: 20px; color: #134e4a; font-size: 14px; line-height: 1.7;">
+      <li><strong>Showcase Your Catalog:</strong> Upload your products, tile slabs, sanitaryware, paints, and hardware.</li>
+      <li><strong>Smart Stock & Pricing:</strong> Manage real-time inventory, B2B wholesale tiers, and state-wise GST taxes.</li>
+      <li><strong>AI Assistant Tejas:</strong> Your 24/7 dedicated AI business & stock advisor right in your dashboard.</li>
+      <li><strong>Pan-India Reach:</strong> Connect directly with verified contractors, architects, designers, and retail buyers.</li>
+    </ul>
+  </div>
+
+  <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px 20px; margin: 20px 0;">
+    <p style="margin: 0 0 6px 0; font-size: 13px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.05em;">Your Login Information</p>
+    <p style="margin: 4px 0; font-size: 14px; color: #1e293b;"><strong>Registered Email:</strong> ${email}</p>
+    <p style="margin: 4px 0; font-size: 14px; color: #1e293b;"><strong>Registered Shop:</strong> ${shopName || 'N/A'}</p>
+    <p style="margin: 4px 0; font-size: 12px; color: #64748b;">(Use your registered password configured during onboarding)</p>
+  </div>
+
+  <div style="text-align: center; margin: 30px 0 20px 0;">
+    <a href="${portalUrl || 'http://localhost:3000/seller/login'}" class="btn" style="background: linear-gradient(135deg, #189D91 0%, #115e59 100%); color: #ffffff !important; padding: 14px 32px; font-size: 15px; font-weight: 700; border-radius: 8px; text-decoration: none; display: inline-block; box-shadow: 0 4px 14px rgba(24, 157, 145, 0.35);">
+      Access Seller Dashboard →
+    </a>
+  </div>
+
+  <p style="font-size: 13px; color: #718096; line-height: 1.6; margin-top: 25px;">
+    Need help setting up your catalog or have questions? Our partner support team is available at <a href="mailto:support@riddhainteriormart.com" style="color: #189D91; font-weight: 700; text-decoration: none;">support@riddhainteriormart.com</a> or <strong>+91 9230621957</strong>.
+  </p>
+
+  <p style="margin-top: 25px; color: #2d3748; font-size: 14px;">
+    Best regards,<br/>
+    <strong>Seller Onboarding Team</strong><br/>
+    <span style="color: #718096; font-size: 13px;">Riddha Interior Mart Pvt Ltd</span><br/>
+    <em style="color: #189D91; font-size: 12px; font-weight: 600;">Sell. Grow. Succeed Together.</em>
+  </p>
+  `,
+  );
+

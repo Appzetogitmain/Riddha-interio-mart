@@ -26,6 +26,7 @@ import api from '../../../shared/utils/api';
 import { connectSocket } from '../../../shared/utils/socket';
 import { isSoundEnabled, playNotificationSound, primeNotificationAudio } from '../../../shared/utils/notificationSound';
 import { toast } from 'react-hot-toast';
+import AiAssistantWidget from '../../user/components/AiAssistantWidget';
 
 const formatTime = (dateStr) => {
   const date = new Date(dateStr);
@@ -583,6 +584,7 @@ const DeliveryLayout = () => {
         {/* Mobile Bottom Navigation */}
         <DeliveryBottomNavbar isHidden={isSidebarOpen} />
       </div>
+      <AiAssistantWidget />
     </div>
   );
 };

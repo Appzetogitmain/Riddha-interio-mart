@@ -144,6 +144,29 @@ const SellerSchema = new mongoose.Schema({
     default: 0
   },
   otpLockedUntil: Date,
+  // Welcome Notifications Status Tracking
+  welcomeNotifications: {
+    email: {
+      status: {
+        type: String,
+        enum: ['pending', 'sent', 'failed'],
+        default: 'pending'
+      },
+      sentAt: { type: Date, default: null },
+      error: { type: String, default: null },
+      messageId: { type: String, default: null }
+    },
+    whatsapp: {
+      status: {
+        type: String,
+        enum: ['pending', 'sent', 'failed', 'not_configured'],
+        default: 'pending'
+      },
+      sentAt: { type: Date, default: null },
+      error: { type: String, default: null },
+      messageId: { type: String, default: null }
+    }
+  },
   bankDetails: {
     accountHolderName: { type: String, default: "" },
     accountNumber: { type: String, default: "" },

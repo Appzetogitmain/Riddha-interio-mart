@@ -31,6 +31,11 @@ const ChatConversationSchema = new mongoose.Schema({
     required: false
   },
   messages: [ChatMessageSchema],
+  roleContext: {
+    type: String,
+    enum: ['user', 'seller', 'delivery', 'admin'],
+    default: 'user'
+  },
   status: {
     type: String,
     required: true,

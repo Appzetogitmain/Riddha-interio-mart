@@ -198,7 +198,8 @@ exports.verifyEmailOtp = async (req, res, next) => {
     const { email, otp } = req.body;
     if (!email || !otp) return res.status(400).json({ success: false, error: 'Please provide email and OTP' });
 
-    const user = await User.findOne({ email });
+    const normalizedEmail = (email || '').trim().toLowerCase();
+    const user = await User.findOne({ email: normalizedEmail });
     if (!user) {
       // Prevent email enumeration: return standard error payload
       return res.status(400).json({ success: false, error: 'Invalid or expired OTP' });
@@ -279,7 +280,8 @@ exports.resendVerificationOtp = async (req, res, next) => {
     const { email } = req.body;
     if (!email) return res.status(400).json({ success: false, error: 'Please provide email' });
 
-    const user = await User.findOne({ email });
+    const normalizedEmail = (email || '').trim().toLowerCase();
+    const user = await User.findOne({ email: normalizedEmail });
     if (!user) {
       // Prevent email enumeration
       return res.status(200).json({ success: true, message: 'If registered, a new OTP verification code has been dispatched.' });

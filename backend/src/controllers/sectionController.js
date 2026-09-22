@@ -158,6 +158,31 @@ exports.getSections = async (req, res) => {
         Section.find().sort({ displayOrder: 1, createdAt: -1 })
       ).lean();
 
+      // Auto-clean: remove null productIds (deleted products) from each section
+      const cleanupPromises = [];
+      sections = sections.map((section) => {
+        const originalProductIds = section.productIds || [];
+        const validProducts = originalProductIds.filter((p) => p !== null && p !== undefined);
+
+        // If any products were null (deleted), update the DB to remove dead references
+        if (validProducts.length !== originalProductIds.length) {
+          cleanupPromises.push(
+            Section.findByIdAndUpdate(section._id, {
+              $set: { productIds: validProducts.map((p) => p._id) }
+            })
+          );
+        }
+
+        return { ...section, productIds: validProducts };
+      });
+
+      // Run DB cleanup in background (don't block response)
+      if (cleanupPromises.length > 0) {
+        Promise.all(cleanupPromises).catch((err) =>
+          console.error('[Sections] Failed to auto-clean deleted product refs:', err.message)
+        );
+      }
+
       cacheService.set(cacheKey, sections, 3600); // 1 hour cache
     }
 

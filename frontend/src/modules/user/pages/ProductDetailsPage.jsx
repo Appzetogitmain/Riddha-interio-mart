@@ -295,7 +295,7 @@ const ProductDetailsPage = () => {
   const displaySku = currentVariant ? currentVariant.sku : product?.sku;
 
   return (
-    <div className="max-w-[1200px] mx-auto px-0 md:px-4 lg:px-6 pb-28 md:pb-10 bg-white md:bg-transparent">
+    <div className="max-w-[1200px] mx-auto px-0 md:px-4 lg:px-6 pb-28 md:pb-10">
 
       {/* Breadcrumb */}
       <nav className="hidden md:flex items-center gap-1.5 text-[11px] text-gray-400 font-medium py-4">

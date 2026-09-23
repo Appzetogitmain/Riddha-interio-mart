@@ -68,21 +68,10 @@ exports.startOrContinueChat = async (req, res, next) => {
       conversation = await ChatConversation.create(createData);
     }
 
-    // 3. Prevent chat interaction if already escalated to human support
+    // 3. If conversation was previously in handover state and user asks a new question, reactivate AI chat
     if (conversation.status === 'handover') {
-      const supportRequest = await AiSupportRequest.findOne({ conversationId: conversation._id });
-      return res.status(200).json({
-        success: true,
-        conversationId: conversation._id,
-        message: "Your conversation has been forwarded to our support representatives. We will get back to you shortly.",
-        products: [],
-        orders: [],
-        actions: [],
-        handover: {
-          requestId: supportRequest ? supportRequest._id : null,
-          status: supportRequest ? supportRequest.status : 'pending'
-        }
-      });
+      conversation.status = 'active';
+      await conversation.save();
     }
 
     // 4. Run Assistant Service OpenAI Loop with roleContext and user profile

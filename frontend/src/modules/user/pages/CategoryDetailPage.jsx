@@ -54,7 +54,7 @@ const CategoryDetailPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-svh flex flex-col items-center justify-center bg-[#FDFBF9]">
+      <div className="min-h-svh flex flex-col items-center justify-center bg-[#F5F7F8]">
         <div className="w-16 h-16 border-4 border-warm-sand/20 border-t-warm-sand rounded-full animate-spin mb-6" />
         <h2 className="text-[11px] font-semibold uppercase tracking-wider text-deep-espresso/40 animate-pulse">Curating Selection</h2>
       </div>
@@ -63,7 +63,7 @@ const CategoryDetailPage = () => {
 
   if (!category) {
     return (
-      <div className="min-h-svh flex flex-col items-center justify-center text-center p-8">
+      <div className="min-h-svh flex flex-col items-center justify-center text-center p-8 bg-[#F5F7F8]">
         <div className="mb-8 p-10 bg-soft-oatmeal/10 rounded-full text-deep-espresso/10">
           <FiHome size={64} />
         </div>
@@ -75,7 +75,7 @@ const CategoryDetailPage = () => {
   }
 
   return (
-    <div className="min-h-svh bg-[#FDFBF9]">
+    <div className="min-h-svh bg-[#F5F7F8]">
       {/* Category Hero */}
       <div className="relative h-[160px] md:h-[240px] overflow-hidden">
         <img

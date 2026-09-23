@@ -276,7 +276,7 @@ const HomePage = () => {
       <RecommendationFeed />
 
       {/* New Season Arrivals Section — shown after the product slider, same auto-slide carousel */}
-      <section className="bg-white py-4 md:py-8 border-t border-gray-50">
+      <section className="py-4 md:py-8 border-t border-gray-200/60">
         <div className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-12">
 
           {/* Section Header */}

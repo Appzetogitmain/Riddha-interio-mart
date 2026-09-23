@@ -154,7 +154,7 @@ exports.getUserMe = async (req, res, next) => {
 // @desc    Update User Profile
 exports.updateUserProfile = async (req, res, next) => {
   try {
-    const { fullName, email, phone, avatar } = req.body;
+    const { fullName, email, phone, avatar, businessDetails } = req.body;
     
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ success: false, error: 'User not found' });
@@ -173,6 +173,16 @@ exports.updateUserProfile = async (req, res, next) => {
       phone: phone || user.phone,
       avatar: avatar || user.avatar
     };
+
+    if (businessDetails && typeof businessDetails === 'object') {
+      fieldsToUpdate.businessDetails = {
+        ...(user.businessDetails ? user.businessDetails.toObject ? user.businessDetails.toObject() : user.businessDetails : {}),
+        shopName: businessDetails.shopName !== undefined ? businessDetails.shopName : user.businessDetails?.shopName,
+        gstNumber: businessDetails.gstNumber !== undefined ? businessDetails.gstNumber : user.businessDetails?.gstNumber,
+        taxationCode: businessDetails.taxationCode !== undefined ? businessDetails.taxationCode : user.businessDetails?.taxationCode,
+        isVerified: user.businessDetails?.isVerified || false
+      };
+    }
 
     const updatedUser = await User.findByIdAndUpdate(req.user.id, fieldsToUpdate, {
       new: true,

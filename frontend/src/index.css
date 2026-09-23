@@ -9,11 +9,18 @@
   --color-dusty-cocoa: #8A6C5F;
   --color-warm-sand: #BFA38A;
   --color-soft-oatmeal: #E0D9CF;
-  --color-deep-espresso: #544339;
+  --color-deep-espresso: #1E293B;
   --color-golden-glow: #F5E9D3;
 
-  --color-brand-purple: #240046;
+  /* Riddha Logo Official Color Palette */
   --color-brand-teal: #189D91;
+  --color-brand-teal-dark: #106b63;
+  --color-brand-teal-light: #E6F6F5;
+  --color-brand-amber: #F59E0B;
+  --color-brand-orange: #F97316;
+  --color-brand-purple: #240046;
+  --color-brand-navy: #1E293B;
+  --color-app-bg: #F5F7F8;
   
   --color-seller-primary: #E36666;
   --color-seller-dark: #C24F4F;
@@ -36,10 +43,11 @@
 .user-theme {
   --color-warm-sand: #189D91;
   --color-header-red: #189D91;
-  --color-deep-espresso: #1a1a1a;
+  --color-deep-espresso: #0F172A;
   --color-dusty-cocoa: #127F75;
-  --color-soft-oatmeal: #F0F9F8;
-  --color-golden-glow: #E2F2F1;
+  --color-soft-oatmeal: #E2E8F0;
+  --color-golden-glow: #FEF3C7;
+  --color-app-bg: #F5F7F8;
 }
 
 .admin-theme {
@@ -226,11 +234,12 @@
   html, body {
     overflow-x: clip;
     max-width: 100%;
+    background-color: #F5F7F8;
   }
 
   body {
     font-family: var(--font-sans);
-    background-color: #FDFBF9;
+    background-color: #F5F7F8;
     color: var(--color-deep-espresso);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;

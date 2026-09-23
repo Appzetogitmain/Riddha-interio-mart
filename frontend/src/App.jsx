@@ -70,7 +70,7 @@ function App() {
   };
 
   return (
-    <div className={`min-h-screen flex flex-col user-theme bg-white border-deep-espresso/5 ${(!shouldHideHeader && !isProductPage) ? 'pb-24 md:pb-0' : ''}`}>
+    <div className={`min-h-screen flex flex-col user-theme bg-[#F5F7F8] border-deep-espresso/5 ${(!shouldHideHeader && !isProductPage) ? 'pb-24 md:pb-0' : ''}`}>
       <Toaster position="top-center" reverseOrder={false} />
       <OfflineDetector />
       {showPincodeModal && <PincodeModal onComplete={handlePincodeComplete} />}

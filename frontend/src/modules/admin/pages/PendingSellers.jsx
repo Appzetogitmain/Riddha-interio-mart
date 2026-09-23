@@ -16,7 +16,7 @@ import {
   LuBuilding2, 
   LuFileText, 
   LuCircleCheck,
-  LuAlertTriangle
+  LuTriangleAlert
 } from 'react-icons/lu';
 import api from '../../../shared/utils/api';
 import toast from 'react-hot-toast';
@@ -596,7 +596,7 @@ const PendingSellers = () => {
                   {confirmModal.type === 'approve' ? (
                     <LuCircleCheck size={32} />
                   ) : (
-                    <LuAlertTriangle size={32} />
+                    <LuTriangleAlert size={32} />
                   )}
                 </div>
 

@@ -35,8 +35,12 @@ const Footer = () => {
   };
 
   return (
-    <footer className="block bg-white text-gray-600 pt-16 pb-28 md:pb-12 border-t border-gray-100/80">
-      <div className="max-w-[1700px] mx-auto px-6 md:px-12">
+    <footer className="block bg-[#161B3D] text-slate-300 pt-16 pb-28 md:pb-12 border-t border-white/10 shadow-2xl relative overflow-hidden">
+      {/* Background Accent Glows */}
+      <div className="absolute top-0 right-0 w-96 h-96 bg-[#189D91]/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-80 h-80 bg-amber-400/5 rounded-full blur-3xl pointer-events-none" />
+
+      <div className="max-w-[1700px] mx-auto px-6 md:px-12 relative z-10">
         <motion.div
           variants={containerVariants}
           initial="hidden"
@@ -48,15 +52,15 @@ const Footer = () => {
           <motion.div variants={itemVariants} className="space-y-5">
             <Link
               to="/"
-              className="inline-block transition-transform hover:scale-[1.02]"
+              className="inline-block p-2 rounded-2xl bg-white/95 backdrop-blur-sm shadow-md transition-transform hover:scale-[1.02]"
             >
               <img
                 src={TransparentLogo}
                 alt="Riddha Interior Mart"
-                className="h-12 w-auto object-contain"
+                className="h-10 w-auto object-contain"
               />
             </Link>
-            <p className="text-sm leading-relaxed text-gray-500 font-medium">
+            <p className="text-sm leading-relaxed text-slate-300 font-medium">
               Transforming your living spaces into luxurious sanctuaries with
               premium tiles, paints, and designer furniture.
             </p>
@@ -72,12 +76,12 @@ const Footer = () => {
                     key={i}
                     whileHover={{
                       y: -3,
-                      backgroundColor: "#189D9115",
+                      backgroundColor: "#189D91",
                       borderColor: "#189D91",
-                      color: "#189D91",
+                      color: "#FFFFFF",
                     }}
                     href={social.href}
-                    className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center text-gray-400 transition-all duration-300 bg-white"
+                    className="w-10 h-10 rounded-full border border-white/15 flex items-center justify-center text-slate-300 transition-all duration-300 bg-white/10 hover:shadow-md"
                   >
                     <Icon className="h-4.5 w-4.5" />
                   </motion.a>
@@ -85,10 +89,10 @@ const Footer = () => {
               })}
             </div>
             <div className="pt-4 flex flex-wrap gap-3">
-              <a href="https://play.google.com/store/apps/details?id=com.riddhainteriormart.riddhainteriormart" target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-opacity">
+              <a href="https://play.google.com/store/apps/details?id=com.riddhainteriormart.riddhainteriormart" target="_blank" rel="noopener noreferrer" className="hover:opacity-90 transition-opacity">
                 <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" alt="Get it on Google Play" className="h-10 w-auto" />
               </a>
-              <a href="#" className="hover:opacity-80 transition-opacity">
+              <a href="#" className="hover:opacity-90 transition-opacity">
                 <img src="https://upload.wikimedia.org/wikipedia/commons/3/3c/Download_on_the_App_Store_Badge.svg" alt="Download on the App Store" className="h-10 w-auto" />
               </a>
             </div>
@@ -96,10 +100,10 @@ const Footer = () => {
 
           {/* Quick Links */}
           <motion.div variants={itemVariants}>
-            <h4 className="text-gray-950 text-xs uppercase tracking-[0.22em] font-black mb-6 pb-2 border-b border-gray-100 inline-block pr-6">
+            <h4 className="text-white text-xs uppercase tracking-[0.22em] font-black mb-6 pb-2 border-b border-white/15 inline-block pr-6">
               Quick Links
             </h4>
-            <ul className="space-y-4 text-sm font-semibold text-gray-500">
+            <ul className="space-y-4 text-sm font-semibold text-slate-300">
               {[
                 { label: "Home", path: "/" },
                 { label: "All Products", path: "/products" },
@@ -110,7 +114,7 @@ const Footer = () => {
                   <li key={i}>
                     <Link
                       to={link.path}
-                      className="hover:text-[#189D91] hover:translate-x-1.5 transition-all duration-300 inline-block"
+                      className="hover:text-amber-300 hover:translate-x-1.5 transition-all duration-300 inline-block text-slate-300"
                     >
                       {link.label}
                     </Link>
@@ -122,52 +126,52 @@ const Footer = () => {
 
           {/* Contact Us */}
           <motion.div variants={itemVariants}>
-            <h4 className="text-gray-950 text-xs uppercase tracking-[0.22em] font-black mb-6 pb-2 border-b border-gray-100 inline-block pr-6">
+            <h4 className="text-white text-xs uppercase tracking-[0.22em] font-black mb-6 pb-2 border-b border-white/15 inline-block pr-6">
               Contact Us
             </h4>
-            <ul className="space-y-4 text-sm font-semibold text-gray-500">
+            <ul className="space-y-4 text-sm font-semibold text-slate-300">
               <li className="flex items-start">
-                <div className="p-1.5 rounded-lg bg-teal-50/50 mr-3 flex-shrink-0">
-                  <FiMapPin className="h-4 w-4 text-[#189D91]" />
+                <div className="p-1.5 rounded-lg bg-teal-400/15 mr-3 flex-shrink-0 text-[#189D91]">
+                  <FiMapPin className="h-4 w-4 text-teal-300" />
                 </div>
-                <span className="leading-relaxed">
+                <span className="leading-relaxed text-slate-300">
                   123 Interior Hub, Design Street, Mumbai, MH 400001
                 </span>
               </li>
               <li className="flex items-center">
-                <div className="p-1.5 rounded-lg bg-teal-50/50 mr-3 flex-shrink-0">
-                  <FiPhone className="h-4 w-4 text-[#189D91]" />
+                <div className="p-1.5 rounded-lg bg-teal-400/15 mr-3 flex-shrink-0 text-[#189D91]">
+                  <FiPhone className="h-4 w-4 text-teal-300" />
                 </div>
-                <span>+91 98765 43210</span>
+                <span className="text-slate-300">+91 98765 43210</span>
               </li>
               <li className="flex items-center">
-                <div className="p-1.5 rounded-lg bg-teal-50/50 mr-3 flex-shrink-0">
-                  <FiMail className="h-4 w-4 text-[#189D91]" />
+                <div className="p-1.5 rounded-lg bg-teal-400/15 mr-3 flex-shrink-0 text-[#189D91]">
+                  <FiMail className="h-4 w-4 text-teal-300" />
                 </div>
-                <span>info@riddhainterio.com</span>
+                <span className="text-slate-300">info@riddhainterio.com</span>
               </li>
             </ul>
           </motion.div>
 
           {/* Newsletter */}
           <motion.div variants={itemVariants}>
-            <h4 className="text-gray-950 text-xs uppercase tracking-[0.22em] font-black mb-6 pb-2 border-b border-gray-100 inline-block pr-6">
+            <h4 className="text-white text-xs uppercase tracking-[0.22em] font-black mb-6 pb-2 border-b border-white/15 inline-block pr-6">
               Newsletter
             </h4>
-            <p className="text-sm text-gray-500 mb-5 font-semibold leading-relaxed">
+            <p className="text-sm text-slate-300 mb-5 font-semibold leading-relaxed">
               Subscribe to receive inspiration and exclusive offers.
             </p>
             <form className="relative flex items-center mt-3">
               <input
                 type="email"
                 placeholder="Email address"
-                className="bg-white border border-gray-200/80 text-gray-900 rounded-full pl-5 pr-28 py-3.5 w-full text-xs focus:outline-none focus:border-[#189D91] focus:ring-1 focus:ring-[#189D91] transition-all font-semibold shadow-sm"
+                className="bg-white/10 border border-white/20 text-white placeholder-slate-400 rounded-full pl-5 pr-28 py-3.5 w-full text-xs focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400 transition-all font-semibold shadow-inner"
               />
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 type="submit"
-                className="absolute right-1.5 bg-[#189D91] text-white rounded-full px-5 py-2.5 font-bold uppercase tracking-wider text-[9px] hover:bg-[#14847a] transition-colors shadow-sm"
+                className="absolute right-1.5 bg-[#189D91] hover:bg-[#14847a] text-white rounded-full px-5 py-2.5 font-bold uppercase tracking-wider text-[9px] transition-colors shadow-md"
               >
                 Subscribe
               </motion.button>
@@ -175,8 +179,8 @@ const Footer = () => {
           </motion.div>
         </motion.div>
 
-        <div className="border-t border-gray-100 pt-8 text-center">
-          <p className="text-[9px] uppercase tracking-[0.3em] font-black text-gray-400/80">
+        <div className="border-t border-white/10 pt-8 text-center">
+          <p className="text-[9px] uppercase tracking-[0.3em] font-black text-slate-400/80">
             © {new Date().getFullYear()} Riddha Interior Mart. Crafted for
             Luxury.
           </p>

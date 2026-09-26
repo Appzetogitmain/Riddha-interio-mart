@@ -209,6 +209,8 @@ app.use('/api/tracking', trackingRoutes);
 const contentGeneratorRoutes = require('./routes/contentGeneratorRoutes');
 app.use('/api/content', contentGeneratorRoutes);
 app.use('/api/assistant', assistantRoutes);
+const ttsRoutes = require('./routes/ttsRoutes');
+app.use('/api/tts', ttsRoutes);
 const journeyRoutes = require('./routes/journeyRoutes');
 app.use('/api/journey', journeyRoutes);
 // Requirement A — B2B Request for Quotation & Sample Requests

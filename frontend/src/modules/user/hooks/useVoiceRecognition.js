@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import toast from 'react-hot-toast';
 
 /**
- * Custom hook for complete, error-resilient Speech-to-Text (STT) and Text-to-Speech (TTS) voice control.
+ * Custom hook for complete, error-resilient Speech-to-Text (STT) and authentic Indian English Text-to-Speech (TTS).
  */
 export const useVoiceRecognition = ({
   onTranscriptChange,
@@ -15,10 +15,12 @@ export const useVoiceRecognition = ({
   const [isSupported, setIsSupported] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isTtsEnabled, setIsTtsEnabled] = useState(true);
+  const [activeIndianVoice, setActiveIndianVoice] = useState(null);
 
   const recognitionRef = useRef(null);
   const isListeningRef = useRef(false);
   const isStartingRef = useRef(false);
+  const indianVoiceRef = useRef(null);
 
   // Store latest callback references in ref to prevent useEffect teardowns on re-renders
   const callbacksRef = useRef({
@@ -34,6 +36,72 @@ export const useVoiceRecognition = ({
       onVoiceCommand
     };
   }, [onTranscriptChange, onFinalTranscript, onVoiceCommand]);
+
+  /**
+   * Intelligently discovers and locks onto authentic Indian English browser voices (Ravi, Prabhat, Heera, Google Indian, Rishi, etc.)
+   */
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.speechSynthesis) return;
+
+    const findIndianVoice = () => {
+      const voices = window.speechSynthesis.getVoices() || [];
+      if (!voices.length) return null;
+
+      // 1. Prioritize authentic Indian Male voices (Microsoft Ravi / Prabhat, Google Indian English Male, Apple Rishi)
+      const maleIndianVoice = voices.find(v => {
+        const name = (v.name || '').toLowerCase();
+        const lang = (v.lang || '').toLowerCase();
+        const isIndian = lang.includes('en-in') || lang.includes('hi') || name.includes('india') || name.includes('indian');
+        const isMale = name.includes('ravi') || name.includes('prabhat') || name.includes('rishi') || name.includes('male') || name.includes('man');
+        return isIndian && isMale;
+      });
+      if (maleIndianVoice) return maleIndianVoice;
+
+      // 2. High-priority general Indian English voices (Google Indian English, Microsoft Heera, Neerja, Sangeeta)
+      const generalIndianVoice = voices.find(v => {
+        const name = (v.name || '').toLowerCase();
+        const lang = (v.lang || '').toLowerCase();
+        return (
+          lang === 'en-in' ||
+          lang.startsWith('en-in') ||
+          name.includes('en-in') ||
+          name.includes('india') ||
+          name.includes('indian') ||
+          name.includes('ravi') ||
+          name.includes('heera') ||
+          name.includes('neerja') ||
+          name.includes('prabhat') ||
+          name.includes('rishi') ||
+          name.includes('hindi')
+        );
+      });
+      if (generalIndianVoice) return generalIndianVoice;
+
+      // 3. Any en-IN language code match
+      const enInVoice = voices.find(v => (v.lang || '').toLowerCase().startsWith('en-in'));
+      if (enInVoice) return enInVoice;
+
+      // 4. Fallback to system English
+      return voices.find(v => (v.lang || '').toLowerCase().startsWith('en')) || voices[0] || null;
+    };
+
+    const updateVoices = () => {
+      const detected = findIndianVoice();
+      if (detected) {
+        indianVoiceRef.current = detected;
+        setActiveIndianVoice(detected);
+      }
+    };
+
+    updateVoices();
+    window.speechSynthesis.onvoiceschanged = updateVoices;
+
+    return () => {
+      if (window.speechSynthesis) {
+        window.speechSynthesis.onvoiceschanged = null;
+      }
+    };
+  }, []);
 
   /**
    * Intelligently parses spoken phrases into high-priority actionable commands
@@ -130,7 +198,7 @@ export const useVoiceRecognition = ({
     return null;
   }, []);
 
-  // Initialize Speech Recognition once on mount
+  // Initialize Speech Recognition (STT) once on mount
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
@@ -144,7 +212,7 @@ export const useVoiceRecognition = ({
       recognition = new SpeechRecognition();
       recognition.continuous = false;
       recognition.interimResults = true;
-      recognition.lang = 'en-IN'; // Optimized for English with Indian & global accent
+      recognition.lang = 'en-IN'; // Optimized for English with Indian accent
 
       recognition.onstart = () => {
         isStartingRef.current = false;
@@ -233,24 +301,86 @@ export const useVoiceRecognition = ({
     };
   }, [parseVoiceCommand]);
 
+  /**
+   * Stop any actively playing speech
+   */
+  const stopSpeaking = useCallback(() => {
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      try {
+        window.speechSynthesis.cancel();
+      } catch (e) {}
+    }
+    setIsSpeaking(false);
+  }, []);
+
+  /**
+   * Speaks out response text with authentic Indian English accent
+   */
+  const speak = useCallback((text) => {
+    if (!isTtsEnabled || !window.speechSynthesis || !text || typeof text !== 'string') return;
+
+    try {
+      stopSpeaking();
+
+      // Clean markdown and URLs for natural speech cadence
+      const cleanText = text
+        .replace(/[*#_`~\[\]()]/g, ' ')
+        .replace(/https?:\/\/\S+/g, '')
+        .trim();
+
+      if (!cleanText) return;
+
+      const utterance = new SpeechSynthesisUtterance(cleanText.slice(0, 500));
+      utterance.lang = 'en-IN';
+      utterance.rate = 1.0;
+      utterance.pitch = 0.95; // Natural, clear male cadence
+
+      // Bind the detected Indian voice
+      const voices = window.speechSynthesis.getVoices() || [];
+      const matchedVoice = indianVoiceRef.current || activeIndianVoice || voices.find(v => {
+        const name = (v.name || '').toLowerCase();
+        const lang = (v.lang || '').toLowerCase();
+        return (
+          lang.includes('en-in') ||
+          name.includes('india') ||
+          name.includes('ravi') ||
+          name.includes('heera') ||
+          name.includes('neerja') ||
+          name.includes('prabhat') ||
+          name.includes('rishi')
+        );
+      });
+
+      if (matchedVoice) {
+        utterance.voice = matchedVoice;
+      }
+
+      utterance.onstart = () => setIsSpeaking(true);
+      utterance.onend = () => setIsSpeaking(false);
+      utterance.onerror = (e) => {
+        console.warn('[Tejas Voice] Speech synthesis error:', e);
+        setIsSpeaking(false);
+      };
+
+      window.speechSynthesis.speak(utterance);
+    } catch (e) {
+      console.warn('[Tejas Voice] Speak error:', e.message);
+      setIsSpeaking(false);
+    }
+  }, [isTtsEnabled, activeIndianVoice, stopSpeaking]);
+
   const startListening = useCallback(() => {
     if (!isSupported) {
       toast.error('Speech recognition is not supported in this browser. Please use Google Chrome, Microsoft Edge, or Safari.');
       return;
     }
 
-    // Prevent duplicate start calls
     if (isListeningRef.current || isStartingRef.current) {
       return;
     }
 
     // Cancel any active TTS speech so bot doesn't hear itself
-    if (window.speechSynthesis) {
-      try {
-        window.speechSynthesis.cancel();
-        setIsSpeaking(false);
-      } catch (e) {}
-    }
+    stopSpeaking();
 
     if (recognitionRef.current) {
       try {
@@ -259,7 +389,6 @@ export const useVoiceRecognition = ({
       } catch (e) {
         isStartingRef.current = false;
         console.warn('Recognition start exception:', e.message);
-        // If state was mismatched, reset
         if (e.name === 'InvalidStateError') {
           try {
             recognitionRef.current.abort();
@@ -269,7 +398,7 @@ export const useVoiceRecognition = ({
         }
       }
     }
-  }, [isSupported]);
+  }, [isSupported, stopSpeaking]);
 
   const stopListening = useCallback(() => {
     isStartingRef.current = false;
@@ -286,38 +415,12 @@ export const useVoiceRecognition = ({
     }
   }, [isListening]);
 
-  /**
-   * Speaks out response text using Web Speech Synthesis
-   */
-  const speak = useCallback((text) => {
-    if (!isTtsEnabled || !window.speechSynthesis || !text) return;
-    try {
-      window.speechSynthesis.cancel(); // Stop any ongoing speech
-      const cleanText = text.replace(/[*#_`~\[\]()]/g, ' ').slice(0, 300); // Clean markdown
-      const utterance = new SpeechSynthesisUtterance(cleanText);
-      utterance.rate = 1.05;
-      utterance.pitch = 1.0;
-      utterance.lang = 'en-IN';
-
-      utterance.onstart = () => setIsSpeaking(true);
-      utterance.onend = () => setIsSpeaking(false);
-      utterance.onerror = () => setIsSpeaking(false);
-
-      window.speechSynthesis.speak(utterance);
-    } catch (e) {
-      console.warn('TTS playback error:', e.message);
-      setIsSpeaking(false);
-    }
-  }, [isTtsEnabled]);
-
-  const stopSpeaking = useCallback(() => {
-    if (window.speechSynthesis) {
-      try {
-        window.speechSynthesis.cancel();
-      } catch (e) {}
-      setIsSpeaking(false);
-    }
-  }, []);
+  // Clean up speech on unmount
+  useEffect(() => {
+    return () => {
+      stopSpeaking();
+    };
+  }, [stopSpeaking]);
 
   return {
     isListening,

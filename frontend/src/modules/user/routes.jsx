@@ -115,6 +115,9 @@ const UserRoutes = () => {
 
       <Route path="/designer-quiz" element={<ProGateGuard title="AI Designer Quiz" description="Discover your interior design persona with AI."><DesignerQuizPage /></ProGateGuard>} />
       <Route path="/designer-quiz/results" element={<ProGateGuard title="AI Designer Quiz" description="Discover your interior design persona with AI."><QuizResultsPage /></ProGateGuard>} />
+      <Route path="/design-persona-quiz" element={<Navigate to="/designer-quiz" replace />} />
+      <Route path="/design-quiz" element={<Navigate to="/designer-quiz" replace />} />
+      <Route path="/quiz" element={<Navigate to="/designer-quiz" replace />} />
       <Route path="/contractor-registration" element={<ContractorRegistration />} />
       <Route path="/designer-registration" element={<DesignerRegistration />} />
       <Route path="/builder-registration" element={<BuilderRegistration />} />

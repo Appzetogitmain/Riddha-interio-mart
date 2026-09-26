@@ -8,12 +8,16 @@ const {
 } = require('../controllers/assistantController');
 
 const { protect, tryProtect, authorize } = require('../middleware/auth');
+const { generateSpeech } = require('../controllers/ttsController');
 
 const router = express.Router();
 
 // Customer Endpoints (can be used by guests or logged-in users)
 router.route('/chat')
   .post(tryProtect, startOrContinueChat);
+
+router.route('/tts')
+  .post(generateSpeech);
 
 router.route('/conversations')
   .get(tryProtect, getConversations);

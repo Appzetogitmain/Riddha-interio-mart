@@ -349,8 +349,18 @@ const AiAssistantWidget = () => {
 
       case 'NAVIGATE':
         if (action.payload?.path) {
+          let targetPath = action.payload.path;
+          if (targetPath.includes('quiz') || targetPath.includes('persona')) {
+            targetPath = '/designer-quiz';
+          } else if (targetPath.includes('visualizer')) {
+            targetPath = '/ai-room-visualizer';
+          } else if (targetPath.includes('estimator') || targetPath.includes('cost')) {
+            targetPath = '/cost-estimator';
+          } else if (targetPath.includes('boq')) {
+            targetPath = '/boq-generator';
+          }
           setIsOpen(false);
-          navigate(action.payload.path);
+          navigate(targetPath);
         }
         break;
 

@@ -284,6 +284,65 @@ class OpenAIServiceClient {
   }
 
   /**
+   * Generate speech audio from text using OpenAI TTS
+   * @param {string} text - Text to speak
+   * @param {Object} options - { model, voice, speed, responseFormat }
+   */
+  async generateSpeech(text, options = {}) {
+    const client = this.getClient();
+
+    // Prioritized list of models to try
+    const preferredModel = options.model || process.env.OPENAI_TTS_MODEL || 'tts-1';
+    const candidateModels = Array.from(new Set([
+      preferredModel,
+      'tts-1',
+      'tts-1-hd'
+    ]));
+
+    // Prioritized list of voices to try (cedar, marin, echo, onyx, alloy)
+    const preferredVoice = options.voice || process.env.OPENAI_TTS_VOICE || 'echo';
+    const candidateVoices = Array.from(new Set([
+      preferredVoice,
+      'echo',
+      'onyx',
+      'cedar',
+      'marin',
+      'alloy'
+    ]));
+
+    let lastError = null;
+
+    for (const model of candidateModels) {
+      for (const voice of candidateVoices) {
+        try {
+          const requestParams = {
+            model,
+            voice,
+            input: text,
+            response_format: options.responseFormat || 'mp3',
+            speed: options.speed || 1.0,
+          };
+
+          const response = await client.audio.speech.create(requestParams);
+          const buffer = Buffer.from(await response.arrayBuffer());
+
+          return {
+            buffer,
+            contentType: 'audio/mpeg',
+            model,
+            voice,
+          };
+        } catch (err) {
+          lastError = err;
+          console.warn(`[OpenAI TTS] Attempt with model="${model}", voice="${voice}" failed:`, err.message);
+        }
+      }
+    }
+
+    throw lastError || new Error('Failed to generate speech with available TTS models');
+  }
+
+  /**
    * Estimate token count for a prompt
    * Fallback: ~4 characters per token on average
    */

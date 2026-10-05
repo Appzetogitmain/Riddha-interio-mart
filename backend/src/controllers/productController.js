@@ -111,10 +111,19 @@ exports.getProducts = async (req, res, next) => {
       }
     }
 
-    // Default protections: only show approved/active unless Admin overrides
+    // Default protections: only show approved/active unless Admin or Seller inspecting own products overrides
     const isAdmin = req.user && req.user.role === 'admin';
-    if (!isAdmin) {
+    const isSellerOwnQuery = req.user && req.user.role === 'seller' && req.query.seller && req.query.seller.toString() === req.user.id.toString();
+
+    if (!isAdmin && !isSellerOwnQuery) {
+      // Auto-sanitize DB inconsistency: if a product is pending/rejected, it MUST NOT be isApproved: true
+      Product.updateMany(
+        { approvalStatus: { $in: ['pending', 'rejected'] }, isApproved: true },
+        { $set: { isApproved: false } }
+      ).catch(err => console.error('Product approval sync error:', err));
+
       filter.isApproved = true;
+      filter.approvalStatus = { $in: ['approved', 'Approved'] };
       filter.isActive = true;
 
       // Filter out products from unverified sellers

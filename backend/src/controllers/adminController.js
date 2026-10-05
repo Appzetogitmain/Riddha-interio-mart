@@ -397,7 +397,8 @@ exports.getDashboardStats = async (req, res, next) => {
       recentOrders,
       userTypeCounts,
       pendingApprovalsCount,
-      totalStockSum
+      totalStockSum,
+      topSellingRaw
     ] = await Promise.all([
       Catalog.countDocuments({ isActive: true }),
       Product.countDocuments({ isActive: true, isApproved: true }),
@@ -413,7 +414,7 @@ exports.getDashboardStats = async (req, res, next) => {
               { $group: { _id: null, total: { $sum: '$totalPrice' } } }
             ],
             statusCounts: [
-              { $group: { _id: "$status", count: { $sum: 1 } } }
+              { $group: { _id: "$status", count: { $sum: 1 } } },
             ],
             paymentCounts: [
               { $group: { _id: "$paymentMethod", count: { $sum: 1 } } }
@@ -433,6 +434,23 @@ exports.getDashboardStats = async (req, res, next) => {
       Product.countDocuments({ approvalStatus: 'pending' }),
       Product.aggregate([
         { $group: { _id: null, total: { $sum: '$countInStock' } } }
+      ]),
+      Order.aggregate([
+        { $match: { status: { $ne: 'Cancelled' } } },
+        { $unwind: '$orderItems' },
+        {
+          $group: {
+            _id: '$orderItems.product',
+            name: { $first: '$orderItems.name' },
+            image: { $first: '$orderItems.image' },
+            price: { $first: '$orderItems.price' },
+            totalQuantitySold: { $sum: '$orderItems.quantity' },
+            totalRevenue: { $sum: { $multiply: ['$orderItems.quantity', '$orderItems.price'] } },
+            orderCount: { $sum: 1 }
+          }
+        },
+        { $sort: { totalQuantitySold: -1, totalRevenue: -1 } },
+        { $limit: 10 }
       ])
     ]);
 
@@ -563,6 +581,58 @@ exports.getDashboardStats = async (req, res, next) => {
       pending: Array(7).fill(pendingApprovalsCount)
     };
 
+    let topSellingProducts = topSellingRaw || [];
+    if (topSellingProducts.length > 0) {
+      topSellingProducts = await Product.populate(topSellingProducts, [
+        { 
+          path: '_id', 
+          select: 'name sku images countInStock category brand price', 
+          populate: [
+            { path: 'category', select: 'name' }, 
+            { path: 'brand', select: 'name' }
+          ] 
+        }
+      ]);
+      topSellingProducts = topSellingProducts.map(item => {
+        const prod = item._id && typeof item._id === 'object' ? item._id : null;
+        return {
+          productId: prod ? prod._id : item._id,
+          name: prod?.name || item.name || 'Unknown Product',
+          image: prod?.images?.[0] || item.image || '',
+          sku: prod?.sku || 'N/A',
+          category: prod?.category?.name || 'General',
+          brand: prod?.brand?.name || 'Generic',
+          totalQuantitySold: item.totalQuantitySold || 0,
+          totalRevenue: item.totalRevenue || 0,
+          orderCount: item.orderCount || 0,
+          price: prod?.price || item.price || 0,
+          currentStock: prod ? prod.countInStock : 0
+        };
+      });
+    }
+
+    if (topSellingProducts.length === 0) {
+      const fallbackProds = await Product.find({ isApproved: true, isActive: true })
+        .populate('category', 'name')
+        .populate('brand', 'name')
+        .limit(5)
+        .lean();
+
+      topSellingProducts = fallbackProds.map(prod => ({
+        productId: prod._id,
+        name: prod.name,
+        image: prod.images?.[0] || '',
+        sku: prod.sku || 'N/A',
+        category: prod.category?.name || 'General',
+        brand: prod.brand?.name || 'Generic',
+        totalQuantitySold: 0,
+        totalRevenue: 0,
+        orderCount: 0,
+        price: prod.price || 0,
+        currentStock: prod.countInStock || 0
+      }));
+    }
+
     const payload = {
       stats: {
         products: productsCount,
@@ -581,6 +651,7 @@ exports.getDashboardStats = async (req, res, next) => {
         sparklines
       },
       revenueChart: chartData,
+      topSellingProducts,
       recentActivity: recentOrders.map(o => ({
         id: o._id,
         action: `Order ${o.status}`,

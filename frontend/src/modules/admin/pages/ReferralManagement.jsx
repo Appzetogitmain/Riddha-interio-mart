@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import PageWrapper from '../components/PageWrapper';
 import StatCard from '../components/StatCard';
-import { FiGift, FiUsers, FiDollarSign, FiSettings, FiCheck, FiX, FiActivity, FiArrowRight, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
-import { LuTrendingUp } from 'react-icons/lu';
+import { FiGift, FiUsers, FiSettings, FiCheck, FiX, FiActivity, FiArrowRight, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import { LuTrendingUp, LuIndianRupee } from 'react-icons/lu';
 import { toast } from 'react-hot-toast';
 import api from '../../../shared/utils/api';
 
@@ -104,7 +104,7 @@ const ReferralManagement = () => {
   const stats = [
     { label: 'Total Referrals', value: statsData.totalReferrals.toString(), icon: FiUsers, color: 'bg-[var(--color-primary)]' },
     { label: 'Successful Referrals', value: statsData.successfulReferrals.toString(), icon: FiCheck, color: 'bg-[var(--color-accent-pink)]' },
-    { label: 'Total Rewards Given', value: `₹${statsData.totalRewardsGiven.toLocaleString('en-IN')}`, icon: FiDollarSign, color: 'bg-emerald-600' },
+    { label: 'Total Rewards Given', value: `₹${statsData.totalRewardsGiven.toLocaleString('en-IN')}`, icon: LuIndianRupee, color: 'bg-emerald-600' },
   ];
 
   const tabs = [
@@ -316,7 +316,7 @@ const ReferralManagement = () => {
                  <div className="bg-white rounded-xl shadow-sm border border-slate-200/80 p-5 space-y-6">
                     <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
                        <div className="h-9 w-9 bg-teal-50 rounded-lg flex items-center justify-center text-[var(--color-primary)]">
-                         <FiDollarSign size={18} />
+                         <LuIndianRupee size={18} />
                        </div>
                        <div>
                          <h3 className="text-xs font-bold text-slate-800 uppercase tracking-tight">Reward Settings</h3>

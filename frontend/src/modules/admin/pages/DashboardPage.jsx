@@ -11,7 +11,7 @@ import {
   LuArrowRight, 
   LuNavigation, 
   LuTruck,
-  LuDollarSign,
+  LuIndianRupee,
   LuBike,
   LuActivity,
   LuCreditCard,
@@ -143,6 +143,7 @@ const DashboardPage = () => {
     }));
   }
   const recentActivity = data?.recentActivity || [];
+  const topSellingProducts = data?.topSellingProducts || [];
   
   const totalOrders = stats.statusBreakdown?.reduce((sum, item) => sum + item.count, 0) || 0;
   const platformProfit = Math.round((stats.totalRevenue || 0) * 0.10);
@@ -169,7 +170,7 @@ const DashboardPage = () => {
       value: loading ? '...' : `₹${stats.totalRevenue?.toLocaleString()}`,
       trend: stats.trends?.revenue || '+0.0%',
       compareText: 'vs last week',
-      icon: LuDollarSign,
+      icon: LuIndianRupee,
       color: '#189D91',
       sparkData: stats.sparklines?.revenue || [0, 0, 0, 0, 0, 0, 0],
       path: '/admin/payments/users'
@@ -479,7 +480,7 @@ const DashboardPage = () => {
                 className="w-full p-4 bg-slate-50 hover:bg-emerald-50 rounded-xl flex items-center gap-4 hover:border-emerald-200 border border-slate-100 transition-all group text-left cursor-pointer"
               >
                 <div className="w-10 h-10 rounded-lg bg-white border border-slate-100 flex items-center justify-center text-emerald-500 group-hover:scale-105 transition-all shadow-sm">
-                  <LuDollarSign size={18} />
+                  <LuIndianRupee size={18} />
                 </div>
                 <div>
                   <p className="text-xs font-bold text-slate-800 leading-none">Financial Telemetry</p>
@@ -630,6 +631,127 @@ const DashboardPage = () => {
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+
+        {/* Most Sold Items (Top Selling Products) Table */}
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6 md:p-8 overflow-hidden">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+            <div>
+              <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
+                <LuAward className="text-[var(--color-primary)]" size={20} /> Most Sold Items Performance
+              </h3>
+              <p className="text-xs text-slate-400 font-medium mt-0.5">Top performing products ranked by order volume & sales revenue</p>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200/60">
+                Top {topSellingProducts.length} Items
+              </span>
+              <button 
+                onClick={() => navigate('/admin/catalog')}
+                className="px-4 py-2 border border-slate-200 rounded-lg text-[10px] font-bold uppercase tracking-wider text-[var(--color-primary)] hover:bg-slate-50 transition-all cursor-pointer flex items-center gap-1.5"
+              >
+                View Catalog <LuArrowRight size={13} />
+              </button>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto w-full">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-200 bg-slate-50/50">
+                  <th className="py-3 px-4 rounded-l-lg">Rank</th>
+                  <th className="py-3 px-4">Product Name & SKU</th>
+                  <th className="py-3 px-4">Category / Brand</th>
+                  <th className="py-3 px-4">Price</th>
+                  <th className="py-3 px-4 text-center">Units Sold</th>
+                  <th className="py-3 px-4 text-right">Total Revenue</th>
+                  <th className="py-3 px-4 text-center rounded-r-lg">Stock Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {topSellingProducts.map((item, index) => {
+                  const rawImg = item.image || '';
+                  const imgUrl = rawImg.startsWith('http') 
+                    ? rawImg 
+                    : rawImg ? `http://localhost:5000${rawImg}` : '';
+
+                  return (
+                    <tr 
+                      key={item.productId || index} 
+                      onClick={() => item.productId && navigate(`/admin/catalog/edit/${item.productId}`)}
+                      className="group hover:bg-slate-50/80 transition-colors cursor-pointer text-xs"
+                    >
+                      <td className="py-3.5 px-4 font-bold text-slate-400 text-xs">
+                        <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-[11px] font-bold ${
+                          index === 0 ? 'bg-amber-100 text-amber-700 border border-amber-200' :
+                          index === 1 ? 'bg-slate-200 text-slate-700' :
+                          index === 2 ? 'bg-amber-50 text-amber-800' :
+                          'bg-slate-50 text-slate-500'
+                        }`}>
+                          #{index + 1}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <div className="flex items-center gap-3">
+                          {imgUrl ? (
+                            <img 
+                              src={imgUrl} 
+                              alt={item.name} 
+                              className="w-10 h-10 rounded-lg object-cover border border-slate-200 bg-white shrink-0" 
+                              onError={(e) => { e.target.style.display = 'none'; }}
+                            />
+                          ) : (
+                            <div className="w-10 h-10 rounded-lg bg-teal-50 text-[var(--color-primary)] flex items-center justify-center font-bold text-sm border border-teal-100 shrink-0">
+                              <LuPackage size={18} />
+                            </div>
+                          )}
+                          <div>
+                            <h4 className="font-bold text-slate-800 group-hover:text-[var(--color-primary)] transition-colors line-clamp-1">
+                              {item.name}
+                            </h4>
+                            <span className="text-[10px] font-semibold text-slate-400 tracking-tight">SKU: {item.sku}</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <div className="flex flex-col">
+                          <span className="font-semibold text-slate-700 text-xs">{item.category}</span>
+                          <span className="text-[10px] font-medium text-slate-400">{item.brand}</span>
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-4 font-bold text-slate-800">
+                        ₹{item.price?.toLocaleString()}
+                      </td>
+                      <td className="py-3.5 px-4 text-center">
+                        <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-teal-50 text-[var(--color-primary)] border border-teal-100 inline-flex items-center gap-1">
+                          <LuTrendingUp size={12} /> {item.totalQuantitySold} pcs
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 font-bold text-slate-900 text-right text-xs">
+                        ₹{item.totalRevenue?.toLocaleString()}
+                      </td>
+                      <td className="py-3.5 px-4 text-center">
+                        <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide border ${
+                          item.currentStock > 20 ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
+                          item.currentStock > 0 ? 'bg-amber-50 text-amber-700 border-amber-100' :
+                          'bg-rose-50 text-rose-700 border-rose-100'
+                        }`}>
+                          {item.currentStock > 0 ? `${item.currentStock} in stock` : 'Out of Stock'}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+
+            {topSellingProducts.length === 0 && !loading && (
+              <div className="text-center py-10 text-slate-400 font-bold uppercase tracking-wider text-[10px]">
+                No product sales data registered yet.
+              </div>
+            )}
           </div>
         </div>
 
@@ -940,6 +1062,54 @@ const DashboardPage = () => {
                 />
               </AreaChart>
             </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Mobile Most Sold Items Table Card */}
+        <div className="bg-white rounded-xl border border-slate-200/80 p-4 shadow-sm min-w-0">
+          <div className="flex items-center justify-between pb-2 mb-3 border-b border-slate-100">
+            <div>
+              <span className="text-[9px] font-bold text-[var(--color-primary)] uppercase tracking-wider">Product Performance</span>
+              <h3 className="text-xs font-bold text-slate-800 mt-0.5 flex items-center gap-1.5">
+                <LuAward className="text-[var(--color-primary)]" size={14} /> Most Sold Items
+              </h3>
+            </div>
+            <span className="text-[9px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
+              Top {topSellingProducts.length}
+            </span>
+          </div>
+
+          <div className="overflow-x-auto w-full">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="text-[9px] font-bold text-slate-400 uppercase border-b border-slate-100 pb-2">
+                  <th className="pb-2 pr-2">Rank</th>
+                  <th className="pb-2 pr-2">Item</th>
+                  <th className="pb-2 pr-2 text-center">Sold</th>
+                  <th className="pb-2 text-right">Revenue</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {topSellingProducts.map((item, idx) => (
+                  <tr 
+                    key={item.productId || idx}
+                    onClick={() => item.productId && navigate(`/admin/catalog/edit/${item.productId}`)}
+                    className="text-[11px] active:bg-slate-50 cursor-pointer"
+                  >
+                    <td className="py-2.5 pr-2 font-bold text-slate-400">#{idx + 1}</td>
+                    <td className="py-2.5 pr-2 font-bold text-slate-800 truncate max-w-[120px]">
+                      {item.name}
+                    </td>
+                    <td className="py-2.5 pr-2 text-center">
+                      <span className="font-bold text-[var(--color-primary)]">{item.totalQuantitySold}</span>
+                    </td>
+                    <td className="py-2.5 text-right font-bold text-slate-900">
+                      ₹{item.totalRevenue?.toLocaleString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
 

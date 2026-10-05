@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiGift, FiCopy, FiCheck, FiArrowLeft, FiClock, FiDollarSign, FiUserPlus, FiSend, FiUserCheck, FiCreditCard } from 'react-icons/fi';
+import { FiGift, FiCopy, FiCheck, FiArrowLeft, FiClock, FiUserPlus, FiSend, FiUserCheck, FiCreditCard } from 'react-icons/fi';
+import { LuIndianRupee } from 'react-icons/lu';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import api from '../../../shared/utils/api';
@@ -70,7 +71,7 @@ const ReferralRewardsPage = () => {
   const availableBalance = data.wallet?.balance || 0;
 
   const referralStats = [
-    { label: 'Total Earned', value: `₹${totalEarned.toLocaleString()}`, icon: FiDollarSign, color: 'text-[#189D91]', bg: 'bg-[#189D91]/10' },
+    { label: 'Total Earned', value: `₹${totalEarned.toLocaleString()}`, icon: LuIndianRupee, color: 'text-[#189D91]', bg: 'bg-[#189D91]/10' },
     { label: 'Friends Referred', value: successfulReferred, icon: FiUserPlus, color: 'text-[#702D8B]', bg: 'bg-[#702D8B]/10' },
     { label: 'Pending Invitations', value: pendingReferred, icon: FiClock, color: 'text-[#FF6B35]', bg: 'bg-[#FF6B35]/10' },
   ];
@@ -97,7 +98,7 @@ const ReferralRewardsPage = () => {
           
           <div className="bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-sm flex items-center gap-6">
              <div className="h-14 w-14 bg-[#189D91]/10 rounded-2xl flex items-center justify-center">
-               <FiDollarSign className="text-[#189D91] h-7 w-7" />
+               <LuIndianRupee className="text-[#189D91] h-7 w-7" />
              </div>
              <div>
                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Available Balance</p>

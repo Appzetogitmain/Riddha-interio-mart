@@ -93,14 +93,14 @@ const SectionShell = ({ section, children, action }) => {
       initial={{ opacity: 0, y: 15 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-40px' }}
-      className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-12 py-4 md:py-8 border-t border-gray-50 bg-white"
+      className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-12 py-6 md:py-10 my-4 border-y border-[#189D91]/15 bg-gradient-to-b from-[#F8FAF9] via-white to-[#F0FDFA]/50 rounded-2xl md:rounded-3xl"
     >
       {/* Compact Standard Header */}
       <div className="flex items-center justify-between mb-4 md:mb-6">
         <div>
-          <p className="text-[9px] font-black uppercase tracking-[0.25em] text-[#189D91] mb-0.5">
+          <span className="inline-block px-3 py-0.5 rounded-full text-[9px] font-black uppercase tracking-[0.25em] bg-[#189D91]/10 text-[#189D91] border border-[#189D91]/20 mb-1">
             Curated Collection
-          </p>
+          </span>
           <h2 className="text-xl md:text-2xl font-black text-gray-900 tracking-tight leading-tight">
             {section.title}
           </h2>

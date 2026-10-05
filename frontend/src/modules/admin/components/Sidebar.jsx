@@ -36,7 +36,7 @@ import {
   FiHelpCircle,
   FiBell
 } from "react-icons/fi";
-import { LuCrown } from "react-icons/lu";
+import { LuCrown, LuIndianRupee } from "react-icons/lu";
 import logoImage from "../../../assets/transparent_logo.png";
 
 const menuGroups = [
@@ -303,7 +303,7 @@ const menuGroups = [
       { path: "/admin/product-batches", icon: FiLayers, label: "Product Batches", showBadge: true, badgeType: "batch" },
       {
         label: "Payments",
-        icon: FiDollarSign,
+        icon: LuIndianRupee,
         path: "/admin/payments",
         children: [
           {
@@ -323,7 +323,7 @@ const menuGroups = [
           },
           {
             path: "/admin/payments/seller-payouts",
-            icon: FiDollarSign,
+            icon: LuIndianRupee,
             label: "Seller Payouts",
           },
         ],

@@ -47,30 +47,30 @@ const TrustBar = () => {
   }, []);
 
   return (
-    <section className="py-2 bg-transparent overflow-hidden hidden md:block">
+    <section className="py-4 bg-transparent overflow-hidden hidden md:block my-2">
       <div className="max-w-[1920px] mx-auto px-4 flex gap-3">
 
         {/* Left Section: Trust Items */}
-        <div className="flex-1 bg-teal-50/20 border border-teal-100/50 rounded-2xl p-3 flex items-center justify-between shadow-sm">
+        <div className="flex-1 bg-gradient-to-r from-[#E6F6F5]/80 via-white to-[#E6F6F5]/60 border border-[#189D91]/20 rounded-2xl p-3.5 flex items-center justify-between shadow-xs">
           {trustItems.map((item, idx) => (
             <TrustItem key={idx} {...item} />
           ))}
         </div>
 
         {/* Right Section: Help Bar */}
-        <div className="bg-gradient-to-r from-[#28a399] to-[#189D91] rounded-2xl p-3 px-6 flex items-center gap-6 shadow-md border border-[#28a399]/20">
+        <div className="bg-gradient-to-r from-[#189D91] via-[#15897F] to-[#1E40AF] rounded-2xl p-3.5 px-6 flex items-center gap-6 shadow-md border border-[#189D91]/30">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-full bg-white/10 backdrop-blur-sm">
+            <div className="p-2 rounded-full bg-white/15 backdrop-blur-sm">
               <LuHeadphones className="w-5 h-5 text-white" />
             </div>
             <div className="flex flex-col">
               <span className="text-sm font-black text-white leading-none">Need Help?</span>
-              <span className="text-[11px] font-bold text-white/80 mt-1">Our experts are here for you!</span>
+              <span className="text-[11px] font-bold text-white/90 mt-1">Our experts are here for you!</span>
             </div>
           </div>
           <Link 
             to="/contact" 
-            className="bg-white/10 hover:bg-white/20 text-white border border-white/30 px-5 py-2 rounded-xl text-xs font-black transition-all backdrop-blur-sm"
+            className="bg-white/15 hover:bg-white/25 text-white border border-white/40 px-5 py-2 rounded-xl text-xs font-black transition-all backdrop-blur-sm shadow-2xs"
           >
             Contact Us
           </Link>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { FiCheckCircle, FiClock, FiDollarSign } from 'react-icons/fi';
+import { FiCheckCircle, FiClock } from 'react-icons/fi';
+import { LuIndianRupee } from 'react-icons/lu';
 import api from '../../../shared/utils/api';
 import toast from 'react-hot-toast';
 import PageWrapper from '../components/PageWrapper';
@@ -119,9 +120,9 @@ const SellerBOQRequests = () => {
                     <div className="space-y-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Unit Price (Rs.)</label>
+                          <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Unit Price (₹)</label>
                           <div className="relative">
-                            <FiDollarSign className="absolute left-3 top-2.5 text-slate-400" size={14} />
+                            <LuIndianRupee className="absolute left-3 top-2.5 text-slate-400" size={14} />
                             <input
                               type="number"
                               value={unitPrice}

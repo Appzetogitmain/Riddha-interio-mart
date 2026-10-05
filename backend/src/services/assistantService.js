@@ -497,6 +497,7 @@ class AssistantService {
       case 'searchProducts': {
         const query = {};
         query.isApproved = true;
+        query.approvalStatus = { $in: ['approved', 'Approved'] };
         query.isActive = true;
         query.isBundle = { $ne: true };
 
@@ -546,7 +547,7 @@ class AssistantService {
           .select('name price images countInStock description');
 
         if (products.length === 0) {
-          products = await Product.find({ isApproved: true, isActive: true, isBundle: { $ne: true } })
+          products = await Product.find({ isApproved: true, approvalStatus: { $in: ['approved', 'Approved'] }, isActive: true, isBundle: { $ne: true } })
             .limit(6)
             .select('name price images countInStock description');
         }

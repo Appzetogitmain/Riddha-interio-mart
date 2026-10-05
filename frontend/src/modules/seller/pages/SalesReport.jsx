@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { 
   BarChart3, 
   TrendingUp, 
-  DollarSign, 
+  IndianRupee, 
   Package, 
   ArrowUpRight, 
   ArrowDownRight, 

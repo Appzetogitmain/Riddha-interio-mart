@@ -61,8 +61,8 @@ const OfferBanner = () => {
   }, [slides]);
 
   return (
-    <section className="max-w-7xl mx-auto px-4 md:px-12 py-4">
-      <div className="flex flex-row h-32 sm:h-40 md:h-64 rounded-xl md:rounded-[2.5rem] overflow-hidden shadow-lg border border-soft-oatmeal/10 bg-white relative">
+    <section className="max-w-7xl mx-auto px-4 md:px-12 py-6">
+      <div className="flex flex-row h-32 sm:h-40 md:h-64 rounded-xl md:rounded-[2.5rem] overflow-hidden shadow-lg border border-[#E52574]/20 bg-white relative">
         <AnimatePresence mode="wait">
           <Motion.div
             key={current}
@@ -72,13 +72,13 @@ const OfferBanner = () => {
             transition={{ duration: 0.6 }}
             className="absolute inset-0 flex flex-row"
           >
-            <div className="w-[42%] min-[400px]:w-[38%] md:w-[30%] bg-white flex flex-col justify-center px-3 min-[400px]:px-4 md:px-12 py-2 md:py-8 space-y-1 md:space-y-4">
-              <h3 className="text-[13px] min-[360px]:text-[15px] sm:text-lg md:text-3xl font-black text-deep-espresso leading-[1.1] md:leading-tight uppercase tracking-tight whitespace-pre-line">
+            <div className="w-[42%] min-[400px]:w-[38%] md:w-[30%] bg-gradient-to-br from-[#FFF0F5] via-white to-[#FCE7F3] flex flex-col justify-center px-3 min-[400px]:px-4 md:px-12 py-2 md:py-8 space-y-1 md:space-y-4 border-r border-[#E52574]/20">
+              <h3 className="text-[13px] min-[360px]:text-[15px] sm:text-lg md:text-3xl font-black text-gray-900 leading-[1.1] md:leading-tight uppercase tracking-tight whitespace-pre-line">
                 {slides[current].title}
               </h3>
               <Link
                 to={slides[current].ctaLink || '/products'}
-                className="text-[9px] min-[360px]:text-[10px] sm:text-xs md:text-lg font-bold text-warm-sand hover:text-deep-espresso uppercase tracking-[0.05em] md:tracking-widest flex items-center gap-1 md:gap-2 transition-colors"
+                className="text-[9px] min-[360px]:text-[10px] sm:text-xs md:text-lg font-bold text-[#E52574] hover:text-[#b01454] uppercase tracking-[0.05em] md:tracking-widest flex items-center gap-1 md:gap-2 transition-colors"
               >
                 {slides[current].offer}{' '}
                 <span className="text-sm md:text-xl transform md:translate-y-[1px]">→</span>

@@ -16,7 +16,7 @@ const COMPLEMENT_GROUPS = [
 ];
 
 const escapeRegex = (str) => String(str).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-const baseVisibilityFilter = () => ({ isActive: true, isApproved: true, countInStock: { $gt: 0 }, isBundle: { $ne: true } });
+const baseVisibilityFilter = () => ({ isActive: true, isApproved: true, approvalStatus: { $in: ['approved', 'Approved'] }, countInStock: { $gt: 0 }, isBundle: { $ne: true } });
 const round = (n) => Math.round(n * 100) / 100;
 
 const formatRecommendation = (doc, reason, score, type = 'personalized') => {

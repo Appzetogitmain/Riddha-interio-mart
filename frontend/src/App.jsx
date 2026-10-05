@@ -14,6 +14,7 @@ import { Toaster } from 'react-hot-toast';
 import PincodeModal from './modules/user/components/PincodeModal';
 import DeliveryBar from './modules/user/components/DeliveryBar';
 import AiAssistantWidget from './modules/user/components/AiAssistantWidget';
+import WhatsAppFloat from './modules/user/components/WhatsAppFloat';
 import UserNotifications from './modules/user/components/UserNotifications';
 import AdminNotifications from './modules/admin/components/AdminNotifications';
 import SellerNotifications from './modules/seller/components/SellerNotifications';
@@ -119,6 +120,7 @@ function App() {
       {!isDashboardLayout && <div className="print:hidden"><Footer /></div>}
       {!isDashboardLayout && !isProductPage && <div className="print:hidden"><BottomNavbar /></div>}
       {!isDashboardLayout && <AiAssistantWidget />}
+      {!isDashboardLayout && <WhatsAppFloat />}
     </div>
   );
 }

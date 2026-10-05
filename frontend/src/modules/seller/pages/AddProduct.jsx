@@ -17,7 +17,7 @@ import {
   Database,
   ArrowRight,
   Info,
-  DollarSign,
+  IndianRupee,
   Box,
   Layers,
   Palette,
@@ -1378,7 +1378,7 @@ const AddProduct = () => {
                   <div className="bg-white rounded-[2.5rem] border border-slate-200 p-8 shadow-sm space-y-8">
                     <div className="flex items-center gap-3 pb-4 border-b border-slate-50">
                       <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600">
-                        <DollarSign size={20} />
+                        <IndianRupee size={20} />
                       </div>
                       <h3 className="text-lg font-bold text-slate-900">
                         Commercials

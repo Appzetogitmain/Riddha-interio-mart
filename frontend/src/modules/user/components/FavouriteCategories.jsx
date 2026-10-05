@@ -33,18 +33,20 @@ const FavouriteSectionCard = ({ section }) => {
   const products = Array.isArray(activeBlock?.productIds) ? activeBlock.productIds.filter(Boolean) : [];
 
   return (
-    <section className="bg-white py-4 md:py-6 border-b border-gray-100">
+    <section className="bg-gradient-to-b from-[#FFFDF5] via-white to-[#FFF7ED]/50 py-6 md:py-10 border-b border-amber-100/60 my-2">
       <div className="max-w-[1440px] mx-auto px-4 md:px-12">
 
         {/* Compact Header */}
         <div className="flex items-center justify-between mb-3 md:mb-5">
           <div>
-            <p className="text-[9px] font-black uppercase tracking-[0.25em] text-[#189D91] mb-0.5">Premium Selection</p>
+            <span className="inline-block px-3 py-0.5 rounded-full text-[9px] font-black uppercase tracking-[0.25em] bg-[#F59E0B]/10 text-[#D97706] border border-[#F59E0B]/20 mb-1">
+              Premium Selection
+            </span>
             <h2 className="text-lg md:text-2xl font-black text-gray-900 tracking-tight leading-tight" style={{ fontFamily: "'Inter', sans-serif" }}>
               {section.heading}
             </h2>
             {section.subheading && (
-              <p className="text-[11px] md:text-sm text-gray-400 font-medium mt-0.5 leading-snug">
+              <p className="text-[11px] md:text-sm text-gray-500 font-medium mt-0.5 leading-snug">
                 {section.subheading}
               </p>
             )}

@@ -60,9 +60,9 @@ const defaultPromos = [
     title: "Contractor Benefits",
     items: ["Special Pricing", "Bulk Deals", "Priority Support"],
     btnText: "Join Now",
-    bg: "bg-[#F4F9F8]",
-    textColor: "text-[#28a399]",
-    btnColor: "text-[#28a399]",
+    bg: "bg-gradient-to-br from-[#E6F6F5] via-[#F0FDFA] to-[#D0F2EF]",
+    textColor: "text-[#189D91]",
+    btnColor: "text-[#189D91] border-[#189D91]/20 hover:bg-[#189D91] hover:text-white",
     img: ContractorImg,
     link: "/contractor-registration"
   },
@@ -70,9 +70,9 @@ const defaultPromos = [
     title: "Interior Designer Zone",
     items: ["Premium Materials", "For Your Projects"],
     btnText: "Join Now",
-    bg: "bg-[#FFF4F7]",
-    textColor: "text-[#D81B60]",
-    btnColor: "text-[#D81B60]",
+    bg: "bg-gradient-to-br from-[#FCE7F3] via-[#FFF0F5] to-[#FBCFE8]",
+    textColor: "text-[#E52574]",
+    btnColor: "text-[#E52574] border-[#E52574]/20 hover:bg-[#E52574] hover:text-white",
     img: DesignerImg,
     link: "/designer-registration"
   },
@@ -80,9 +80,9 @@ const defaultPromos = [
     title: "Builder Benefits",
     items: ["Reliable Supplies", "At Best Prices"],
     btnText: "Join Now",
-    bg: "bg-[#FFF8F2]",
-    textColor: "text-[#F57C00]",
-    btnColor: "text-[#F57C00]",
+    bg: "bg-gradient-to-br from-[#FEF3C7] via-[#FFFBEB] to-[#FDE68A]",
+    textColor: "text-[#D97706]",
+    btnColor: "text-[#D97706] border-[#D97706]/20 hover:bg-[#D97706] hover:text-white",
     img: BuildingImg,
     link: "/builder-registration"
   },
@@ -90,9 +90,9 @@ const defaultPromos = [
     title: "Refer & Earn",
     items: ["Refer Your Friends", "& Earn Rewards"],
     btnText: "Know More",
-    bg: "bg-[#F8F4FF]",
-    textColor: "text-[#7E57C2]",
-    btnColor: "text-[#7E57C2]",
+    bg: "bg-gradient-to-br from-[#EFF6FF] via-[#F8FAFC] to-[#DBEAFE]",
+    textColor: "text-[#1E40AF]",
+    btnColor: "text-[#1E40AF] border-[#1E40AF]/20 hover:bg-[#1E40AF] hover:text-white",
     img: GiftImg,
     link: "/referral"
   }
@@ -126,7 +126,7 @@ const PromoGrid = () => {
   }
 
   return (
-    <section className="pt-2 pb-2 md:pt-2 md:pb-4 bg-white">
+    <section className="py-3 md:py-6 bg-gradient-to-b from-slate-50/60 to-white">
       <div className="max-w-[1920px] mx-auto px-2 md:px-4">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3">
           {promos.map((promo, idx) => (

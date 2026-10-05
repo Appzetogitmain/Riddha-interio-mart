@@ -9,7 +9,7 @@ import {
   ChevronRight, 
   ShoppingBag, 
   Calendar,
-  DollarSign,
+  IndianRupee,
   ArrowUpRight,
   MoreVertical,
   ExternalLink
@@ -237,7 +237,7 @@ const Customers = () => {
              { 
                label: 'Avg LTV', 
                value: filteredCustomers.length > 0 ? `₹${(filteredCustomers.reduce((sum, c) => sum + c.totalSpent, 0) / filteredCustomers.length).toFixed(0).toLocaleString()}` : '₹0', 
-               icon: <DollarSign size={18} />, 
+               icon: <IndianRupee size={18} />, 
                color: 'bg-amber-50 text-amber-600' 
              },
              { 

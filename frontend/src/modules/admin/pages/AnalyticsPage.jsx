@@ -5,7 +5,6 @@ import {
   FiTrendingUp, 
   FiShoppingBag, 
   FiUsers, 
-  FiDollarSign, 
   FiArrowUpRight, 
   FiArrowDownRight, 
   FiCalendar, 
@@ -13,6 +12,7 @@ import {
   FiActivity,
   FiZap
 } from 'react-icons/fi';
+import { LuIndianRupee } from 'react-icons/lu';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import api from '../../../shared/utils/api';
 
@@ -50,7 +50,7 @@ const AnalyticsPage = () => {
 
   // Live and Fallback Data for Frontend Display
   const stats = data?.stats || [
-    { label: 'Total Revenue', value: '₹0', change: '+0.0%', isUp: true, icon: 'FiDollarSign' },
+    { label: 'Total Revenue', value: '₹0', change: '+0.0%', isUp: true, icon: 'LuIndianRupee' },
     { label: 'Total Orders', value: '0', change: '+0.0%', isUp: true, icon: 'FiShoppingBag' },
     { label: 'Profit Margin', value: '₹0', change: '+0.0%', isUp: true, icon: 'FiTrendingUp' },
     { label: 'Avg Order Value', value: '₹0', change: '+0.0%', isUp: true, icon: 'FiZap' }
@@ -108,7 +108,7 @@ const AnalyticsPage = () => {
         {/* Stats Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {stats.map((stat, idx) => {
-            const Icon = FiIcons[stat.icon] || FiIcons.FiDollarSign;
+            const Icon = stat.icon === 'LuIndianRupee' ? LuIndianRupee : (FiIcons[stat.icon] || LuIndianRupee);
             const isUp = stat.isUp;
             const brandBg = idx === 0 || idx === 2 ? 'bg-teal-50 text-[#189D91] border-teal-100/50' : 'bg-pink-50 text-[#EC008C] border-pink-100/50';
             

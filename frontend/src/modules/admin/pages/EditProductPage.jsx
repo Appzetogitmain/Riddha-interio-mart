@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import PageWrapper from '../components/PageWrapper';
 import { FiArrowLeft, FiImage, FiVideo, FiSave, FiInfo, FiTag, FiDollarSign, FiType, FiUser, FiPackage, FiTrash2, FiPlus, FiX, FiCamera } from 'react-icons/fi';
+import { LuIndianRupee } from 'react-icons/lu';
 import api from '../../../shared/utils/api';
 
 const EditProductPage = () => {
@@ -576,7 +577,7 @@ const EditProductPage = () => {
                     <div className="grid grid-cols-2 gap-4">
                        <div className="space-y-2">
                          <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest flex items-center gap-2">
-                            <FiDollarSign size={12} /> Price (₹)
+                            <LuIndianRupee size={12} /> Price (₹)
                          </label>
                          <input 
                            type="number" required placeholder="0.00"
@@ -602,7 +603,7 @@ const EditProductPage = () => {
                     <div className="grid grid-cols-2 gap-4">
                        <div className="space-y-2">
                          <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest flex items-center gap-2 text-deep-espresso">
-                            <FiDollarSign size={12} /> B2B Price (₹)
+                            <LuIndianRupee size={12} /> B2B Price (₹)
                          </label>
                          <input 
                            type="number" placeholder="Optional"

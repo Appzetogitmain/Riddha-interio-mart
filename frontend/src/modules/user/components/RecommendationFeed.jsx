@@ -73,13 +73,13 @@ const RecommendationFeed = () => {
   };
 
   return (
-    <section className="py-10 bg-linear-to-b from-gray-50 via-white to-gray-50 border-y border-gray-100">
+    <section className="py-10 md:py-14 bg-gradient-to-b from-[#F0FDFA] via-white to-[#F0FDFA] border-y border-[#189D91]/20 my-4">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-100 text-emerald-950 rounded-full text-xs font-bold border border-emerald-200 mb-2">
-              <Sparkles className="w-3.5 h-3.5 text-emerald-700" />
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 bg-[#189D91]/10 text-[#189D91] rounded-full text-xs font-bold border border-[#189D91]/25 mb-2">
+              <Sparkles className="w-3.5 h-3.5 text-[#189D91]" />
               <span>AI Personalization</span>
             </div>
             <h2 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">

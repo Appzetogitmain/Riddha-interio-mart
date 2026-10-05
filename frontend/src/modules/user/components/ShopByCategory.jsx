@@ -52,17 +52,19 @@ const ShopByCategory = () => {
   }, [categories.length, scrollBySlide]);
 
   return (
-    <section className="py-4 md:py-8 bg-white overflow-hidden">
+    <section className="py-6 md:py-10 bg-gradient-to-b from-[#F0FDFA]/60 via-white to-[#F8FAF9] border-y border-[#189D91]/15 overflow-hidden my-2">
       <div className="max-w-[1440px] mx-auto px-4 md:px-12">
 
         {/* Improved Heading */}
         <div className="flex items-center justify-between mb-4 md:mb-6">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#28a399] mb-0.5">Browse</p>
+            <span className="inline-block px-3 py-0.5 rounded-full text-[9px] font-black uppercase tracking-[0.2em] bg-[#189D91]/10 text-[#189D91] border border-[#189D91]/20 mb-1">
+              Explore Collections
+            </span>
             <h2 className="text-xl md:text-2xl font-black text-gray-900 tracking-tight leading-tight">Shop by Category</h2>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <Link to="/categories" className="flex items-center gap-1 text-[11px] md:text-sm font-bold text-[#28a399] hover:underline mr-1">
+            <Link to="/categories" className="flex items-center gap-1 text-[11px] md:text-sm font-bold text-[#189D91] hover:underline mr-1 bg-white px-3 py-1.5 rounded-xl border border-gray-200 shadow-2xs">
               View All <FiChevronRight />
             </Link>
             {categories.length > 4 && (
@@ -70,14 +72,14 @@ const ShopByCategory = () => {
                 <button
                   onClick={() => scrollBySlide(-1)}
                   aria-label="Previous categories"
-                  className="w-7 h-7 md:w-8 md:h-8 rounded-full border border-gray-200 bg-white hover:bg-[#28a399] hover:border-[#28a399] hover:text-white text-gray-500 flex items-center justify-center transition-colors shadow-sm cursor-pointer"
+                  className="w-7 h-7 md:w-8 md:h-8 rounded-full border border-gray-200 bg-white hover:bg-[#189D91] hover:border-[#189D91] hover:text-white text-gray-500 flex items-center justify-center transition-colors shadow-sm cursor-pointer"
                 >
                   <FiChevronLeft size={14} />
                 </button>
                 <button
                   onClick={() => scrollBySlide(1)}
                   aria-label="Next categories"
-                  className="w-7 h-7 md:w-8 md:h-8 rounded-full border border-gray-200 bg-white hover:bg-[#28a399] hover:border-[#28a399] hover:text-white text-gray-500 flex items-center justify-center transition-colors shadow-sm cursor-pointer"
+                  className="w-7 h-7 md:w-8 md:h-8 rounded-full border border-gray-200 bg-white hover:bg-[#189D91] hover:border-[#189D91] hover:text-white text-gray-500 flex items-center justify-center transition-colors shadow-sm cursor-pointer"
                 >
                   <FiChevronRight size={14} />
                 </button>

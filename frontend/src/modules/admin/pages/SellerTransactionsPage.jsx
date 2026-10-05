@@ -8,9 +8,10 @@ import {
   LuX,
   LuPackage,
   LuPercent,
-  LuReceipt
+  LuReceipt,
+  LuIndianRupee
 } from "react-icons/lu";
-import { FiDownload, FiDollarSign } from "react-icons/fi";
+import { FiDownload } from "react-icons/fi";
 import api from "../../../shared/utils/api";
 import { toast } from "react-hot-toast";
 
@@ -108,7 +109,7 @@ const SellerTransactionsPage = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="bg-white p-6 rounded-2xl border border-soft-oatmeal shadow-sm flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center text-green-600">
-              <FiDollarSign size={24} />
+              <LuIndianRupee size={24} />
             </div>
             <div>
               <p className="text-xs text-warm-sand font-bold uppercase tracking-wider">
@@ -121,7 +122,7 @@ const SellerTransactionsPage = () => {
           </div>
           <div className="bg-white p-6 rounded-2xl border border-soft-oatmeal shadow-sm flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600">
-              <FiDollarSign size={24} />
+              <LuPercent size={24} />
             </div>
             <div>
               <p className="text-xs text-warm-sand font-bold uppercase tracking-wider">
@@ -133,8 +134,8 @@ const SellerTransactionsPage = () => {
             </div>
           </div>
           <div className="bg-white p-6 rounded-2xl border border-soft-oatmeal shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center text-red-600">
-              <FiDollarSign size={24} />
+            <div className="w-12 h-12 rounded-xl bg-teal-50 flex items-center justify-center text-teal-600">
+              <LuReceipt size={24} />
             </div>
             <div>
               <p className="text-xs text-warm-sand font-bold uppercase tracking-wider">

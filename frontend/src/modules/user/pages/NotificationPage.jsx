@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNotification } from '../data/NotificationContext';
-import { FiBell, FiCheck, FiTrash2, FiInfo, FiBox, FiTruck, FiDollarSign, FiUserCheck, FiAlertTriangle } from 'react-icons/fi';
+import { FiBell, FiCheck, FiTrash2, FiInfo, FiBox, FiTruck, FiUserCheck, FiAlertTriangle } from 'react-icons/fi';
+import { LuIndianRupee } from 'react-icons/lu';
 import { formatDistanceToNow } from 'date-fns';
 import Button from '../../../shared/components/Button';
 
@@ -17,7 +18,7 @@ const NotificationPage = () => {
     switch (type) {
       case 'order_update': return <FiBox className="w-5 h-5 text-blue-500" />;
       case 'delivery_update': return <FiTruck className="w-5 h-5 text-green-500" />;
-      case 'payment_success': return <FiDollarSign className="w-5 h-5 text-emerald-500" />;
+      case 'payment_success': return <LuIndianRupee className="w-5 h-5 text-emerald-500" />;
       case 'seller_approval': return <FiUserCheck className="w-5 h-5 text-purple-500" />;
       case 'admin_alert': return <FiAlertTriangle className="w-5 h-5 text-red-500" />;
       case 'stock_alert': return <FiAlertTriangle className="w-5 h-5 text-orange-500" />;

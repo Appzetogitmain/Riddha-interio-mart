@@ -14,7 +14,6 @@ import { Link } from 'react-router-dom';
 import api from '../../../shared/utils/api';
 import ShopByCategory from '../components/ShopByCategory';
 import { LuChevronRight } from 'react-icons/lu';
-import WhatsAppFloat from '../components/WhatsAppFloat';
 
 const SectionGrid = ({ products, loading, containerVariants, autoSlide = false }) => {
   const scrollRef = useRef(null);
@@ -247,15 +246,18 @@ const HomePage = () => {
 
       {/* Featured Advertisements */}
       {(advertisedProducts.length > 0) && (
-        <section className="px-4 md:px-8 py-4">
+        <section className="max-w-[1700px] mx-auto px-4 md:px-8 py-6 my-4 bg-gradient-to-r from-[#F0FDFA] via-[#FFFDF5] to-[#FCE7F3]/40 rounded-2xl md:rounded-3xl border border-[#189D91]/20 shadow-xs">
           <div className="flex justify-between items-end mb-4">
             <div>
+              <span className="inline-block px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-[0.2em] bg-[#E52574]/10 text-[#E52574] mb-1">
+                Featured Deals
+              </span>
               <h2 className="text-xl md:text-2xl font-black text-gray-900 tracking-tight">
                 Sponsored Products
               </h2>
               <p className="text-xs md:text-sm text-gray-500 font-medium">Top picks for you</p>
             </div>
-            <Link to="/products" className="text-sm font-bold text-[#189D91] hover:text-[#137c72] flex items-center gap-1 group">
+            <Link to="/products" className="text-xs md:text-sm font-bold text-[#189D91] hover:text-[#137c72] flex items-center gap-1 group bg-white/80 px-3 py-1.5 rounded-xl border border-[#189D91]/20 shadow-2xs">
               See All <LuChevronRight className="group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>
@@ -276,16 +278,18 @@ const HomePage = () => {
       <RecommendationFeed />
 
       {/* New Season Arrivals Section — shown after the product slider, same auto-slide carousel */}
-      <section className="py-4 md:py-8 border-t border-gray-200/60">
+      <section className="py-6 md:py-10 my-4 bg-gradient-to-b from-[#F0FDFA]/70 via-white to-[#F8FAFC] border-y border-[#189D91]/15">
         <div className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-12">
 
           {/* Section Header */}
           <div className="flex items-center justify-between mb-4 md:mb-6">
             <div>
-              <p className="text-[9px] font-black uppercase tracking-[0.25em] text-[#189D91] mb-0.5">Curated Collection</p>
+              <span className="inline-block px-3 py-0.5 rounded-full text-[9px] font-black uppercase tracking-[0.25em] bg-[#189D91]/10 text-[#189D91] mb-1 border border-[#189D91]/20">
+                Curated Collection
+              </span>
               <h2 className="text-xl md:text-2xl font-black text-gray-900 tracking-tight leading-tight">New Season Arrivals</h2>
             </div>
-            <Link to="/products" className="flex items-center gap-1 text-[11px] md:text-sm font-bold text-[#189D91] hover:underline shrink-0">
+            <Link to="/products" className="flex items-center gap-1 text-[11px] md:text-sm font-bold text-[#189D91] hover:underline bg-white px-3 py-1.5 rounded-xl border border-gray-200 shadow-2xs shrink-0">
               View All <span>›</span>
             </Link>
           </div>
@@ -297,18 +301,14 @@ const HomePage = () => {
       {/* Top Brands Section — shown right after New Season Arrivals, also an auto-slide carousel */}
       <TopBrands />
 
-      {/* Trust & Help Bar (Now below ShopByCategory) */}
-      <TrustBar />
-
       {/* Offer Banner */}
       <OfferBanner />
-
 
       {/* Admin-Created Custom Sections */}
       <DynamicSections />
 
-      {/* WhatsApp Floating Button */}
-      <WhatsAppFloat number={whatsappNumber} />
+      {/* Trust & Help Bar (500+ section at the end before footer) */}
+      <TrustBar />
 
     </div>
   );

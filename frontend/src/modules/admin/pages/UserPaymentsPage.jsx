@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import PageWrapper from "../components/PageWrapper";
 import {
   LuSearch,
-  LuDollarSign,
+  LuIndianRupee,
   LuCreditCard,
   LuShoppingBag,
   LuArrowRight,
@@ -70,7 +70,7 @@ const UserPaymentsPage = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="bg-white p-6 rounded-2xl border border-soft-oatmeal shadow-sm flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center text-green-600">
-              <LuDollarSign size={24} />
+              <LuIndianRupee size={24} />
             </div>
             <div>
               <p className="text-[10px] text-warm-sand font-black uppercase tracking-wider">

@@ -61,6 +61,7 @@ class SearchService {
       const products = await Product.find({
         name: { $regex: q, $options: 'i' },
         isApproved: true,
+        approvalStatus: { $in: ['approved', 'Approved'] },
         isActive: true
       })
         .limit(5)
@@ -71,6 +72,7 @@ class SearchService {
       const categories = await Product.distinct('category', {
         category: { $regex: q, $options: 'i' },
         isApproved: true,
+        approvalStatus: { $in: ['approved', 'Approved'] },
         isActive: true
       });
       categories.slice(0, 3).forEach(c => suggestions.add(c));

@@ -3,7 +3,7 @@ import PageWrapper from '../components/PageWrapper';
 import { 
   LuTrendingUp, 
   LuWallet, 
-  LuCircleDollarSign, 
+  LuIndianRupee, 
   LuClock, 
   LuSearch, 
   LuChevronDown
@@ -69,7 +69,7 @@ const WalletEarningsPage = () => {
   const stats = [
     { label: 'Total Platform Earning', value: '₹1,090.9', icon: LuTrendingUp, color: 'text-blue-600', bg: 'bg-blue-50' },
     { label: 'Current Platform Balance', value: '₹1,090.9', icon: LuWallet, color: 'text-amber-600', bg: 'bg-amber-50' },
-    { label: 'Total Admin Earning', value: '₹0', icon: LuCircleDollarSign, color: 'text-purple-600', bg: 'bg-purple-50' },
+    { label: 'Total Admin Earning', value: '₹0', icon: LuIndianRupee, color: 'text-purple-600', bg: 'bg-purple-50' },
     { label: 'Seller Pending Payouts', value: '₹0', icon: LuClock, color: 'text-orange-600', bg: 'bg-orange-50' },
     { label: 'Delivery Boy Pending Payouts', value: '₹0', icon: LuClock, color: 'text-red-500', bg: 'bg-red-50' },
     { label: 'Pending from Delivery Boy (COD)', value: '₹219.05', icon: LuClock, color: 'text-amber-500', bg: 'bg-amber-100/50' },

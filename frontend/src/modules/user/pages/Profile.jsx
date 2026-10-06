@@ -268,9 +268,9 @@ const Profile = () => {
   const b2cDaysRemaining = isB2CActive ? Math.max(0, Math.ceil((new Date(user.b2cSubscription.endDate) - new Date()) / (1000 * 60 * 60 * 24))) : 0;
 
   /* ══════════════════════════════════════════════════════════════════
-     ENTERPRISE B2B DASHBOARD VIEW (Left Sidebar + Right Details)
+     ENTERPRISE B2B DASHBOARD VIEW — only shown when subscription is active
      ══════════════════════════════════════════════════════════════════ */
-  if (isEnterprise) {
+  if (isEnterprise && isProActive) {
     const sidebarNavGroups = [
       {
         groupTitle: 'ENTERPRISE CORE',
@@ -1378,13 +1378,695 @@ const Profile = () => {
   }
 
   /* ══════════════════════════════════════════════════════════════════
-     STANDARD CONSUMER PROFILE VIEW (Customer UserType)
+     B2C PRO DASHBOARD — only shown when B2C subscription is active
+     ══════════════════════════════════════════════════════════════════ */
+  if (!isEnterprise && isB2CActive) {
+    const b2cSidebarGroups = [
+      {
+        groupTitle: 'MY MEMBERSHIP',
+        items: [
+          { id: 'overview',   label: 'Dashboard Overview',    icon: LuLayoutDashboard, badge: null },
+          { id: 'delivery',   label: 'Express Delivery Perks', icon: FiTruck,           badge: 'FASTEST' },
+          { id: 'hire',       label: 'Hire Professionals',     icon: LuHammer,          badge: 'PRO' },
+        ]
+      },
+      {
+        groupTitle: 'SHOPPING & ORDERS',
+        items: [
+          { id: 'orders',     label: 'My Orders',              icon: FiPackage, badge: null },
+          { id: 'wishlist',   label: 'My Wishlist',            icon: FiHeart,   badge: null },
+          { id: 'addresses',  label: 'My Addresses',           icon: FiMapPin,  badge: addresses?.length ? `${addresses.length}` : null },
+        ]
+      },
+      {
+        groupTitle: 'REWARDS & ACCOUNT',
+        items: [
+          { id: 'wallet',     label: 'Riddha Wallet',          icon: FiCreditCard, badge: walletBalance !== null ? `₹${walletBalance}` : null },
+          { id: 'referrals',  label: 'Referral & Rewards',     icon: FiGift,       badge: '₹100' },
+          { id: 'settings',   label: 'Account Settings',       icon: FiSettings,   badge: null },
+        ]
+      },
+    ];
+
+    const b2cPlanName = user.b2cSubscription?.planName || 'B2C PRO';
+    const b2cEndDate  = new Date(user.b2cSubscription.endDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+    const hireDesigner   = user?.b2cSubscription?.hireDesigner;
+    const hireContractor = user?.b2cSubscription?.hireContractor;
+    const hireArchitect  = user?.b2cSubscription?.hireArchitect;
+    const emiMonths      = user?.b2cSubscription?.emiMonths || 3;
+
+    const b2cBenefits = [
+      { icon: FiTruck,       label: 'Fastest Express Delivery',           detail: '24–48 hour priority dispatch',                   color: 'bg-teal-50 text-[#189D91]' },
+      { icon: FiCreditCard,  label: `0% EMI up to ${emiMonths} months`,   detail: 'Flexible installments at checkout',              color: 'bg-blue-50 text-blue-600' },
+      { icon: FiPackage,     label: 'Priority Order Processing',          detail: 'Jump the queue on every order',                  color: 'bg-purple-50 text-purple-600' },
+      { icon: FiShield,      label: 'Zero Delivery Fees',                 detail: 'Free delivery on all Pro orders',                color: 'bg-emerald-50 text-emerald-600' },
+      ...(hireDesigner   ? [{ icon: LuPalette,  label: 'Hire Verified Designers',   detail: 'Connect with interior designers', color: 'bg-pink-50 text-pink-600' }] : []),
+      ...(hireContractor ? [{ icon: LuHammer,   label: 'Hire Certified Contractors', detail: 'Renovation & civil work pros',   color: 'bg-orange-50 text-orange-600' }] : []),
+      ...(hireArchitect  ? [{ icon: LuBuilding2,label: 'Hire Licensed Architects',   detail: 'Floor plans & design blueprints', color: 'bg-amber-50 text-amber-600' }] : []),
+    ];
+
+    return (
+      <div className="min-h-screen bg-[#F4F6F9] pb-24 md:pb-12 text-slate-800">
+
+        {/* B2C Pro Top Banner */}
+        <div className="bg-gradient-to-r from-orange-600 via-amber-500 to-yellow-500 text-white border-b border-orange-700/30 px-4 py-6 md:px-8 shadow-md">
+          <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+
+            <div className="flex items-center gap-4">
+              <div className="relative shrink-0">
+                <div className="h-16 w-16 md:h-20 md:w-20 rounded-2xl bg-white/15 backdrop-blur-md border border-white/25 flex items-center justify-center overflow-hidden shadow-inner">
+                  {user.avatar ? (
+                    <img src={user.avatar} alt="Avatar" className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="text-2xl font-black text-white tracking-wider">{initials}</span>
+                  )}
+                </div>
+                <button
+                  onClick={() => navigate('/profile/edit')}
+                  title="Edit Profile"
+                  className="absolute -bottom-1 -right-1 bg-white text-orange-500 rounded-lg p-1.5 shadow-md transition-all active:scale-90"
+                >
+                  <FiSettings size={12} />
+                </button>
+              </div>
+
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="px-2.5 py-0.5 rounded-full bg-white/20 border border-white/30 text-white text-[10px] font-black uppercase tracking-widest flex items-center gap-1">
+                    <LuCrown size={12} /> {b2cPlanName}
+                  </span>
+                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-400/30 border border-emerald-300/40 text-white text-[10px] font-bold uppercase tracking-wider">
+                    Active
+                  </span>
+                </div>
+                <h1 className="text-xl md:text-2xl font-black text-white mt-1">
+                  {user.fullName || user.name || 'Customer'}
+                </h1>
+                <p className="text-xs text-white/80 font-medium flex items-center gap-2 mt-0.5">
+                  <span>{user.email}</span>
+                  <span>•</span>
+                  <span>Member Since {memberSince}</span>
+                  <span>•</span>
+                  <FiClock className="w-3 h-3" />
+                  <span>{b2cDaysRemaining} days left</span>
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2.5 flex-wrap self-stretch md:self-auto">
+              <button
+                onClick={() => setIsB2CModalOpen(true)}
+                className="flex-1 md:flex-none px-4 py-2.5 bg-white hover:bg-orange-50 text-orange-600 font-black text-xs uppercase tracking-wider rounded-xl shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2"
+              >
+                <FiZap className="w-4 h-4" /> Manage Plan
+              </button>
+              <Link
+                to="/plans"
+                className="flex-1 md:flex-none px-4 py-2.5 bg-white/15 hover:bg-white/25 border border-white/25 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2"
+              >
+                <LuCrown size={14} className="text-yellow-200" /> Upgrade Plan
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* Dashboard Main Layout */}
+        <div className="max-w-7xl mx-auto px-4 md:px-8 mt-6">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+            {/* LEFT SIDEBAR */}
+            <aside className="lg:col-span-4 xl:col-span-3 space-y-4">
+
+              {/* Mobile Horizontal Strip */}
+              <div className="lg:hidden flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+                {b2cSidebarGroups.flatMap(g => g.items).map((item) => {
+                  const Icon = item.icon;
+                  const isActive = activeTab === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => setActiveTab(item.id)}
+                      className={`shrink-0 flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
+                        isActive
+                          ? 'bg-orange-500 text-white shadow-md'
+                          : 'bg-white text-slate-600 border border-gray-200 hover:bg-gray-50'
+                      }`}
+                    >
+                      <Icon size={14} />
+                      <span>{item.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Desktop Sticky Sidebar */}
+              <div className="hidden lg:block bg-white rounded-2xl border border-gray-200/80 shadow-sm p-3.5 sticky top-20 space-y-5">
+
+                <div className="p-3 bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl border border-orange-100 flex items-center justify-between">
+                  <div>
+                    <p className="text-[10px] font-black text-orange-600 uppercase tracking-widest">B2C Pro Dashboard</p>
+                    <p className="text-xs font-bold text-slate-800 truncate max-w-[170px]">
+                      {user.fullName || user.name || 'My Account'}
+                    </p>
+                  </div>
+                  <span className="h-2.5 w-2.5 rounded-full bg-orange-500 animate-pulse ring-4 ring-orange-100" />
+                </div>
+
+                <div className="space-y-4">
+                  {b2cSidebarGroups.map((group, gIdx) => (
+                    <div key={gIdx} className="space-y-1">
+                      <p className="px-3 text-[9.5px] font-black tracking-wider text-gray-400 uppercase">
+                        {group.groupTitle}
+                      </p>
+                      <div className="space-y-1">
+                        {group.items.map((item) => {
+                          const Icon = item.icon;
+                          const isActive = activeTab === item.id;
+                          return (
+                            <button
+                              key={item.id}
+                              onClick={() => setActiveTab(item.id)}
+                              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all text-left group ${
+                                isActive
+                                  ? 'bg-orange-500 text-white shadow-sm font-black'
+                                  : 'text-slate-600 hover:bg-slate-50 hover:text-orange-600'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2.5 truncate">
+                                <Icon size={16} className={isActive ? 'text-white' : 'text-slate-400 group-hover:text-orange-500 transition-colors'} />
+                                <span className="truncate">{item.label}</span>
+                              </div>
+                              {item.badge && (
+                                <span className={`text-[9px] px-1.5 py-0.5 rounded-md font-black uppercase tracking-wider ${
+                                  isActive ? 'bg-white/20 text-white' : 'bg-orange-50 text-orange-600 border border-orange-100'
+                                }`}>
+                                  {item.badge}
+                                </span>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="pt-3 border-t border-gray-100 space-y-2">
+                  <button
+                    onClick={() => setIsB2CModalOpen(true)}
+                    className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-orange-50 hover:bg-orange-100 border border-orange-200 text-orange-800 text-xs font-bold transition-all"
+                  >
+                    <LuCrown className="text-orange-500" size={14} /> Pro Membership Plans
+                  </button>
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl border border-red-100 text-red-600 hover:bg-red-50 text-xs font-bold transition-all"
+                  >
+                    <FiLogOut size={13} /> Sign Out
+                  </button>
+                </div>
+              </div>
+            </aside>
+
+            {/* RIGHT CONTENT PANEL */}
+            <main className="lg:col-span-8 xl:col-span-9 space-y-6">
+              <AnimatePresence mode="wait">
+
+                {/* ── TAB: DASHBOARD OVERVIEW ── */}
+                {activeTab === 'overview' && (
+                  <motion.div
+                    key="b2c-overview"
+                    initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.18 }}
+                    className="space-y-6"
+                  >
+                    {/* Active Plan Banner */}
+                    <div className="bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-400 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden">
+                      <div className="absolute -top-10 -right-10 w-44 h-44 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative z-10">
+                        <div className="flex items-center gap-3.5">
+                          <div className="w-12 h-12 rounded-2xl bg-white text-orange-500 flex items-center justify-center font-black shadow-md shrink-0">
+                            <LuCrown className="w-6 h-6" />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-black text-white/90 uppercase tracking-widest">{b2cPlanName}</span>
+                              <span className="px-2 py-0.5 rounded-full bg-white/25 text-white border border-white/30 text-[9px] font-black uppercase">ACTIVE</span>
+                            </div>
+                            <h3 className="text-lg font-black text-white mt-0.5">Your Pro Membership is Active</h3>
+                            <p className="text-xs text-white/80 font-medium flex items-center gap-1.5 mt-0.5">
+                              <FiClock className="w-3.5 h-3.5" />
+                              Valid until {b2cEndDate} &bull; {b2cDaysRemaining} days remaining
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => setIsB2CModalOpen(true)}
+                          className="px-4 py-2.5 bg-white hover:bg-orange-50 text-orange-600 font-black text-xs uppercase tracking-wider rounded-xl shadow-md transition-all active:scale-95 flex items-center gap-1.5 shrink-0"
+                        >
+                          <FiZap className="w-4 h-4" /> Manage Plan
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Metric Cards */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="bg-white rounded-2xl p-4 border border-gray-200/80 shadow-sm space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <p className="text-[10px] font-black text-gray-400 uppercase tracking-wider">Delivery</p>
+                          <div className="w-7 h-7 rounded-lg bg-teal-50 text-[#189D91] flex items-center justify-center"><FiTruck size={14} /></div>
+                        </div>
+                        <h4 className="text-sm font-black text-slate-900">24–48 hrs</h4>
+                        <button onClick={() => setActiveTab('delivery')} className="text-[10.5px] font-bold text-[#189D91] hover:underline flex items-center gap-1">View perks <LuArrowRight size={10} /></button>
+                      </div>
+
+                      <div className="bg-white rounded-2xl p-4 border border-gray-200/80 shadow-sm space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <p className="text-[10px] font-black text-gray-400 uppercase tracking-wider">EMI</p>
+                          <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center"><FiCreditCard size={14} /></div>
+                        </div>
+                        <h4 className="text-sm font-black text-slate-900">{emiMonths} Months</h4>
+                        <p className="text-[10.5px] font-bold text-blue-600">0% Interest</p>
+                      </div>
+
+                      <div className="bg-white rounded-2xl p-4 border border-gray-200/80 shadow-sm space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <p className="text-[10px] font-black text-gray-400 uppercase tracking-wider">Wallet</p>
+                          <div className="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center"><FiCreditCard size={14} /></div>
+                        </div>
+                        <h4 className="text-sm font-black text-slate-900">{walletBalance === null ? '...' : `₹${walletBalance.toLocaleString('en-IN')}`}</h4>
+                        <button onClick={() => setActiveTab('wallet')} className="text-[10.5px] font-bold text-amber-600 hover:underline flex items-center gap-1">View balance <LuArrowRight size={10} /></button>
+                      </div>
+
+                      <div className="bg-white rounded-2xl p-4 border border-gray-200/80 shadow-sm space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <p className="text-[10px] font-black text-gray-400 uppercase tracking-wider">Hire</p>
+                          <div className="w-7 h-7 rounded-lg bg-pink-50 text-pink-600 flex items-center justify-center"><LuHammer size={14} /></div>
+                        </div>
+                        <h4 className="text-sm font-black text-slate-900">{[hireDesigner, hireContractor, hireArchitect].filter(Boolean).length} Services</h4>
+                        <button onClick={() => setActiveTab('hire')} className="text-[10.5px] font-bold text-pink-600 hover:underline flex items-center gap-1">Hire now <LuArrowRight size={10} /></button>
+                      </div>
+                    </div>
+
+                    {/* All Benefits Grid */}
+                    <div className="bg-white rounded-2xl p-5 border border-gray-200/80 shadow-sm space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="text-base font-black text-slate-900">Your Pro Membership Benefits</h3>
+                          <p className="text-xs text-gray-500 font-medium">Everything unlocked with your {b2cPlanName} plan</p>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                        {b2cBenefits.map((b, i) => {
+                          const Icon = b.icon;
+                          return (
+                            <div key={i} className="p-3.5 rounded-xl border border-gray-100 hover:border-orange-200 hover:bg-orange-50/20 transition-all flex items-start gap-3 group">
+                              <div className={`w-9 h-9 rounded-xl ${b.color} bg-opacity-20 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform`}>
+                                <Icon size={16} />
+                              </div>
+                              <div>
+                                <p className="text-xs font-bold text-slate-800 group-hover:text-orange-600 transition-colors">{b.label}</p>
+                                <p className="text-[10px] text-gray-400 mt-0.5">{b.detail}</p>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Quick Shortcuts */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <Link to="/orders" className="bg-white p-4 rounded-2xl border border-gray-200/80 shadow-sm hover:border-orange-300/50 transition-all flex items-center justify-between group">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-teal-50 text-[#189D91] flex items-center justify-center group-hover:scale-105 transition-transform"><FiPackage size={18} /></div>
+                          <div>
+                            <p className="text-xs font-black text-slate-800">My Orders</p>
+                            <p className="text-[10px] text-gray-400">Track & reorder</p>
+                          </div>
+                        </div>
+                        <FiChevronRight size={14} className="text-gray-300 group-hover:text-[#189D91]" />
+                      </Link>
+
+                      <Link to="/shop" className="bg-white p-4 rounded-2xl border border-gray-200/80 shadow-sm hover:border-orange-300/50 transition-all flex items-center justify-between group">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center group-hover:scale-105 transition-transform"><LuStore size={18} /></div>
+                          <div>
+                            <p className="text-xs font-black text-slate-800">Browse Shop</p>
+                            <p className="text-[10px] text-gray-400">Priority checkout</p>
+                          </div>
+                        </div>
+                        <FiChevronRight size={14} className="text-gray-300 group-hover:text-purple-600" />
+                      </Link>
+
+                      <Link to="/referral-rewards" className="bg-white p-4 rounded-2xl border border-gray-200/80 shadow-sm hover:border-orange-300/50 transition-all flex items-center justify-between group">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center group-hover:scale-105 transition-transform"><FiGift size={18} /></div>
+                          <div>
+                            <p className="text-xs font-black text-slate-800">Refer & Earn</p>
+                            <p className="text-[10px] text-gray-400">₹100 per referral</p>
+                          </div>
+                        </div>
+                        <FiChevronRight size={14} className="text-gray-300 group-hover:text-amber-600" />
+                      </Link>
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* ── TAB: EXPRESS DELIVERY PERKS ── */}
+                {activeTab === 'delivery' && (
+                  <motion.div
+                    key="b2c-delivery"
+                    initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.18 }}
+                    className="space-y-6"
+                  >
+                    <div className="bg-white rounded-2xl p-6 border border-gray-200/80 shadow-sm space-y-6">
+                      <div className="border-b border-gray-100 pb-4">
+                        <h3 className="text-lg font-black text-slate-900 flex items-center gap-2"><FiTruck className="text-[#189D91]" /> Express Delivery Perks</h3>
+                        <p className="text-xs text-gray-500 font-medium mt-1">Priority dispatch and zero-fee delivery — exclusively for Pro members.</p>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="p-5 rounded-2xl bg-gradient-to-br from-teal-50 to-emerald-50 border border-teal-100 space-y-2">
+                          <div className="w-10 h-10 rounded-xl bg-[#189D91] text-white flex items-center justify-center"><FiTruck size={18} /></div>
+                          <h4 className="text-sm font-black text-slate-800">Fastest Express Delivery</h4>
+                          <p className="text-xs text-slate-600">Your orders are dispatched within 24–48 hours — while standard delivery takes 5–7 business days.</p>
+                          <Link to="/orders" className="inline-block text-xs font-bold text-[#189D91] hover:underline pt-1">Track My Orders →</Link>
+                        </div>
+
+                        <div className="p-5 rounded-2xl bg-gradient-to-br from-blue-50 to-cyan-50 border border-blue-100 space-y-2">
+                          <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center"><FiShield size={18} /></div>
+                          <h4 className="text-sm font-black text-slate-800">Zero Delivery Fees</h4>
+                          <p className="text-xs text-slate-600">All orders placed under your Pro membership ship free of charge — no minimums or conditions.</p>
+                          <Link to="/shop" className="inline-block text-xs font-bold text-blue-600 hover:underline pt-1">Shop Now →</Link>
+                        </div>
+
+                        <div className="p-5 rounded-2xl bg-gradient-to-br from-purple-50 to-indigo-50 border border-purple-100 space-y-2">
+                          <div className="w-10 h-10 rounded-xl bg-purple-600 text-white flex items-center justify-center"><FiPackage size={18} /></div>
+                          <h4 className="text-sm font-black text-slate-800">Priority Order Processing</h4>
+                          <p className="text-xs text-slate-600">Your orders go to the front of the fulfillment queue — faster packing and earlier pickup by couriers.</p>
+                        </div>
+
+                        <div className="p-5 rounded-2xl bg-gradient-to-br from-amber-50 to-yellow-50 border border-amber-100 space-y-2">
+                          <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center"><FiCreditCard size={18} /></div>
+                          <h4 className="text-sm font-black text-slate-800">0% EMI — {emiMonths} Months</h4>
+                          <p className="text-xs text-slate-600">Pay in easy monthly installments at 0% interest. Select EMI at checkout on your next order.</p>
+                          <Link to="/shop" className="inline-block text-xs font-bold text-amber-600 hover:underline pt-1">Shop with EMI →</Link>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* ── TAB: HIRE PROFESSIONALS ── */}
+                {activeTab === 'hire' && (
+                  <motion.div
+                    key="b2c-hire"
+                    initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.18 }}
+                    className="space-y-6"
+                  >
+                    <div className="bg-white rounded-2xl p-6 border border-gray-200/80 shadow-sm space-y-6">
+                      <div className="border-b border-gray-100 pb-4">
+                        <h3 className="text-lg font-black text-slate-900 flex items-center gap-2"><LuHammer className="text-pink-500" /> Hire Verified Professionals</h3>
+                        <p className="text-xs text-gray-500 font-medium mt-1">Your {b2cPlanName} plan unlocks access to pre-vetted interior professionals.</p>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                        {hireDesigner && (
+                          <div className="p-5 rounded-2xl bg-gradient-to-br from-pink-50 to-rose-50 border border-pink-100 space-y-3 flex flex-col">
+                            <div className="w-11 h-11 rounded-2xl bg-pink-500 text-white flex items-center justify-center"><LuPalette size={20} /></div>
+                            <div className="flex-1">
+                              <h4 className="text-sm font-black text-slate-800">Hire Interior Designer</h4>
+                              <p className="text-xs text-slate-500 mt-1">Connect with verified designers. Fill a brief — they'll reach out within 24 hours.</p>
+                            </div>
+                            <Link to="/hire/Designer" className="mt-2 block text-center px-4 py-2 bg-pink-500 hover:bg-pink-600 text-white text-xs font-black rounded-xl shadow-sm transition-all">Hire Designer →</Link>
+                          </div>
+                        )}
+                        {hireContractor && (
+                          <div className="p-5 rounded-2xl bg-gradient-to-br from-orange-50 to-red-50 border border-orange-100 space-y-3 flex flex-col">
+                            <div className="w-11 h-11 rounded-2xl bg-orange-500 text-white flex items-center justify-center"><LuHammer size={20} /></div>
+                            <div className="flex-1">
+                              <h4 className="text-sm font-black text-slate-800">Hire Certified Contractor</h4>
+                              <p className="text-xs text-slate-500 mt-1">Renovation, civil work, and fit-outs handled by certified contractors.</p>
+                            </div>
+                            <Link to="/hire/Contractor" className="mt-2 block text-center px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white text-xs font-black rounded-xl shadow-sm transition-all">Hire Contractor →</Link>
+                          </div>
+                        )}
+                        {hireArchitect && (
+                          <div className="p-5 rounded-2xl bg-gradient-to-br from-amber-50 to-yellow-50 border border-amber-100 space-y-3 flex flex-col">
+                            <div className="w-11 h-11 rounded-2xl bg-amber-500 text-white flex items-center justify-center"><LuBuilding2 size={20} /></div>
+                            <div className="flex-1">
+                              <h4 className="text-sm font-black text-slate-800">Hire Licensed Architect</h4>
+                              <p className="text-xs text-slate-500 mt-1">Floor plans, structural design, and project blueprints by licensed architects.</p>
+                            </div>
+                            <Link to="/hire/Architect" className="mt-2 block text-center px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-black rounded-xl shadow-sm transition-all">Hire Architect →</Link>
+                          </div>
+                        )}
+                        {!hireDesigner && !hireContractor && !hireArchitect && (
+                          <div className="sm:col-span-3 text-center py-10 space-y-3 bg-gray-50/50 rounded-2xl border border-dashed border-gray-200">
+                            <LuHammer className="mx-auto text-gray-300" size={32} />
+                            <p className="text-xs font-bold text-gray-500">Hire services not included in your current plan</p>
+                            <button onClick={() => setIsB2CModalOpen(true)} className="px-4 py-2 bg-orange-500 text-white text-xs font-bold rounded-xl shadow-sm">Upgrade to Unlock →</button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* ── TAB: MY ORDERS ── */}
+                {activeTab === 'orders' && (
+                  <motion.div
+                    key="b2c-orders"
+                    initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.18 }}
+                    className="space-y-6"
+                  >
+                    <div className="bg-white rounded-2xl p-6 border border-gray-200/80 shadow-sm space-y-6">
+                      <div className="flex items-center justify-between flex-wrap gap-4 border-b border-gray-100 pb-4">
+                        <div>
+                          <h3 className="text-lg font-black text-slate-900 flex items-center gap-2"><FiPackage className="text-[#189D91]" /> My Orders</h3>
+                          <p className="text-xs text-gray-500 font-medium">Track, manage and reorder your purchases.</p>
+                        </div>
+                        <Link to="/orders" className="px-4 py-2 rounded-xl bg-[#189D91] text-white hover:bg-[#14847a] font-black text-xs flex items-center gap-1.5 shadow-sm">View All Orders <LuArrowRight size={12} /></Link>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="p-5 rounded-2xl bg-gradient-to-br from-teal-50 to-emerald-50 border border-teal-100 space-y-2">
+                          <div className="w-10 h-10 rounded-xl bg-[#189D91] text-white flex items-center justify-center"><FiPackage size={18} /></div>
+                          <h4 className="text-sm font-black text-slate-800">Order History & Reorders</h4>
+                          <p className="text-xs text-slate-600">Review past orders, download invoices, and reorder in 1-click.</p>
+                          <Link to="/orders" className="inline-block text-xs font-bold text-[#189D91] hover:underline pt-2">Open Orders Center →</Link>
+                        </div>
+                        <div className="p-5 rounded-2xl bg-gradient-to-br from-blue-50 to-cyan-50 border border-blue-100 space-y-2">
+                          <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center"><FiTruck size={18} /></div>
+                          <h4 className="text-sm font-black text-slate-800">Live Order Tracking</h4>
+                          <p className="text-xs text-slate-600">Track your express shipments in real-time with delivery updates.</p>
+                          <Link to="/orders/track" className="inline-block text-xs font-bold text-blue-600 hover:underline pt-2">Track Shipment →</Link>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* ── TAB: WISHLIST ── */}
+                {activeTab === 'wishlist' && (
+                  <motion.div
+                    key="b2c-wishlist"
+                    initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.18 }}
+                    className="space-y-6"
+                  >
+                    <div className="bg-white rounded-2xl p-6 border border-gray-200/80 shadow-sm space-y-6">
+                      <div className="flex items-center justify-between flex-wrap gap-4 border-b border-gray-100 pb-4">
+                        <div>
+                          <h3 className="text-lg font-black text-slate-900 flex items-center gap-2"><FiHeart className="text-[#189D91]" /> My Wishlist</h3>
+                          <p className="text-xs text-gray-500 font-medium">Products you've saved for later.</p>
+                        </div>
+                        <Link to="/shop" className="text-xs font-bold text-[#189D91] hover:underline">Browse Catalog →</Link>
+                      </div>
+                      <WishlistSection isEmbedded={true} />
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* ── TAB: MY ADDRESSES ── */}
+                {activeTab === 'addresses' && (
+                  <motion.div
+                    key="b2c-addresses"
+                    initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.18 }}
+                    className="space-y-6"
+                  >
+                    <div className="bg-white rounded-2xl p-6 border border-gray-200/80 shadow-sm space-y-6">
+                      <div className="flex items-center justify-between flex-wrap gap-4 border-b border-gray-100 pb-4">
+                        <div>
+                          <h3 className="text-lg font-black text-slate-900 flex items-center gap-2"><FiMapPin className="text-[#189D91]" /> Delivery Addresses</h3>
+                          <p className="text-xs text-gray-500 font-medium">Manage your saved delivery locations.</p>
+                        </div>
+                        <Link to="/addresses" className="px-4 py-2 rounded-xl bg-[#189D91] text-white hover:bg-[#14847a] font-black text-xs flex items-center gap-1.5 shadow-sm"><FiPlusCircle size={14} /> Add Address</Link>
+                      </div>
+                      {addresses && addresses.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {addresses.map((addr, idx) => (
+                            <div key={addr._id || idx} className="p-4 rounded-2xl border border-gray-200/80 space-y-2 bg-gray-50/50">
+                              <div className="flex items-center justify-between">
+                                <span className="px-2.5 py-0.5 rounded-full bg-teal-50 border border-teal-100 text-[#189D91] text-[10px] font-black uppercase">{addr.addressType || 'Home'}</span>
+                                {addr.isDefault && <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">DEFAULT</span>}
+                              </div>
+                              <h4 className="text-sm font-bold text-slate-800">{addr.fullName}</h4>
+                              <p className="text-xs text-gray-600">{addr.fullAddress}</p>
+                              <p className="text-xs font-semibold text-gray-500">{addr.city}, {addr.pincode} • {addr.mobileNumber}</p>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-center py-10 space-y-3 bg-gray-50/50 rounded-2xl border border-dashed border-gray-200">
+                          <FiMapPin className="mx-auto text-gray-300" size={32} />
+                          <p className="text-xs font-bold text-gray-500">No saved addresses yet</p>
+                          <Link to="/addresses" className="inline-block px-4 py-2 bg-[#189D91] text-white text-xs font-bold rounded-xl shadow-sm">Add First Address</Link>
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* ── TAB: WALLET ── */}
+                {activeTab === 'wallet' && (
+                  <motion.div
+                    key="b2c-wallet"
+                    initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.18 }}
+                    className="space-y-6"
+                  >
+                    <div className="bg-white rounded-2xl p-6 border border-gray-200/80 shadow-sm space-y-6">
+                      <div className="border-b border-gray-100 pb-4">
+                        <h3 className="text-lg font-black text-slate-900 flex items-center gap-2"><FiCreditCard className="text-[#189D91]" /> Riddha Wallet</h3>
+                        <p className="text-xs text-gray-500 font-medium">Use your wallet balance at checkout on any order.</p>
+                      </div>
+                      <div className="bg-gradient-to-br from-orange-500 via-amber-500 to-yellow-400 rounded-2xl p-6 text-white shadow-lg space-y-3">
+                        <p className="text-xs font-black text-white/80 uppercase tracking-widest">Available Balance</p>
+                        <h2 className="text-3xl md:text-4xl font-black text-white tracking-tight">
+                          {walletBalance === null ? '...' : `₹${walletBalance.toLocaleString('en-IN')}`}
+                        </h2>
+                        <p className="text-xs text-white/80">Refunds and referral credits appear here. Usable on any checkout.</p>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* ── TAB: REFERRALS ── */}
+                {activeTab === 'referrals' && (
+                  <motion.div
+                    key="b2c-referrals"
+                    initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.18 }}
+                    className="space-y-6"
+                  >
+                    <div className="bg-white rounded-2xl p-6 border border-gray-200/80 shadow-sm space-y-6">
+                      <div className="border-b border-gray-100 pb-4">
+                        <h3 className="text-lg font-black text-slate-900 flex items-center gap-2"><FiGift className="text-[#189D91]" /> Referral & Rewards</h3>
+                        <p className="text-xs text-gray-500 font-medium">Invite friends and earn ₹100 wallet credits per successful referral.</p>
+                      </div>
+                      <div className="p-6 rounded-2xl bg-gray-50 border border-gray-200/80 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                        <div className="space-y-1">
+                          <p className="text-xs font-black text-slate-800">Your Referral Code</p>
+                          <p className="text-xs text-gray-500">Your friend gets ₹50 off their first order.</p>
+                          {(user.referralCount || 0) > 0 && (
+                            <p className="text-xs font-bold text-[#189D91] pt-1">🎉 {user.referralCount} friend{user.referralCount === 1 ? '' : 's'} referred</p>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <div className="px-5 py-2.5 bg-white rounded-xl border border-dashed border-[#189D91]/40 font-mono font-black text-slate-900 tracking-widest text-base shadow-sm">
+                            {user.referralCode || 'RIDDHA-PRO'}
+                          </div>
+                          <button onClick={copyReferralCode} className="h-11 w-11 bg-[#189D91] hover:bg-[#14847a] text-white rounded-xl flex items-center justify-center transition-all active:scale-90 shadow-sm">
+                            {copied ? <FiCheck size={18} /> : <FiCopy size={18} />}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* ── TAB: SETTINGS ── */}
+                {activeTab === 'settings' && (
+                  <motion.div
+                    key="b2c-settings"
+                    initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.18 }}
+                    className="space-y-6"
+                  >
+                    <div className="bg-white rounded-2xl p-6 border border-gray-200/80 shadow-sm space-y-6">
+                      <div className="border-b border-gray-100 pb-4">
+                        <h3 className="text-lg font-black text-slate-900 flex items-center gap-2"><FiSettings className="text-[#189D91]" /> Account Settings</h3>
+                        <p className="text-xs text-gray-500 font-medium">Manage your profile, security and preferences.</p>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <Link to="/profile/edit" className="p-4 rounded-2xl border border-gray-200/80 hover:border-[#189D91]/50 transition-all flex items-center justify-between group bg-gray-50/50">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-teal-50 text-[#189D91] flex items-center justify-center group-hover:scale-105 transition-transform"><FiUser size={18} /></div>
+                            <div>
+                              <p className="text-xs font-black text-slate-800">Edit Profile</p>
+                              <p className="text-[10px] text-gray-400">Name, avatar, phone</p>
+                            </div>
+                          </div>
+                          <FiChevronRight size={14} className="text-gray-400 group-hover:text-[#189D91]" />
+                        </Link>
+                        <button onClick={() => setIsB2CModalOpen(true)} className="p-4 rounded-2xl border border-gray-200/80 hover:border-orange-400/50 transition-all flex items-center justify-between group bg-orange-50/30 text-left">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center group-hover:scale-105 transition-transform"><LuCrown size={18} /></div>
+                            <div>
+                              <p className="text-xs font-black text-slate-800">Pro Membership</p>
+                              <p className="text-[10px] text-gray-400">Manage plan & renewal</p>
+                            </div>
+                          </div>
+                          <FiChevronRight size={14} className="text-gray-400 group-hover:text-orange-600" />
+                        </button>
+                      </div>
+                      <div className="pt-4 border-t border-gray-100 space-y-2">
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-wider">Support & Legal</p>
+                        <div className="divide-y divide-gray-100 border border-gray-100 rounded-2xl overflow-hidden">
+                          {supportLinks.map((item, i) => {
+                            const Icon = item.icon;
+                            return (
+                              <Link key={i} to={item.link} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50/80 transition-colors group">
+                                <Icon size={14} className="text-gray-400 group-hover:text-[#189D91] shrink-0" />
+                                <span className="flex-1 text-xs font-semibold text-slate-700 group-hover:text-[#189D91]">{item.title}</span>
+                                <FiChevronRight size={13} className="text-gray-300 group-hover:text-[#189D91]" />
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      </div>
+                      <div className="pt-2">
+                        <button onClick={handleLogout} className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 text-xs font-black transition-all">
+                          <FiLogOut size={14} /> Sign Out
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+
+              </AnimatePresence>
+            </main>
+          </div>
+        </div>
+
+        {/* B2C Subscription Modal */}
+        <B2CSubscriptionModal
+          isOpen={isB2CModalOpen}
+          onClose={() => setIsB2CModalOpen(false)}
+        />
+      </div>
+    );
+  }
+
+  /* ══════════════════════════════════════════════════════════════════
+     STANDARD CONSUMER PROFILE VIEW (Customer UserType / No Active Plan)
      ══════════════════════════════════════════════════════════════════ */
   const visibleConsumerItems = [
     ...consumerMenuItems,
-    ...(isB2CActive && user?.b2cSubscription?.hireDesigner ? [{ icon: LuPalette, title: 'Hire Designer', subtitle: 'Connect with verified interior designers for your project', link: '/hire/Designer', badge: 'B2C PRO' }] : []),
-    ...(isB2CActive && user?.b2cSubscription?.hireContractor ? [{ icon: LuHammer, title: 'Hire Contractor', subtitle: 'Hire certified contractors for renovation & civil work', link: '/hire/Contractor', badge: 'B2C PRO' }] : []),
-    ...(isB2CActive && user?.b2cSubscription?.hireArchitect ? [{ icon: LuBuilding2, title: 'Hire Architect', subtitle: 'Work with licensed architects for floor plans & design blueprints', link: '/hire/Architect', badge: 'B2C PRO' }] : []),
   ];
 
   return (

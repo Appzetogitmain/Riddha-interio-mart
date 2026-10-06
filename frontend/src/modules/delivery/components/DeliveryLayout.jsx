@@ -66,7 +66,7 @@ const DeliveryLayout = () => {
     };
   }, []);
 
-  const storedUser = JSON.parse(localStorage.getItem('riddha_user') || 'null');
+  const storedUser = JSON.parse(localStorage.getItem('riddha_delivery') || localStorage.getItem('riddha_user') || 'null');
   const activeUser = user || storedUser;
   const hasValidDeliverySession =
     Boolean(activeUser?.token) && activeUser?.role === 'delivery';

@@ -22,24 +22,49 @@ export const UserProvider = ({ children }) => {
   const [address, setAddress]     = useState(null);
   const [addresses, setAddresses] = useState([]);
 
-  // Sync session on mount (unified session validation)
+  // Sync session on mount — validate the stored token; do NOT log out on
+  // transient network errors or 5xx failures. Only log out on a hard 401
+  // that survives a token-refresh attempt.
   useEffect(() => {
     const syncSession = async () => {
       const savedUser = localStorage.getItem('riddha_user');
-      if (savedUser) {
-        try {
-          const currentUser = JSON.parse(savedUser);
-          const res = await api.get('/auth/me');
-          if (res.data.success && res.data.user) {
-            setUser({
-              ...currentUser,
-              ...res.data.user,
-              token: currentUser.token
-            });
-          }
-        } catch (err) {
-          console.error('[UserContext] Session sync failed. Clearing profile.');
+      if (!savedUser) return;
+
+      let currentUser;
+      try {
+        currentUser = JSON.parse(savedUser);
+      } catch {
+        // Corrupted localStorage entry — clear it silently
+        localStorage.removeItem('riddha_user');
+        setUser(null);
+        return;
+      }
+
+      try {
+        const res = await api.get('/auth/me');
+        if (res.data.success && res.data.user) {
+          setUser({
+            ...currentUser,
+            ...res.data.user,
+            token: currentUser.token
+          });
+        }
+      } catch (err) {
+        const status = err?.response?.status;
+
+        // Only clear the session on a definitive 401 that the api interceptor
+        // could NOT recover via silent token refresh (the interceptor already
+        // tries /auth/refresh before rejecting with 401).  Do NOT log out on
+        // network failures (status undefined) or server errors (5xx) because
+        // those are transient — the user is still legitimately logged in.
+        if (status === 401) {
+          console.warn('[UserContext] Session is no longer valid. Clearing stored profile.');
+          localStorage.removeItem('riddha_user');
           setUser(null);
+        } else {
+          // Transient error (network down, 5xx, etc.) — keep the user logged in
+          // so they are not bounced out every time the server hiccups.
+          console.warn('[UserContext] Session sync encountered a transient error. Keeping session.', err?.message);
         }
       }
     };
@@ -49,9 +74,10 @@ export const UserProvider = ({ children }) => {
   // Sync user state with localStorage
   useEffect(() => {
     if (user) {
-      localStorage.setItem('riddha_user', JSON.stringify(user));
+      const key = user.role === 'seller' ? 'riddha_seller' : user.role === 'admin' ? 'riddha_admin' : user.role === 'delivery' ? 'riddha_delivery' : 'riddha_user';
+      localStorage.setItem(key, JSON.stringify(user));
       setIsLoggedIn(true);
-      if (user.role === 'user') {
+      if (user.role === 'user' || user.role === 'customer' || !user.role) {
         fetchAddresses();
       }
     } else {
@@ -121,7 +147,8 @@ export const UserProvider = ({ children }) => {
   };
 
   const login = (userData) => {
-    localStorage.setItem('riddha_user', JSON.stringify(userData));
+    const key = userData?.role === 'seller' ? 'riddha_seller' : userData?.role === 'admin' ? 'riddha_admin' : userData?.role === 'delivery' ? 'riddha_delivery' : 'riddha_user';
+    localStorage.setItem(key, JSON.stringify(userData));
     setUser(userData);
   };
 
@@ -131,7 +158,8 @@ export const UserProvider = ({ children }) => {
     } catch (err) {
       console.error('[UserContext] Failed to call API logout:', err.message);
     } finally {
-      localStorage.removeItem('riddha_user');
+      const key = user?.role === 'seller' ? 'riddha_seller' : user?.role === 'admin' ? 'riddha_admin' : user?.role === 'delivery' ? 'riddha_delivery' : 'riddha_user';
+      localStorage.removeItem(key);
       setUser(null);
     }
   };

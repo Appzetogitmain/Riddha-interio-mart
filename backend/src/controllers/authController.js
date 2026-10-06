@@ -196,19 +196,25 @@ exports.logout = async (req, res, next) => {
  */
 exports.getMe = async (req, res) => {
   try {
-    // Always fetch fresh from DB to ensure b2cSubscription and subscription are current
-    const freshUser = await User.findById(req.user._id);
+    let Model;
+    switch (req.user.role) {
+      case 'admin': Model = Admin; break;
+      case 'seller': Model = Seller; break;
+      case 'delivery': Model = Delivery; break;
+      default: Model = User;
+    }
+    const freshUser = (await Model.findById(req.user._id)) || req.user;
     if (!freshUser) {
-      return res.status(404).json({ success: false, error: 'User not found' });
+      return res.status(404).json({ success: false, error: 'Account not found' });
     }
     res.status(200).json({
       success: true,
       user: {
         id: freshUser._id,
-        name: freshUser.fullName || freshUser.name || "",
-        fullName: freshUser.fullName || freshUser.name || "",
+        name: freshUser.fullName || freshUser.name || freshUser.shopName || "",
+        fullName: freshUser.fullName || freshUser.name || freshUser.shopName || "",
         email: freshUser.email,
-        role: freshUser.role,
+        role: freshUser.role || req.user.role,
         userType: freshUser.userType || "customer",
         businessDetails: freshUser.businessDetails || {},
         avatar: freshUser.avatar || "",

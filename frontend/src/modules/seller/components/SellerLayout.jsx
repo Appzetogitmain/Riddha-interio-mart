@@ -26,7 +26,7 @@ const SellerLayout = () => {
   const { logout, user } = useUser();
   const navigate = useNavigate();
 
-  const storedUser = JSON.parse(localStorage.getItem('riddha_user') || 'null');
+  const storedUser = JSON.parse(localStorage.getItem('riddha_seller') || localStorage.getItem('riddha_user') || 'null');
   const activeUser = user || storedUser;
   const hasValidSellerSession =
     Boolean(activeUser?.token) && activeUser?.role === 'seller';

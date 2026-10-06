@@ -19,7 +19,7 @@ const AdminLayoutContent = () => {
   const { role } = useRBAC();
   const navigate = useNavigate();
 
-  const storedUser = JSON.parse(localStorage.getItem("riddha_user") || "null");
+  const storedUser = JSON.parse(localStorage.getItem("riddha_admin") || localStorage.getItem("riddha_user") || "null");
   const activeUser = user || storedUser;
   const hasValidAdminSession =
     Boolean(activeUser?.token) && activeUser?.role === "admin";

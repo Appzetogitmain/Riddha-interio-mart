@@ -225,7 +225,7 @@ exports.getProducts = async (req, res, next) => {
       { path: 'category', select: 'name' }
     ];
 
-    console.log("FILTER BUILT FOR PRODUCTS QUERY:", JSON.stringify(filter, null, 2));
+    // console.log("FILTER BUILT FOR PRODUCTS QUERY:", JSON.stringify(filter, null, 2));
     const result = await paginate(Product, filter, req, populateOptions);
 
     // Attach offer pricing to products

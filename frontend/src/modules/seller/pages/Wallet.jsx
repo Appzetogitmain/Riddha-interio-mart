@@ -84,7 +84,7 @@ const Wallet = () => {
 
   // Listen for socket events to update wallet in real-time
   React.useEffect(() => {
-    const userStr = localStorage.getItem('riddha_user') || localStorage.getItem('user');
+    const userStr = localStorage.getItem('riddha_seller') || localStorage.getItem('riddha_user') || localStorage.getItem('user');
     let hasUser = false;
     let token = 'cookie';
     if (userStr) {

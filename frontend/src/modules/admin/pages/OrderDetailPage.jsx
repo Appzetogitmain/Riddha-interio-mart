@@ -538,7 +538,7 @@ const OrderDetailPage = () => {
                   <button
                     onClick={async () => {
                       try {
-                        const authData = JSON.parse(localStorage.getItem('riddha_user') || '{}');
+                        const authData = JSON.parse(localStorage.getItem('riddha_admin') || localStorage.getItem('riddha_user') || '{}');
                         const token = authData?.token || authData?.user?.token || '';
                         const API_BASE = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000/api`;
                         const downloadUrl = `${API_BASE}/invoices/orders/${order._id}/invoice/seller`;
@@ -608,7 +608,7 @@ const OrderDetailPage = () => {
                 <button
                   onClick={async () => {
                     try {
-                      const authData = JSON.parse(localStorage.getItem('riddha_user') || '{}');
+                      const authData = JSON.parse(localStorage.getItem('riddha_admin') || localStorage.getItem('riddha_user') || '{}');
                       const token = authData?.token || authData?.user?.token || '';
                       const API_BASE = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000/api`;
                       const downloadUrl = `${API_BASE}/invoices/orders/${order._id}/invoice/customer`;

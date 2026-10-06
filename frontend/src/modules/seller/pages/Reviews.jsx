@@ -17,7 +17,7 @@ const SellerReviews = () => {
 
   const getSellerName = () => {
     try {
-      const raw = localStorage.getItem('riddha_user');
+      const raw = localStorage.getItem('riddha_seller') || localStorage.getItem('riddha_user');
       if (raw) {
         const parsed = JSON.parse(raw);
         const userObj = parsed.user || parsed;

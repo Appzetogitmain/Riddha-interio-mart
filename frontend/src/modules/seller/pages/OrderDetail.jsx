@@ -203,7 +203,7 @@ const OrderDetail = () => {
     try {
       toast.loading('Preparing invoice...', { id: 'pdf-download' });
       
-      const authData = JSON.parse(localStorage.getItem('riddha_user') || '{}');
+      const authData = JSON.parse(localStorage.getItem('riddha_seller') || localStorage.getItem('riddha_user') || '{}');
       const token = authData?.token || authData?.user?.token || '';
       const API_BASE = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000/api`;
       const downloadUrl = `${API_BASE}/invoices/orders/${id}/invoice/seller`;
@@ -262,7 +262,7 @@ const OrderDetail = () => {
     try {
       toast.loading('Preparing shipping label & e-way bill...', { id: 'label-download' });
       
-      const authData = JSON.parse(localStorage.getItem('riddha_user') || '{}');
+      const authData = JSON.parse(localStorage.getItem('riddha_seller') || localStorage.getItem('riddha_user') || '{}');
       const token = authData?.token || authData?.user?.token || '';
       const API_BASE = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000/api`;
       const downloadUrl = `${API_BASE}/invoices/orders/${id}/invoice/label`;

@@ -5,8 +5,6 @@ const api = axios.create({
   withCredentials: true
 });
 
-const AUTH_STORAGE_KEY = 'riddha_user';
-
 const safeJsonParse = (value) => {
   if (!value) return null;
   try {
@@ -16,8 +14,25 @@ const safeJsonParse = (value) => {
   }
 };
 
-const getStoredAuth = () => {
-  const parsed = safeJsonParse(localStorage.getItem(AUTH_STORAGE_KEY));
+const getStoredAuthKey = (config = {}) => {
+  const url = String(config?.url || '');
+  const pathname = typeof window !== 'undefined' ? (window.location.pathname || '') : '';
+
+  if (url.includes('/seller') || pathname.startsWith('/seller')) return 'riddha_seller';
+  if (url.includes('/admin') || pathname.startsWith('/admin')) return 'riddha_admin';
+  if (url.includes('/delivery') || pathname.startsWith('/delivery')) return 'riddha_delivery';
+  return 'riddha_user';
+};
+
+const getStoredAuth = (config = {}) => {
+  const storageKey = getStoredAuthKey(config);
+  
+  let parsed = safeJsonParse(localStorage.getItem(storageKey));
+  // If specific role key is not found, fallback to riddha_user
+  if (!parsed && storageKey !== 'riddha_user') {
+    parsed = safeJsonParse(localStorage.getItem('riddha_user'));
+  }
+
   if (!parsed || typeof parsed !== 'object') return null;
 
   if (typeof parsed.token === 'string') return parsed;
@@ -72,6 +87,7 @@ const resolveLoginPath = (pathname = '') => {
 
 let isRefreshing = false;
 let failedQueue = [];
+let _isRedirectingToLogin = false; // guard: only redirect once even if many 401s fire
 
 const processQueue = (error, token = null) => {
   failedQueue.forEach((prom) => {
@@ -87,7 +103,7 @@ const processQueue = (error, token = null) => {
 // Add a request interceptor to add the auth token to every request
 api.interceptors.request.use(
   (config) => {
-    const user = getStoredAuth();
+    const user = getStoredAuth(config);
     if (user?.token) {
       config.headers.Authorization = `Bearer ${user.token}`;
     }
@@ -123,6 +139,7 @@ api.interceptors.response.use(
     // 2. Authentication 401 redirect and refresh logic
     if (error?.response?.status === 401 && config && !config._retry && typeof window !== 'undefined') {
       const wasPublic = isPublicRequest(config);
+      const targetStorageKey = getStoredAuthKey(config);
       
       if (!wasPublic) {
         if (isRefreshing) {
@@ -151,32 +168,34 @@ api.interceptors.response.use(
             .then((refreshRes) => {
               if (refreshRes.data && refreshRes.data.success) {
                 const { token, user } = refreshRes.data;
-                const currentAuth = safeJsonParse(localStorage.getItem(AUTH_STORAGE_KEY)) || {};
+                const currentAuth = safeJsonParse(localStorage.getItem(targetStorageKey)) || {};
                 const updatedAuth = {
                   ...currentAuth,
                   ...user,
                   token: token || currentAuth.token
                 };
-                localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(updatedAuth));
+                localStorage.setItem(targetStorageKey, JSON.stringify(updatedAuth));
                 
                 processQueue(null, token);
                 if (token) {
                   config.headers.Authorization = `Bearer ${token}`;
                 }
+                _isRedirectingToLogin = false; // reset guard on successful refresh
                 resolve(api(config));
               } else {
                 throw new Error("Token refresh response success is false");
               }
             })
             .catch((refreshErr) => {
-              console.error('[API Interceptor] Token refresh failed or session expired. Logging out.');
+              console.error('[API Interceptor] Token refresh failed or session expired. Logging out role:', targetStorageKey);
               processQueue(refreshErr, null);
               
-              localStorage.removeItem(AUTH_STORAGE_KEY);
+              localStorage.removeItem(targetStorageKey);
               const path = window.location.pathname || '';
               const loginPath = resolveLoginPath(path);
               
-              if (path !== loginPath) {
+              if (path !== loginPath && !_isRedirectingToLogin) {
+                _isRedirectingToLogin = true;
                 window.location.assign(loginPath);
               }
               reject(refreshErr);
@@ -186,8 +205,10 @@ api.interceptors.response.use(
             });
         });
       } else {
-        // Clear stale local profile if public request returns 401
-        localStorage.removeItem(AUTH_STORAGE_KEY);
+        // Public route got a 401 — this is normal (e.g. expired cookie on a GET).
+        // Do NOT clear localStorage here; the UserContext syncSession handles cleanup
+        // only after a full refresh attempt has also failed.
+        console.warn('[API Interceptor] Public route returned 401. Ignoring — no session to clear.');
       }
     }
     return Promise.reject(error);

@@ -177,7 +177,7 @@ const BulkProductUpload = () => {
   // Silently refresh batch history when admin reviews a product
   // (popup notification + sound is handled globally by SellerNotifications in App.jsx)
   useEffect(() => {
-    const userData = JSON.parse(localStorage.getItem('riddha_user') || '{}');
+    const userData = JSON.parse(localStorage.getItem('riddha_seller') || localStorage.getItem('riddha_user') || '{}');
     const token = userData?.token;
     if (!token) return;
 

@@ -238,11 +238,13 @@ const HomePage = () => {
 
   return (
     <div className="space-y-0 py-0">
-      {/* Banner Section (Now at Top) */}
+      {/* Banner Section (Top Hero) */}
       <section className="w-full">
         <Banner banners={banners} />
       </section>
 
+      {/* Feature Badges / Trust Bar */}
+      <TrustBar />
 
       {/* Featured Advertisements */}
       {(advertisedProducts.length > 0) && (
@@ -265,27 +267,27 @@ const HomePage = () => {
         </section>
       )}
 
-      {/* Promo Section (Benefits for Contractors, Designers, etc.) */}
-      <PromoGrid />
-
-      {/* Visual Shop by Category Row */}
+      {/* Visual Shop by Category Row (Ice Blue Background) */}
       <ShopByCategory />
+
+      {/* AI Recommendation Engine Feed (Soft Pink Background) */}
+      <RecommendationFeed />
+
+      {/* Promo Section (Benefits Grid) */}
+      <PromoGrid />
 
       {/* Designer Favorites / Favourite Categories Section */}
       <FavouriteCategories />
 
-      {/* AI Recommendation Engine Feed (the product slider) */}
-      <RecommendationFeed />
-
       {/* New Season Arrivals Section — shown after the product slider, same auto-slide carousel */}
-      <section className="py-6 md:py-10 my-4 bg-gradient-to-b from-[#F0FDFA]/70 via-white to-[#F8FAFC] border-y border-[#189D91]/15">
+      <section className="py-6 md:py-10 my-4 bg-gradient-to-b from-[#FAF5EB] via-[#FFFDF5] to-[#FAF5EB] border-y border-amber-100/60">
         <div className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-12">
 
           {/* Section Header */}
           <div className="flex items-center justify-between mb-4 md:mb-6">
             <div>
-              <span className="inline-block px-3 py-0.5 rounded-full text-[9px] font-black uppercase tracking-[0.25em] bg-[#189D91]/10 text-[#189D91] mb-1 border border-[#189D91]/20">
-                Curated Collection
+              <span className="inline-block px-3 py-0.5 rounded-full text-[9px] font-black uppercase tracking-[0.25em] bg-[#D97706]/10 text-[#D97706] mb-1 border border-[#D97706]/20">
+                Curated Picks
               </span>
               <h2 className="text-xl md:text-2xl font-black text-gray-900 tracking-tight leading-tight">New Season Arrivals</h2>
             </div>

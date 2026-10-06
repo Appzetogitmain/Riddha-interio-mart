@@ -73,20 +73,20 @@ const RecommendationFeed = () => {
   };
 
   return (
-    <section className="py-10 md:py-14 bg-gradient-to-b from-[#F0FDFA] via-white to-[#F0FDFA] border-y border-[#189D91]/20 my-4">
+    <section className="py-10 md:py-14 bg-gradient-to-r from-[#FFF0F4] via-[#FEEFF3] to-[#FFF0F4] border-y border-pink-100 my-4">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
           <div>
-            <div className="inline-flex items-center gap-2 px-3.5 py-1 bg-[#189D91]/10 text-[#189D91] rounded-full text-xs font-bold border border-[#189D91]/25 mb-2">
-              <Sparkles className="w-3.5 h-3.5 text-[#189D91]" />
-              <span>AI Personalization</span>
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 bg-[#E52574]/10 text-[#E52574] rounded-full text-xs font-bold border border-[#E52574]/20 mb-2">
+              <Sparkles className="w-3.5 h-3.5 text-[#E52574]" />
+              <span>AI Recommendations</span>
             </div>
             <h2 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">
-              Curated Recommendations For You
+              Your Dream Space Our Priority
             </h2>
             <p className="text-sm font-medium text-gray-600 mt-1">
-              Tailored to your design preferences, room quizzes, and browsing habits.
+              From modern furniture to unique décor pieces, find everything you need to design a home that reflects your style.
             </p>
           </div>
 

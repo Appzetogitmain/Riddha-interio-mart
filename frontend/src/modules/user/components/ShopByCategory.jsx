@@ -52,16 +52,16 @@ const ShopByCategory = () => {
   }, [categories.length, scrollBySlide]);
 
   return (
-    <section className="py-6 md:py-10 bg-gradient-to-b from-[#F0FDFA]/60 via-white to-[#F8FAF9] border-y border-[#189D91]/15 overflow-hidden my-2">
+    <section className="py-6 md:py-10 bg-gradient-to-b from-[#EBF5FF] via-[#F4F9FF] to-[#EBF5FF] border-y border-sky-100 overflow-hidden my-2">
       <div className="max-w-[1440px] mx-auto px-4 md:px-12">
 
         {/* Improved Heading */}
         <div className="flex items-center justify-between mb-4 md:mb-6">
           <div>
-            <span className="inline-block px-3 py-0.5 rounded-full text-[9px] font-black uppercase tracking-[0.2em] bg-[#189D91]/10 text-[#189D91] border border-[#189D91]/20 mb-1">
-              Explore Collections
+            <span className="inline-block px-3 py-0.5 rounded-full text-[9px] font-black uppercase tracking-[0.2em] bg-[#0284C7]/10 text-[#0284C7] border border-[#0284C7]/20 mb-1">
+              Shop By Category
             </span>
-            <h2 className="text-xl md:text-2xl font-black text-gray-900 tracking-tight leading-tight">Shop by Category</h2>
+            <h2 className="text-xl md:text-2xl font-black text-gray-900 tracking-tight leading-tight">Explore Our Categories</h2>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <Link to="/categories" className="flex items-center gap-1 text-[11px] md:text-sm font-bold text-[#189D91] hover:underline mr-1 bg-white px-3 py-1.5 rounded-xl border border-gray-200 shadow-2xs">

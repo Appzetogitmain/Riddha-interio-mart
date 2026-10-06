@@ -50,7 +50,7 @@ const Banner = ({ banners }) => {
   const isVideo = currentImage.match(/\.(mp4|webm|ogg|mov)$/i) || currentImage.startsWith('data:video') || currentImage.includes('/video/upload/');
 
   return (
-    <section className="py-2 md:py-4 bg-white">
+    <section className="py-2 md:py-4 bg-gradient-to-b from-[#E6F7F6] via-[#EFFBF9] to-[#E6F7F6]">
       <div className="max-w-[1700px] mx-auto px-2 md:px-10">
         <div className="relative w-full aspect-[2.4/1] md:aspect-[4.5/1] overflow-hidden bg-gray-50 rounded-2xl md:rounded-[32px] shadow-sm">
 

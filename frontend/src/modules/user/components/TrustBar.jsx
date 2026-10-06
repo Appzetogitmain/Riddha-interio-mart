@@ -47,7 +47,7 @@ const TrustBar = () => {
   }, []);
 
   return (
-    <section className="py-4 bg-transparent overflow-hidden hidden md:block my-2">
+    <section className="py-5 bg-gradient-to-r from-[#E6FAF6] via-[#EEFCF9] to-[#E6FAF6] border-y border-[#189D91]/15 overflow-hidden hidden md:block my-2">
       <div className="max-w-[1920px] mx-auto px-4 flex gap-3">
 
         {/* Left Section: Trust Items */}

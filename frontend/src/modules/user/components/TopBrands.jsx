@@ -44,20 +44,20 @@ const TopBrands = ({ title }) => {
   if (!loading && brands.length === 0) return null;
 
   return (
-    <section className="max-w-7xl mx-auto px-4 md:px-12 py-8 md:py-14">
-      <div className="relative overflow-hidden rounded-2xl border border-white/70 bg-[linear-gradient(135deg,rgba(255,255,255,0.96)_0%,rgba(245,249,249,0.95)_52%,rgba(238,247,246,0.98)_100%)] shadow-[0_20px_60px_rgba(16,24,40,0.08)]">
-        <div className="absolute -top-20 right-0 h-56 w-56 rounded-full bg-[#189D91]/8 blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-24 left-0 h-64 w-64 rounded-full bg-[#EC008C]/6 blur-3xl pointer-events-none" />
+    <section className="w-full py-8 md:py-14 bg-gradient-to-b from-[#EFF6FF] via-[#F4F8FF] to-[#EFF6FF] border-y border-blue-100 my-4">
+      <div className="max-w-7xl mx-auto px-4 md:px-12">
+        <div className="relative overflow-hidden rounded-2xl border border-blue-100 bg-white/80 backdrop-blur-sm shadow-sm p-4 md:p-8">
+          <div className="absolute -top-20 right-0 h-56 w-56 rounded-full bg-blue-500/5 blur-3xl pointer-events-none" />
 
-        <div className="relative z-10 px-4 sm:px-6 md:px-8 pt-6 md:pt-8 flex items-start md:items-center justify-between gap-4">
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/80 border border-slate-200/70 shadow-sm">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#189D91]" />
-              <span className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.22em] text-slate-500">Curated Brands</span>
-            </div>
-            <h2 className="text-lg md:text-2xl lg:text-3xl font-display font-black text-slate-950 tracking-tight">
-              {title || "Explore Top Brands"}
-            </h2>
+          <div className="relative z-10 flex items-start md:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <div className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full bg-[#2563EB]/10 border border-[#2563EB]/20 text-[#2563EB] mb-1">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#2563EB]" />
+                <span className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.22em]">Trusted Brands</span>
+              </div>
+              <h2 className="text-lg md:text-2xl lg:text-3xl font-display font-black text-slate-950 tracking-tight">
+                {title || "Explore Top Brands"}
+              </h2>
             <p className="max-w-xl text-[11px] md:text-sm text-slate-500 font-medium">
               Trusted names, premium selections, and quick access to the collections customers ask for most.
             </p>
@@ -109,7 +109,8 @@ const TopBrands = ({ title }) => {
           </div>
         </div>
       </div>
-    </section>
+    </div>
+  </section>
   );
 };
 

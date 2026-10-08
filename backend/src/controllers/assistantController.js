@@ -62,7 +62,7 @@ exports.startOrContinueChat = async (req, res, next) => {
       } else if (guestSessionId) {
         createData.guestSessionId = guestSessionId;
       } else {
-        return res.status(400).json({ success: false, error: 'guestSessionId or user login is required to start a chat.' });
+        return res.status(401).json({ success: false, error: 'Please log in first to chat with the assistant.', requiresLogin: true });
       }
 
       conversation = await ChatConversation.create(createData);
@@ -103,7 +103,7 @@ exports.getConversations = async (req, res, next) => {
     } else if (guestSessionId) {
       query.guestSessionId = guestSessionId;
     } else {
-      return res.status(400).json({ success: false, error: 'guestSessionId or user login is required.' });
+      return res.status(200).json({ success: true, conversations: [] });
     }
 
     const conversations = await ChatConversation.find(query)

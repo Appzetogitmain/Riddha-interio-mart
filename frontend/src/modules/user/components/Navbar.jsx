@@ -355,10 +355,10 @@ const Navbar = () => {
             <div className="flex items-center gap-1.5 lg:gap-2 shrink-0">
               {/* Become a Seller */}
               <Link to="/seller/join" className="flex items-center gap-1.5 group">
-                <AiOutlineShop className="text-gray-500 w-4 h-4 group-hover:text-[#28a399] transition-colors" />
+                <AiOutlineShop className="text-gray-500 w-4 h-4 group-hover:text-[#189D91] transition-colors" />
                 <div className="flex flex-col text-left">
-                  <span className="text-[10px] font-bold text-gray-700 leading-none group-hover:text-[#28a399] transition-colors">Become a Seller</span>
-                  <span className="text-[9px] font-bold text-[#28a399] mt-0.5">Join Now</span>
+                  <span className="text-[10px] font-bold text-gray-700 leading-none group-hover:text-[#189D91] transition-colors">Become a Seller</span>
+                  <span className="text-[9px] font-bold text-[#189D91] mt-0.5">Join Now</span>
                 </div>
               </Link>
 
@@ -367,10 +367,10 @@ const Navbar = () => {
                 onClick={() => setIsBulkModalOpen(true)}
                 className="flex items-center gap-1.5 group border-l border-gray-200 pl-2 lg:pl-3 xl:pl-4 text-left"
               >
-                <FiFileText className="text-gray-500 w-4 h-4 group-hover:text-[#28a399] transition-colors" />
+                <FiFileText className="text-gray-500 w-4 h-4 group-hover:text-[#189D91] transition-colors" />
                 <div className="flex flex-col text-left">
-                  <span className="text-[10px] font-bold text-gray-700 leading-none group-hover:text-[#28a399] transition-colors">Bulk Order</span>
-                  <span className="text-[9px] font-bold text-[#28a399] mt-0.5">Best Price</span>
+                  <span className="text-[10px] font-bold text-gray-700 leading-none group-hover:text-[#189D91] transition-colors">Bulk Order</span>
+                  <span className="text-[9px] font-bold text-[#189D91] mt-0.5">Best Price</span>
                 </div>
               </button>
 
@@ -428,7 +428,7 @@ const Navbar = () => {
             {/* User Actions */}
             <div className="flex items-center gap-3 lg:gap-4 shrink-0 pr-1">
               <Link to="/profile" className="flex items-center group relative" title={user ? (user.fullName?.split(' ')[0] || 'Profile') : 'Login'}>
-                <FiUser className="w-5 h-5 text-gray-500 group-hover:text-[#28a399] transition-colors" />
+                <FiUser className="w-5 h-5 text-gray-500 group-hover:text-[#189D91] transition-colors" />
               </Link>
 
               <Link to="/wishlist" className="flex items-center group relative" title="Wishlist">
@@ -441,9 +441,9 @@ const Navbar = () => {
               </Link>
 
               <Link to="/cart" className="flex items-center group relative" title="Cart">
-                <FiShoppingCart className="w-5 h-5 text-gray-500 group-hover:text-[#28a399] transition-colors" />
+                <FiShoppingCart className="w-5 h-5 text-gray-500 group-hover:text-[#189D91] transition-colors" />
                 {cartCount > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 bg-[#FF6B35] text-white text-[9px] font-bold h-4 w-4 flex items-center justify-center rounded-full border-2 border-white">
+                  <span className="absolute -top-1.5 -right-1.5 bg-[#189D91] text-white text-[9px] font-bold h-4 w-4 flex items-center justify-center rounded-full border-2 border-white shadow-xs">
                     {cartCount}
                   </span>
                 )}

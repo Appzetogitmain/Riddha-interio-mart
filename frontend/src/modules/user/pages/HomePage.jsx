@@ -13,9 +13,9 @@ import Button from '../../../shared/components/Button';
 import { Link } from 'react-router-dom';
 import api from '../../../shared/utils/api';
 import ShopByCategory from '../components/ShopByCategory';
-import { LuChevronRight } from 'react-icons/lu';
+import { LuChevronRight, LuChevronLeft } from 'react-icons/lu';
 
-const SectionGrid = ({ products, loading, containerVariants, autoSlide = false }) => {
+const SectionGrid = ({ products, loading, containerVariants, autoSlide = false, fadeColor = "from-white/90" }) => {
   const scrollRef = useRef(null);
 
   const getProductImage = (p) =>
@@ -48,21 +48,48 @@ const SectionGrid = ({ products, loading, containerVariants, autoSlide = false }
     return () => clearInterval(timer);
   }, [autoSlide, loading, products.length]);
 
+  const scrollManual = (direction) => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const card = el.querySelector('[data-arrival-card]');
+    const amount = (card ? card.offsetWidth + 16 : 220) * 2;
+    el.scrollBy({ left: direction * amount, behavior: 'smooth' });
+  };
+
   return (
-    <div className="relative">
+    <div className="relative group/carousel">
+      {/* Desktop Previous Button */}
+      <button
+        onClick={() => scrollManual(-1)}
+        aria-label="Previous products"
+        className="hidden md:flex absolute -left-3 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white/95 hover:bg-white text-gray-700 hover:text-[#189D91] shadow-md border border-stone-200/80 items-center justify-center transition-all duration-300 opacity-0 group-hover/carousel:opacity-100 hover:scale-110 active:scale-95"
+      >
+        <LuChevronLeft size={16} />
+      </button>
+
+      {/* Desktop Next Button */}
+      <button
+        onClick={() => scrollManual(1)}
+        aria-label="Next products"
+        className="hidden md:flex absolute -right-3 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white/95 hover:bg-white text-gray-700 hover:text-[#189D91] shadow-md border border-stone-200/80 items-center justify-center transition-all duration-300 opacity-0 group-hover/carousel:opacity-100 hover:scale-110 active:scale-95"
+      >
+        <LuChevronRight size={16} />
+      </button>
+
       {/* Fade edge on right */}
-      <div className="pointer-events-none absolute right-0 top-0 h-full w-12 bg-gradient-to-l from-white to-transparent z-10" />
+      <div className={`pointer-events-none absolute right-0 top-0 h-full w-12 bg-gradient-to-l ${fadeColor} to-transparent z-10`} />
+
       <Motion.div
         ref={scrollRef}
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="flex flex-row gap-3 md:gap-4 overflow-x-auto pb-2 scrollbar-hide"
+        className="flex flex-row gap-3 md:gap-4 overflow-x-auto pb-3 pt-1 scrollbar-hide px-0.5"
         style={{ scrollSnapType: 'x mandatory' }}
       >
       {loading ? (
         [1, 2, 3, 4, 5, 6].map(i => (
-          <div key={i} className="flex-none w-36 md:w-48 aspect-[3/4] bg-gray-100 rounded-xl animate-pulse" />
+          <div key={i} className="flex-none w-36 md:w-48 aspect-[3/4] bg-stone-100 rounded-2xl animate-pulse border border-stone-200/60" />
         ))
       ) : (
         products.map((product) => {
@@ -108,34 +135,35 @@ const SectionGrid = ({ products, loading, containerVariants, autoSlide = false }
             >
               <Link
                 to={`/products/${productId}`}
-                className="group flex flex-col overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 h-full"
+                className="group flex flex-col overflow-hidden rounded-2xl border border-stone-200/80 bg-white shadow-xs hover:shadow-[0_16px_36px_rgba(24,157,145,0.12)] hover:border-[#189D91]/40 hover:-translate-y-1 transition-all duration-400 h-full"
               >
                 {/* Product Image */}
-                <div className="relative aspect-square overflow-hidden bg-gray-50">
+                <div className="relative aspect-square overflow-hidden bg-stone-50">
                   <img
                     src={getProductImage(product)}
                     alt={product?.name || 'Product'}
                     loading="lazy"
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-108"
                   />
                   {hasDiscount && (
-                    <span className="absolute top-1.5 left-1.5 bg-[#EC008C] text-white text-[8px] font-black px-1.5 py-0.5 rounded-md">
+                    <span className="absolute top-2 left-2 bg-[#0F172A] text-amber-300 border border-amber-400/30 text-[8px] font-black px-2 py-0.5 rounded-md shadow-xs tracking-wider">
                       SALE
                     </span>
                   )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 </div>
 
                 {/* Product Info */}
-                <div className="p-2 flex flex-col gap-0.5 flex-1 justify-between">
+                <div className="p-2.5 flex flex-col gap-1 flex-1 justify-between bg-white">
                   <div>
-                    <p className="line-clamp-1 text-[10px] md:text-xs font-black text-gray-800 leading-tight">
+                    <p className="line-clamp-1 text-[11px] md:text-xs font-black text-slate-900 group-hover:text-[#189D91] transition-colors leading-tight">
                       {product?.name}
                     </p>
-                    <p className="line-clamp-1 text-[8px] md:text-[10px] font-bold text-[#189D91] uppercase tracking-wide">
+                    <p className="line-clamp-1 text-[8px] md:text-[9px] font-bold text-[#189D91] uppercase tracking-wider mt-0.5">
                       {product?.category}
                     </p>
-                    <div className="flex items-center gap-1.5 mt-1">
-                      <span className="text-[11px] md:text-sm font-black text-gray-900">
+                    <div className="flex items-center gap-1.5 mt-1.5">
+                      <span className="text-[12px] md:text-sm font-black text-slate-950">
                         {toMoney(displayPrice)}
                       </span>
                       {hasDiscount && (
@@ -147,9 +175,9 @@ const SectionGrid = ({ products, loading, containerVariants, autoSlide = false }
                   </div>
                   
                   {/* Compact Delivery Estimate UI */}
-                  <div className="mt-1.5 pt-1.5 border-t border-gray-50 flex items-center gap-1 text-[8px] md:text-[10px] text-slate-500">
-                    <span>🚚</span>
-                    <span className="truncate">Del: <span className="font-semibold text-slate-700">{getDeliveryEstimate()}</span></span>
+                  <div className="mt-1.5 pt-1.5 border-t border-stone-100 flex items-center gap-1.5 text-[8px] md:text-[10px] text-slate-500">
+                    <span className="text-[10px]">🚚</span>
+                    <span className="truncate">Del: <span className="font-bold text-slate-800">{getDeliveryEstimate()}</span></span>
                   </div>
                 </div>
               </Link>
@@ -243,34 +271,39 @@ const HomePage = () => {
         <Banner banners={banners} />
       </section>
 
-      {/* Feature Badges / Trust Bar */}
-      <TrustBar />
-
       {/* Featured Advertisements */}
       {(advertisedProducts.length > 0) && (
-        <section className="max-w-[1700px] mx-auto px-4 md:px-8 py-6 my-4 bg-gradient-to-r from-[#F0FDFA] via-[#FFFDF5] to-[#FCE7F3]/40 rounded-2xl md:rounded-3xl border border-[#189D91]/20 shadow-xs">
-          <div className="flex justify-between items-end mb-4">
-            <div>
-              <span className="inline-block px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-[0.2em] bg-[#E52574]/10 text-[#E52574] mb-1">
-                Featured Deals
-              </span>
-              <h2 className="text-xl md:text-2xl font-black text-gray-900 tracking-tight">
-                Sponsored Products
-              </h2>
-              <p className="text-xs md:text-sm text-gray-500 font-medium">Top picks for you</p>
+        <section
+          className="w-full py-8 md:py-12 my-0 border-y"
+          style={{
+            background: 'linear-gradient(180deg, #DCF5F0 0%, #E6F9F5 50%, #D5F2EC 100%)',
+            borderColor: '#AEE4DA',
+          }}
+        >
+          <div className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-12">
+            <div className="flex justify-between items-end mb-4">
+              <div>
+                <span className="inline-block px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-[0.2em] bg-[#189D91]/15 text-[#0F766E] border border-[#189D91]/30 mb-1">
+                  Featured Deals
+                </span>
+                <h2 className="text-xl md:text-2xl font-black text-gray-900 tracking-tight">
+                  Sponsored Products
+                </h2>
+                <p className="text-xs md:text-sm text-gray-500 font-medium">Top picks for you</p>
+              </div>
+              <Link to="/products" className="text-xs md:text-sm font-bold text-[#189D91] hover:text-[#137c72] flex items-center gap-1 group bg-white px-3 py-1.5 rounded-xl border border-[#AEE4DA] shadow-2xs">
+                See All <LuChevronRight className="group-hover:translate-x-1 transition-transform" />
+              </Link>
             </div>
-            <Link to="/products" className="text-xs md:text-sm font-bold text-[#189D91] hover:text-[#137c72] flex items-center gap-1 group bg-white/80 px-3 py-1.5 rounded-xl border border-[#189D91]/20 shadow-2xs">
-              See All <LuChevronRight className="group-hover:translate-x-1 transition-transform" />
-            </Link>
+            <SectionGrid products={advertisedProducts} loading={loading} containerVariants={containerVariants} fadeColor="from-[#E6F9F5]" />
           </div>
-          <SectionGrid products={advertisedProducts} loading={loading} containerVariants={containerVariants} />
         </section>
       )}
 
-      {/* Visual Shop by Category Row (Ice Blue Background) */}
+      {/* Visual Shop by Category Row (Soft Mint Background from reference image) */}
       <ShopByCategory />
 
-      {/* AI Recommendation Engine Feed (Soft Pink Background) */}
+      {/* AI Recommendation Engine Feed (Soft Blush Pink Background from reference image) */}
       <RecommendationFeed />
 
       {/* Promo Section (Benefits Grid) */}
@@ -279,28 +312,34 @@ const HomePage = () => {
       {/* Designer Favorites / Favourite Categories Section */}
       <FavouriteCategories />
 
-      {/* New Season Arrivals Section — shown after the product slider, same auto-slide carousel */}
-      <section className="py-6 md:py-10 my-4 bg-gradient-to-b from-[#FAF5EB] via-[#FFFDF5] to-[#FAF5EB] border-y border-amber-100/60">
+      {/* New Season Arrivals Section (Warm Cream / Pale Amber Background from reference image) */}
+      <section
+        className="py-8 md:py-14 my-0 border-y"
+        style={{
+          background: 'linear-gradient(180deg, #FEE8D2 0%, #FFF1E2 50%, #FEDEBF 100%)',
+          borderColor: '#FDCBA0',
+        }}
+      >
         <div className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-12">
 
           {/* Section Header */}
           <div className="flex items-center justify-between mb-4 md:mb-6">
             <div>
-              <span className="inline-block px-3 py-0.5 rounded-full text-[9px] font-black uppercase tracking-[0.25em] bg-[#D97706]/10 text-[#D97706] mb-1 border border-[#D97706]/20">
+              <span className="inline-block px-3 py-0.5 rounded-full text-[9px] font-black uppercase tracking-[0.25em] bg-[#D97706]/15 text-[#B45309] mb-1 border border-[#D97706]/30">
                 Curated Picks
               </span>
               <h2 className="text-xl md:text-2xl font-black text-gray-900 tracking-tight leading-tight">New Season Arrivals</h2>
             </div>
-            <Link to="/products" className="flex items-center gap-1 text-[11px] md:text-sm font-bold text-[#189D91] hover:underline bg-white px-3 py-1.5 rounded-xl border border-gray-200 shadow-2xs shrink-0">
-              View All <span>›</span>
+            <Link to="/products" className="flex items-center gap-1 text-[11px] md:text-sm font-bold text-[#D97706] hover:underline bg-white px-3 py-1.5 rounded-xl border border-[#FDCBA0] shadow-2xs shrink-0">
+              View All <LuChevronRight size={14} />
             </Link>
           </div>
 
-          <SectionGrid products={newArrivals} loading={loading} containerVariants={containerVariants} autoSlide />
+          <SectionGrid products={newArrivals} loading={loading} containerVariants={containerVariants} autoSlide fadeColor="from-[#FFF1E2]" />
         </div>
       </section>
 
-      {/* Top Brands Section — shown right after New Season Arrivals, also an auto-slide carousel */}
+      {/* Top Brands Section (Soft Sky Blue / Ice Blue Background from reference image) */}
       <TopBrands />
 
       {/* Offer Banner */}
@@ -309,7 +348,7 @@ const HomePage = () => {
       {/* Admin-Created Custom Sections */}
       <DynamicSections />
 
-      {/* Trust & Help Bar (500+ section at the end before footer) */}
+      {/* Why Shop With Riddha / Trust Bar (Soft Mint / Seafoam Background from reference image) */}
       <TrustBar />
 
     </div>

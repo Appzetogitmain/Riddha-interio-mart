@@ -1,30 +1,65 @@
 import React, { useEffect, useState } from 'react';
 import { motion as Motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import { FiArrowRight } from 'react-icons/fi';
 import api from '../../../shared/utils/api';
 
-// Assets
-import offerBannerBase from '../../../assets/offer_banner.png';
-import offerBanner1 from '../../../assets/offer_banner_1.png';
-import offerBanner2 from '../../../assets/offer_banner_2.png';
-
 const defaultSlides = [
-  { id: 1, title: 'Turn On\nThe Charm', offer: 'Min. 40% Off', image: offerBannerBase, ctaLink: '/products' },
-  { id: 2, title: 'Bespoke\nFurniture', offer: 'Up to 30% Off', image: offerBanner1, ctaLink: '/products' },
-  { id: 3, title: 'Elegant\nDecor', offer: 'Flat 20% Off', image: offerBanner2, ctaLink: '/products' },
+  {
+    id: 1,
+    badge: 'UP TO',
+    headline: '50% OFF',
+    subtitle: 'On Selected Collections',
+    btnText: 'Shop the Sale',
+    ctaLink: '/products',
+    themeColor: 'from-[#D81B60] via-[#E11D48] to-[#BE123C]',
+    accentColor: 'from-[#F59E0B] to-[#FBBF24]',
+    cornerColor: 'from-[#1F3E96] to-[#142966]',
+    cornerGradient: 'linear-gradient(225deg, #22429B 0%, #1F3E96 50%, #142966 100%)',
+    image: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=1800&q=85',
+  },
+  {
+    id: 2,
+    badge: 'EXCLUSIVE DEALS',
+    headline: '40% OFF',
+    subtitle: 'On Luxury Living & Dining Sets',
+    btnText: 'Explore Collection',
+    ctaLink: '/products?category=furniture',
+    themeColor: 'from-[#0F766E] via-[#14B8A6] to-[#0D9488]',
+    accentColor: 'from-[#F59E0B] to-[#FBBF24]',
+    cornerColor: 'from-[#BE123C] to-[#E11D48]',
+    image: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=1800&q=85',
+  },
+  {
+    id: 3,
+    badge: 'LIMITED TIME',
+    headline: 'FLAT 35% OFF',
+    subtitle: 'On Designer Lights & Home Decor',
+    btnText: 'View Decor Deals',
+    ctaLink: '/products?category=lighting',
+    themeColor: 'from-[#4338CA] via-[#6366F1] to-[#3730A3]',
+    accentColor: 'from-[#EC4899] to-[#F43F5E]',
+    cornerColor: 'from-[#F59E0B] to-[#D97706]',
+    image: 'https://images.unsplash.com/photo-1513519245088-0e12902e35ca?auto=format&fit=crop&w=1800&q=85',
+  },
 ];
 
 const mapPromoBanner = (item, index) => {
   const image = item?.image || item?.bgImage?.src || item?.bannerImage || '';
-
   if (!image) return null;
 
   return {
     id: item?._id || item?.id || `promo-banner-${index}`,
-    title: item?.title || 'Promo Offer',
-    offer: item?.subtitle || item?.ctaText || 'Limited Offer',
+    badge: 'SPECIAL OFFER',
+    headline: item?.offer || item?.subtitle || 'UP TO 50% OFF',
+    subtitle: item?.title || 'On Selected Collections',
+    btnText: item?.ctaText || 'Shop the Sale',
     image,
     ctaLink: item?.ctaLink || '/products',
+    themeColor: 'from-[#D81B60] via-[#E11D48] to-[#BE123C]',
+    accentColor: 'from-[#F59E0B] to-[#FBBF24]',
+    cornerColor: 'from-[#1F3E96] to-[#142966]',
+    cornerGradient: 'linear-gradient(225deg, #22429B 0%, #1F3E96 50%, #142966 100%)',
   };
 };
 
@@ -37,15 +72,15 @@ const OfferBanner = () => {
       try {
         const { data } = await api.get('/promo-banner');
         const list = Array.isArray(data?.data) ? data.data : [];
+        const mapped = list.map(mapPromoBanner).filter(Boolean);
 
-        const mappedSlides = list.map(mapPromoBanner).filter(Boolean);
-
-        if (mappedSlides.length > 0) {
-          setSlides(mappedSlides);
+        if (mapped.length > 0) {
+          // Prepend the iconic 50% off slide as the hero default
+          setSlides([defaultSlides[0], ...mapped]);
           setCurrent(0);
         }
       } catch (err) {
-        console.error('Failed to load promo banners:', err);
+        console.warn('Failed to load dynamic promo banners, using curated offer slides');
       }
     };
 
@@ -56,58 +91,112 @@ const OfferBanner = () => {
     if (slides.length <= 1) return;
     const timer = setInterval(() => {
       setCurrent((prev) => (prev + 1) % slides.length);
-    }, 5000);
+    }, 6000);
     return () => clearInterval(timer);
   }, [slides]);
 
-  return (
-    <section className="max-w-7xl mx-auto px-4 md:px-12 py-6">
-      <div className="flex flex-row h-32 sm:h-40 md:h-64 rounded-xl md:rounded-[2.5rem] overflow-hidden shadow-lg border border-[#E52574]/20 bg-white relative">
-        <AnimatePresence mode="wait">
-          <Motion.div
-            key={current}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.6 }}
-            className="absolute inset-0 flex flex-row"
-          >
-            <div className="w-[42%] min-[400px]:w-[38%] md:w-[30%] bg-gradient-to-br from-[#FFF0F5] via-white to-[#FCE7F3] flex flex-col justify-center px-3 min-[400px]:px-4 md:px-12 py-2 md:py-8 space-y-1 md:space-y-4 border-r border-[#E52574]/20">
-              <h3 className="text-[13px] min-[360px]:text-[15px] sm:text-lg md:text-3xl font-black text-gray-900 leading-[1.1] md:leading-tight uppercase tracking-tight whitespace-pre-line">
-                {slides[current].title}
-              </h3>
-              <Link
-                to={slides[current].ctaLink || '/products'}
-                className="text-[9px] min-[360px]:text-[10px] sm:text-xs md:text-lg font-bold text-[#E52574] hover:text-[#b01454] uppercase tracking-[0.05em] md:tracking-widest flex items-center gap-1 md:gap-2 transition-colors"
-              >
-                {slides[current].offer}{' '}
-                <span className="text-sm md:text-xl transform md:translate-y-[1px]">→</span>
-              </Link>
-            </div>
+  const slide = slides[current] || defaultSlides[0];
 
-            <div className="w-[58%] min-[400px]:w-[62%] md:w-[70%] relative overflow-hidden bg-soft-oatmeal/5">
-              <img
-                src={slides[current].image}
-                alt="Offer Banner"
-                className="h-full w-full object-cover"
+  return (
+    <section
+      className="w-full py-8 md:py-12 border-b"
+      style={{
+        background: 'linear-gradient(180deg, #E6F0FE 0%, #EDF5FF 50%, #DEECFE 100%)',
+        borderColor: '#BAD6FC',
+      }}
+    >
+      <div className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-12">
+        <div className="relative w-full h-44 sm:h-56 md:h-72 lg:h-80 rounded-2xl md:rounded-[2rem] overflow-hidden shadow-xl border border-stone-200/80 bg-white">
+          <AnimatePresence mode="wait">
+            <Motion.div
+              key={current}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.6 }}
+              className="absolute inset-0 flex"
+            >
+              {/* Full-Bleed Right Living Room Image */}
+              <div className="absolute inset-0 w-full h-full bg-slate-100">
+                <img
+                  src={slide.image}
+                  alt={slide.subtitle || 'Special Sale Offer'}
+                  className="w-full h-full object-cover object-center"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=1800&q=85';
+                  }}
+                />
+              </div>
+
+              {/* Dynamic Angled Yellow/Gold Slash Accent */}
+              <div
+                className={`absolute top-0 bottom-0 left-0 w-[72%] sm:w-[56%] md:w-[48%] lg:w-[44%] bg-gradient-to-r ${slide.accentColor || 'from-[#F59E0B] to-[#FBBF24]'} z-10 pointer-events-none`}
+                style={{
+                  clipPath: 'polygon(0 0, 100% 0, 85% 100%, 0 100%)',
+                }}
               />
 
-              <p className="absolute bottom-2 md:bottom-6 right-4 md:right-10 text-[6px] md:text-[10px] text-white/50 font-bold tracking-widest uppercase">
-                *T&C Apply
-              </p>
-            </div>
-          </Motion.div>
-        </AnimatePresence>
+              {/* Dynamic Angled Magenta/Hot-Pink Main Banner Panel */}
+              <div
+                className={`relative z-20 w-[68%] sm:w-[52%] md:w-[45%] lg:w-[41%] h-full bg-gradient-to-r ${slide.themeColor || 'from-[#D81B60] via-[#E11D48] to-[#BE123C]'} flex flex-col justify-center px-4 sm:px-6 md:px-10 lg:px-12 text-white shadow-2xl`}
+                style={{
+                  clipPath: 'polygon(0 0, 100% 0, 82% 100%, 0 100%)',
+                }}
+              >
+                <span className="text-[9px] sm:text-[11px] md:text-xs font-black uppercase tracking-[0.2em] text-white/95 drop-shadow-xs">
+                  {slide.badge || 'UP TO'}
+                </span>
 
-        <div className="absolute bottom-4 md:bottom-8 left-[45%] md:left-[35%] flex gap-2 md:gap-3 z-10">
-          {slides.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setCurrent(i)}
-              className={`h-1 md:h-2 rounded-full transition-all duration-300 ${current === i ? 'w-4 md:w-10 bg-warm-sand' : 'w-1 md:w-2 bg-gray-200'
-                }`}
-            />
-          ))}
+                <h3 className="text-xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-black text-white leading-none tracking-tight mt-0.5 sm:mt-1 drop-shadow-md">
+                  {slide.headline || '50% OFF'}
+                </h3>
+
+                <p className="text-[10px] sm:text-xs md:text-sm lg:text-base font-semibold text-white/90 mt-1 md:mt-2 leading-tight drop-shadow-xs line-clamp-1">
+                  {slide.subtitle || 'On Selected Collections'}
+                </p>
+
+                <Link
+                  to={slide.ctaLink || '/products'}
+                  className="mt-2.5 sm:mt-4 md:mt-6 inline-flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-5 md:px-6 py-1.5 sm:py-2 md:py-2.5 rounded-full bg-white text-[#BE123C] font-black text-[9px] sm:text-xs md:text-sm tracking-wider uppercase shadow-md hover:bg-white/95 hover:shadow-lg hover:scale-105 active:scale-95 transition-all w-fit"
+                >
+                  <span>{slide.btnText || 'Shop the Sale'}</span>
+                  <FiArrowRight className="text-xs md:text-sm" />
+                </Link>
+              </div>
+
+              {/* Dynamic Angled Blue Ribbon Accent on Bottom-Right (Matching Riddha Logo's Blue) */}
+              <div
+                className="hidden sm:block absolute bottom-0 right-0 w-24 sm:w-36 md:w-44 h-24 sm:h-36 md:h-44 z-10 pointer-events-none shadow-lg"
+                style={{
+                  clipPath: 'polygon(100% 0, 100% 100%, 25% 100%)',
+                  background: slide.cornerGradient || 'linear-gradient(225deg, #22429B 0%, #1F3E96 50%, #142966 100%)',
+                }}
+              />
+              <div
+                className="hidden sm:block absolute bottom-0 right-0 w-16 sm:w-28 md:w-36 h-16 sm:h-28 md:h-36 bg-[#F59E0B] z-15 pointer-events-none opacity-90"
+                style={{
+                  clipPath: 'polygon(100% 65%, 100% 100%, 35% 100%)',
+                }}
+              />
+            </Motion.div>
+          </AnimatePresence>
+
+          {/* Interactive Pagination Dots */}
+          {slides.length > 1 && (
+            <div className="absolute bottom-2.5 sm:bottom-4 md:bottom-5 left-1/2 -translate-x-1/2 flex items-center gap-1.5 sm:gap-2 z-30 bg-black/20 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/20">
+              {slides.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCurrent(i)}
+                  aria-label={`Go to slide ${i + 1}`}
+                  className={`h-1.5 sm:h-2 rounded-full transition-all duration-300 cursor-pointer ${
+                    current === i ? 'w-5 sm:w-7 bg-[#189D91]' : 'w-1.5 sm:w-2 bg-white/70 hover:bg-white'
+                  }`}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </section>

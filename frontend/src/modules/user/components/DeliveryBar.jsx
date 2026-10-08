@@ -53,7 +53,7 @@ const DeliveryBar = () => {
 
         <button
           onClick={() => setIsBulkModalOpen(true)}
-          className="flex items-center gap-1.5 bg-gradient-to-r from-[#189D91] to-[#EC008C] text-white px-3 py-1.5 rounded-lg shadow-sm hover:opacity-90 transition-all duration-300 active:scale-95 group"
+          className="flex items-center gap-1.5 bg-gradient-to-r from-[#189D91] to-[#106b63] text-white px-3 py-1.5 rounded-lg shadow-sm hover:shadow-[#189D91]/25 hover:from-[#14877c] hover:to-[#0d5952] transition-all duration-300 active:scale-95 group"
         >
           <span className="text-[10px] font-bold uppercase tracking-wider">Bulk Order</span>
           <svg className="w-3 h-3 text-white/80 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">

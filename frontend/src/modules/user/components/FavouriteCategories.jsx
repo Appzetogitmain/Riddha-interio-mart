@@ -33,16 +33,22 @@ const FavouriteSectionCard = ({ section }) => {
   const products = Array.isArray(activeBlock?.productIds) ? activeBlock.productIds.filter(Boolean) : [];
 
   return (
-    <section className="bg-gradient-to-b from-[#FFFDF5] via-white to-[#FFF7ED]/50 py-6 md:py-10 border-b border-amber-100/60 my-2">
-      <div className="max-w-[1440px] mx-auto px-4 md:px-12">
+    <section
+      className="w-full py-8 md:py-14 border-y my-0"
+      style={{
+        background: 'linear-gradient(180deg, #FEF9C3 0%, #FEFCE8 50%, #FEEF85 100%)',
+        borderColor: '#FDE047',
+      }}
+    >
+      <div className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-12">
 
         {/* Compact Header */}
         <div className="flex items-center justify-between mb-3 md:mb-5">
           <div>
-            <span className="inline-block px-3 py-0.5 rounded-full text-[9px] font-black uppercase tracking-[0.25em] bg-[#F59E0B]/10 text-[#D97706] border border-[#F59E0B]/20 mb-1">
+            <span className="inline-block px-3 py-0.5 rounded-full text-[9px] font-black uppercase tracking-[0.25em] bg-[#D97706]/10 text-[#D97706] border border-[#D97706]/20 mb-1">
               Premium Selection
             </span>
-            <h2 className="text-lg md:text-2xl font-black text-gray-900 tracking-tight leading-tight" style={{ fontFamily: "'Inter', sans-serif" }}>
+            <h2 className="text-lg md:text-2xl font-black text-gray-900 tracking-tight leading-tight">
               {section.heading}
             </h2>
             {section.subheading && (
@@ -95,18 +101,19 @@ const FavouriteSectionCard = ({ section }) => {
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.96 }}
                     transition={{ duration: 0.3 }}
-                    className="group relative flex flex-col bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-md hover:-translate-y-0.5 transition-all duration-300"
+                    className="group relative flex flex-col bg-white rounded-2xl overflow-hidden shadow-xs border border-stone-200/80 hover:shadow-[0_16px_36px_rgba(24,157,145,0.12)] hover:border-[#189D91]/40 hover:-translate-y-1 transition-all duration-400"
                   >
                     <Link to={`/products/${getId(product)}`} className="block h-full">
-                      <div className="aspect-square overflow-hidden bg-gray-50">
+                      <div className="relative aspect-square overflow-hidden bg-stone-50">
                         <img
                           src={getProductImage(product)}
                           alt={product?.name || 'Product'}
-                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-108"
                         />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                       </div>
-                      <div className="py-1.5 px-2 text-center">
-                        <span className="text-[10px] md:text-xs font-semibold text-gray-600 group-hover:text-[#189D91] transition-colors leading-tight line-clamp-1">
+                      <div className="py-2 px-2.5 text-center bg-white">
+                        <span className="text-[11px] md:text-xs font-black text-slate-800 group-hover:text-[#189D91] transition-colors leading-tight line-clamp-1">
                           {product?.name}
                         </span>
                       </div>

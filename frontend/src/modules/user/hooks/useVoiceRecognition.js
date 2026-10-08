@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import toast from 'react-hot-toast';
+import api from '../../../shared/utils/api';
 
 /**
  * Custom hook for complete, error-resilient Speech-to-Text (STT) and authentic Indian English Text-to-Speech (TTS).
@@ -21,6 +22,7 @@ export const useVoiceRecognition = ({
   const isListeningRef = useRef(false);
   const isStartingRef = useRef(false);
   const indianVoiceRef = useRef(null);
+  const currentAudioRef = useRef(null);
 
   // Store latest callback references in ref to prevent useEffect teardowns on re-renders
   const callbacksRef = useRef({
@@ -38,7 +40,8 @@ export const useVoiceRecognition = ({
   }, [onTranscriptChange, onFinalTranscript, onVoiceCommand]);
 
   /**
-   * Intelligently discovers and locks onto authentic Indian English browser voices (Ravi, Prabhat, Heera, Google Indian, Rishi, etc.)
+   * Intelligently discovers and locks onto authentic Indian English browser voices
+   * Prioritizes high-fidelity Neural/Online Indian voices (Neerja, Prabhat, Google English India, Rishi)
    */
   useEffect(() => {
     if (typeof window === 'undefined' || !window.speechSynthesis) return;
@@ -47,32 +50,34 @@ export const useVoiceRecognition = ({
       const voices = window.speechSynthesis.getVoices() || [];
       if (!voices.length) return null;
 
-      // 1. Prioritize authentic Indian Male voices (Microsoft Ravi / Prabhat, Google Indian English Male, Apple Rishi)
-      const maleIndianVoice = voices.find(v => {
+      // 1. High-Fidelity Online Neural Indian voices (e.g. Microsoft Neerja/Prabhat Online Natural, Google English India, Apple Rishi)
+      const neuralIndianVoice = voices.find(v => {
         const name = (v.name || '').toLowerCase();
         const lang = (v.lang || '').toLowerCase();
         const isIndian = lang.includes('en-in') || lang.includes('hi') || name.includes('india') || name.includes('indian');
-        const isMale = name.includes('ravi') || name.includes('prabhat') || name.includes('rishi') || name.includes('male') || name.includes('man');
-        return isIndian && isMale;
+        const isNeural = name.includes('natural') || name.includes('online') || name.includes('google') || name.includes('neural');
+        return isIndian && isNeural;
       });
-      if (maleIndianVoice) return maleIndianVoice;
+      if (neuralIndianVoice) return neuralIndianVoice;
 
-      // 2. High-priority general Indian English voices (Google Indian English, Microsoft Heera, Neerja, Sangeeta)
+      // 2. High-priority general Indian English & Hindi voices (Neerja, Prabhat, Rishi, Veena, Swara, Madhur, Ravi, Heera)
       const generalIndianVoice = voices.find(v => {
         const name = (v.name || '').toLowerCase();
         const lang = (v.lang || '').toLowerCase();
         return (
           lang === 'en-in' ||
           lang.startsWith('en-in') ||
-          name.includes('en-in') ||
+          lang.includes('hi-in') ||
           name.includes('india') ||
           name.includes('indian') ||
-          name.includes('ravi') ||
-          name.includes('heera') ||
           name.includes('neerja') ||
           name.includes('prabhat') ||
           name.includes('rishi') ||
-          name.includes('hindi')
+          name.includes('veena') ||
+          name.includes('ravi') ||
+          name.includes('heera') ||
+          name.includes('swara') ||
+          name.includes('madhur')
         );
       });
       if (generalIndianVoice) return generalIndianVoice;
@@ -81,8 +86,14 @@ export const useVoiceRecognition = ({
       const enInVoice = voices.find(v => (v.lang || '').toLowerCase().startsWith('en-in'));
       if (enInVoice) return enInVoice;
 
-      // 4. Fallback to system English
-      return voices.find(v => (v.lang || '').toLowerCase().startsWith('en')) || voices[0] || null;
+      // 4. Modern natural voice (strictly avoiding robotic legacy SAPI Desktop voices like Microsoft David Desktop)
+      return voices.find(v => {
+        const name = (v.name || '').toLowerCase();
+        return (
+          (name.includes('natural') || name.includes('online') || name.includes('google')) &&
+          !name.includes('desktop')
+        );
+      }) || voices.find(v => !v.name?.toLowerCase().includes('desktop') && v.lang?.startsWith('en')) || null;
     };
 
     const updateVoices = () => {
@@ -121,7 +132,10 @@ export const useVoiceRecognition = ({
       lower.includes('ai pro') ||
       lower.includes('upgrade membership') ||
       lower.includes('upgrade plan') ||
-      lower.includes('pro membership')
+      lower.includes('pro membership') ||
+      lower.includes('pro upgrade karo') ||
+      lower.includes('membership upgrade karo') ||
+      lower.includes('upgrade karo')
     ) {
       return { type: 'UPGRADE_PRO', label: 'B2B Upgrade to Pro', phrase: text };
     }
@@ -134,7 +148,12 @@ export const useVoiceRecognition = ({
       lower.includes('order status') ||
       lower.includes('track delivery') ||
       lower.includes('gps track') ||
-      lower.includes('delivery status')
+      lower.includes('delivery status') ||
+      lower.includes('mera order track karo') ||
+      lower.includes('order track karo') ||
+      lower.includes('order kahan hai') ||
+      lower.includes('delivery status batao') ||
+      lower.includes('order tracking')
     ) {
       return { type: 'TRACK_ORDER', label: 'Live GPS Tracking', phrase: text, path: '/orders/track' };
     }
@@ -146,7 +165,11 @@ export const useVoiceRecognition = ({
       lower.includes('request quotation') ||
       lower.includes('bulk quote') ||
       lower.includes('bulk rfq') ||
-      lower.includes('custom quotation')
+      lower.includes('custom quotation') ||
+      lower.includes('quotation banao') ||
+      lower.includes('naya rfq banao') ||
+      lower.includes('quote banao') ||
+      lower.includes('bulk quote chahiye')
     ) {
       return { type: 'CREATE_RFQ', label: 'Create Bulk RFQ', phrase: text, path: '/rfq/new' };
     }
@@ -156,7 +179,10 @@ export const useVoiceRecognition = ({
       lower.includes('go to cart') ||
       lower.includes('open cart') ||
       lower.includes('view cart') ||
-      lower.includes('show cart')
+      lower.includes('show cart') ||
+      lower.includes('cart dikhao') ||
+      lower.includes('cart kholo') ||
+      lower.includes('trolley dikhao')
     ) {
       return { type: 'NAVIGATE', label: 'Shopping Cart', phrase: text, path: '/cart' };
     }
@@ -305,6 +331,13 @@ export const useVoiceRecognition = ({
    * Stop any actively playing speech
    */
   const stopSpeaking = useCallback(() => {
+    if (currentAudioRef.current) {
+      try {
+        currentAudioRef.current.pause();
+        currentAudioRef.current.currentTime = 0;
+      } catch (e) {}
+      currentAudioRef.current = null;
+    }
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       try {
         window.speechSynthesis.cancel();
@@ -314,60 +347,165 @@ export const useVoiceRecognition = ({
   }, []);
 
   /**
-   * Speaks out response text with authentic Indian English accent
+   * Enhanced Browser Synthesis Fallback (Prioritizes genuine Indian voices & excludes robotic SAPI Desktop voices)
    */
-  const speak = useCallback((text) => {
-    if (!isTtsEnabled || !window.speechSynthesis || !text || typeof text !== 'string') return;
+  const playBrowserSynthesis = useCallback((rawText) => {
+    if (typeof window === 'undefined' || !window.speechSynthesis) return;
 
     try {
-      stopSpeaking();
-
-      // Clean markdown and URLs for natural speech cadence
-      const cleanText = text
-        .replace(/[*#_`~\[\]()]/g, ' ')
-        .replace(/https?:\/\/\S+/g, '')
+      // Prepare text for natural Indian pronunciation
+      let cleanText = (rawText || '')
+        .replace(/₹\s*(\d+(?:,\d+)*(?:\.\d+)?)/gi, '$1 rupees')
+        .replace(/Rs\.?\s*(\d+(?:,\d+)*(?:\.\d+)?)/gi, '$1 rupees')
+        .replace(/₹/g, ' rupees ')
+        .replace(/\bB2B\b/gi, 'B to B')
+        .replace(/\bB2C\b/gi, 'B to C')
+        .replace(/\bRFQ\b/gi, 'R F Q')
+        .replace(/\bCOD\b/gi, 'Cash on Delivery')
+        .replace(/\bsq\.?\s*ft\.?\b/gi, 'square feet')
+        .replace(/\bBHK\b/gi, 'B H K')
+        .replace(/\bVastu\b/gi, 'Vaastu')
         .trim();
 
       if (!cleanText) return;
 
-      const utterance = new SpeechSynthesisUtterance(cleanText.slice(0, 500));
+      const utterance = new SpeechSynthesisUtterance(cleanText);
       utterance.lang = 'en-IN';
-      utterance.rate = 1.0;
-      utterance.pitch = 0.95; // Natural, clear male cadence
+      utterance.rate = 0.96; // Relaxed, natural Indian conversational pacing
+      utterance.pitch = 1.02; // Friendly, warm Indian inflection
 
-      // Bind the detected Indian voice
       const voices = window.speechSynthesis.getVoices() || [];
-      const matchedVoice = indianVoiceRef.current || activeIndianVoice || voices.find(v => {
+
+      // 1. Search for genuine Indian English & Hindi voices (prioritizing Neural / Online voices)
+      const indianVoice = indianVoiceRef.current || activeIndianVoice || voices.find(v => {
+        const name = (v.name || '').toLowerCase();
+        const lang = (v.lang || '').toLowerCase();
+        const isIndian = lang.includes('en-in') || lang.includes('hi-in') || name.includes('india') || name.includes('indian');
+        const isNeural = name.includes('natural') || name.includes('online') || name.includes('google');
+        return isIndian && isNeural;
+      }) || voices.find(v => {
         const name = (v.name || '').toLowerCase();
         const lang = (v.lang || '').toLowerCase();
         return (
-          lang.includes('en-in') ||
+          lang === 'en-in' ||
+          lang.startsWith('en-in') ||
+          lang.includes('hi-in') ||
           name.includes('india') ||
-          name.includes('ravi') ||
-          name.includes('heera') ||
+          name.includes('indian') ||
           name.includes('neerja') ||
           name.includes('prabhat') ||
-          name.includes('rishi')
+          name.includes('rishi') ||
+          name.includes('veena') ||
+          name.includes('ravi') ||
+          name.includes('heera') ||
+          name.includes('swara') ||
+          name.includes('madhur')
         );
       });
 
-      if (matchedVoice) {
-        utterance.voice = matchedVoice;
+      if (indianVoice) {
+        utterance.voice = indianVoice;
+      } else {
+        // 2. Fallback to modern natural voice (strictly avoiding robotic SAPI Desktop voices like Microsoft David Desktop)
+        const modernVoice = voices.find(v => {
+          const name = (v.name || '').toLowerCase();
+          return (
+            (name.includes('natural') || name.includes('online') || name.includes('google') || name.includes('neural')) &&
+            !name.includes('desktop')
+          );
+        }) || voices.find(v => !v.name?.toLowerCase().includes('desktop') && v.lang?.startsWith('en'));
+
+        if (modernVoice) {
+          utterance.voice = modernVoice;
+        }
       }
 
       utterance.onstart = () => setIsSpeaking(true);
       utterance.onend = () => setIsSpeaking(false);
       utterance.onerror = (e) => {
-        console.warn('[Tejas Voice] Speech synthesis error:', e);
+        console.warn('[Tejas Voice] Browser speech error:', e);
         setIsSpeaking(false);
       };
 
       window.speechSynthesis.speak(utterance);
+    } catch (err) {
+      console.warn('[Tejas Voice] Browser synthesis exception:', err.message);
+      setIsSpeaking(false);
+    }
+  }, [activeIndianVoice]);
+
+  /**
+   * Speaks out response text with natural human voice (Authentic Indian Neural TTS primary, Indian browser secondary)
+   */
+  const speak = useCallback(async (text) => {
+    if (!isTtsEnabled || !text || typeof text !== 'string') return;
+
+    try {
+      stopSpeaking();
+
+      // Clean markdown, code, URLs, and emojis for natural human speech
+      let cleanText = text
+        .replace(/https?:\/\/\S+/g, '')
+        .replace(/[*#_`~\[\]()|{}>]/g, ' ')
+        .replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F900}-\u{1F9FF}\u{1FA70}-\u{1FAFF}]/gu, '')
+        .replace(/₹\s*(\d+(?:,\d+)*(?:\.\d+)?)/gi, '$1 rupees')
+        .replace(/Rs\.?\s*(\d+(?:,\d+)*(?:\.\d+)?)/gi, '$1 rupees')
+        .replace(/₹/g, ' rupees ')
+        .replace(/\bB2B\b/gi, 'B to B')
+        .replace(/\bRFQ\b/gi, 'R F Q')
+        .replace(/\bCOD\b/gi, 'Cash on Delivery')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+      if (!cleanText) return;
+
+      // Keep a concise slice (max 380 chars) for responsive, natural interactive spoken audio
+      const textToSpeak = cleanText.slice(0, 380);
+
+      // ── Tier 1: Authentic Native Indian Neural Voice via Backend TTS (/assistant/tts) ──
+      try {
+        const res = await api.post('/assistant/tts', {
+          text: textToSpeak,
+          lang: 'en-IN'
+        }, {
+          responseType: 'blob',
+          timeout: 6500
+        });
+
+        // Ensure we got valid audio bytes (not a JSON error blob)
+        if (res.data && res.data.size > 250) {
+          const audioUrl = URL.createObjectURL(res.data);
+          const audio = new Audio(audioUrl);
+          currentAudioRef.current = audio;
+
+          audio.onplay = () => setIsSpeaking(true);
+          audio.onended = () => {
+            setIsSpeaking(false);
+            URL.revokeObjectURL(audioUrl);
+            currentAudioRef.current = null;
+          };
+          audio.onerror = () => {
+            setIsSpeaking(false);
+            URL.revokeObjectURL(audioUrl);
+            currentAudioRef.current = null;
+            playBrowserSynthesis(textToSpeak);
+          };
+
+          await audio.play();
+          return;
+        }
+      } catch (neuralErr) {
+        // Silently fall back to natural browser synthesis with Indian voice
+      }
+
+      // ── Tier 2: Enhanced Browser Synthesis Fallback (Indian English en-IN) ──
+      playBrowserSynthesis(textToSpeak);
+
     } catch (e) {
       console.warn('[Tejas Voice] Speak error:', e.message);
       setIsSpeaking(false);
     }
-  }, [isTtsEnabled, activeIndianVoice, stopSpeaking]);
+  }, [isTtsEnabled, stopSpeaking, playBrowserSynthesis]);
 
   const startListening = useCallback(() => {
     if (!isSupported) {

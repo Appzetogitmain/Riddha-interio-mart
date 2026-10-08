@@ -26,7 +26,6 @@ const AiAssistantWidget = () => {
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
   const [conversationId, setConversationId] = useState(null);
-  const [guestSessionId, setGuestSessionId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [handoverState, setHandoverState] = useState(null);
   const [expression, setExpression] = useState('idle'); // idle | listening | thinking | speaking | confused | celebrating
@@ -48,6 +47,13 @@ const AiAssistantWidget = () => {
 
   const roleContext = getRoleContext();
 
+  const getLoginPath = () => {
+    if (roleContext === 'seller') return '/seller/login';
+    if (roleContext === 'delivery') return '/delivery/login';
+    if (roleContext === 'admin') return '/admin/login';
+    return '/login';
+  };
+
   // Speak ref helper to avoid cyclic dependency
   const speakRef = useRef(null);
 
@@ -58,6 +64,31 @@ const AiAssistantWidget = () => {
 
     // Always clear input field when sending
     setInputText('');
+
+    // If user is not logged in: DO NOT send HTTP request to /assistant/chat!
+    // Instead show the user message and assistant login prompt directly in chat.
+    if (!user) {
+      const tempUserMsg = {
+        role: 'user',
+        content: text,
+        createdAt: new Date().toISOString()
+      };
+      const loginPromptMsg = {
+        role: 'assistant',
+        content: "Please log in first to chat with me! 🔐\n\nOnce logged in, you'll get instant AI interior design advice, live GPS order tracking, bulk RFQ estimates, and personalized recommendations.",
+        metadata: {
+          expression: 'happy',
+          actions: [
+            { type: 'LOGIN', label: 'Log In / Sign Up', icon: FiLogIn }
+          ]
+        },
+        createdAt: new Date().toISOString()
+      };
+      setMessages(prev => [...prev, tempUserMsg, loginPromptMsg]);
+      setExpression('happy');
+      speakRef.current?.("Please log in first to chat with me.");
+      return;
+    }
 
     const tempUserMsg = {
       role: 'user',
@@ -73,8 +104,7 @@ const AiAssistantWidget = () => {
       const payload = {
         message: text,
         conversationId,
-        roleContext: currentRole,
-        guestSessionId: user ? undefined : guestSessionId
+        roleContext: currentRole
       };
 
       const res = await api.post('/assistant/chat', payload);
@@ -111,6 +141,21 @@ const AiAssistantWidget = () => {
         }
       }
     } catch (e) {
+      if (e.response?.status === 401 || e.response?.data?.requiresLogin) {
+        setExpression('happy');
+        const loginPromptMsg = {
+          role: 'assistant',
+          content: "Please log in first to chat with me! 🔐 Click below to sign in.",
+          metadata: {
+            expression: 'happy',
+            actions: [{ type: 'LOGIN', label: 'Log In Now', icon: FiLogIn }]
+          },
+          createdAt: new Date().toISOString()
+        };
+        setMessages(prev => [...prev, loginPromptMsg]);
+        return;
+      }
+
       const errMsg = e.response?.data?.error || 'Failed to send message. Please retry.';
       toast.error(errMsg);
       setExpression('confused');
@@ -126,10 +171,27 @@ const AiAssistantWidget = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [inputText, isLoading, conversationId, user, guestSessionId, location.pathname]);
+  }, [inputText, isLoading, conversationId, user, location.pathname]);
 
   // Voice command execution handler
   const handleVoiceCommand = useCallback((command, rawText) => {
+    if (!user) {
+      const loginPromptMsg = {
+        role: 'assistant',
+        content: "Please log in first to use voice commands and chat with Tejas! 🎙️🔐",
+        metadata: {
+          expression: 'happy',
+          actions: [
+            { type: 'LOGIN', label: 'Log In / Sign Up', icon: FiLogIn }
+          ]
+        },
+        createdAt: new Date().toISOString()
+      };
+      setMessages(prev => [...prev, loginPromptMsg]);
+      setExpression('happy');
+      return;
+    }
+
     switch (command.type) {
       case 'UPGRADE_PRO':
         setExpression('celebrating');
@@ -222,24 +284,10 @@ const AiAssistantWidget = () => {
     setConversationId(null);
     setMessages([]);
     setHandoverState(null);
-    if (isOpen) {
+    if (isOpen && user) {
       loadConversation();
     }
   }, [location.pathname, user]);
-
-  // Initialize guest session ID if not logged in
-  useEffect(() => {
-    if (!user) {
-      let savedId = localStorage.getItem('riddha_guest_assistant_session');
-      if (!savedId) {
-        savedId = 'guest_' + Math.random().toString(36).substring(2, 15);
-        localStorage.setItem('riddha_guest_assistant_session', savedId);
-      }
-      setGuestSessionId(savedId);
-    } else {
-      setGuestSessionId(null);
-    }
-  }, [user]);
 
   // Reset conversation handler for starting fresh chat
   const handleResetConversation = () => {
@@ -248,23 +296,20 @@ const AiAssistantWidget = () => {
     setHandoverState(null);
     setInputText('');
     setExpression('idle');
-    if (!user) {
-      const newGuestId = 'guest_' + Math.random().toString(36).substring(2, 15);
-      localStorage.setItem('riddha_guest_assistant_session', newGuestId);
-      setGuestSessionId(newGuestId);
-    }
     toast.success('Started a fresh conversation with Tejas.', { icon: '✨' });
   };
 
   // Load conversation thread when opening chat
   useEffect(() => {
     if (isOpen) {
-      loadConversation();
+      if (user) {
+        loadConversation();
+      }
     } else {
       stopListening();
       stopSpeaking();
     }
-  }, [isOpen, user, guestSessionId]);
+  }, [isOpen, user]);
 
   // Scroll to bottom on new message
   useEffect(() => {
@@ -276,12 +321,10 @@ const AiAssistantWidget = () => {
   };
 
   const loadConversation = async () => {
+    if (!user) return;
     try {
       const currentRole = getRoleContext();
       const params = { roleContext: currentRole };
-      if (!user && guestSessionId) {
-        params.guestSessionId = guestSessionId;
-      }
       
       const res = await api.get('/assistant/conversations', { params });
       if (res.data && res.data.success && res.data.conversations.length > 0) {
@@ -344,7 +387,7 @@ const AiAssistantWidget = () => {
 
       case 'LOGIN':
         setIsOpen(false);
-        navigate('/login');
+        navigate(getLoginPath(), { state: { redirect: location.pathname } });
         break;
 
       case 'NAVIGATE':
@@ -456,6 +499,22 @@ const AiAssistantWidget = () => {
   };
 
   const handleQuickAction = (act) => {
+    if (!user && act.type !== 'LOGIN') {
+      const loginPromptMsg = {
+        role: 'assistant',
+        content: `Please log in first to use "${act.label}" and chat with Tejas! 🔐`,
+        metadata: {
+          expression: 'happy',
+          actions: [
+            { type: 'LOGIN', label: 'Log In / Sign Up', icon: FiLogIn }
+          ]
+        },
+        createdAt: new Date().toISOString()
+      };
+      setMessages(prev => [...prev, loginPromptMsg]);
+      setExpression('happy');
+      return;
+    }
     if (act.isPrompt) {
       const text = act.text || act.label;
       handleSendMessage(text);
@@ -470,7 +529,7 @@ const AiAssistantWidget = () => {
         title: 'Tejas',
         subtitle: 'Seller Business Advisor',
         badge: 'SELLER ASSISTANT',
-        greeting: `Hello ${user?.shopName || 'Seller'}! 👋`,
+        greeting: `Namaste ${user?.shopName || 'Seller'} ji! 🙏`,
         intro: 'Ask me about your store inventory, low stock warnings, seller orders, or revenue details.'
       };
     }
@@ -479,7 +538,7 @@ const AiAssistantWidget = () => {
         title: 'Tejas',
         subtitle: 'Logistics & Delivery Advisor',
         badge: 'DELIVERY ASSISTANT',
-        greeting: `Hello ${user?.fullName || 'Partner'}! 👋`,
+        greeting: `Namaste ${user?.fullName || 'Partner'} ji! 🚚`,
         intro: 'Ask me about your assigned packages, pickup/drop addresses, or COD collection summaries.'
       };
     }
@@ -488,7 +547,7 @@ const AiAssistantWidget = () => {
         title: 'Tejas',
         subtitle: 'Platform Operations Executive',
         badge: 'ADMIN ASSISTANT',
-        greeting: `Hello ${user?.fullName || 'Admin'}! 👋`,
+        greeting: `Namaste ${user?.fullName || 'Admin'} ji! 👑`,
         intro: 'Ask me about overall platform sales, commission profit, pending seller approvals, or customer support handovers.'
       };
     }
@@ -496,8 +555,8 @@ const AiAssistantWidget = () => {
       title: 'Ask Tejas',
       subtitle: 'Interior & Voice Consultant',
       badge: 'AI VOICE CONSULTANT',
-      greeting: 'Hello! I am Tejas. 👋',
-      intro: 'Speak or type any command! Try saying "B2B Upgrade to Pro", "Track my order", or ask for interior design advice!'
+      greeting: 'Namaste! I am Tejas. 🙏',
+      intro: 'Speak or type any command! Try saying "B2B Upgrade to Pro", "Mera order track karo", or ask for interior design & Vastu advice!'
     };
   };
 
@@ -516,8 +575,8 @@ const AiAssistantWidget = () => {
           <button
             onClick={() => setIsOpen(!isOpen)}
             aria-label="Ask Tejas"
-            className={`w-18 h-18 sm:w-20 sm:h-20 rounded-full flex items-center justify-center shadow-2xl transition-all focus:outline-none ${
-              isOpen ? 'bg-[#189D91] text-white ring-4 ring-[#189D91]/20' : 'bg-white p-1'
+            className={`w-18 h-18 sm:w-20 sm:h-20 rounded-full flex items-center justify-center shadow-2xl transition-all focus:outline-none overflow-hidden ${
+              isOpen ? 'bg-[#189D91] text-white ring-4 ring-[#189D91]/20' : 'bg-white p-1 hover:shadow-[0_20px_35px_rgba(24,157,145,0.25)] border-2 border-teal-100'
             }`}
           >
             <AnimatePresence mode="wait">
@@ -526,11 +585,15 @@ const AiAssistantWidget = () => {
                   <FiX size={32} />
                 </motion.div>
               ) : (
-                <TejasAvatar
-                  key="avatar"
-                  expression={expression}
-                  size={68}
-                  showReactionBadge={true}
+                <motion.img
+                  key="tejas-original-logo"
+                  src="/ask tejas final icon.png"
+                  alt="Ask Tejas"
+                  initial={{ scale: 0.85, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.85, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="w-full h-full object-contain rounded-full select-none"
                 />
               )}
             </AnimatePresence>
@@ -604,8 +667,72 @@ const AiAssistantWidget = () => {
               {/* Messages Area */}
               <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50/50 no-scrollbar">
                 
-                {/* Welcome Card */}
-                {messages.length === 0 && (
+                {/* Unauthenticated / Guest Welcome & Login Card */}
+                {messages.length === 0 && !user && (
+                  <div className="text-center py-6 px-4 space-y-4 bg-gradient-to-b from-white to-teal-50/40 rounded-3xl border border-teal-100 shadow-sm">
+                    <div className="flex justify-center">
+                      <div className="p-2.5 bg-teal-50/80 rounded-full border border-teal-100 shadow-inner">
+                        <TejasAvatar expression="happy" size={54} />
+                      </div>
+                    </div>
+                    <div>
+                      <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 border border-amber-200/60 rounded-full text-[10px] font-black text-amber-800 uppercase tracking-wider mb-2">
+                        <FiLogIn size={11} className="text-amber-600" /> Login Required
+                      </div>
+                      <h4 className="font-black text-slate-800 text-sm tracking-tight">{headerInfo.greeting}</h4>
+                      <p className="text-xs text-gray-600 font-medium leading-relaxed mt-1.5">
+                        Please log in first to chat with me! Unlock personalized interior styling, live GPS order tracking, and voice assistance.
+                      </p>
+                    </div>
+
+                    {/* Primary Login Button */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsOpen(false);
+                        navigate(getLoginPath(), { state: { redirect: location.pathname } });
+                      }}
+                      className="w-full py-2.5 px-4 bg-gradient-to-r from-[#189D91] to-[#127F75] hover:from-[#14847a] hover:to-[#0e635b] text-white font-black text-xs rounded-xl flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all active:scale-95"
+                    >
+                      <FiLogIn size={14} />
+                      Log In to Start Chat
+                    </button>
+
+                    {/* Sign Up Link */}
+                    <p className="text-[11px] text-gray-500 font-medium">
+                      New to Riddha Mart?{' '}
+                      <Link
+                        to="/signup"
+                        onClick={() => setIsOpen(false)}
+                        className="font-bold text-[#189D91] hover:underline"
+                      >
+                        Create an account
+                      </Link>
+                    </p>
+
+                    {/* Feature Highlights */}
+                    <div className="pt-3 border-t border-gray-100 text-left space-y-2">
+                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-wider">What you can do with Tejas:</p>
+                      <div className="grid grid-cols-2 gap-1.5">
+                        <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-700 bg-white p-2 rounded-xl border border-gray-100 shadow-2xs">
+                          <span>🎨</span> Room Styling
+                        </div>
+                        <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-700 bg-white p-2 rounded-xl border border-gray-100 shadow-2xs">
+                          <span>🚚</span> GPS Tracking
+                        </div>
+                        <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-700 bg-white p-2 rounded-xl border border-gray-100 shadow-2xs">
+                          <span>🎙️</span> Voice Commands
+                        </div>
+                        <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-700 bg-white p-2 rounded-xl border border-gray-100 shadow-2xs">
+                          <span>📋</span> Instant RFQ
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Authenticated Welcome Card */}
+                {messages.length === 0 && user && (
                   <div className="text-center py-5 px-3 space-y-3 bg-white rounded-2xl border border-teal-100/60 shadow-sm">
                     <div className="flex justify-center">
                       <TejasAvatar expression="idle" size={54} />
@@ -621,7 +748,7 @@ const AiAssistantWidget = () => {
                     <div className="pt-2 border-t border-gray-100 text-left space-y-1.5">
                       <p className="text-[10px] font-black text-[#189D91] uppercase tracking-wider">🎙️ Try Voice Commands:</p>
                       <div className="flex flex-wrap gap-1.5">
-                        {['"B2B Upgrade to Pro"', '"Track my order"', '"Create RFQ"', '"Show products"'].map((tip, idx) => (
+                        {['"B2B Upgrade to Pro"', '"Mera order track karo"', '"Create RFQ"', '"Vastu tips for home"'].map((tip, idx) => (
                           <button
                             key={idx}
                             onClick={() => handleSendMessage(tip.replace(/"/g, ''))}
@@ -658,6 +785,18 @@ const AiAssistantWidget = () => {
                         : 'bg-white text-slate-800 rounded-tl-none border border-gray-100'
                     }`}>
                       <p className="whitespace-pre-line">{msg.content}</p>
+                      {msg.role === 'assistant' && (
+                        <div className="flex items-center justify-end pt-1 -mb-1">
+                          <button
+                            onClick={() => speakRef.current?.(msg.content)}
+                            title="Listen with Tejas's Indian Voice"
+                            className="text-gray-400 hover:text-[#189D91] transition-colors p-0.5 rounded flex items-center gap-1 text-[10px]"
+                          >
+                            <FiVolume2 size={12} />
+                            <span className="text-[9px] font-semibold">Listen</span>
+                          </button>
+                        </div>
+                      )}
                     </div>
 
                     {/* Direct Action Chips */}
@@ -818,6 +957,28 @@ const AiAssistantWidget = () => {
                 </div>
               )}
 
+              {/* Login Required Notice Bar if unauthenticated */}
+              {!user && (
+                <div className="px-3.5 py-2 bg-gradient-to-r from-amber-50 to-orange-50 border-t border-amber-200/70 flex items-center justify-between gap-2 shrink-0">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0"></span>
+                    <p className="text-[11px] font-bold text-amber-900 truncate">
+                      Login first to chat with Tejas
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsOpen(false);
+                      navigate(getLoginPath(), { state: { redirect: location.pathname } });
+                    }}
+                    className="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-white text-[10px] font-black rounded-lg uppercase tracking-wider transition-all shrink-0 active:scale-95 flex items-center gap-1 shadow-sm"
+                  >
+                    <FiLogIn size={11} /> Log In
+                  </button>
+                </div>
+              )}
+
               {/* Chat & Voice Input Bar */}
               <form
                 onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }}
@@ -826,8 +987,26 @@ const AiAssistantWidget = () => {
                 {/* Voice Input Microphone Button */}
                 <button
                   type="button"
-                  onClick={isListening ? stopListening : startListening}
-                  title={isListening ? 'Stop listening' : 'Start voice command'}
+                  onClick={() => {
+                    if (!user) {
+                      setExpression('happy');
+                      const loginPromptMsg = {
+                        role: 'assistant',
+                        content: "Please log in first to use voice commands with Tejas! 🎙️🔐",
+                        metadata: {
+                          expression: 'happy',
+                          actions: [
+                            { type: 'LOGIN', label: 'Log In Now', icon: FiLogIn }
+                          ]
+                        },
+                        createdAt: new Date().toISOString()
+                      };
+                      setMessages(prev => [...prev, loginPromptMsg]);
+                      return;
+                    }
+                    isListening ? stopListening() : startListening();
+                  }}
+                  title={!user ? 'Login required for voice' : (isListening ? 'Stop listening' : 'Start voice command')}
                   className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-all ${
                     isListening
                       ? 'bg-red-500 text-white animate-pulse shadow-lg ring-4 ring-red-100'
@@ -843,7 +1022,9 @@ const AiAssistantWidget = () => {
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
                   placeholder={
-                    isListening
+                    !user
+                      ? "Ask Tejas (Login required to chat)..."
+                      : isListening
                       ? "Listening to voice..."
                       : "Ask Tejas or speak command..."
                   }

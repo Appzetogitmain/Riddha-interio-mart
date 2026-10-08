@@ -46,8 +46,8 @@ const RecommendationCard = ({ item, onExplain, onTrack }) => {
       onClick={handleCardClick}
       className="group relative bg-white border border-gray-100 rounded-2xl p-3 shadow-xs hover:shadow-xl transition-all duration-300 flex flex-col justify-between hover:-translate-y-1 cursor-pointer"
     >
-      {/* AI Recommendation Badge — logo blue (better contrast with white text than the logo's yellow) */}
-      <div className="absolute top-4 left-4 z-10 flex items-center gap-1.5 px-3 py-1 bg-[#2E3192] text-white text-[11px] font-bold rounded-full shadow-md border border-[#2E3192]/60">
+      {/* AI Recommendation Badge — luxury dark slate with teal hairline border */}
+      <div className="absolute top-4 left-4 z-10 flex items-center gap-1.5 px-3 py-1 bg-[#0F172A] text-white text-[11px] font-bold rounded-full shadow-md border border-[#189D91]/40">
         <Sparkles className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
         <span className="truncate max-w-[140px]">{reason}</span>
       </div>
@@ -72,7 +72,7 @@ const RecommendationCard = ({ item, onExplain, onTrack }) => {
             onClick={(e) => { e.stopPropagation(); onExplain(item); }}
             className="absolute bottom-2 right-2 px-2.5 py-1 bg-gray-950/90 hover:bg-black text-white text-[10px] font-bold rounded-lg flex items-center gap-1.5 shadow-md border border-gray-700"
           >
-            <Info className="w-3.5 h-3.5 text-emerald-400" />
+            <Info className="w-3.5 h-3.5 text-[#189D91]" />
             <span>Why Recommended?</span>
           </button>
         )}
@@ -81,8 +81,8 @@ const RecommendationCard = ({ item, onExplain, onTrack }) => {
       {/* Card Info */}
       <div className="flex-1 flex flex-col justify-between">
         <div>
-          <span className="text-[11px] uppercase tracking-wider text-emerald-800 font-extrabold">{category}</span>
-          <Link to={`/products/${productId}`} className="block font-bold text-gray-900 text-sm hover:text-emerald-700 line-clamp-1 mt-0.5">
+          <span className="text-[11px] uppercase tracking-wider text-[#189D91] font-extrabold">{category}</span>
+          <Link to={`/products/${productId}`} className="block font-bold text-gray-900 text-sm hover:text-[#189D91] line-clamp-1 mt-0.5">
             {name}
           </Link>
           
@@ -105,7 +105,7 @@ const RecommendationCard = ({ item, onExplain, onTrack }) => {
           </div>
           <button
             onClick={handleAddToCart}
-            className="p-2 bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl shadow-xs transition-colors flex items-center justify-center active:scale-95"
+            className="p-2 bg-[#189D91] hover:bg-[#127F75] text-white rounded-xl shadow-xs hover:shadow-[#189D91]/25 transition-all flex items-center justify-center active:scale-95"
             title="Add to Cart"
           >
             <ShoppingBag className="w-4 h-4" />

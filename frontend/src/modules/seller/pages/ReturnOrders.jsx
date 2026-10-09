@@ -5,14 +5,14 @@ import toast from 'react-hot-toast';
 import api from '../../../shared/utils/api';
 import TableSkeleton from '../../../shared/components/skeletons/TableSkeleton';
 import PageWrapper from '../components/PageWrapper';
-import ProofUploadModal from '../components/ProofUploadModal';
+import ReturnInspectionModal from '../components/ReturnInspectionModal';
 
 const ReturnOrders = () => {
   const [returns, setReturns] = useState([]);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState(null);
-  const [isProofModalOpen, setIsProofModalOpen] = useState(false);
-  const [proofTargetOrder, setProofTargetOrder] = useState(null);
+  const [isInspectionModalOpen, setIsInspectionModalOpen] = useState(false);
+  const [selectedReturn, setSelectedReturn] = useState(null);
 
   const fetchReturns = async () => {
     try {
@@ -32,15 +32,6 @@ const ReturnOrders = () => {
   }, []);
 
   const handleUpdateStatus = async (id, status) => {
-    if (status === 'Completed') {
-      const returnData = returns.find(r => r._id === id);
-      if (returnData?.deliveryStatus === 'None') {
-        setProofTargetOrder(id);
-        setIsProofModalOpen(true);
-        return;
-      }
-    }
-    
     setProcessingId(id);
     try {
       const res = await api.put(`/returns/${id}/status`, { status });
@@ -49,29 +40,37 @@ const ReturnOrders = () => {
         fetchReturns();
       }
     } catch (err) {
-      toast.error('Failed to update status');
+      toast.error(err.response?.data?.error || 'Failed to update status');
     } finally {
       setProcessingId(null);
     }
   };
 
-  const submitProof = async ({ images, video }) => {
-    setIsProofModalOpen(false);
-    setProcessingId(proofTargetOrder);
+  const handleOpenReceiveModal = (ret) => {
+    setSelectedReturn(ret);
+    setIsInspectionModalOpen(true);
+  };
+
+  const handleConfirmReceived = async ({ comment, images }) => {
+    if (!selectedReturn) return;
+    setProcessingId(selectedReturn._id);
     try {
       const payload = { 
         status: 'Completed',
-        dropoffProofImages: images
+        comment: comment || 'Return received and inspected by seller',
+        dropoffProofImages: images || []
       };
       
-      const res = await api.put(`/returns/${proofTargetOrder}/status`, payload);
+      const res = await api.put(`/returns/${selectedReturn._id}/status`, payload);
       
       if (res.data.success) {
-        toast.success(`Return marked as Completed`);
+        toast.success('Return received! Product restocked to your inventory.');
+        setIsInspectionModalOpen(false);
+        setSelectedReturn(null);
         fetchReturns();
       }
     } catch (err) {
-      toast.error('Failed to submit proof');
+      toast.error(err.response?.data?.error || 'Failed to complete return');
     } finally {
       setProcessingId(null);
     }
@@ -105,37 +104,51 @@ const ReturnOrders = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
-                  {returns.map((ret) => (
+                  {returns.map((ret) => {
+                    const orderId = ret.order?._id ? String(ret.order._id) : (typeof ret.order === 'string' ? ret.order : '');
+                    return (
                     <tr key={ret._id} className="hover:bg-gray-50/50 transition-colors">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <img src={ret.product?.images?.[0]} alt="" className="w-10 h-10 rounded-lg object-cover bg-gray-100" />
-                          <div>
-                            <p className="font-bold text-gray-900 max-w-[200px] truncate">{ret.product?.name}</p>
-                            <p className="text-[10px] text-gray-500">Order: #{ret.order?.slice(-6).toUpperCase()}</p>
+                          <img 
+                            src={ret.product?.images?.[0] || 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=200'} 
+                            alt="" 
+                            className="w-12 h-12 rounded-xl object-cover bg-gray-100 border border-gray-100 shrink-0" 
+                          />
+                          <div className="min-w-0">
+                            <p className="font-bold text-gray-900 max-w-[220px] truncate">{ret.product?.name || 'Product'}</p>
+                            <p className="text-[11px] text-gray-400 font-medium">Order: #{orderId ? orderId.slice(-6).toUpperCase() : 'N/A'}</p>
+                            {ret.deliveryBoy && (
+                              <p className="text-[10px] text-emerald-600 font-semibold mt-0.5 flex items-center gap-1">
+                                <span>🚚</span> {ret.deliveryBoy.fullName} ({ret.deliveryStatus || 'Assigned'})
+                              </p>
+                            )}
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <p className="font-bold text-gray-900">{ret.user?.fullName}</p>
-                        <p className="text-xs text-gray-500">{ret.user?.email}</p>
+                        <p className="font-bold text-gray-900">{ret.user?.fullName || 'Customer'}</p>
+                        <p className="text-xs text-gray-500">{ret.user?.email || ret.user?.phone || 'No contact'}</p>
                       </td>
                       <td className="px-6 py-4">
                         <p className="font-bold text-gray-800">{ret.reason}</p>
+                        {ret.description && (
+                          <p className="text-xs text-gray-500 max-w-[200px] truncate mt-0.5">{ret.description}</p>
+                        )}
                         <div className="flex gap-1 mt-1">
                           {ret.images?.length > 0 && (
                             <span className="flex items-center gap-1 text-[10px] text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full font-bold">
-                              <FiImage /> {ret.images.length}
+                              <FiImage /> {ret.images.length} photos
                             </span>
                           )}
                         </div>
                       </td>
                       <td className="px-6 py-4">
                         <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
-                          ret.status === 'Pending' ? 'bg-orange-50 text-orange-600' :
-                          ret.status === 'Approved' ? 'bg-blue-50 text-blue-600' :
-                          ret.status === 'Completed' ? 'bg-green-50 text-green-600' :
-                          'bg-red-50 text-red-600'
+                          ret.status === 'Pending' ? 'bg-orange-50 text-orange-600 border border-orange-200' :
+                          ret.status === 'Approved' ? 'bg-blue-50 text-blue-600 border border-blue-200' :
+                          ret.status === 'Completed' || ret.status === 'Received' ? 'bg-green-50 text-green-600 border border-green-200' :
+                          'bg-red-50 text-red-600 border border-red-200'
                         }`}>
                           {ret.status}
                         </span>
@@ -146,33 +159,39 @@ const ReturnOrders = () => {
                             <button
                               onClick={() => handleUpdateStatus(ret._id, 'Approved')}
                               disabled={processingId === ret._id}
-                              className="p-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-colors"
+                              className="px-3 py-1.5 bg-green-50 text-green-700 hover:bg-green-100 rounded-lg font-bold text-xs transition-colors flex items-center gap-1"
                               title="Approve Return"
                             >
-                              <FiCheck size={16} />
+                              <FiCheck size={14} /> Accept
                             </button>
                             <button
                               onClick={() => handleUpdateStatus(ret._id, 'Rejected')}
                               disabled={processingId === ret._id}
-                              className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
+                              className="px-3 py-1.5 bg-red-50 text-red-700 hover:bg-red-100 rounded-lg font-bold text-xs transition-colors flex items-center gap-1"
                               title="Reject Return"
                             >
-                              <FiX size={16} />
+                              <FiX size={14} /> Reject
                             </button>
                           </div>
                         )}
                         {ret.status === 'Approved' && (
                           <button
-                            onClick={() => handleUpdateStatus(ret._id, 'Completed')}
+                            onClick={() => handleOpenReceiveModal(ret)}
                             disabled={processingId === ret._id}
-                            className="px-4 py-2 bg-[#189D91] text-white text-xs font-bold rounded-lg hover:bg-[#14847a] transition-colors"
+                            className="px-4 py-2 bg-[#189D91] hover:bg-[#14847a] text-white text-xs font-bold rounded-xl shadow-sm transition-all flex items-center gap-1.5 ml-auto"
                           >
-                            Mark Received
+                            <FiCheck size={14} /> Mark Received & Restock
                           </button>
+                        )}
+                        {(ret.status === 'Completed' || ret.status === 'Received') && (
+                          <span className="text-xs font-bold text-emerald-600 inline-flex items-center gap-1">
+                            <FiCheck size={14} /> Restocked
+                          </span>
                         )}
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             )}
@@ -180,11 +199,15 @@ const ReturnOrders = () => {
         </div>
       </div>
 
-      <ProofUploadModal
-        isOpen={isProofModalOpen}
-        onClose={() => setIsProofModalOpen(false)}
-        onSubmit={submitProof}
-        isPickup={false}
+      <ReturnInspectionModal
+        isOpen={isInspectionModalOpen}
+        onClose={() => {
+          setIsInspectionModalOpen(false);
+          setSelectedReturn(null);
+        }}
+        returnItem={selectedReturn}
+        onConfirm={handleConfirmReceived}
+        isSubmitting={processingId === selectedReturn?._id}
       />
     </PageWrapper>
   );

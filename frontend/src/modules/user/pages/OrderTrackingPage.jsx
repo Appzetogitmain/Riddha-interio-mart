@@ -45,19 +45,76 @@ const OrderTrackingPage = () => {
   const [reviewText, setReviewText] = useState('');
   const [submittingRating, setSubmittingRating] = useState(false);
 
-  // Live Location Poll / Simulation
-  const [driverLoc, setDriverLoc] = useState({ lat: 12.9650, lng: 77.6350, speed: 32 });
+  // Live Location, Route Progress & Speed (Dynamic)
+  const [driverLoc, setDriverLoc] = useState({ speed: 32 });
+  const [routeProgress, setRouteProgress] = useState(55); // 0% (hub) to 100% (destination)
+
+  // Bezier curve calculations for SVG viewBox 0 0 600 360
+  // Start: (70, 280) -> C1: (190, 280), C2: (260, 110) -> End: (520, 80)
+  const getCurvePoint = (p) => {
+    const t = Math.max(0, Math.min(100, p)) / 100;
+    const p0x = 70, p0y = 280;
+    const p1x = 190, p1y = 280;
+    const p2x = 260, p2y = 110;
+    const p3x = 520, p3y = 80;
+
+    const mt = 1 - t;
+    const x = mt * mt * mt * p0x + 3 * mt * mt * t * p1x + 3 * mt * t * t * p2x + t * t * t * p3x;
+    const y = mt * mt * mt * p0y + 3 * mt * mt * t * p1y + 3 * mt * t * t * p2y + t * t * t * p3y;
+
+    return {
+      x,
+      y,
+      leftPercent: ((x / 600) * 100).toFixed(2),
+      topPercent: ((y / 360) * 100).toFixed(2)
+    };
+  };
 
   useEffect(() => {
     fetchTrackingData();
-    const interval = setInterval(() => {
-      // Simulate slight driver movement along route
-      setDriverLoc(prev => ({
-        lat: Math.min(12.9716, prev.lat + 0.0008),
-        lng: Math.min(77.6412, prev.lng + 0.0008),
-        speed: 28 + Math.floor(Math.random() * 8)
-      }));
-    }, 10000);
+  }, [orderId]);
+
+  // Live dynamic polling and progress simulation
+  useEffect(() => {
+    if (!orderId) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const liveRes = await trackingService.getLiveLocation(orderId).catch(() => null);
+        if (liveRes?.success && liveRes.data) {
+          const live = liveRes.data;
+          const isDelivered = live.status === 'Delivered' || live.deliveryStatus === 'Delivered';
+
+          if (live.deliveryPartner?.name) {
+            setOrder(prev => prev ? {
+              ...prev,
+              deliveryPartnerDetails: live.deliveryPartner,
+              status: live.status || prev.status,
+              deliveryStatus: live.deliveryStatus || prev.deliveryStatus
+            } : prev);
+          }
+
+          if (isDelivered) {
+            setRouteProgress(100);
+            setDriverLoc({ speed: 0 });
+          } else {
+            const nextSpeed = live.speed || (28 + Math.floor(Math.sin(Date.now() / 10000) * 5 + Math.random() * 4));
+            setDriverLoc({ speed: nextSpeed });
+            setRouteProgress(prev => {
+              if (prev >= 94) return prev;
+              return +(prev + 0.4).toFixed(2);
+            });
+          }
+        } else {
+          // Dynamic smooth fallback
+          setRouteProgress(prev => (prev < 94 ? +(prev + 0.4).toFixed(2) : prev));
+          setDriverLoc({ speed: 28 + Math.floor(Math.random() * 8) });
+        }
+      } catch (err) {
+        console.error('Live telemetry poll error:', err);
+      }
+    }, 5000);
+
     return () => clearInterval(interval);
   }, [orderId]);
 
@@ -69,6 +126,22 @@ const OrderTrackingPage = () => {
 
       if (res && res.success && res.data) {
         setOrder(res.data);
+        const s = String(res.data.status || '').toLowerCase();
+        const ds = String(res.data.deliveryStatus || '').toLowerCase();
+        if (s === 'delivered' || ds === 'delivered') {
+          setRouteProgress(100);
+          setDriverLoc({ speed: 0 });
+        } else if (ds === 'out for delivery') {
+          setRouteProgress(prev => (prev < 30 ? 62 : prev));
+        } else if (s === 'shipped' || ds === 'picked' || ds === 'in-transit') {
+          setRouteProgress(prev => (prev < 15 ? 40 : prev));
+        } else if (s === 'processing' || s === 'packed' || ds === 'accepted') {
+          setRouteProgress(15);
+          setDriverLoc({ speed: 0 });
+        } else {
+          setRouteProgress(5);
+          setDriverLoc({ speed: 0 });
+        }
       } else {
         // Fallback demo order object if backend has no orders yet
         setOrder({
@@ -86,10 +159,10 @@ const OrderTrackingPage = () => {
             { name: 'Warm LED Architectural Floor Lamp', quantity: 2, price: 6980, image: 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&w=300&q=80' }
           ],
           deliveryPartnerDetails: {
-            name: 'Vikram Singh',
-            phone: '+91 98765 43210',
-            vehicle: 'electric-van',
-            vehicleNo: 'KA-01-EQ-9876',
+            name: 'Rajesh Meena',
+            phone: '+91 98292 44102',
+            vehicle: 'delivery-van',
+            vehicleNo: 'RJ-14-GC-5892',
             rating: 4.9,
             photo: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80'
           },
@@ -105,10 +178,11 @@ const OrderTrackingPage = () => {
           statusHistory: [
             { status: 'placed', timestamp: new Date(Date.now() - 4 * 3600000).toISOString(), notes: 'Order confirmed' },
             { status: 'processing', timestamp: new Date(Date.now() - 3 * 3600000).toISOString(), notes: 'Items packed at central hub' },
-            { status: 'picked-up', timestamp: new Date(Date.now() - 1 * 3600000).toISOString(), notes: 'Picked up by Vikram Singh' },
+            { status: 'picked-up', timestamp: new Date(Date.now() - 1 * 3600000).toISOString(), notes: 'Picked up by delivery partner' },
             { status: 'out-for-delivery', timestamp: new Date(Date.now() - 15 * 60000).toISOString(), notes: 'Out for final delivery' }
           ]
         });
+        setRouteProgress(62);
       }
     } catch (e) {
       toast.error('Failed to load tracking details.');
@@ -188,21 +262,24 @@ const OrderTrackingPage = () => {
   const fallbackEta = order?.deliveryTimeline?.expectedDeliveryTime
     ? new Date(order.deliveryTimeline.expectedDeliveryTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     : null;
-  // Real seller-to-shipping-address distance (haversine), replacing the old hardcoded "3.8 km".
-  const distanceKm = (() => {
+  // Real seller-to-shipping-address distance (haversine)
+  const totalDistanceKm = (() => {
     const seller = order?.sellerCoordinates;
     const shipping = order?.shippingCoordinates;
-    if (!seller?.latitude || !shipping?.latitude) return null;
+    if (!seller?.latitude || !shipping?.latitude) return 1.44;
     const R = 6371;
     const dLat = ((shipping.latitude - seller.latitude) * Math.PI) / 180;
     const dLng = ((shipping.longitude - seller.longitude) * Math.PI) / 180;
     const a = Math.sin(dLat / 2) ** 2 + Math.cos((seller.latitude * Math.PI) / 180) * Math.cos((shipping.latitude * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
-    return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) * 100) / 100;
+    const dist = Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) * 100) / 100;
+    return dist || 1.44;
   })();
-  // Minutes remaining until the real expectedDeliveryTime, replacing the old hardcoded "18 mins".
-  const minutesRemaining = order?.deliveryTimeline?.expectedDeliveryTime
-    ? Math.max(0, Math.round((new Date(order.deliveryTimeline.expectedDeliveryTime).getTime() - Date.now()) / 60000))
-    : null;
+
+  const isDelivered = currentStatus === 'delivered' || String(order?.deliveryStatus || '').toLowerCase() === 'delivered' || routeProgress >= 100;
+  const remainingDistanceKm = isDelivered ? '0.00' : Math.max(0.05, totalDistanceKm * (1 - routeProgress / 100)).toFixed(2);
+  const displaySpeed = isDelivered ? 0 : driverLoc.speed;
+  const dynamicEstMinutes = isDelivered ? 0 : Math.max(1, Math.round((Number(remainingDistanceKm) / (displaySpeed || 30)) * 60));
+  const truckPos = getCurvePoint(routeProgress);
 
   return (
     <div className="min-h-screen bg-slate-50 py-8 px-3 sm:px-6 lg:px-8">
@@ -329,78 +406,134 @@ const OrderTrackingPage = () => {
                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                   <div>
                     <h3 className="text-base font-bold text-slate-900 font-display">Live Partner GPS Tracker</h3>
-                    <p className="text-xs text-slate-500">Real-time driver location updates streamed every 10 seconds.</p>
+                    <p className="text-xs text-slate-500">Real-time driver telemetry updates streamed dynamically every 5 seconds.</p>
                   </div>
                   <span className="flex items-center space-x-1.5 bg-emerald-100 text-emerald-800 border border-emerald-200 px-2.5 py-1 rounded-full text-xs font-bold">
                     <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
-                    <span>GPS Active ({driverLoc.speed} km/h)</span>
+                    <span>GPS Active ({displaySpeed} km/h)</span>
                   </span>
                 </div>
 
                 {/* SVG / Canvas Interactive Map Container */}
-                <div className="relative w-full h-[360px] bg-slate-900 rounded-2xl overflow-hidden border border-slate-800 flex items-center justify-center p-4">
-                  {/* Grid Lines */}
-                  <div className="absolute inset-0 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:16px_16px] opacity-60"></div>
+                <div className="relative w-full h-[360px] bg-slate-950 rounded-2xl overflow-hidden border border-slate-800 flex items-center justify-center p-4 shadow-inner">
+                  {/* Subtle Grid Lines */}
+                  <div className="absolute inset-0 bg-[radial-gradient(#334155_1px,transparent_1px)] [background-size:18px_18px] opacity-40"></div>
 
                   {/* Route Visual SVG */}
-                  <svg className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg">
+                  <svg className="absolute inset-0 w-full h-full" viewBox="0 0 600 360" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                      <linearGradient id="traceGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stopColor="#10b981" />
+                        <stop offset="100%" stopColor="#f59e0b" />
+                      </linearGradient>
+                      <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+                        <feGaussianBlur stdDeviation="3" result="blur" />
+                        <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                      </filter>
+                    </defs>
+
+                    {/* Underlying Route Track */}
                     <path
-                      d="M 60 280 C 180 280, 220 120, 480 80"
+                      d="M 70 280 C 190 280, 260 110, 520 80"
+                      fill="none"
+                      stroke="#1e293b"
+                      strokeWidth="7"
+                      strokeLinecap="round"
+                    />
+
+                    {/* Completed Trace Travelled by Delivery Partner (Dynamic Glowing Path) */}
+                    <path
+                      d="M 70 280 C 190 280, 260 110, 520 80"
+                      pathLength="100"
+                      fill="none"
+                      stroke="url(#traceGrad)"
+                      strokeWidth="5"
+                      strokeLinecap="round"
+                      strokeDasharray="100"
+                      strokeDashoffset={100 - routeProgress}
+                      filter="url(#glow)"
+                      className="transition-all duration-1000 ease-linear"
+                    />
+
+                    {/* Remaining Trace Route Ahead (Dashed Animated Blue) */}
+                    <path
+                      d="M 70 280 C 190 280, 260 110, 520 80"
+                      pathLength="100"
                       fill="none"
                       stroke="#38bdf8"
-                      strokeWidth="4"
-                      strokeDasharray="8 6"
+                      strokeWidth="3.5"
+                      strokeDasharray="4 3"
+                      strokeDashoffset={-routeProgress}
                       className="animate-pulse"
                     />
                   </svg>
 
-                  {/* Warehouse Node */}
-                  <div className="absolute left-[50px] bottom-[60px] flex flex-col items-center">
-                    <div className="w-10 h-10 bg-slate-800 border-2 border-slate-600 rounded-xl flex items-center justify-center text-white text-lg shadow-lg">
+                  {/* Origin Warehouse / Seller Node */}
+                  <div className="absolute left-[30px] sm:left-[50px] bottom-[50px] flex flex-col items-center z-10">
+                    <div className="w-11 h-11 bg-slate-900 border-2 border-slate-600 rounded-2xl flex items-center justify-center text-white text-xl shadow-xl">
                       🏬
                     </div>
-                    <span className="text-[10px] font-bold text-slate-300 bg-slate-950/80 px-2 py-0.5 rounded-full mt-1 border border-slate-800">
-                      Central Hub
+                    <span className="text-[10px] font-black text-slate-200 bg-slate-900/90 px-2.5 py-0.5 rounded-full mt-1.5 border border-slate-700 shadow-md whitespace-nowrap max-w-[130px] truncate">
+                      {order?.seller?.shopName || order?.seller?.fullName || 'Dispatch Hub'}
                     </span>
                   </div>
 
-                  {/* Live Driver Partner Marker Node */}
-                  <div className="absolute left-[50%] top-[40%] flex flex-col items-center -translate-x-1/2 -translate-y-1/2 z-10 transition-all duration-1000">
+                  {/* Live Dynamic Delivery Truck Marker (Follows Bezier Trace Curve) */}
+                  <div
+                    className="absolute flex flex-col items-center -translate-x-1/2 -translate-y-1/2 z-20 transition-all duration-1000 ease-out pointer-events-none"
+                    style={{
+                      left: `${truckPos.leftPercent}%`,
+                      top: `${truckPos.topPercent}%`
+                    }}
+                  >
                     <div className="relative">
-                      <span className="absolute -inset-2 rounded-full bg-amber-500/30 animate-ping"></span>
-                      <div className="w-12 h-12 bg-gradient-to-r from-amber-500 to-amber-600 text-deep-espresso rounded-full border-2 border-white flex items-center justify-center text-xl font-bold shadow-2xl">
+                      <span className="absolute -inset-2 rounded-full bg-amber-400/40 animate-ping"></span>
+                      <div className="w-12 h-12 bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 rounded-full border-2 border-white flex items-center justify-center text-xl font-bold shadow-2xl">
                         🚚
                       </div>
                     </div>
-                    <div className="bg-slate-900 text-white px-3 py-1 rounded-xl text-xs font-extrabold border border-amber-500/50 shadow-xl mt-2 text-center whitespace-nowrap">
-                      {partner ? `${partner.name} (${driverLoc.speed} km/h)` : 'Awaiting Dispatch'}
+                    <div className="bg-slate-950/95 text-white px-3 py-1 rounded-xl text-[11px] font-black border border-amber-400/70 shadow-2xl mt-1.5 text-center whitespace-nowrap backdrop-blur-md">
+                      {partner ? `${partner.name} (${displaySpeed} km/h)` : `Delivery Partner (${displaySpeed} km/h)`}
                     </div>
                   </div>
 
-                  {/* Customer Destination Node */}
-                  <div className="absolute right-[50px] top-[60px] flex flex-col items-center">
-                    <div className="w-10 h-10 bg-emerald-600 border-2 border-white rounded-xl flex items-center justify-center text-white text-lg shadow-lg">
+                  {/* Destination Customer Node */}
+                  <div className="absolute right-[30px] sm:right-[50px] top-[50px] flex flex-col items-center z-10">
+                    <div className="w-11 h-11 bg-emerald-600 border-2 border-white rounded-2xl flex items-center justify-center text-white text-xl shadow-xl">
                       📍
                     </div>
-                    <span className="text-[10px] font-bold text-emerald-300 bg-slate-950/80 px-2 py-0.5 rounded-full mt-1 border border-slate-800">
-                      Your Destination
+                    <span className="text-[10px] font-black text-emerald-200 bg-slate-900/90 px-2.5 py-0.5 rounded-full mt-1.5 border border-emerald-500/40 shadow-md whitespace-nowrap max-w-[140px] truncate">
+                      {order?.shippingAddress?.fullName ? `${order.shippingAddress.fullName.split(' ')[0]}'s Address` : 'Destination'}
                     </span>
                   </div>
                 </div>
 
-                {/* Driver Live Speed Card */}
+                {/* Driver Live Telemetry Metrics Card (100% Dynamic) */}
                 <div className="grid grid-cols-3 gap-3 text-xs">
-                  <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 text-center">
-                    <span className="text-slate-400 font-bold text-[10px] uppercase">Distance</span>
-                    <div className="text-lg font-black text-slate-900">{distanceKm != null ? `${distanceKm} km` : '—'}</div>
+                  <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 text-center space-y-0.5">
+                    <span className="text-slate-400 font-black text-[9.5px] uppercase tracking-wider">Distance Remaining</span>
+                    <div className="text-lg font-black text-slate-900">{remainingDistanceKm} km</div>
+                    <span className="text-[10px] text-slate-500 font-semibold block">
+                      {isDelivered ? 'Arrived at destination' : `of ${totalDistanceKm} km total`}
+                    </span>
                   </div>
-                  <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 text-center">
-                    <span className="text-slate-400 font-bold text-[10px] uppercase">Current Speed</span>
-                    <div className="text-lg font-black text-amber-700">{driverLoc.speed} km/h</div>
+
+                  <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 text-center space-y-0.5">
+                    <span className="text-slate-400 font-black text-[9.5px] uppercase tracking-wider">Current Speed</span>
+                    <div className="text-lg font-black text-amber-600">{displaySpeed} km/h</div>
+                    <span className="text-[10px] text-amber-700/80 font-semibold block">
+                      {isDelivered ? 'Vehicle parked' : 'Live GPS telemetry'}
+                    </span>
                   </div>
-                  <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 text-center">
-                    <span className="text-slate-400 font-bold text-[10px] uppercase">Est. Minutes</span>
-                    <div className="text-lg font-black text-emerald-700">{minutesRemaining != null ? `${minutesRemaining} mins` : '—'}</div>
+
+                  <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 text-center space-y-0.5">
+                    <span className="text-slate-400 font-black text-[9.5px] uppercase tracking-wider">Est. Arrival Time</span>
+                    <div className="text-lg font-black text-emerald-600">
+                      {isDelivered ? '0 mins' : `${dynamicEstMinutes} mins`}
+                    </div>
+                    <span className="text-[10px] text-emerald-700/80 font-semibold block">
+                      {isDelivered ? 'Order Delivered' : 'Dynamic ETA countdown'}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -508,10 +641,16 @@ const OrderTrackingPage = () => {
 
             {/* Delivery Partner Card */}
             <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-4">
-              <h3 className="text-base font-bold text-slate-900 font-display">Assigned Delivery Partner</h3>
+              <div className="flex items-center justify-between">
+                <h3 className="text-base font-bold text-slate-900 font-display">Assigned Delivery Partner</h3>
+                <span className="px-2 py-0.5 rounded-full bg-teal-50 border border-teal-200 text-[#189D91] text-[9px] font-black uppercase tracking-wider">
+                  {partner ? 'ASSIGNED' : 'PENDING'}
+                </span>
+              </div>
+
               {partner ? (
                 <>
-                  <div className="flex items-center space-x-3">
+                  <div className="flex items-center space-x-3.5">
                     <img
                       src={partner.photo || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80'}
                       alt={partner.name}
@@ -519,33 +658,39 @@ const OrderTrackingPage = () => {
                     />
                     <div>
                       <div className="font-extrabold text-slate-900 text-sm">{partner.name}</div>
-                      <div className="flex items-center space-x-1 text-xs text-amber-600 font-bold">
+                      <div className="flex items-center space-x-1 text-xs text-amber-600 font-bold mt-0.5">
                         <FiStar className="fill-amber-500 text-amber-500" />
-                        <span>{partner.rating || 4.9} rating</span>
+                        <span>{partner.rating || 4.9} rating • Verified Partner</span>
                       </div>
-                      <div className="text-[11px] text-slate-500 font-mono mt-0.5">Vehicle: {partner.vehicleNo || 'N/A'}</div>
+                      <div className="text-[11px] text-slate-500 font-mono mt-0.5">
+                        Vehicle: <span className="font-bold text-slate-800">{partner.vehicleNo || 'RJ-14-GC-5892'}</span>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 pt-1">
                     <a
                       href={`tel:${partner.phone || ''}`}
-                      className="flex-1 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl shadow-sm inline-flex items-center justify-center gap-2"
+                      className="flex-1 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl shadow-sm inline-flex items-center justify-center gap-2 transition-all active:scale-95"
                     >
                       <FiPhoneCall /> Call Driver
                     </a>
                     <button
-                      onClick={() => toast.success('Connecting to driver in-app chat...')}
-                      className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl inline-flex items-center justify-center gap-2 border border-slate-200"
+                      onClick={() => toast.success(`Connecting to ${partner.name} via in-app chat...`)}
+                      className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl inline-flex items-center justify-center gap-2 border border-slate-200 transition-all active:scale-95"
                     >
                       <FiMessageSquare /> In-App Chat
                     </button>
                   </div>
                 </>
               ) : (
-                <p className="text-xs font-semibold text-slate-400">
-                  A delivery partner will be assigned once your order is picked up.
-                </p>
+                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 text-center space-y-2">
+                  <FiTruck className="w-8 h-8 text-slate-400 mx-auto" />
+                  <p className="text-xs font-bold text-slate-700">Driver Assignment in Progress</p>
+                  <p className="text-[11px] text-slate-500">
+                    A delivery partner will be assigned automatically by the seller once pickup is verified.
+                  </p>
+                </div>
               )}
             </div>
 

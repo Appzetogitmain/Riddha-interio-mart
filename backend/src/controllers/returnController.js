@@ -92,7 +92,8 @@ exports.getSellerReturns = async (req, res, next) => {
     const populateOptions = [
       { path: 'product', select: 'name images' },
       { path: 'user', select: 'fullName email phone' },
-      { path: 'order', select: 'shippingAddress createdAt' }
+      { path: 'order', select: 'shippingAddress createdAt' },
+      { path: 'deliveryBoy', select: 'fullName phone email vehicleType vehicleNumber' }
     ];
     
     const result = await paginate(Return, { seller: req.user.id }, req, populateOptions);

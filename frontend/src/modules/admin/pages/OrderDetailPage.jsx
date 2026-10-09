@@ -248,9 +248,13 @@ const OrderDetailPage = () => {
                     <div className="flex-grow">
                       <h4 className="font-bold text-deep-espresso">{item.name}</h4>
                       <p className="text-sm text-warm-sand">Quantity: {item.quantity}</p>
-                      {item.sellerType === 'Admin' && (
+                      {item.sellerType === 'Admin' ? (
                         <span className="inline-block mt-2 px-2 py-0.5 bg-red-800/10 text-red-800 text-[8px] font-black uppercase tracking-widest rounded border border-red-800/20">
-                          Direct Inventory
+                          Mart Direct Inventory
+                        </span>
+                      ) : (
+                        <span className="inline-block mt-2 px-2 py-0.5 bg-emerald-800/10 text-emerald-800 text-[8px] font-black uppercase tracking-widest rounded border border-emerald-800/20">
+                          Seller: {item.seller?.shopName || item.seller?.fullName || order.seller?.shopName || order.seller?.fullName || 'Seller Partner'}
                         </span>
                       )}
                     </div>
@@ -424,26 +428,65 @@ const OrderDetailPage = () => {
                 </div>
               </div>
             </div>
-              {/* Merchant info if exists */}
+              {/* Merchant / Seller info */}
               {order.seller && (
-              <div className="bg-white p-6 rounded-2xl border border-soft-oatmeal shadow-sm space-y-4">
-                <div className="flex items-center gap-2 text-deep-espresso border-b border-soft-oatmeal pb-3">
-                  <LuPackage className="text-warm-sand" size={18} />
-                  <h3 className="font-bold">Seller Information</h3>
+                <div className="bg-white p-6 rounded-2xl border border-soft-oatmeal shadow-sm space-y-4">
+                  <div className="flex items-center justify-between border-b border-soft-oatmeal pb-3">
+                    <div className="flex items-center gap-2 text-deep-espresso">
+                      <LuPackage className="text-warm-sand" size={18} />
+                      <h3 className="font-bold">Seller Information</h3>
+                    </div>
+                    {order.sellerType === 'Admin' ? (
+                      <span className="px-2.5 py-0.5 bg-red-800/10 text-red-800 text-[9px] font-black uppercase tracking-widest rounded-full border border-red-800/20">
+                        Mart Direct
+                      </span>
+                    ) : (
+                      <span className="px-2.5 py-0.5 bg-emerald-500/10 text-emerald-700 text-[9px] font-black uppercase tracking-widest rounded-full border border-emerald-500/20">
+                        {order.seller.isVerified ? 'Verified Seller' : 'Registered Seller'}
+                      </span>
+                    )}
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <div>
+                      <p className="text-xs text-warm-sand font-bold uppercase tracking-wider">Shop Name</p>
+                      <p className="text-base font-bold text-deep-espresso">
+                        {order.sellerType === 'Admin' ? 'Riddha Mart Official' : (order.seller.shopName || order.seller.fullName || "Official Store")}
+                      </p>
+                    </div>
+
+                    {order.seller.fullName && order.seller.shopName && order.seller.fullName !== order.seller.shopName && (
+                      <div>
+                        <p className="text-xs text-warm-sand font-bold uppercase tracking-wider">Owner / Contact Person</p>
+                        <p className="text-sm font-semibold text-deep-espresso">{order.seller.fullName}</p>
+                      </div>
+                    )}
+
+                    <div className="pt-2 border-t border-soft-oatmeal/60 space-y-2">
+                      {order.seller.email && (
+                        <div className="flex items-center gap-2 text-xs text-deep-espresso">
+                          <LuMail size={14} className="text-warm-sand shrink-0" />
+                          <span className="truncate">{order.seller.email}</span>
+                        </div>
+                      )}
+                      {order.seller.phone && (
+                        <div className="flex items-center gap-2 text-xs text-deep-espresso">
+                          <LuPhone size={14} className="text-warm-sand shrink-0" />
+                          <span>{order.seller.phone}</span>
+                        </div>
+                      )}
+                      {(order.seller.shopAddress || order.seller.location?.address) && (
+                        <div className="flex items-start gap-2 text-xs text-deep-espresso">
+                          <LuMapPin size={14} className="text-warm-sand shrink-0 mt-0.5" />
+                          <span className="text-[11px] leading-relaxed text-warm-sand">
+                            {order.seller.shopAddress || order.seller.location?.address}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
-                <div className="space-y-1">
-                  <p className="text-sm font-bold text-deep-espresso">
-                    {order.sellerType === 'Admin' ? 'Riddha Mart (Admin)' : (order.seller.shopName || order.seller.fullName || "Official Store")}
-                  </p>
-                  {order.sellerType === 'Admin' && (
-                    <span className="inline-block px-2 py-0.5 bg-red-800/10 text-red-800 text-[9px] font-black uppercase tracking-widest rounded border border-red-800/20">
-                      Mart Direct
-                    </span>
-                  )}
-                  <p className="text-xs text-warm-sand">{order.seller.email}</p>
-                </div>
-              </div>
-            )}
+              )}
 
             {/* Delivery Details */}
             <div className="bg-white p-6 rounded-2xl border border-soft-oatmeal shadow-sm space-y-4">

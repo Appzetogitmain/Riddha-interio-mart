@@ -171,6 +171,11 @@ const menuGroups = [
     title: "Partners & Clients",
     items: [
       {
+        path: "/admin/directory",
+        icon: FiUsers,
+        label: "Unified Registry",
+      },
+      {
         label: "Seller Management",
         icon: FiUsers,
         path: "/admin/sellers",
@@ -576,6 +581,7 @@ const Sidebar = ({ isOpen, onClose }) => {
   };
 
   const handleLogout = () => {
+    localStorage.removeItem("riddha_admin");
     logout();
     navigate("/admin/login");
   };

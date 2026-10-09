@@ -5,7 +5,7 @@ import {
   FiChevronRight, FiGift, FiCopy, FiCheck, FiHeart,
   FiShield, FiPhone, FiFileText, FiAlertCircle, FiCompass, FiTruck, FiZap, FiCheckCircle, FiClock,
   FiCreditCard, FiExternalLink, FiBriefcase, FiLayers, FiDollarSign, FiEdit3, FiPlusCircle,
-  FiActivity, FiArrowUpRight, FiTool, FiCheckSquare, FiInfo
+  FiActivity, FiArrowUpRight, FiTool, FiCheckSquare, FiInfo, FiShoppingBag
 } from 'react-icons/fi';
 import { Link, useNavigate } from 'react-router-dom';
 import { useUser } from '../data/UserContext';
@@ -158,12 +158,28 @@ const Profile = () => {
     fullName: ''
   });
   const [savingBusiness, setSavingBusiness] = useState(false);
+  const [recentOrders, setRecentOrders] = useState([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
 
   useEffect(() => {
     api.get('/referrals/wallet')
       .then(({ data }) => setWalletBalance(data?.data?.balance ?? 0))
       .catch(() => setWalletBalance(0));
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      setOrdersLoading(true);
+      api.get('/orders/my-orders?limit=4')
+        .then(({ data }) => {
+          if (data?.success) {
+            setRecentOrders(data.data || []);
+          }
+        })
+        .catch((err) => console.error('Failed to load recent orders for profile:', err))
+        .finally(() => setOrdersLoading(false));
+    }
+  }, [user]);
 
   useEffect(() => {
     if (user) {
@@ -236,7 +252,59 @@ const Profile = () => {
     }
   };
 
+  const storedSeller = React.useMemo(() => {
+    try {
+      const s = localStorage.getItem('riddha_seller');
+      return s ? JSON.parse(s) : null;
+    } catch {
+      return null;
+    }
+  }, []);
+
   if (!user) {
+    if (storedSeller?.role === 'seller') {
+      return (
+        <div className="min-h-[80vh] flex items-center justify-center bg-slate-50 px-4 py-12">
+          <div className="max-w-md w-full bg-white rounded-3xl p-8 border border-slate-200/80 shadow-xl text-center space-y-6">
+            <div className="w-16 h-16 rounded-2xl bg-teal-50 border border-teal-100 flex items-center justify-center mx-auto text-[#189D91]">
+              <LuStore className="w-8 h-8" />
+            </div>
+
+            <div className="space-y-2">
+              <span className="text-[10px] font-black uppercase tracking-widest text-[#189D91] bg-teal-50 border border-teal-200/60 px-3 py-1 rounded-full">
+                Seller Account Active
+              </span>
+              <h2 className="text-xl font-black text-slate-900 mt-2">
+                {storedSeller.shopName || storedSeller.fullName || 'Merchant Account'}
+              </h2>
+              <p className="text-xs text-slate-500 font-medium">
+                {storedSeller.email}
+              </p>
+            </div>
+
+            <p className="text-xs text-slate-600 leading-relaxed bg-slate-50 p-4 rounded-2xl border border-slate-100">
+              You are currently signed in as a <strong>Seller / Merchant</strong>. This profile view is designed for retail customers. Your product listings, orders, and store analytics are located in your Merchant Dashboard.
+            </p>
+
+            <div className="flex flex-col gap-3 pt-2">
+              <button
+                onClick={() => navigate('/seller/dashboard')}
+                className="w-full py-3 bg-[#189D91] hover:bg-[#14847a] text-white font-bold rounded-xl transition-all text-xs shadow-md shadow-[#189D91]/20 flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <LuStore className="w-4 h-4" /> Go to Seller Dashboard
+              </button>
+              <button
+                onClick={() => navigate('/login')}
+                className="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-all text-xs flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <FiUser className="w-4 h-4" /> Sign In with Customer Account
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="min-h-screen flex items-center justify-center bg-white p-4">
         <div className="text-center space-y-4">
@@ -616,6 +684,339 @@ const Profile = () => {
                           Launch Studio <LuArrowRight size={10} />
                         </button>
                       </div>
+                    </div>
+
+                    {/* ══════════════════════════════════════════════════════════════
+                       ACTIVE SUBSCRIPTION PRIVILEGES & BENEFITS SHOWCASE
+                       ══════════════════════════════════════════════════════════════ */}
+                    {isProActive && (
+                      <div className="bg-white rounded-2xl p-5 md:p-6 border border-teal-200/90 shadow-sm space-y-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-100 pb-3">
+                          <div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300 text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
+                                <LuCrown size={12} className="text-amber-600" /> Active Plan: {user.subscription?.planName || 'ENTERPRISE PRO'}
+                              </span>
+                              <span className="text-xs text-gray-500 font-medium">
+                                • Valid until {new Date(user.subscription.endDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} ({daysRemaining} days left)
+                              </span>
+                            </div>
+                            <h3 className="text-base font-black text-slate-900 mt-1 flex items-center gap-2">
+                              Your Unlocked Plan Privileges & Subscription Benefits
+                            </h3>
+                          </div>
+                          <button
+                            onClick={() => setIsSubscriptionModalOpen(true)}
+                            className="text-xs font-bold text-[#189D91] hover:underline flex items-center gap-1 self-start sm:self-auto"
+                          >
+                            Manage Plan <LuArrowRight size={12} />
+                          </button>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 pt-1">
+                          <div className="p-3.5 rounded-xl bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200/70 flex items-start gap-3">
+                            <div className="w-9 h-9 rounded-xl bg-amber-400 text-slate-950 flex items-center justify-center shrink-0 shadow-sm font-black text-base">
+                              🏷️
+                            </div>
+                            <div>
+                              <h4 className="text-xs font-black text-slate-900">B2B Wholesale Price Tier</h4>
+                              <p className="text-[11px] text-slate-600 mt-0.5 leading-snug">
+                                Discounted commercial volume pricing on hardware, furniture & materials across the catalog.
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="p-3.5 rounded-xl bg-gradient-to-br from-purple-50 to-indigo-50 border border-purple-200/70 flex items-start gap-3">
+                            <div className="w-9 h-9 rounded-xl bg-purple-600 text-white flex items-center justify-center shrink-0 shadow-sm font-black">
+                              <LuSparkles size={16} />
+                            </div>
+                            <div>
+                              <h4 className="text-xs font-black text-slate-900">10 AI Studio Tools Included</h4>
+                              <p className="text-[11px] text-slate-600 mt-0.5 leading-snug">
+                                Complete access to Cost Estimator, automated BOQ Generator, Quotations & 3D Staging.
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="p-3.5 rounded-xl bg-gradient-to-br from-teal-50 to-emerald-50 border border-teal-200/70 flex items-start gap-3">
+                            <div className="w-9 h-9 rounded-xl bg-[#189D91] text-white flex items-center justify-center shrink-0 shadow-sm font-black">
+                              <FiTruck size={16} />
+                            </div>
+                            <div>
+                              <h4 className="text-xs font-black text-slate-900">Priority Express Dispatch</h4>
+                              <p className="text-[11px] text-slate-600 mt-0.5 leading-snug">
+                                Jump the dispatch queue with live GPS driver tracking & secure OTP delivery verification.
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="p-3.5 rounded-xl bg-gradient-to-br from-blue-50 to-cyan-50 border border-blue-200/70 flex items-start gap-3">
+                            <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-sm font-black">
+                              <LuReceipt size={16} />
+                            </div>
+                            <div>
+                              <h4 className="text-xs font-black text-slate-900">GST Input Tax Credit (ITC)</h4>
+                              <p className="text-[11px] text-slate-600 mt-0.5 leading-snug">
+                                100% compliant business GST tax invoices downloadable instantly for business tax write-offs.
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="p-3.5 rounded-xl bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200/70 flex items-start gap-3">
+                            <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-sm font-black">
+                              <FiCreditCard size={16} />
+                            </div>
+                            <div>
+                              <h4 className="text-xs font-black text-slate-900">0% Interest Credit & EMI</h4>
+                              <p className="text-[11px] text-slate-600 mt-0.5 leading-snug">
+                                Flexible payment schedules and zero-cost installment options on large project procurements.
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="p-3.5 rounded-xl bg-gradient-to-br from-rose-50 to-pink-50 border border-rose-200/70 flex items-start gap-3">
+                            <div className="w-9 h-9 rounded-xl bg-rose-500 text-white flex items-center justify-center shrink-0 shadow-sm font-black">
+                              <FiPhone size={16} />
+                            </div>
+                            <div>
+                              <h4 className="text-xs font-black text-slate-900">Dedicated Account Support</h4>
+                              <p className="text-[11px] text-slate-600 mt-0.5 leading-snug">
+                                Priority telephone, email and WhatsApp assistance for custom RFQs and project orders.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ══════════════════════════════════════════════════════════════
+                       MY ACCOUNT & SHOPPING HUB (Classic Profile Options)
+                       ══════════════════════════════════════════════════════════════ */}
+                    <div className="bg-white rounded-2xl p-5 md:p-6 border border-gray-200/80 shadow-sm space-y-4">
+                      <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                        <div>
+                          <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
+                            <FiUser className="text-[#189D91]" /> My Account & Shopping Hub
+                          </h3>
+                          <p className="text-xs text-gray-500 font-medium">
+                            Classic profile shortcuts to your orders, saved wishlist items, delivery locations, and account settings
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                        {/* My Orders */}
+                        <Link
+                          to="/orders"
+                          className="p-4 rounded-xl border border-gray-100 hover:border-[#189D91]/60 hover:bg-teal-50/20 transition-all flex items-center justify-between group shadow-sm bg-white"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-teal-50 text-[#189D91] flex items-center justify-center group-hover:scale-105 transition-transform">
+                              <FiPackage size={18} />
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <p className="text-xs font-black text-slate-800 group-hover:text-[#189D91] transition-colors">My Orders</p>
+                                {recentOrders.length > 0 && (
+                                  <span className="px-1.5 py-0.5 rounded bg-teal-100 text-[#189D91] text-[9px] font-black">
+                                    {recentOrders.length} Recent
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[10px] text-gray-400 mt-0.5">Track status, reorder & invoices</p>
+                            </div>
+                          </div>
+                          <FiChevronRight size={14} className="text-gray-300 group-hover:text-[#189D91] transition-colors" />
+                        </Link>
+
+                        {/* My Wishlist */}
+                        <button
+                          onClick={() => setActiveTab('wishlist')}
+                          className="p-4 rounded-xl border border-gray-100 hover:border-pink-300 hover:bg-pink-50/20 transition-all flex items-center justify-between group shadow-sm text-left bg-white"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-pink-50 text-pink-600 flex items-center justify-center group-hover:scale-105 transition-transform">
+                              <FiHeart size={18} />
+                            </div>
+                            <div>
+                              <p className="text-xs font-black text-slate-800 group-hover:text-pink-600 transition-colors">My Wishlist</p>
+                              <p className="text-[10px] text-gray-400 mt-0.5">Saved materials & furniture</p>
+                            </div>
+                          </div>
+                          <FiChevronRight size={14} className="text-gray-300 group-hover:text-pink-600 transition-colors" />
+                        </button>
+
+                        {/* Delivery Addresses */}
+                        <button
+                          onClick={() => setActiveTab('addresses')}
+                          className="p-4 rounded-xl border border-gray-100 hover:border-amber-300 hover:bg-amber-50/20 transition-all flex items-center justify-between group shadow-sm text-left bg-white"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center group-hover:scale-105 transition-transform">
+                              <FiMapPin size={18} />
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <p className="text-xs font-black text-slate-800 group-hover:text-amber-600 transition-colors">Delivery Addresses</p>
+                                {addresses?.length > 0 && (
+                                  <span className="px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 text-[9px] font-black">
+                                    {addresses.length} Sites
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[10px] text-gray-400 mt-0.5">Manage delivery sites & locations</p>
+                            </div>
+                          </div>
+                          <FiChevronRight size={14} className="text-gray-300 group-hover:text-amber-600 transition-colors" />
+                        </button>
+
+                        {/* Riddha Wallet */}
+                        <button
+                          onClick={() => setActiveTab('wallet')}
+                          className="p-4 rounded-xl border border-gray-100 hover:border-emerald-300 hover:bg-emerald-50/20 transition-all flex items-center justify-between group shadow-sm text-left bg-white"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:scale-105 transition-transform">
+                              <FiCreditCard size={18} />
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <p className="text-xs font-black text-slate-800 group-hover:text-emerald-600 transition-colors">Riddha Wallet</p>
+                                {walletBalance !== null && (
+                                  <span className="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[9px] font-black">
+                                    ₹{walletBalance}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[10px] text-gray-400 mt-0.5">Cashback, refunds & credits</p>
+                            </div>
+                          </div>
+                          <FiChevronRight size={14} className="text-gray-300 group-hover:text-emerald-600 transition-colors" />
+                        </button>
+
+                        {/* Referral & Rewards */}
+                        <button
+                          onClick={() => setActiveTab('referrals')}
+                          className="p-4 rounded-xl border border-gray-100 hover:border-purple-300 hover:bg-purple-50/20 transition-all flex items-center justify-between group shadow-sm text-left bg-white"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center group-hover:scale-105 transition-transform">
+                              <FiGift size={18} />
+                            </div>
+                            <div>
+                              <p className="text-xs font-black text-slate-800 group-hover:text-purple-600 transition-colors">Referral & Rewards</p>
+                              <p className="text-[10px] text-gray-400 mt-0.5">Share code & earn reward cash</p>
+                            </div>
+                          </div>
+                          <FiChevronRight size={14} className="text-gray-300 group-hover:text-purple-600 transition-colors" />
+                        </button>
+
+                        {/* Account Settings / Edit Profile */}
+                        <Link
+                          to="/profile/edit"
+                          className="p-4 rounded-xl border border-gray-100 hover:border-blue-300 hover:bg-blue-50/20 transition-all flex items-center justify-between group shadow-sm bg-white"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-105 transition-transform">
+                              <FiSettings size={18} />
+                            </div>
+                            <div>
+                              <p className="text-xs font-black text-slate-800 group-hover:text-blue-600 transition-colors">Account Settings</p>
+                              <p className="text-[10px] text-gray-400 mt-0.5">Personal info, security & preferences</p>
+                            </div>
+                          </div>
+                          <FiChevronRight size={14} className="text-gray-300 group-hover:text-blue-600 transition-colors" />
+                        </Link>
+                      </div>
+                    </div>
+
+                    {/* ══════════════════════════════════════════════════════════════
+                       RECENT ORDERS PREVIEW (Live Order Status & Quick Reorder)
+                       ══════════════════════════════════════════════════════════════ */}
+                    <div className="bg-white rounded-2xl p-5 md:p-6 border border-gray-200/80 shadow-sm space-y-4">
+                      <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                        <div>
+                          <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
+                            <FiPackage className="text-[#189D91]" /> Recent Orders & Status
+                          </h3>
+                          <p className="text-xs text-gray-500 font-medium">Your placed orders, tracking numbers, and delivery milestones</p>
+                        </div>
+                        <Link
+                          to="/orders"
+                          className="text-xs font-bold text-[#189D91] hover:underline flex items-center gap-1"
+                        >
+                          View All Orders <LuArrowRight size={12} />
+                        </Link>
+                      </div>
+
+                      {ordersLoading ? (
+                        <div className="py-8 text-center text-xs font-medium text-gray-400">Loading your orders...</div>
+                      ) : recentOrders.length > 0 ? (
+                        <div className="divide-y divide-gray-100">
+                          {recentOrders.map((order) => {
+                            const orderDate = new Date(order.createdAt).toLocaleDateString('en-IN', {
+                              day: 'numeric',
+                              month: 'short',
+                              year: 'numeric'
+                            });
+                            const itemCount = order.orderItems?.reduce((sum, item) => sum + (item.quantity || 1), 0) || 0;
+                            const statusColors = {
+                              Delivered: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+                              Processing: 'bg-blue-100 text-blue-800 border-blue-200',
+                              Pending: 'bg-amber-100 text-amber-800 border-amber-200',
+                              Shipped: 'bg-purple-100 text-purple-800 border-purple-200',
+                              Cancelled: 'bg-red-100 text-red-800 border-red-200'
+                            };
+                            const statusClass = statusColors[order.status] || 'bg-gray-100 text-gray-800 border-gray-200';
+
+                            return (
+                              <div key={order._id} className="py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 group">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-10 h-10 rounded-xl bg-gray-50 border border-gray-200 flex items-center justify-center shrink-0 text-slate-600 group-hover:border-[#189D91]/40 transition-colors">
+                                    <FiPackage size={18} />
+                                  </div>
+                                  <div>
+                                    <div className="flex items-center gap-2">
+                                      <p className="text-xs font-black text-slate-800">
+                                        Order #{order._id.slice(-6).toUpperCase()}
+                                      </p>
+                                      <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border ${statusClass}`}>
+                                        {order.status || 'Pending'}
+                                      </span>
+                                    </div>
+                                    <p className="text-[11px] text-gray-400 font-medium mt-0.5">
+                                      Placed on {orderDate} • {itemCount} {itemCount === 1 ? 'item' : 'items'}
+                                    </p>
+                                  </div>
+                                </div>
+
+                                <div className="flex items-center justify-between sm:justify-end gap-3">
+                                  <p className="text-xs font-black text-slate-900">
+                                    ₹{Number(order.totalPrice || 0).toLocaleString('en-IN')}
+                                  </p>
+                                  <Link
+                                    to="/orders"
+                                    className="px-3.5 py-1.5 rounded-lg bg-teal-50 hover:bg-teal-100 text-[#189D91] text-[11px] font-bold transition-colors flex items-center gap-1"
+                                  >
+                                    View in Orders <LuArrowRight size={10} />
+                                  </Link>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div className="py-8 text-center space-y-2">
+                          <FiShoppingBag className="w-8 h-8 text-gray-300 mx-auto" />
+                          <p className="text-xs font-semibold text-gray-500">No orders placed yet</p>
+                          <Link
+                            to="/shop"
+                            className="inline-block px-4 py-2 bg-[#189D91] text-white text-xs font-bold rounded-xl shadow-sm hover:bg-[#14847a] transition-all"
+                          >
+                            Explore Catalog
+                          </Link>
+                        </div>
+                      )}
                     </div>
 
                     {/* Quick AI Studio Shortcuts Grid */}
@@ -1025,6 +1426,87 @@ const Profile = () => {
                             Launch GPS Tracking Map →
                           </Link>
                         </div>
+                      </div>
+
+                      {/* Orders Quick Table */}
+                      <div className="pt-4 border-t border-gray-100 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-sm font-black text-slate-800 flex items-center gap-2">
+                            <FiPackage className="text-[#189D91]" /> Your Placed Orders
+                          </h4>
+                          <Link to="/orders" className="text-xs font-bold text-[#189D91] hover:underline flex items-center gap-1">
+                            Go to Orders Page <LuArrowRight size={11} />
+                          </Link>
+                        </div>
+
+                        {ordersLoading ? (
+                          <div className="py-6 text-center text-xs font-medium text-gray-400">Loading your orders...</div>
+                        ) : recentOrders.length > 0 ? (
+                          <div className="divide-y divide-gray-100 border border-gray-100 rounded-xl overflow-hidden">
+                            {recentOrders.map((order) => {
+                              const orderDate = new Date(order.createdAt).toLocaleDateString('en-IN', {
+                                day: 'numeric',
+                                month: 'short',
+                                year: 'numeric'
+                              });
+                              const itemCount = order.orderItems?.reduce((sum, item) => sum + (item.quantity || 1), 0) || 0;
+                              const statusColors = {
+                                Delivered: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+                                Processing: 'bg-blue-100 text-blue-800 border-blue-200',
+                                Pending: 'bg-amber-100 text-amber-800 border-amber-200',
+                                Shipped: 'bg-purple-100 text-purple-800 border-purple-200',
+                                Cancelled: 'bg-red-100 text-red-800 border-red-200'
+                              };
+                              const statusClass = statusColors[order.status] || 'bg-gray-100 text-gray-800 border-gray-200';
+
+                              return (
+                                <div key={order._id} className="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white hover:bg-gray-50/70 transition-colors">
+                                  <div className="flex items-center gap-3">
+                                    <div className="w-9 h-9 rounded-xl bg-teal-50 text-[#189D91] flex items-center justify-center shrink-0">
+                                      <FiPackage size={16} />
+                                    </div>
+                                    <div>
+                                      <div className="flex items-center gap-2">
+                                        <p className="text-xs font-black text-slate-800">
+                                          Order #{order._id.slice(-6).toUpperCase()}
+                                        </p>
+                                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border ${statusClass}`}>
+                                          {order.status || 'Pending'}
+                                        </span>
+                                      </div>
+                                      <p className="text-[10px] text-gray-400 font-medium mt-0.5">
+                                        Placed {orderDate} • {itemCount} {itemCount === 1 ? 'item' : 'items'}
+                                      </p>
+                                    </div>
+                                  </div>
+
+                                  <div className="flex items-center justify-between sm:justify-end gap-3">
+                                    <p className="text-xs font-black text-slate-900">
+                                      ₹{Number(order.totalPrice || 0).toLocaleString('en-IN')}
+                                    </p>
+                                    <Link
+                                      to="/orders"
+                                      className="px-3 py-1.5 rounded-lg bg-[#189D91] hover:bg-[#14847a] text-white text-[11px] font-black transition-colors flex items-center gap-1 shadow-sm"
+                                    >
+                                      Order Details <LuArrowRight size={10} />
+                                    </Link>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <div className="py-6 text-center space-y-2">
+                            <FiShoppingBag className="w-8 h-8 text-gray-300 mx-auto" />
+                            <p className="text-xs font-semibold text-gray-500">No orders placed yet</p>
+                            <Link
+                              to="/shop"
+                              className="inline-block px-4 py-2 bg-[#189D91] text-white text-xs font-bold rounded-xl shadow-sm hover:bg-[#14847a] transition-all"
+                            >
+                              Browse Catalog
+                            </Link>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </motion.div>

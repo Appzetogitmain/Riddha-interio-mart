@@ -875,98 +875,98 @@ const ManageSellerListPage = () => {
   return (
     <PageWrapper>
       {/* 🖥️ DESKTOP VIEW (Large screens) */}
-      <div className="hidden lg:block max-w-7xl mx-auto space-y-6 pb-32">
+      <div className="hidden lg:block w-full space-y-4 pb-12">
         {/* Header */}
         <div className="flex items-center justify-between gap-4">
-          <div className="space-y-1">
-            <h1 className="text-2xl md:text-3xl lg:text-4xl font-display font-bold text-deep-espresso">
+          <div className="space-y-0.5">
+            <h1 className="text-xl md:text-2xl font-display font-bold text-deep-espresso">
               Manage Sellers
             </h1>
-            <p className="text-warm-sand text-sm md:text-base">
+            <p className="text-warm-sand text-xs">
               View and manage all registered sellers in the platform.
             </p>
           </div>
-          <div className="flex gap-4">
-            <div className="px-4 py-2 bg-white rounded-xl border border-soft-oatmeal shadow-sm flex flex-col">
-              <span className="text-[10px] font-black text-warm-sand uppercase tracking-widest">Active</span>
-              <span className="text-lg font-bold text-deep-espresso">{sellers.filter(s => s.status === 'Active').length}</span>
+          <div className="flex gap-3">
+            <div className="px-3 py-1.5 bg-white rounded-xl border border-soft-oatmeal shadow-sm flex flex-col">
+              <span className="text-[9px] font-black text-warm-sand uppercase tracking-wider">Active</span>
+              <span className="text-base font-bold text-deep-espresso">{sellers.filter(s => s.status === 'Active').length}</span>
             </div>
-            <div className="px-4 py-2 bg-white rounded-xl border border-soft-oatmeal shadow-sm flex flex-col">
-              <span className="text-[10px] font-black text-warm-sand uppercase tracking-widest">Pending</span>
-              <span className="text-lg font-bold text-amber-600">{sellers.filter(s => s.status === 'Pending').length}</span>
+            <div className="px-3 py-1.5 bg-white rounded-xl border border-soft-oatmeal shadow-sm flex flex-col">
+              <span className="text-[9px] font-black text-warm-sand uppercase tracking-wider">Pending</span>
+              <span className="text-base font-bold text-amber-600">{sellers.filter(s => s.status === 'Pending').length}</span>
             </div>
           </div>
         </div>
 
         {/* Toolbar */}
-        <div className="bg-white p-3 md:p-4 rounded-2xl border border-soft-oatmeal shadow-sm flex flex-col md:flex-row gap-3 md:gap-4">
+        <div className="bg-white p-2.5 rounded-xl border border-soft-oatmeal shadow-sm flex flex-col md:flex-row gap-2.5">
           <div className="relative flex-grow">
             <LuSearch
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-warm-sand"
-              size={18}
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-warm-sand"
+              size={15}
             />
             <input
               type="text"
               placeholder="Search by name, shop, or email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl pl-11 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-warm-sand/20 transition-all text-sm font-bold"
+              className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-lg pl-10 pr-3 py-2 focus:outline-none focus:ring-1 focus:ring-warm-sand/30 transition-all text-xs font-semibold"
             />
           </div>
-          <button className="flex items-center justify-center gap-2 border border-soft-oatmeal text-deep-espresso px-6 py-3 md:py-0 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-soft-oatmeal/20 transition-all">
-            <LuFilter size={16} />
+          <button className="flex items-center justify-center gap-1.5 border border-soft-oatmeal text-deep-espresso px-4 py-2 md:py-0 rounded-lg font-bold text-[11px] uppercase tracking-wider hover:bg-soft-oatmeal/20 transition-all">
+            <LuFilter size={14} />
             Filters
           </button>
         </div>
 
         {/* Sellers Table */}
-        <div className="bg-white rounded-2xl border border-soft-oatmeal shadow-md overflow-hidden min-h-[420px]">
+        <div className="bg-white rounded-xl border border-soft-oatmeal shadow-sm overflow-hidden min-h-[300px]">
           {loading ? (
-             <div className="flex flex-col items-center justify-center py-24 gap-4">
-               <div className="w-12 h-12 border-4 border-warm-sand border-t-deep-espresso rounded-full animate-spin"></div>
-               <p className="text-xs font-black uppercase tracking-[0.2em] text-warm-sand">Fetching Seller Records...</p>
+             <div className="flex flex-col items-center justify-center py-20 gap-3">
+               <div className="w-10 h-10 border-4 border-warm-sand border-t-deep-espresso rounded-full animate-spin"></div>
+               <p className="text-[11px] font-black uppercase tracking-[0.2em] text-warm-sand">Fetching Seller Records...</p>
              </div>
           ) : (
-            <div className="overflow-x-auto min-h-[380px] pb-32">
-              <table className="w-full text-left border-collapse">
+            <div className="overflow-x-auto min-h-[260px] pb-8">
+              <table className="w-full text-left border-collapse table-auto">
                 <thead className="bg-soft-oatmeal/20 border-b border-soft-oatmeal">
                   <tr>
-                    <th className="px-6 py-4 text-[10px] font-black text-warm-sand uppercase tracking-widest">
+                    <th className="px-3.5 py-2.5 text-[9.5px] font-bold text-warm-sand uppercase tracking-wider whitespace-nowrap">
                       Seller & Shop
                     </th>
-                    <th className="px-6 py-4 text-[10px] font-black text-warm-sand uppercase tracking-widest">
+                    <th className="px-3.5 py-2.5 text-[9.5px] font-bold text-warm-sand uppercase tracking-wider whitespace-nowrap">
                       Contact Info
                     </th>
-                    <th className="px-6 py-4 text-[10px] font-black text-warm-sand uppercase tracking-widest">
+                    <th className="px-3 py-2.5 text-[9.5px] font-bold text-warm-sand uppercase tracking-wider whitespace-nowrap">
                       Location
                     </th>
-                    <th className="px-6 py-4 text-[10px] font-black text-warm-sand uppercase tracking-widest">
+                    <th className="px-3 py-2.5 text-[9.5px] font-bold text-warm-sand uppercase tracking-wider whitespace-nowrap text-center">
                       Products
                     </th>
-                    <th className="px-6 py-4 text-[10px] font-black text-warm-sand uppercase tracking-widest">
+                    <th className="px-3 py-2.5 text-[9.5px] font-bold text-warm-sand uppercase tracking-wider whitespace-nowrap">
                       Total Sales
                     </th>
-                    <th className="px-6 py-4 text-[10px] font-black text-warm-sand uppercase tracking-widest">
+                    <th className="px-3 py-2.5 text-[9.5px] font-bold text-warm-sand uppercase tracking-wider whitespace-nowrap">
                       Sales Volume
                     </th>
-                    <th className="px-6 py-4 text-[10px] font-black text-warm-sand uppercase tracking-widest">
+                    <th className="px-3 py-2.5 text-[9.5px] font-bold text-warm-sand uppercase tracking-wider whitespace-nowrap">
                       Joined Date
                     </th>
-                    <th className="px-6 py-4 text-[10px] font-black text-warm-sand uppercase tracking-widest">
+                    <th className="px-3 py-2.5 text-[9.5px] font-bold text-warm-sand uppercase tracking-wider whitespace-nowrap">
                       Status
                     </th>
-                    <th className="px-6 py-4 text-[10px] font-black text-warm-sand uppercase tracking-widest">
+                    <th className="px-3 py-2.5 text-[9.5px] font-bold text-warm-sand uppercase tracking-wider whitespace-nowrap">
                       Verification
                     </th>
-                    <th className="px-6 py-4 text-[10px] font-black text-warm-sand uppercase tracking-widest text-right">
+                    <th className="px-2.5 py-2.5 text-[9.5px] font-bold text-warm-sand uppercase tracking-wider text-right whitespace-nowrap">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-soft-oatmeal/50">
+                <tbody className="divide-y divide-soft-oatmeal/40">
                   {filteredSellers.length === 0 ? (
                     <tr>
-                      <td colSpan="10" className="px-6 py-20 text-center text-warm-sand font-bold uppercase tracking-widest italic text-sm">
+                      <td colSpan="10" className="px-6 py-16 text-center text-warm-sand font-bold uppercase tracking-wider italic text-xs">
                         No sellers found.
                       </td>
                     </tr>
@@ -976,61 +976,61 @@ const ManageSellerListPage = () => {
                       return (
                         <tr
                         key={seller._id}
-                        className="hover:bg-soft-oatmeal/5 transition-colors group"
+                        className="hover:bg-soft-oatmeal/10 transition-colors group"
                       >
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-deep-espresso/5 flex items-center justify-center text-deep-espresso border border-soft-oatmeal">
-                              <LuUser size={20} />
+                        <td className="px-3.5 py-2">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-7 h-7 rounded-lg bg-deep-espresso/5 flex items-center justify-center text-deep-espresso border border-soft-oatmeal shrink-0">
+                              <LuUser size={13} />
                             </div>
-                            <div>
-                              <p className="font-bold text-deep-espresso">
+                            <div className="min-w-0">
+                              <p className="font-bold text-xs text-deep-espresso leading-snug whitespace-nowrap truncate max-w-[130px]" title={seller.fullName}>
                                 {seller.fullName}
                               </p>
-                              <div className="flex items-center gap-1 text-[10px] font-black text-warm-sand uppercase tracking-widest mt-0.5">
-                                <LuBriefcase size={10} /> {seller.shopName}
+                              <div className="flex items-center gap-1 text-[9px] font-semibold text-warm-sand uppercase tracking-wider whitespace-nowrap truncate max-w-[130px]" title={seller.shopName}>
+                                <LuBriefcase size={9} className="shrink-0" /> {seller.shopName}
                               </div>
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4">
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2 text-xs font-bold text-deep-espresso/70">
-                              <LuMail size={12} className="text-warm-sand" />
-                              {seller.email}
+                        <td className="px-3.5 py-2">
+                          <div className="space-y-0.5">
+                            <div className="flex items-center gap-1.5 text-[10.5px] font-medium text-deep-espresso/80 whitespace-nowrap truncate max-w-[170px]" title={seller.email}>
+                              <LuMail size={11} className="text-warm-sand shrink-0" />
+                              <span className="truncate">{seller.email}</span>
                             </div>
-                            <div className="flex items-center gap-2 text-xs font-bold text-deep-espresso/70">
-                              <LuPhone size={12} className="text-warm-sand" />
-                              {seller.phone || 'No phone'}
+                            <div className="flex items-center gap-1.5 text-[10.5px] font-medium text-deep-espresso/80 whitespace-nowrap">
+                              <LuPhone size={11} className="text-warm-sand shrink-0" />
+                              <span>{seller.phone || 'No phone'}</span>
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-2 text-xs font-bold text-deep-espresso/70">
-                            <LuMapPin size={14} className="text-warm-sand flex-shrink-0" />
-                            <span className="line-clamp-1">{seller.shopAddress || 'Online Only'}</span>
+                        <td className="px-3 py-2">
+                          <div className="flex items-center gap-1 text-[10.5px] font-medium text-deep-espresso/70 max-w-[110px]" title={seller.shopAddress || 'Online Only'}>
+                            <LuMapPin size={11} className="text-warm-sand shrink-0" />
+                            <span className="truncate">{seller.shopAddress || 'Online Only'}</span>
                           </div>
                         </td>
                         {/* Real-time backend performance metrics */}
-                        <td className="px-6 py-4">
-                          <div className="text-xs font-bold text-deep-espresso/80 bg-slate-50 border border-slate-100 px-2.5 py-1 rounded-lg w-max flex items-center justify-center min-w-[32px]">
+                        <td className="px-3 py-2 text-center">
+                          <span className="text-[10.5px] font-bold text-deep-espresso/80 bg-slate-50 border border-slate-100 px-2 py-0.5 rounded-md inline-block">
                             {seller.productCount || 0}
-                          </div>
+                          </span>
                         </td>
-                        <td className="px-6 py-4 text-xs font-black text-deep-espresso">
+                        <td className="px-3 py-2 text-[11px] font-bold text-deep-espresso whitespace-nowrap">
                           ₹{(seller.totalSales || 0).toLocaleString('en-IN')}
                         </td>
-                        <td className="px-6 py-4">
-                          <span className="text-[10px] font-bold text-slate-600 bg-slate-100/70 border border-slate-200/50 px-2 py-0.5 rounded-full">
+                        <td className="px-3 py-2">
+                          <span className="text-[9.5px] font-semibold text-slate-600 bg-slate-100/80 border border-slate-200/50 px-1.5 py-0.5 rounded-full whitespace-nowrap">
                             {seller.orderCount || 0} orders
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-xs text-deep-espresso/70 font-black uppercase tracking-tighter">
-                          {new Date(seller.createdAt).toLocaleDateString()}
+                        <td className="px-3 py-2 text-[10px] text-deep-espresso/70 font-semibold uppercase tracking-tight whitespace-nowrap">
+                          {new Date(seller.createdAt).toLocaleDateString('en-GB')}
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-3 py-2">
                           <span
-                            className={`text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full border ${
+                            className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border whitespace-nowrap ${
                               seller.status === "Active"
                                 ? "text-green-700 bg-green-50 border-green-700/10"
                                 : seller.status === "Suspended"
@@ -1041,11 +1041,11 @@ const ManageSellerListPage = () => {
                             {seller.status}
                           </span>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-3 py-2">
                           <select
                             value={seller.verificationStatus || 'unverified'}
                             onChange={(e) => handleVerificationChange(seller._id, e.target.value)}
-                            className={`text-[11px] font-bold uppercase tracking-wide px-2.5 py-1.5 rounded-lg border focus:outline-none focus:ring-2 focus:ring-warm-sand/20 cursor-pointer ${
+                            className={`text-[9.5px] font-bold uppercase tracking-wide px-1.5 py-1 rounded-md border focus:outline-none focus:ring-1 focus:ring-warm-sand/20 cursor-pointer ${
                               (seller.verificationStatus || 'unverified') === 'unverified'
                                 ? 'text-slate-500 bg-slate-50 border-slate-200'
                                 : 'text-[#189D91] bg-[#189D91]/10 border-[#189D91]/20'
@@ -1056,40 +1056,40 @@ const ManageSellerListPage = () => {
                             ))}
                           </select>
                         </td>
-                        <td className="px-6 py-4 text-right relative">
+                        <td className="px-2.5 py-2 text-right relative whitespace-nowrap">
                           <button 
                             onClick={() => setActiveMenu(activeMenu === seller._id ? null : seller._id)}
-                            className="p-2 text-deep-espresso hover:bg-soft-oatmeal rounded-lg transition-colors"
+                            className="p-1 text-deep-espresso hover:bg-soft-oatmeal rounded-md transition-colors"
                           >
-                            <FiMoreVertical size={16} />
+                            <FiMoreVertical size={14} />
                           </button>
 
                           {activeMenu === seller._id && (
                             <>
                               <div className="fixed inset-0 z-30" onClick={() => setActiveMenu(null)}></div>
-                              <div className={`absolute right-6 w-52 bg-white rounded-2xl shadow-2xl border border-soft-oatmeal py-2 z-50 overflow-hidden animate-in fade-in zoom-in duration-200 ${isLastRows ? 'bottom-12' : 'top-14'}`}>
+                              <div className={`absolute right-2 w-44 bg-white rounded-xl shadow-xl border border-soft-oatmeal py-1.5 z-50 overflow-hidden animate-in fade-in zoom-in duration-200 ${isLastRows ? 'bottom-8' : 'top-8'}`}>
                                 {seller.status === 'Pending' && (
                                   <button 
                                     onClick={() => handleStatusUpdate(seller._id, 'approve')}
-                                    className="w-full text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-emerald-600 hover:bg-emerald-50 transition-colors flex items-center gap-3"
+                                    className="w-full text-left px-3.5 py-2 text-[9.5px] font-black uppercase tracking-wider text-emerald-600 hover:bg-emerald-50 transition-colors flex items-center gap-2"
                                   >
-                                    <LuCheck size={14} /> Approve Store
+                                    <LuCheck size={13} /> Approve Store
                                   </button>
                                 )}
                                 {seller.status === 'Active' && (
                                   <button 
                                     onClick={() => handleStatusUpdate(seller._id, 'suspend')}
-                                    className="w-full text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-amber-600 hover:bg-amber-50 transition-colors flex items-center gap-3"
+                                    className="w-full text-left px-3.5 py-2 text-[9.5px] font-black uppercase tracking-wider text-amber-600 hover:bg-amber-50 transition-colors flex items-center gap-2"
                                   >
-                                    <LuX size={14} /> Suspend Account
+                                    <LuX size={13} /> Suspend Account
                                   </button>
                                 )}
                                 {seller.status === 'Suspended' && (
                                   <button 
                                     onClick={() => handleStatusUpdate(seller._id, 'unsuspend')}
-                                    className="w-full text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-emerald-650 hover:bg-emerald-50 transition-colors flex items-center gap-3"
+                                    className="w-full text-left px-3.5 py-2 text-[9.5px] font-black uppercase tracking-wider text-emerald-650 hover:bg-emerald-50 transition-colors flex items-center gap-2"
                                   >
-                                    <LuCheck size={14} /> Reactivate Account
+                                    <LuCheck size={13} /> Reactivate Account
                                   </button>
                                 )}
                                 <button 
@@ -1097,16 +1097,16 @@ const ManageSellerListPage = () => {
                                     setSelectedSeller(seller);
                                     setActiveMenu(null);
                                   }}
-                                  className="w-full text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-deep-espresso hover:bg-soft-oatmeal transition-colors flex items-center gap-3"
+                                  className="w-full text-left px-3.5 py-2 text-[9.5px] font-black uppercase tracking-wider text-deep-espresso hover:bg-soft-oatmeal transition-colors flex items-center gap-2"
                                 >
-                                  <LuUser size={14} /> View Details
+                                  <LuUser size={13} /> View Details
                                 </button>
                                 <div className="h-px bg-soft-oatmeal my-1 mx-2"></div>
                                 <button 
                                   onClick={() => handleStatusUpdate(seller._id, 'delete')}
-                                  className="w-full text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-red-800 hover:bg-red-50 transition-colors flex items-center gap-3"
+                                  className="w-full text-left px-3.5 py-2 text-[9.5px] font-black uppercase tracking-wider text-red-800 hover:bg-red-50 transition-colors flex items-center gap-2"
                                 >
-                                  <LuTrash2 size={14} /> Remove Account
+                                  <LuTrash2 size={13} /> Remove Account
                                 </button>
                               </div>
                             </>
@@ -1124,16 +1124,16 @@ const ManageSellerListPage = () => {
 
         {/* Pagination */}
         {!loading && filteredSellers.length > 0 && (
-          <div className="flex items-center justify-between bg-white px-6 py-4 rounded-2xl border border-soft-oatmeal shadow-sm">
-            <p className="text-xs font-bold text-deep-espresso/60">
+          <div className="flex items-center justify-between bg-white px-4 py-2.5 rounded-xl border border-soft-oatmeal shadow-sm">
+            <p className="text-[11px] font-bold text-deep-espresso/60">
               Showing {(currentPage - 1) * SELLERS_PER_PAGE + 1}
               –{Math.min(currentPage * SELLERS_PER_PAGE, filteredSellers.length)} of {filteredSellers.length} sellers
             </p>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               <button
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
-                className="px-4 py-2 rounded-xl border border-soft-oatmeal text-xs font-bold text-deep-espresso disabled:opacity-40 disabled:cursor-not-allowed hover:bg-soft-oatmeal/20 transition-colors"
+                className="px-3 py-1.5 rounded-lg border border-soft-oatmeal text-[11px] font-bold text-deep-espresso disabled:opacity-40 disabled:cursor-not-allowed hover:bg-soft-oatmeal/20 transition-colors"
               >
                 Previous
               </button>

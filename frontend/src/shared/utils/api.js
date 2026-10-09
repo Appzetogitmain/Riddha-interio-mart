@@ -15,12 +15,32 @@ const safeJsonParse = (value) => {
 };
 
 const getStoredAuthKey = (config = {}) => {
+  if (config?.authKey) return config.authKey;
+
   const url = String(config?.url || '');
   const pathname = typeof window !== 'undefined' ? (window.location.pathname || '') : '';
 
-  if (url.includes('/seller') || pathname.startsWith('/seller')) return 'riddha_seller';
-  if (url.includes('/admin') || pathname.startsWith('/admin')) return 'riddha_admin';
-  if (url.includes('/delivery') || pathname.startsWith('/delivery')) return 'riddha_delivery';
+  // 1. Admin Portal or Admin API endpoints ALWAYS take top priority
+  // Checking /admin first ensures admin routes like /auth/admin/sellers/pending use riddha_admin
+  if (pathname.startsWith('/admin') || url.includes('/admin')) {
+    return 'riddha_admin';
+  }
+
+  // 2. Seller Portal or Seller API endpoints
+  if (pathname.startsWith('/seller') || url.includes('/seller')) {
+    return 'riddha_seller';
+  }
+
+  // 3. Delivery Portal or Delivery API endpoints
+  if (pathname.startsWith('/delivery') || url.includes('/delivery')) {
+    return 'riddha_delivery';
+  }
+
+  // 4. Cart, Wishlist, User routes or Customer Portal
+  if (url.startsWith('/cart') || url.startsWith('/wishlist') || url.startsWith('/user')) {
+    return 'riddha_user';
+  }
+
   return 'riddha_user';
 };
 
@@ -28,9 +48,20 @@ const getStoredAuth = (config = {}) => {
   const storageKey = getStoredAuthKey(config);
   
   let parsed = safeJsonParse(localStorage.getItem(storageKey));
-  // If specific role key is not found, fallback to riddha_user
-  if (!parsed && storageKey !== 'riddha_user') {
-    parsed = safeJsonParse(localStorage.getItem('riddha_user'));
+
+  // Fallback for admin or seller if session was previously stored in riddha_user with matching role
+  if (!parsed || (!parsed.token && !parsed.user?.token)) {
+    if (storageKey === 'riddha_admin') {
+      const legacy = safeJsonParse(localStorage.getItem('riddha_user'));
+      if (legacy && (legacy.role === 'admin' || legacy.role === 'superadmin' || legacy.user?.role === 'admin' || legacy.user?.role === 'superadmin')) {
+        parsed = legacy;
+      }
+    } else if (storageKey === 'riddha_seller') {
+      const legacy = safeJsonParse(localStorage.getItem('riddha_user'));
+      if (legacy && (legacy.role === 'seller' || legacy.user?.role === 'seller')) {
+        parsed = legacy;
+      }
+    }
   }
 
   if (!parsed || typeof parsed !== 'object') return null;
@@ -48,14 +79,24 @@ const getStoredAuth = (config = {}) => {
   return parsed;
 };
 
+const isPublicAuthRoute = (url) => {
+  return (
+    url.includes('/login') ||
+    url.includes('/register') ||
+    url.includes('/forgot-password') ||
+    url.includes('/reset-password') ||
+    url.includes('/verify-email') ||
+    url.includes('/send-otp') ||
+    url.includes('/verify-otp') ||
+    url.includes('/refresh')
+  );
+};
+
 const isPublicRequest = (config) => {
   const method = (config.method || 'get').toLowerCase();
   const url = String(config.url || '');
 
-  const isAuth = url.startsWith('/auth/');
-  const isMeOrProfile = url.includes('/me') || url.includes('/profile');
-
-  if (isAuth && !isMeOrProfile) return true;
+  if (isPublicAuthRoute(url)) return true;
 
   if (
     method === 'get' &&
@@ -121,6 +162,11 @@ api.interceptors.response.use(
     
     // 1. Exponential retry logic for network errors and transient 5xx errors
     if (config && (!error.response || (error.response.status >= 500 && error.response.status <= 504))) {
+      // Never retry telemetry, journey tracking, or analytics requests
+      if (config.url?.includes('/journey/') || config.url?.includes('/analytics/') || config.skipRetry) {
+        return Promise.reject(error);
+      }
+
       config.__retryCount = config.__retryCount || 0;
       
       const MAX_RETRIES = 3;

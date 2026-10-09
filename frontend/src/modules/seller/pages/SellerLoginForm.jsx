@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
 import { FiMail, FiLock, FiEye, FiEyeOff, FiArrowLeft, FiShield, FiCheckCircle, FiRefreshCw } from 'react-icons/fi';
 import api from '../../../shared/utils/api';
-import { useUser } from '../../user/data/UserContext';
+import { useSeller } from '../data/SellerContext';
 import logo from '../../../assets/transparent_logo.png';
 import toast from 'react-hot-toast';
 
@@ -22,7 +22,7 @@ const SellerLoginForm = () => {
   const [otp, setOtp] = useState('');
   const [resendCooldown, setResendCooldown] = useState(0);
 
-  const { login } = useUser();
+  const { sellerLogin } = useSeller();
   const navigate = useNavigate();
 
   // Handle resend countdown timer
@@ -44,13 +44,16 @@ const SellerLoginForm = () => {
 
     try {
       const response = await api.post('/auth/seller/login', {
-        email: identifier,
+        email: identifier.trim(),
         password: password
       });
 
       if (response.data.success) {
         const { token, user } = response.data.data;
-        login({ ...user, token });
+        const sessionData = { ...user, token, role: 'seller' };
+        localStorage.setItem('riddha_seller', JSON.stringify(sessionData));
+        sellerLogin(sessionData);
+        toast.success('Welcome back!');
         navigate('/seller/dashboard');
       }
     } catch (err) {

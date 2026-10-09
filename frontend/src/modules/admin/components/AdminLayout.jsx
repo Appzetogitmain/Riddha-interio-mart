@@ -22,7 +22,7 @@ const AdminLayoutContent = () => {
   const storedUser = JSON.parse(localStorage.getItem("riddha_admin") || localStorage.getItem("riddha_user") || "null");
   const activeUser = user || storedUser;
   const hasValidAdminSession =
-    Boolean(activeUser?.token) && activeUser?.role === "admin";
+    Boolean(activeUser?.token) && (activeUser?.role === "admin" || activeUser?.role === "superadmin");
 
   useEffect(() => {
     if (!hasValidAdminSession) {
@@ -31,6 +31,7 @@ const AdminLayoutContent = () => {
   }, [hasValidAdminSession, navigate]);
 
   const handleLogout = () => {
+    localStorage.removeItem("riddha_admin");
     logout();
     navigate("/admin/login");
   };

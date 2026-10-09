@@ -84,4 +84,15 @@ router.get('/payments/sellers', protect, authorize('admin'), checkPermission('pa
 // Activity Logs route
 router.get('/activity-logs', protect, authorize('admin'), checkPermission('team'), getActivityLogs);
 
+// Unified Partners & User Directory routes
+const {
+  getDirectory,
+  exportDirectoryCSV,
+  downloadDossierPDF
+} = require('../controllers/adminDirectoryController');
+
+router.get('/directory', protect, authorize('admin'), checkPermission('sellers'), getDirectory);
+router.get('/directory/export', protect, authorize('admin'), checkPermission('sellers'), exportDirectoryCSV);
+router.get('/directory/:entityType/:id/pdf', protect, authorize('admin'), checkPermission('sellers'), downloadDossierPDF);
+
 module.exports = router;

@@ -32,9 +32,14 @@ export const CartProvider = ({ children }) => {
     }
   }, []);
 
-  // Sync with backend if logged in as user
+  // Sync with backend if logged in as user (only on customer storefront)
   useEffect(() => {
-    if (isLoggedIn && user?.role === 'user') {
+    const isPortal = typeof window !== 'undefined' && (
+      window.location.pathname.startsWith('/seller') ||
+      window.location.pathname.startsWith('/admin') ||
+      window.location.pathname.startsWith('/delivery')
+    );
+    if (!isPortal && isLoggedIn && user?.role === 'user') {
       fetchCart();
     }
   }, [isLoggedIn, user]);

@@ -134,6 +134,12 @@ exports.trackStep = async (req, res) => {
 
     const sessionId = sessionOf(req);
     const userId = req.user?._id || null;
+
+    // Portal roles (seller, admin, delivery) do not participate in shopper journey funnels
+    if (req.user?.role && req.user.role !== 'user' && req.user.role !== 'enterpriser') {
+      return res.json({ success: true, skipped: true });
+    }
+
     if (!sessionId && !userId) {
       return res.status(400).json({ success: false, error: 'A sessionId (x-journey-session header) is required for anonymous tracking' });
     }
@@ -196,7 +202,8 @@ exports.trackStep = async (req, res) => {
 
     return res.json({ success: true, data: { journeyId: journey._id, stepsRecorded: journey.stepsCompleted.length } });
   } catch (error) {
-    return res.status(500).json({ success: false, error: error.message });
+    console.warn('[JOURNEY TRACK WARNING]:', error.message);
+    return res.status(200).json({ success: false, error: error.message });
   }
 };
 

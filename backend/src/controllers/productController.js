@@ -604,6 +604,10 @@ exports.createProduct = async (req, res, next) => {
       if (!req.body.sellerType) {
         req.body.sellerType = req.user.role === 'admin' ? 'Admin' : 'Seller';
       }
+    } else if (req.user.role === 'admin') {
+      const Admin = require('../models/Admin');
+      const isAdminSeller = await Admin.findById(req.body.seller);
+      req.body.sellerType = isAdminSeller ? 'Admin' : 'Seller';
     }
 
     // Handle Auto-approval logic
@@ -802,7 +806,7 @@ exports.getProduct = async (req, res, next) => {
     if (!product) {
       cached = false;
       product = await Product.findById(req.params.id)
-        .populate('seller', 'fullName shopName isVerified')
+        .populate('seller', 'fullName shopName isVerified email phone shopAddress')
         .populate('brand', 'name logo')
         .populate('category', 'name')
         .lean();
@@ -933,8 +937,13 @@ exports.updateProduct = async (req, res, next) => {
     if (req.body.subsubcategory === '') delete req.body.subsubcategory;
     if (req.body.category === '') delete req.body.category;
 
-      // If admin is updating, handle commission logic
+      // If admin is updating, handle commission logic and seller assignment
     if (req.user.role === 'admin') {
+      if (req.body.seller) {
+        const Admin = require('../models/Admin');
+        const isAdminSeller = await Admin.findById(req.body.seller);
+        req.body.sellerType = isAdminSeller ? 'Admin' : 'Seller';
+      }
       const { adminCommission, b2bAdminCommission, price: newPrice, sellerPrice: newSPrice, b2bPrice: newB2b, sellerB2bPrice: newSB2b } = req.body;
       
       const sPrice = newSPrice || product.sellerPrice || product.price;

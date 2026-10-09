@@ -25,7 +25,7 @@ import {
   Sparkles,
   Percent
 } from "lucide-react";
-import { useUser } from "../../user/data/UserContext";
+import { useSeller } from "../data/SellerContext";
 import api from "../../../shared/utils/api";
 import logo from "../../../assets/transparent_logo.png";
 import { OFFER_TYPES } from "../../../shared/constants/offerTypes";
@@ -52,6 +52,7 @@ const menuItems = [
     children: [
       { path: "/seller/orders",       label: "All Orders"   },
       { path: "/seller/bulk-orders",  label: "Bulk Orders"  },
+      { path: "/seller/return",       label: "Return Orders" },
       // Requirement A — B2B quote & sample queues
       { path: "/seller/rfqs",         label: "Quotation Requests" },
       { path: "/seller/boq-requests", label: "BOQ Sourcing Requests" },
@@ -89,7 +90,7 @@ const menuItems = [
 ];
 
 const SellerSidebar = ({ isOpen, onClose }) => {
-  const { user, logout } = useUser();
+  const { seller, sellerLogout } = useSeller();
   const navigate = useNavigate();
   const location = useLocation();
   const [openMenus, setOpenMenus] = React.useState({});
@@ -122,7 +123,7 @@ const SellerSidebar = ({ isOpen, onClose }) => {
   };
 
   const handleLogout = () => {
-    logout();
+    sellerLogout();
     navigate("/seller/login");
   };
 
@@ -174,14 +175,14 @@ const SellerSidebar = ({ isOpen, onClose }) => {
         <div className="px-3 py-3 border-b border-slate-100 shrink-0">
           <Link to="/seller/profile" className="flex items-center gap-2.5 p-2 rounded-xl hover:bg-slate-50 transition-colors group">
             <div className="w-8 h-8 rounded-xl bg-seller-primary/10 text-seller-primary flex items-center justify-center font-black text-xs shrink-0 overflow-hidden">
-              {user?.avatar
-                ? <img src={user.avatar} alt="" className="w-full h-full object-cover" />
-                : (user?.fullName?.[0] || user?.name?.[0] || 'S')
+              {seller?.avatar
+                ? <img src={seller.avatar} alt="" className="w-full h-full object-cover" />
+                : (seller?.shopName?.[0] || seller?.fullName?.[0] || seller?.name?.[0] || 'S')
               }
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-bold text-slate-800 leading-none truncate">{user?.fullName || user?.name || 'Seller'}</p>
-              <p className="text-[10px] text-slate-400 font-medium mt-0.5 leading-none truncate">{user?.email || 'seller@store.com'}</p>
+              <p className="text-xs font-bold text-slate-800 leading-none truncate">{seller?.shopName || seller?.fullName || seller?.name || 'Seller'}</p>
+              <p className="text-[10px] text-slate-400 font-medium mt-0.5 leading-none truncate">{seller?.email || 'seller@store.com'}</p>
             </div>
             <ChevronRight size={13} className="text-slate-300 group-hover:text-slate-500 transition-colors shrink-0" />
           </Link>

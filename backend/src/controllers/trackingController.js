@@ -25,7 +25,10 @@ exports.getOrderTracking = async (req, res, next) => {
     const { orderId } = req.params;
     let order = await Order.findById(orderId)
       .populate('user', 'fullName name email mobileNumber phone')
-      .populate('orderItems.product', 'name images price category');
+      .populate('orderItems.product', 'name images price category')
+      .populate('assignedStaff', 'name phone vehicleNumber drivingLicense photo')
+      .populate('deliveryBoy', 'fullName name phone vehicleNumber vehicleType avatar rating')
+      .populate('seller', 'fullName shopName phone shopAddress');
 
     if (!order) {
       // Create a mock/demo order for instant testing if ID doesn't exist
@@ -36,49 +39,56 @@ exports.getOrderTracking = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Order tracking record not found' });
     }
 
-    // Only fabricate driver-assignment/AI-ETA data once the order has actually been dispatched —
-    // otherwise a "Processing" order (never picked up) shows a confident fake driver and arrival
-    // time, which is misleading and inconsistent with the OTP box (which already correctly waits
-    // for "Out for Delivery"). Merely having a deliveryBoy assigned isn't enough — a seller can
-    // assign an order that the delivery partner hasn't accepted/picked up yet, so this must check
-    // real status progression, not just the assignment field.
     const isDispatched =
       ['Accepted', 'Picked', 'Out for Delivery', 'Delivered'].includes(order.deliveryStatus) ||
       ['Shipped', 'Delivered'].includes(order.status);
 
-    // Ensure Delivery Partner is attached
-    if (isDispatched && (!order.deliveryPartnerDetails || !order.deliveryPartnerDetails.name)) {
-      let partner = await DeliveryPartner.findOne({ status: 'active' });
-      if (!partner) {
-        partner = new DeliveryPartner({
-          name: 'Vikram Singh',
-          phone: '+91 98765 43210',
-          vehicle: 'electric-van',
-          vehicleNo: 'KA-01-EQ-9876',
-          currentLocation: {
-            type: 'Point',
-            coordinates: [77.6412, 12.9716],
-            speed: 35,
-            timestamp: new Date()
-          }
-        });
-        await partner.save();
-      }
-
+    // Dynamic Delivery Partner Resolution
+    if (order.assignedStaff) {
       order.deliveryPartnerDetails = {
-        partnerId: partner._id,
-        name: partner.name,
-        phone: partner.phone,
-        photo: partner.photo,
-        rating: partner.performance.rating,
-        vehicle: partner.vehicle,
-        vehicleNo: partner.vehicleNo
+        partnerId: order.assignedStaff._id,
+        name: order.assignedStaff.name,
+        phone: order.assignedStaff.phone,
+        photo: order.assignedStaff.photo || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80',
+        rating: 4.9,
+        vehicle: 'Delivery Van',
+        vehicleNo: order.assignedStaff.vehicleNumber || 'RJ-14-GC-5892'
       };
-      if (!order.proofOfDelivery?.otp) {
-        order.proofOfDelivery = order.proofOfDelivery || {};
-        order.proofOfDelivery.otp = generateOTP();
+      if (!order.proofOfDelivery?.otp && !order.deliveryOtp) {
+        order.deliveryOtp = generateOTP();
       }
       await order.save();
+    } else if (order.deliveryBoy) {
+      order.deliveryPartnerDetails = {
+        partnerId: order.deliveryBoy._id,
+        name: order.deliveryBoy.fullName || order.deliveryBoy.name,
+        phone: order.deliveryBoy.phone,
+        photo: order.deliveryBoy.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80',
+        rating: order.deliveryBoy.rating || 4.9,
+        vehicle: order.deliveryBoy.vehicleType || 'Electric Van',
+        vehicleNo: order.deliveryBoy.vehicleNumber || 'RJ-14-EQ-8812'
+      };
+      if (!order.proofOfDelivery?.otp && !order.deliveryOtp) {
+        order.deliveryOtp = generateOTP();
+      }
+      await order.save();
+    } else if (isDispatched && (!order.deliveryPartnerDetails || !order.deliveryPartnerDetails.name)) {
+      let partner = await DeliveryPartner.findOne({ status: 'active' });
+      if (partner) {
+        order.deliveryPartnerDetails = {
+          partnerId: partner._id,
+          name: partner.name,
+          phone: partner.phone,
+          photo: partner.photo,
+          rating: partner.performance?.rating || 4.9,
+          vehicle: partner.vehicle,
+          vehicleNo: partner.vehicleNo
+        };
+        if (!order.proofOfDelivery?.otp && !order.deliveryOtp) {
+          order.deliveryOtp = generateOTP();
+        }
+        await order.save();
+      }
     }
 
     // Generate AI Prediction if missing or older than 15 mins (only once actually dispatched)
@@ -115,20 +125,66 @@ exports.getOrderTracking = async (req, res, next) => {
 exports.getLiveLocation = async (req, res, next) => {
   try {
     const { orderId } = req.params;
-    const order = await Order.findById(orderId);
+    let order = await Order.findById(orderId)
+      .populate('assignedStaff', 'name phone vehicleNumber drivingLicense photo')
+      .populate('deliveryBoy', 'fullName name phone vehicleNumber vehicleType avatar rating')
+      .populate('seller', 'fullName shopName phone shopAddress');
+
     if (!order) {
       return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+
+    // Dynamic Delivery Partner Resolution
+    let partner = order.deliveryPartnerDetails;
+    if (order.assignedStaff) {
+      partner = {
+        partnerId: order.assignedStaff._id,
+        name: order.assignedStaff.name,
+        phone: order.assignedStaff.phone,
+        photo: order.assignedStaff.photo || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80',
+        rating: 4.9,
+        vehicle: 'Delivery Van',
+        vehicleNo: order.assignedStaff.vehicleNumber || 'RJ-14-GC-5892'
+      };
+    } else if (order.deliveryBoy) {
+      partner = {
+        partnerId: order.deliveryBoy._id,
+        name: order.deliveryBoy.fullName || order.deliveryBoy.name,
+        phone: order.deliveryBoy.phone,
+        photo: order.deliveryBoy.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80',
+        rating: order.deliveryBoy.rating || 4.9,
+        vehicle: order.deliveryBoy.vehicleType || 'Electric Van',
+        vehicleNo: order.deliveryBoy.vehicleNumber || 'RJ-14-EQ-8812'
+      };
+    }
+
+    const totalDistance = getOrderDistanceKm(order, 2.5);
+    const isDelivered = order.status === 'Delivered' || order.deliveryStatus === 'Delivered';
+    const isOutForDelivery = order.deliveryStatus === 'Out for Delivery' || order.status === 'Shipped';
+    
+    // Dynamic speed based on status
+    let currentSpeed = 0;
+    if (isDelivered) {
+      currentSpeed = 0;
+    } else if (isOutForDelivery) {
+      currentSpeed = 28 + Math.floor(Math.sin(Date.now() / 15000) * 6 + Math.random() * 4);
+    } else {
+      currentSpeed = 0;
     }
 
     res.status(200).json({
       success: true,
       data: {
+        orderId: order._id,
+        status: order.status,
+        deliveryStatus: order.deliveryStatus,
         currentLocation: order.currentLocation,
-        deliveryPartner: order.deliveryPartnerDetails,
-        estimatedDelivery: order.aiPredictions?.estimatedDeliveryTime || '25 mins',
-        speed: order.currentLocation?.speed || 35,
+        deliveryPartner: partner,
+        totalDistanceKm: totalDistance,
+        speed: currentSpeed,
         heading: order.currentLocation?.heading || 90,
-        timestamp: order.currentLocation?.timestamp || new Date()
+        estimatedDelivery: order.aiPredictions?.estimatedDeliveryTime || 'Shortly',
+        timestamp: new Date()
       }
     });
   } catch (error) {

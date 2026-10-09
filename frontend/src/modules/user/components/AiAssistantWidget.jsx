@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -17,6 +17,179 @@ import { useVoiceRecognition } from '../hooks/useVoiceRecognition';
 import SubscriptionModal from './SubscriptionModal';
 import B2CSubscriptionModal from './B2CSubscriptionModal';
 
+/**
+ * Detect user conversational emotion or intent
+ */
+const detectUserIntent = (text) => {
+  if (!text) return null;
+  const lower = text.toLowerCase().trim();
+
+  // Goodbye intent
+  if (
+    /^(bye|goodbye|see you|tata|alvida|cya)\b/i.test(lower) ||
+    lower.includes('goodbye') ||
+    lower.includes('bye tejas') ||
+    lower.includes('bye bye')
+  ) {
+    return 'goodbye';
+  }
+
+  // Friendly / Emotional / Gratitude intent
+  if (
+    lower.includes('thank you') ||
+    lower.includes('thanks') ||
+    lower.includes('dhanyawad') ||
+    lower.includes('shukriya') ||
+    lower.includes('love you') ||
+    lower.includes('awesome') ||
+    lower.includes('great job') ||
+    lower.includes('you are amazing') ||
+    lower.includes('helpful') ||
+    lower.includes('superb')
+  ) {
+    return 'love';
+  }
+
+  // Okay / Confirmation intent
+  if (
+    /^(okay|ok|sure|done|alright|theek hai|got it|cool)\b/i.test(lower) ||
+    lower === 'ok' ||
+    lower === 'okay' ||
+    lower === 'done' ||
+    lower === 'sure'
+  ) {
+    return 'okay';
+  }
+
+  return null;
+};
+
+/**
+ * Detect assistant response emotion based on payload and conversational context
+ */
+const detectResponseEmotion = (resData, userIntent) => {
+  if (userIntent === 'goodbye') return 'goodbye';
+  if (userIntent === 'love') return 'love';
+  if (userIntent === 'okay') return 'okay';
+
+  // Explicit expression returned from backend AI service
+  if (resData?.expression && resData.expression !== 'idle') {
+    const rawExpr = String(resData.expression).toLowerCase().trim();
+    if (['happy', 'okay', 'excited', 'thinking', 'sad', 'confused', 'love', 'goodbye', 'surprised', 'celebrating', 'assisted'].includes(rawExpr)) {
+      return rawExpr === 'assisted' ? 'okay' : rawExpr;
+    }
+  }
+
+  // Handover / Support ticket / human assistance
+  if (
+    resData?.handover ||
+    (resData?.message && (
+      resData.message.toLowerCase().includes('support team') ||
+      resData.message.toLowerCase().includes('connected your request') ||
+      resData.message.toLowerCase().includes('assist you shortly') ||
+      resData.message.toLowerCase().includes('human agent') ||
+      resData.message.toLowerCase().includes('support ticket') ||
+      resData.message.toLowerCase().includes('customer support')
+    ))
+  ) {
+    return 'okay';
+  }
+
+  // Positive / Successful Answer indicators (recommendations, orders, RFQs)
+  if (
+    (Array.isArray(resData?.products) && resData.products.length > 0) ||
+    (Array.isArray(resData?.orders) && resData.orders.length > 0) ||
+    (Array.isArray(resData?.actions) && resData.actions.some(a => a.type === 'UPGRADE_PRO' || a.type === 'CREATE_RFQ'))
+  ) {
+    return 'excited';
+  }
+
+  const msg = (resData?.message || '').toLowerCase();
+
+  // Apology / Error / Sad
+  if (
+    msg.includes('sorry') ||
+    msg.includes('apologize') ||
+    msg.includes('trouble connecting') ||
+    msg.includes('could not find') ||
+    msg.includes('out of stock') ||
+    msg.includes('unavailable') ||
+    msg.includes('regret')
+  ) {
+    return 'sad';
+  }
+
+  // Confused / Clarification required
+  if (
+    msg.includes('please clarify') ||
+    msg.includes('could you specify') ||
+    msg.includes('not sure') ||
+    msg.includes('unclear') ||
+    msg.includes('which room') ||
+    msg.includes('more details') ||
+    msg.includes('did you mean')
+  ) {
+    return 'confused';
+  }
+
+  // Gratitude / Warmth
+  if (
+    msg.includes('welcome') ||
+    msg.includes('my pleasure') ||
+    msg.includes('happy to help') ||
+    msg.includes('happy to assist') ||
+    msg.includes('dhanyawad') ||
+    msg.includes('shukriya')
+  ) {
+    return 'love';
+  }
+
+  // Thinking / Calculations / Vastu / Estimates
+  if (
+    msg.includes('vastu') ||
+    msg.includes('calculate') ||
+    msg.includes('sq ft') ||
+    msg.includes('analyzing') ||
+    msg.includes('budget estimate') ||
+    msg.includes('let me check')
+  ) {
+    return 'thinking';
+  }
+
+  // Surprising / Important info
+  if (
+    msg.includes('wow') ||
+    msg.includes('surprise') ||
+    msg.includes('huge discount') ||
+    msg.includes('exclusive deal')
+  ) {
+    return 'surprised';
+  }
+
+  return 'happy';
+};
+
+/**
+ * Resolve expression for any message (loaded from DB history or newly sent)
+ */
+const getMsgExpression = (msg) => {
+  if (!msg) return 'happy';
+  if (msg.metadata?.expression && msg.metadata.expression !== 'idle') {
+    const raw = String(msg.metadata.expression).toLowerCase().trim();
+    if (['happy', 'okay', 'excited', 'thinking', 'sad', 'confused', 'love', 'goodbye', 'surprised', 'celebrating', 'sleepy', 'assisted'].includes(raw)) {
+      return raw === 'assisted' ? 'okay' : raw;
+    }
+  }
+  return detectResponseEmotion({
+    message: msg.content,
+    handover: msg.metadata?.handover,
+    products: msg.metadata?.products,
+    orders: msg.metadata?.orders,
+    actions: msg.metadata?.actions
+  });
+};
+
+
 const AiAssistantWidget = () => {
   const { user } = useUser();
   const navigate = useNavigate();
@@ -28,7 +201,12 @@ const AiAssistantWidget = () => {
   const [conversationId, setConversationId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [handoverState, setHandoverState] = useState(null);
-  const [expression, setExpression] = useState('idle'); // idle | listening | thinking | speaking | confused | celebrating
+
+  // Centralized Tejas expression state machine
+  // baseExpression: persistent state ('happy' | 'confused' | 'sleepy' | 'goodbye')
+  const [baseExpression, setBaseExpression] = useState('happy');
+  // tempReaction: transient priority state ({ type, until })
+  const [tempReaction, setTempReaction] = useState(null);
   
   // Subscription Modals for B2B Pro voice actions
   const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
@@ -57,6 +235,20 @@ const AiAssistantWidget = () => {
   // Speak ref helper to avoid cyclic dependency
   const speakRef = useRef(null);
 
+  // Temporary expression timer handler
+  useEffect(() => {
+    if (!tempReaction) return;
+    const remaining = tempReaction.until - Date.now();
+    if (remaining <= 0) {
+      setTempReaction(null);
+      return;
+    }
+    const timer = setTimeout(() => {
+      setTempReaction(null);
+    }, remaining);
+    return () => clearTimeout(timer);
+  }, [tempReaction]);
+
   // Message Sending Handler
   const handleSendMessage = useCallback(async (textToSend) => {
     const text = textToSend || inputText;
@@ -64,6 +256,20 @@ const AiAssistantWidget = () => {
 
     // Always clear input field when sending
     setInputText('');
+
+    // Detect user emotion / intent
+    const userIntent = detectUserIntent(text);
+
+    // If goodbye, lock into goodbye
+    if (userIntent === 'goodbye') {
+      setBaseExpression('goodbye');
+    } else {
+      // Step 2 from specs: Switch Happy -> Surprised (hold for ~750ms) -> then Thinking
+      setTempReaction({ type: 'surprised', until: Date.now() + 750 });
+      if (baseExpression === 'sleepy') {
+        setBaseExpression('happy');
+      }
+    }
 
     // If user is not logged in: DO NOT send HTTP request to /assistant/chat!
     // Instead show the user message and assistant login prompt directly in chat.
@@ -85,7 +291,7 @@ const AiAssistantWidget = () => {
         createdAt: new Date().toISOString()
       };
       setMessages(prev => [...prev, tempUserMsg, loginPromptMsg]);
-      setExpression('happy');
+      setBaseExpression('happy');
       speakRef.current?.("Please log in first to chat with me.");
       return;
     }
@@ -97,7 +303,6 @@ const AiAssistantWidget = () => {
     };
     setMessages(prev => [...prev, tempUserMsg]);
     setIsLoading(true);
-    setExpression('thinking');
 
     try {
       const currentRole = getRoleContext();
@@ -111,11 +316,28 @@ const AiAssistantWidget = () => {
       if (res.data && res.data.success) {
         setConversationId(res.data.conversationId);
         
-        // Detect expression from response or fallback
-        const returnedExpression = res.data.expression || 
-          (res.data.message?.toLowerCase().includes('oh no') ? 'confused' : 'happy');
+        // Detect expression from response and user intent
+        const returnedExpression = detectResponseEmotion(res.data, userIntent);
 
-        setExpression(returnedExpression);
+        if (returnedExpression === 'goodbye') {
+          setBaseExpression('goodbye');
+        } else if (returnedExpression === 'excited') {
+          setTempReaction({ type: 'excited', until: Date.now() + 1500 });
+          setBaseExpression('happy');
+        } else if (returnedExpression === 'love') {
+          setTempReaction({ type: 'love', until: Date.now() + 1800 });
+          setBaseExpression('happy');
+        } else if (returnedExpression === 'confused') {
+          setBaseExpression('confused');
+        } else if (returnedExpression === 'okay') {
+          setTempReaction({ type: 'okay', until: Date.now() + 1400 });
+          setBaseExpression('happy');
+        } else if (returnedExpression === 'surprised') {
+          setTempReaction({ type: 'surprised', until: Date.now() + 1000 });
+          setBaseExpression('happy');
+        } else {
+          setBaseExpression('happy');
+        }
 
         const botMsg = {
           role: 'assistant',
@@ -142,7 +364,7 @@ const AiAssistantWidget = () => {
       }
     } catch (e) {
       if (e.response?.status === 401 || e.response?.data?.requiresLogin) {
-        setExpression('happy');
+        setBaseExpression('happy');
         const loginPromptMsg = {
           role: 'assistant',
           content: "Please log in first to chat with me! 🔐 Click below to sign in.",
@@ -158,20 +380,23 @@ const AiAssistantWidget = () => {
 
       const errMsg = e.response?.data?.error || 'Failed to send message. Please retry.';
       toast.error(errMsg);
-      setExpression('confused');
+      
+      // Error/Sad state holds for 2 seconds then reverts to happy
+      setTempReaction({ type: 'sad', until: Date.now() + 2000 });
+      setBaseExpression('happy');
       
       const fallbackMsg = "Oh no! 🥺 I am having trouble connecting to the network right now. Please try again in a moment.";
       setMessages(prev => [...prev, {
         role: 'assistant',
         content: fallbackMsg,
-        metadata: { expression: 'confused' },
+        metadata: { expression: 'sad' },
         createdAt: new Date().toISOString()
       }]);
       speakRef.current?.(fallbackMsg);
     } finally {
       setIsLoading(false);
     }
-  }, [inputText, isLoading, conversationId, user, location.pathname]);
+  }, [inputText, isLoading, conversationId, user, location.pathname, baseExpression]);
 
   // Voice command execution handler
   const handleVoiceCommand = useCallback((command, rawText) => {
@@ -188,13 +413,14 @@ const AiAssistantWidget = () => {
         createdAt: new Date().toISOString()
       };
       setMessages(prev => [...prev, loginPromptMsg]);
-      setExpression('happy');
+      setBaseExpression('happy');
       return;
     }
 
     switch (command.type) {
       case 'UPGRADE_PRO':
-        setExpression('celebrating');
+        setTempReaction({ type: 'excited', until: Date.now() + 1800 });
+        setBaseExpression('happy');
         toast.success('Voice Command: B2B Upgrade to Pro', { icon: '👑' });
         if (user?.userType === 'enterpriser' || user?.userType === 'enterprise') {
           setIsSubscriptionModalOpen(true);
@@ -204,14 +430,16 @@ const AiAssistantWidget = () => {
         break;
 
       case 'TRACK_ORDER':
-        setExpression('celebrating');
+        setTempReaction({ type: 'excited', until: Date.now() + 1800 });
+        setBaseExpression('happy');
         toast.success('Voice Command: Live GPS Tracking', { icon: '🚚' });
         navigate(command.path || '/orders/track');
         setIsOpen(false);
         break;
 
       case 'CREATE_RFQ':
-        setExpression('celebrating');
+        setTempReaction({ type: 'excited', until: Date.now() + 1800 });
+        setBaseExpression('happy');
         toast.success('Voice Command: Create RFQ', { icon: '📋' });
         navigate(command.path || '/rfq/new');
         setIsOpen(false);
@@ -219,7 +447,8 @@ const AiAssistantWidget = () => {
 
       case 'NAVIGATE':
         if (command.path) {
-          setExpression('happy');
+          setTempReaction({ type: 'okay', until: Date.now() + 1400 });
+          setBaseExpression('happy');
           toast.success(`Voice Command: ${command.label}`, { icon: '🧭' });
           navigate(command.path);
           setIsOpen(false);
@@ -265,19 +494,64 @@ const AiAssistantWidget = () => {
     speakRef.current = speak;
   }, [speak]);
 
-  // Dynamic expression management
+  // Inactivity tracking (2.5 minutes of idle time -> sleepy)
   useEffect(() => {
-    if (isListening) {
-      setExpression('listening');
-    } else if (isLoading) {
-      setExpression('thinking');
-    } else if (isSpeaking) {
-      setExpression('speaking');
-    } else if (expression === 'listening' || expression === 'thinking' || expression === 'speaking') {
-      const timer = setTimeout(() => setExpression('idle'), 2500);
-      return () => clearTimeout(timer);
+    if (!isOpen || isLoading || isSpeaking || baseExpression === 'goodbye') return;
+
+    let inactivityTimer;
+
+    const resetInactivity = () => {
+      if (baseExpression === 'sleepy') {
+        setBaseExpression('happy');
+      }
+      clearTimeout(inactivityTimer);
+      inactivityTimer = setTimeout(() => {
+        setBaseExpression('sleepy');
+      }, 150000); // 2.5 minutes
+    };
+
+    resetInactivity();
+
+    window.addEventListener('mousemove', resetInactivity);
+    window.addEventListener('keydown', resetInactivity);
+    window.addEventListener('click', resetInactivity);
+
+    return () => {
+      clearTimeout(inactivityTimer);
+      window.removeEventListener('mousemove', resetInactivity);
+      window.removeEventListener('keydown', resetInactivity);
+      window.removeEventListener('click', resetInactivity);
+    };
+  }, [isOpen, isLoading, isSpeaking, baseExpression]);
+
+  // Priority-based resolved expression:
+  // ERROR/SAD (10) > GOODBYE (9) > TALKING (8) > THINKING (7) > EXCITED/LOVE/SURPRISED (6) > CONFUSED (5) > OKAY (4) > HAPPY (3) > SLEEPY (2)
+  const resolvedExpression = useMemo(() => {
+    // 1. Sad / Error reaction (Priority 10)
+    if (tempReaction?.type === 'sad') return 'sad';
+
+    // 2. Goodbye persistent session end (Priority 9)
+    if (baseExpression === 'goodbye') return 'goodbye';
+
+    // 3. Talking while audio/TTS is playing (Priority 8)
+    if (isSpeaking) return 'talking';
+
+    // 4. Thinking while API is fetching response (Priority 7)
+    if (isLoading) {
+      // Allow the 600-900ms 'surprised' intake animation before showing thinking
+      if (tempReaction?.type === 'surprised') return 'surprised';
+      return 'thinking';
     }
-  }, [isListening, isLoading, isSpeaking]);
+
+    // 5. Listening to voice command
+    if (isListening) return 'listening';
+
+    // 6. Temporary reaction if active (excited, love, surprised, okay) (Priority 6)
+    if (tempReaction) return tempReaction.type;
+
+    // 7. Base persistent expression (confused, okay, happy, sleepy)
+    return baseExpression || 'happy';
+  }, [tempReaction, baseExpression, isSpeaking, isLoading, isListening]);
 
   // Reset conversation selection if role context changes
   useEffect(() => {
@@ -295,13 +569,18 @@ const AiAssistantWidget = () => {
     setMessages([]);
     setHandoverState(null);
     setInputText('');
-    setExpression('idle');
+    setBaseExpression('happy');
+    setTempReaction(null);
     toast.success('Started a fresh conversation with Tejas.', { icon: '✨' });
   };
 
   // Load conversation thread when opening chat
   useEffect(() => {
     if (isOpen) {
+      if (baseExpression === 'goodbye' || baseExpression === 'sleepy') {
+        setBaseExpression('happy');
+      }
+      setTempReaction(null);
       if (user) {
         loadConversation();
       }
@@ -334,7 +613,20 @@ const AiAssistantWidget = () => {
         const detailRes = await api.get(`/assistant/conversations/${latestId}`, { params });
         if (detailRes.data && detailRes.data.success && detailRes.data.conversation) {
           const loadedConversation = detailRes.data.conversation;
-          setMessages(loadedConversation.messages || []);
+          const rawMsgs = loadedConversation.messages || [];
+          const hydratedMsgs = rawMsgs.map(m => {
+            if (m.role === 'assistant' && (!m.metadata?.expression || m.metadata.expression === 'idle')) {
+              return {
+                ...m,
+                metadata: {
+                  ...(m.metadata || {}),
+                  expression: getMsgExpression(m)
+                }
+              };
+            }
+            return m;
+          });
+          setMessages(hydratedMsgs);
           if (loadedConversation.status === 'handover') {
             setHandoverState({ status: 'pending' });
           } else {
@@ -621,7 +913,7 @@ const AiAssistantWidget = () => {
               {/* Header with Avatar & Audio Controls */}
               <div className="bg-gradient-to-r from-[#0E544D] via-[#189D91] to-[#127F75] text-white px-4 py-3.5 flex items-center justify-between border-b border-white/10 shadow-md">
                 <div className="flex items-center gap-3">
-                  <TejasAvatar expression={expression} size={42} showReactionBadge={true} />
+                  <TejasAvatar expression={resolvedExpression} size={42} showReactionBadge={true} />
                   <div>
                     <h3 className="font-black text-sm tracking-tight leading-none text-white">{headerInfo.title}</h3>
                     <div className="flex items-center gap-1.5 mt-1">
@@ -735,7 +1027,7 @@ const AiAssistantWidget = () => {
                 {messages.length === 0 && user && (
                   <div className="text-center py-5 px-3 space-y-3 bg-white rounded-2xl border border-teal-100/60 shadow-sm">
                     <div className="flex justify-center">
-                      <TejasAvatar expression="idle" size={54} />
+                      <TejasAvatar expression={resolvedExpression} size={54} />
                     </div>
                     <div>
                       <h4 className="font-black text-slate-800 text-sm">{headerInfo.greeting}</h4>
@@ -763,133 +1055,151 @@ const AiAssistantWidget = () => {
                 )}
 
                 {/* Message Stream */}
-                {messages.map((msg, index) => (
-                  <div key={index} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'} space-y-1.5`}>
-                    
-                    {msg.role === 'assistant' && (
-                      <div className="flex items-center gap-1.5 ml-1">
-                        <TejasAvatar
-                          expression={msg.metadata?.expression || (msg.content?.toLowerCase().includes('oh no') ? 'confused' : 'idle')}
-                          size={24}
-                          showReactionBadge={false}
-                        />
-                        <span className="text-[9.5px] font-black uppercase tracking-wider text-slate-500">Tejas</span>
-                      </div>
-                    )}
-                    
-                    <div className={`max-w-[88%] px-4 py-3 rounded-2xl text-xs font-medium leading-relaxed shadow-sm ${
-                      msg.role === 'user'
-                        ? 'bg-[#189D91] text-white rounded-tr-none'
-                        : msg.content?.toLowerCase().includes('oh no')
-                        ? 'bg-amber-50/80 text-slate-800 rounded-tl-none border border-amber-200 shadow-sm'
-                        : 'bg-white text-slate-800 rounded-tl-none border border-gray-100'
-                    }`}>
-                      <p className="whitespace-pre-line">{msg.content}</p>
-                      {msg.role === 'assistant' && (
-                        <div className="flex items-center justify-end pt-1 -mb-1">
-                          <button
-                            onClick={() => speakRef.current?.(msg.content)}
-                            title="Listen with Tejas's Indian Voice"
-                            className="text-gray-400 hover:text-[#189D91] transition-colors p-0.5 rounded flex items-center gap-1 text-[10px]"
-                          >
-                            <FiVolume2 size={12} />
-                            <span className="text-[9px] font-semibold">Listen</span>
-                          </button>
+                {messages.map((msg, index) => {
+                  const isAssistant = msg.role === 'assistant';
+                  const msgExpression = isAssistant ? getMsgExpression(msg) : null;
+
+                  return (
+                    <div key={index} className={`flex flex-col ${!isAssistant ? 'items-end' : 'items-start'} space-y-1.5 w-full`}>
+                      
+                      {isAssistant ? (
+                        <div className="flex items-start gap-2.5 max-w-[95%]">
+                          {/* Visible Mascot Expression Avatar */}
+                          <div className="shrink-0 mt-0.5">
+                            <TejasAvatar
+                              expression={msgExpression}
+                              size={44}
+                              showReactionBadge={false}
+                            />
+                          </div>
+
+                          <div className="flex-1 min-w-0 space-y-1.5">
+                            {/* Tejas Name Only (No expression badges) */}
+                            <div className="flex items-center gap-1.5 ml-0.5">
+                              <span className="text-[10px] font-black uppercase tracking-wider text-slate-700">Tejas</span>
+                            </div>
+
+                            {/* Message Text Bubble */}
+                            <div className={`px-4 py-3 rounded-2xl rounded-tl-sm text-xs font-medium leading-relaxed shadow-sm ${
+                              msg.content?.toLowerCase().includes('oh no') || msgExpression === 'sad'
+                                ? 'bg-amber-50/90 text-slate-800 border border-amber-200'
+                                : 'bg-white text-slate-800 border border-gray-100'
+                            }`}>
+                              <p className="whitespace-pre-line">{msg.content}</p>
+                              
+                              <div className="flex items-center justify-end pt-1 -mb-1">
+                                <button
+                                  onClick={() => speakRef.current?.(msg.content)}
+                                  title="Listen with Tejas's Indian Voice"
+                                  className="text-gray-400 hover:text-[#189D91] transition-colors p-0.5 rounded flex items-center gap-1 text-[10px]"
+                                >
+                                  <FiVolume2 size={12} />
+                                  <span className="text-[9px] font-semibold">Listen</span>
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Direct Action Chips */}
+                            {msg.metadata?.actions?.length > 0 && (
+                              <div className="flex flex-wrap gap-1.5 pt-0.5">
+                                {msg.metadata.actions.map((act, aIdx) => (
+                                  <button
+                                    key={aIdx}
+                                    onClick={() => handleActionClick(act)}
+                                    className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 shadow-sm transition-all active:scale-95 ${
+                                      act.type === 'UPGRADE_PRO'
+                                        ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 hover:from-amber-300'
+                                        : 'bg-[#189D91] text-white hover:bg-[#14847a]'
+                                    }`}
+                                  >
+                                    {act.type === 'UPGRADE_PRO' && <LuCrown size={12} />}
+                                    {act.label}
+                                    <FiArrowUpRight size={11} />
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Products Grid */}
+                            {msg.metadata?.products?.length > 0 && (
+                              <div className="w-full grid grid-cols-2 gap-2.5 pt-1">
+                                {msg.metadata.products.map((p, idx) => (
+                                  <div key={idx} className="bg-white border border-gray-100 rounded-2xl p-2 flex flex-col shadow-sm">
+                                    <div className="aspect-square w-full rounded-xl bg-gray-50 overflow-hidden relative border border-gray-50 shrink-0">
+                                      {p.imageUrl ? (
+                                        <img src={p.imageUrl} alt={p.name} className="w-full h-full object-cover" />
+                                      ) : (
+                                        <div className="w-full h-full flex items-center justify-center bg-[#189D91]/5 text-[#189D91] text-[9px] font-bold">Riddha Mart</div>
+                                      )}
+                                    </div>
+                                    <div className="mt-2 flex-1 flex flex-col justify-between">
+                                      <div>
+                                        <h5 className="font-bold text-[11px] text-slate-800 line-clamp-1 leading-tight">{p.name}</h5>
+                                        <p className="text-[11px] font-black text-slate-900 mt-0.5">₹{Number(p.price).toLocaleString()}</p>
+                                      </div>
+                                      <button
+                                        onClick={() => handleActionClick({ type: 'VIEW_PRODUCT', payload: { productId: p.productId } })}
+                                        className="w-full mt-2 py-1.5 bg-[#189D91]/10 hover:bg-[#189D91] text-[#189D91] hover:text-white rounded-lg text-[9px] font-bold uppercase tracking-wider transition-all leading-none"
+                                      >
+                                        View Item
+                                      </button>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Orders */}
+                            {msg.metadata?.orders?.length > 0 && (
+                              <div className="w-full pt-0.5">
+                                {msg.metadata.orders.map((o, idx) => (
+                                  <div key={idx} className="bg-white border border-gray-100 rounded-2xl p-3 shadow-sm space-y-2">
+                                    <div className="flex justify-between items-center pb-2 border-b border-gray-50">
+                                      <div>
+                                        <p className="text-[9px] font-bold text-gray-400 uppercase leading-none">Order Ref</p>
+                                        <p className="text-[11px] font-black text-slate-800 mt-1">#{o.orderId.substring(o.orderId.length - 8).toUpperCase()}</p>
+                                      </div>
+                                      <span className="text-[9px] font-bold uppercase bg-[#189D91]/10 text-[#189D91] px-2 py-1 rounded-full border border-[#189D91]/15">
+                                        {o.status}
+                                      </span>
+                                    </div>
+                                    <button
+                                      onClick={() => handleActionClick({ type: 'TRACK_ORDER', payload: { orderId: o.orderId } })}
+                                      className="w-full py-2 bg-teal-50 hover:bg-teal-100 text-[#189D91] font-bold rounded-xl text-[10px] flex items-center justify-center gap-1.5 transition-all"
+                                    >
+                                      <FiTruck size={12} /> Live GPS Tracking
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Handover Card */}
+                            {msg.metadata?.handover?.reason && (
+                              <div className="w-full pt-1">
+                                <div className="bg-[#FF6B35]/5 border border-[#FF6B35]/15 rounded-2xl p-3 flex items-start gap-2.5 shadow-sm">
+                                  <FiAlertCircle className="text-[#FF6B35] shrink-0 mt-0.5" size={16} />
+                                  <div>
+                                    <h5 className="text-[11px] font-black text-slate-800 leading-none">Support Ticket Generated</h5>
+                                    <p className="text-[10px] text-gray-500 mt-1 leading-normal">
+                                      {msg.metadata.handover.reason}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+
+                          </div>
+                        </div>
+                      ) : (
+                        /* User Bubble */
+                        <div className="max-w-[85%] px-4 py-2.5 bg-[#189D91] text-white rounded-2xl rounded-tr-none text-xs font-medium leading-relaxed shadow-sm">
+                          <p className="whitespace-pre-line">{msg.content}</p>
                         </div>
                       )}
                     </div>
-
-                    {/* Direct Action Chips */}
-                    {msg.metadata?.actions?.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 pt-1 max-w-[90%]">
-                        {msg.metadata.actions.map((act, aIdx) => (
-                          <button
-                            key={aIdx}
-                            onClick={() => handleActionClick(act)}
-                            className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 shadow-sm transition-all active:scale-95 ${
-                              act.type === 'UPGRADE_PRO'
-                                ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 hover:from-amber-300'
-                                : 'bg-[#189D91] text-white hover:bg-[#14847a]'
-                            }`}
-                          >
-                            {act.type === 'UPGRADE_PRO' && <LuCrown size={12} />}
-                            {act.label}
-                            <FiArrowUpRight size={11} />
-                          </button>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Products Grid */}
-                    {msg.metadata?.products?.length > 0 && (
-                      <div className="w-full grid grid-cols-2 gap-2.5 pt-1.5">
-                        {msg.metadata.products.map((p, idx) => (
-                          <div key={idx} className="bg-white border border-gray-100 rounded-2xl p-2 flex flex-col shadow-sm">
-                            <div className="aspect-square w-full rounded-xl bg-gray-50 overflow-hidden relative border border-gray-50 shrink-0">
-                              {p.imageUrl ? (
-                                <img src={p.imageUrl} alt={p.name} className="w-full h-full object-cover" />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center bg-[#189D91]/5 text-[#189D91] text-[9px] font-bold">Riddha Mart</div>
-                              )}
-                            </div>
-                            <div className="mt-2 flex-1 flex flex-col justify-between">
-                              <div>
-                                <h5 className="font-bold text-[11px] text-slate-800 line-clamp-1 leading-tight">{p.name}</h5>
-                                <p className="text-[11px] font-black text-slate-900 mt-0.5">₹{Number(p.price).toLocaleString()}</p>
-                              </div>
-                              <button
-                                onClick={() => handleActionClick({ type: 'VIEW_PRODUCT', payload: { productId: p.productId } })}
-                                className="w-full mt-2 py-1.5 bg-[#189D91]/10 hover:bg-[#189D91] text-[#189D91] hover:text-white rounded-lg text-[9px] font-bold uppercase tracking-wider transition-all leading-none"
-                              >
-                                View Item
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Orders */}
-                    {msg.metadata?.orders?.length > 0 && (
-                      <div className="w-full pt-1">
-                        {msg.metadata.orders.map((o, idx) => (
-                          <div key={idx} className="bg-white border border-gray-100 rounded-2xl p-3 shadow-sm space-y-2">
-                            <div className="flex justify-between items-center pb-2 border-b border-gray-50">
-                              <div>
-                                <p className="text-[9px] font-bold text-gray-400 uppercase leading-none">Order Ref</p>
-                                <p className="text-[11px] font-black text-slate-800 mt-1">#{o.orderId.substring(o.orderId.length - 8).toUpperCase()}</p>
-                              </div>
-                              <span className="text-[9px] font-bold uppercase bg-[#189D91]/10 text-[#189D91] px-2 py-1 rounded-full border border-[#189D91]/15">
-                                {o.status}
-                              </span>
-                            </div>
-                            <button
-                              onClick={() => handleActionClick({ type: 'TRACK_ORDER', payload: { orderId: o.orderId } })}
-                              className="w-full py-2 bg-teal-50 hover:bg-teal-100 text-[#189D91] font-bold rounded-xl text-[10px] flex items-center justify-center gap-1.5 transition-all"
-                            >
-                              <FiTruck size={12} /> Live GPS Tracking
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Handover Card */}
-                    {msg.metadata?.handover?.reason && (
-                      <div className="w-full pt-1.5">
-                        <div className="bg-[#FF6B35]/5 border border-[#FF6B35]/15 rounded-2xl p-3 flex items-start gap-2.5 shadow-sm">
-                          <FiAlertCircle className="text-[#FF6B35] shrink-0 mt-0.5" size={16} />
-                          <div>
-                            <h5 className="text-[11px] font-black text-slate-800 leading-none">Support Ticket Generated</h5>
-                            <p className="text-[10px] text-gray-500 mt-1 leading-normal">
-                              {msg.metadata.handover.reason}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
 
                 {/* Live Speech Recognition Wave Banner */}
                 {isListening && (
@@ -919,19 +1229,49 @@ const AiAssistantWidget = () => {
                   </motion.div>
                 )}
 
-                {/* Thinking Animation */}
+                {/* Thinking State - Prominent Thinking Face (NOT inside a circle so user sees it clearly) */}
                 {isLoading && (
-                  <div className="flex flex-col items-start space-y-1">
-                    <div className="flex items-center gap-1.5 ml-1">
-                      <TejasAvatar expression="thinking" size={24} showReactionBadge={false} />
-                      <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400">Tejas is thinking...</span>
+                  <motion.div
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex items-start gap-3 pl-1 max-w-[95%]"
+                  >
+                    {/* Clear Thinking Mascot Display - NOT a circle, large and prominent */}
+                    <div className="shrink-0 relative">
+                      <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-teal-50/90 via-white to-slate-50 border border-teal-200/80 shadow-md p-1.5 flex items-center justify-center relative overflow-hidden">
+                        {/* Soft breathing pulse glow */}
+                        <motion.div
+                          animate={{ opacity: [0.25, 0.65, 0.25], scale: [0.96, 1.04, 0.96] }}
+                          transition={{ repeat: Infinity, duration: 2.2, ease: 'easeInOut' }}
+                          className="absolute inset-0 bg-gradient-to-tr from-[#189D91]/15 to-teal-300/10 rounded-2xl pointer-events-none"
+                        />
+                        <motion.img
+                          src="/tejas-expressions/tejas-thinking.webp"
+                          alt="Tejas Thinking"
+                          animate={{ y: [0, -2, 0] }}
+                          transition={{ repeat: Infinity, duration: 2.2, ease: 'easeInOut' }}
+                          className="w-full h-full object-contain relative z-10 select-none drop-shadow-xs"
+                        />
+                      </div>
                     </div>
-                    <div className="bg-white border border-gray-100 rounded-2xl rounded-tl-none px-4 py-3 shadow-sm flex items-center gap-1.5">
-                      <span className="w-2 h-2 bg-[#189D91] rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
-                      <span className="w-2 h-2 bg-[#189D91] rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
-                      <span className="w-2 h-2 bg-[#189D91] rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+
+                    <div className="flex-1 min-w-0 space-y-1.5 pt-0.5">
+                      {/* Name Only - No badges */}
+                      <div className="flex items-center gap-1.5 ml-0.5">
+                        <span className="text-[10px] font-black uppercase tracking-wider text-slate-700">Tejas</span>
+                      </div>
+
+                      {/* Clean Thinking Bubble with Animated Dots */}
+                      <div className="bg-white border border-gray-100 rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm inline-flex items-center gap-2.5">
+                        <span className="text-xs font-semibold text-slate-600">Thinking...</span>
+                        <div className="flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 bg-[#189D91] rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                          <span className="w-1.5 h-1.5 bg-[#189D91] rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                          <span className="w-1.5 h-1.5 bg-[#189D91] rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  </motion.div>
                 )}
 
                 <div ref={messagesEndRef} />

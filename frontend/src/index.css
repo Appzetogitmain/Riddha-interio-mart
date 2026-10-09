@@ -206,28 +206,31 @@
 .seller-theme .bg-primary { background-color: var(--color-primary) !important; }
 .seller-theme .border-primary { border-color: var(--color-primary) !important; }
 
-.seller-theme h1,
-.seller-theme h2,
-.seller-theme h3,
-.seller-theme h4 {
-  font-family: var(--font-sans) !important;
-  font-weight: 700 !important;
-  text-transform: none !important;
-  font-style: normal !important;
-  letter-spacing: -0.02em !important;
-  line-height: 1.2 !important;
-  color: #0f172a !important; /* Professional Slate 900 */
+.seller-theme :where(h1, h2, h3, h4) {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  text-transform: none;
+  font-style: normal;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  color: #0f172a;
 }
 
-.seller-theme p {
-  @apply text-slate-500;
+.seller-theme p:not([class*="text-"]) {
+  color: #64748b;
 }
 
-.seller-theme h1 span,
-.seller-theme h2 span,
-.seller-theme h3 span,
-.seller-theme h4 span {
-  color: inherit !important;
+.seller-theme .text-white,
+.seller-theme [class*="text-white"] {
+  color: #ffffff !important;
+}
+
+.seller-theme .text-amber-400 {
+  color: #fbbf24 !important;
+}
+
+.seller-theme .text-amber-300 {
+  color: #fcd34d !important;
 }
 
 @layer base {

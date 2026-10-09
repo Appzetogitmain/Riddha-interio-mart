@@ -18,7 +18,12 @@ export const WishlistProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
 
   const fetchWishlist = useCallback(async () => {
-    if (!isLoggedIn || ['seller', 'admin', 'delivery'].includes(user?.role)) {
+    const isPortal = typeof window !== 'undefined' && (
+      window.location.pathname.startsWith('/seller') ||
+      window.location.pathname.startsWith('/admin') ||
+      window.location.pathname.startsWith('/delivery')
+    );
+    if (isPortal || !isLoggedIn || ['seller', 'admin', 'delivery'].includes(user?.role)) {
       setWishlistItems([]);
       return;
     }

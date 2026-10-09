@@ -543,8 +543,9 @@ exports.addOrderItems = async (req, res) => {
 exports.getOrderById = async (req, res) => {
   try {
     const order = await Order.findById(req.params.id)
-      .populate('user', 'fullName email')
-      .populate('seller', 'fullName shopName email phone shopAddress')
+      .populate('user', 'fullName email phone')
+      .populate('seller', 'fullName shopName email phone shopAddress isVerified status')
+      .populate('orderItems.seller', 'fullName shopName email phone shopAddress isVerified status')
       .populate('deliveryBoy', 'fullName email phone avatar vehicleType vehicleNumber')
       .populate('assignedStaff', 'name phone vehicleNumber');
 
@@ -956,6 +957,23 @@ exports.assignOrderToDeliveryBoy = async (req, res) => {
       order.assignedStaff = staffId || null;
       order.deliveryStatus = 'Accepted'; // Seller implicitly accepts
       order.deliveryAssignmentTime = Date.now();
+
+      if (staffId) {
+        const SellerStaff = require('../models/SellerStaff');
+        const staff = await SellerStaff.findById(staffId);
+        if (staff) {
+          order.deliveryPartnerDetails = {
+            partnerId: staff._id,
+            name: staff.name,
+            phone: staff.phone,
+            photo: staff.photo || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80',
+            rating: 4.9,
+            vehicle: 'Delivery Van',
+            vehicleNo: staff.vehicleNumber || ''
+          };
+        }
+      }
+
       await order.save();
       return res.status(200).json({ success: true, data: order });
     } else if (deliveryType === 'shiprocket') {
@@ -966,13 +984,27 @@ exports.assignOrderToDeliveryBoy = async (req, res) => {
       return res.status(200).json({ success: true, data: order });
     } else {
       // In-app delivery default
-      order.deliveryType = 'in-app';
       if (!deliveryBoyId) {
         return res.status(400).json({ success: false, message: 'Delivery boy ID is required for in-app delivery' });
       }
+      order.deliveryType = 'in-app';
       order.deliveryBoy = deliveryBoyId;
       order.deliveryStatus = 'Pending';
       order.deliveryAssignmentTime = Date.now();
+
+      const User = require('../models/User');
+      const dBoy = await User.findById(deliveryBoyId);
+      if (dBoy) {
+        order.deliveryPartnerDetails = {
+          partnerId: dBoy._id,
+          name: dBoy.fullName || dBoy.name,
+          phone: dBoy.phone,
+          photo: dBoy.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80',
+          rating: dBoy.rating || 4.9,
+          vehicle: dBoy.vehicleType || 'Electric Van',
+          vehicleNo: dBoy.vehicleNumber || ''
+        };
+      }
 
       await order.save();
 

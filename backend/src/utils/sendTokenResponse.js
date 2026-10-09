@@ -120,7 +120,7 @@ const sendTokenResponse = async (user, statusCode, res) => {
           vehicleNumber: user.vehicleNumber || "",
           isVerified: user.isVerified || false,
           approvalStatus: user.approvalStatus || "",
-          type: user.type || "standard",
+          type: user.type || (role === 'admin' ? 'superadmin' : 'standard'),
           permissions: user.permissions || {}
         }
       }

@@ -16,19 +16,44 @@ export const useRBAC = () => {
 export const RBACProvider = ({ children }) => {
   const { user } = useUser();
   
-  // State for current role and permissions - synced with User session
-  const [role, setRole] = useState('user');
-  const [currentPermissions, setCurrentPermissions] = useState(null);
+  const getStoredAdmin = () => {
+    try {
+      const stored = JSON.parse(localStorage.getItem('riddha_admin') || 'null');
+      return (stored?.role === 'admin' && stored?.token) ? stored : null;
+    } catch {
+      return null;
+    }
+  };
+
+  const initialAdmin = (user?.role === 'admin') ? user : getStoredAdmin();
+
+  // State for current role and permissions - synced with Admin session
+  const [role, setRole] = useState(() => {
+    if (!initialAdmin) {
+      const isInsideAdmin = typeof window !== 'undefined' && window.location.pathname.startsWith('/admin');
+      return isInsideAdmin ? 'admin' : 'user';
+    }
+    return initialAdmin.type === 'assistant' ? 'assistant' : 'admin';
+  });
+
+  const [currentPermissions, setCurrentPermissions] = useState(() => {
+    if (!initialAdmin || initialAdmin.type !== 'assistant') return null;
+    return initialAdmin.permissions || DEFAULT_ASSISTANT_PERMISSIONS;
+  });
+
   const [assistants, setAssistants] = useState([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (user && user.role === 'admin') {
-      setRole(user.type === 'superadmin' ? 'admin' : 'assistant');
-      setCurrentPermissions(user.type === 'superadmin' ? null : user.permissions);
+    const currentAdmin = (user?.role === 'admin') ? user : getStoredAdmin();
+    if (currentAdmin) {
+      const isAssistant = currentAdmin.type === 'assistant';
+      setRole(isAssistant ? 'assistant' : 'admin');
+      setCurrentPermissions(isAssistant ? (currentAdmin.permissions || DEFAULT_ASSISTANT_PERMISSIONS) : null);
       fetchAssistants();
     } else {
-      setRole('user');
+      const isInsideAdmin = typeof window !== 'undefined' && window.location.pathname.startsWith('/admin');
+      setRole(isInsideAdmin ? 'admin' : 'user');
       setCurrentPermissions(null);
     }
   }, [user]);

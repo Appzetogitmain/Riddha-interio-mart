@@ -1,87 +1,264 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 /**
- * Tejas Mascot Avatar Component
+ * Reusable Tejas Mascot Avatar Component
  * 
- * Uses Tejas's original official logo by default (/ask tejas final icon.png)
- * and supports custom animated GIFs for different emotional expressions:
- * - idle / blink: /tejas_idle.gif or /tejas_blink.gif
- * - happy / celebrating: /tejas_happy.gif
- * - sad / confused / oh-no: /tejas_sad.gif
- * - thinking: /tejas_thinking.gif
- * - speaking / listening: /tejas_speaking.gif
- * 
- * If a specific GIF is not present, it gracefully falls back to the original Tejas logo
- * while maintaining smooth Framer Motion expression dynamics.
+ * Supports all 12 official Tejas expressions from /tejas-expressions/:
+ * - happy: tejas-happy.webp (default idle & calm)
+ * - wink: tejas-wink.webp (autonomous blink engine)
+ * - sad: tejas-sad.webp (errors, failure, empathy)
+ * - excited: tejas-excited.webp (recommendations, orders, wins)
+ * - thinking: tejas-thinking.webp (AI generating answer)
+ * - surprised: tejas-surprised.webp (message intake, alert)
+ * - love: tejas-love.webp (thank you, compliments)
+ * - talking: tejas-talking.webp (TTS audio, streaming answer)
+ * - confused: tejas-confused.webp (unclear question, clarification)
+ * - sleepy: tejas-sleepy.webp (long user inactivity)
+ * - okay: tejas-okay.webp (confirmation, acknowledgment)
+ * - goodbye: tejas-goodbye.webp (farewell, session close)
  */
-const DEFAULT_TEJAS_LOGO = '/ask tejas final icon.png';
 
-const EXPRESSION_GIFS = {
-  idle: '/tejas_idle.gif',
-  blink: '/tejas_blink.gif',
-  happy: '/tejas_happy.gif',
-  celebrating: '/tejas_happy.gif',
-  success: '/tejas_happy.gif',
-  sad: '/tejas_sad.gif',
-  confused: '/tejas_sad.gif',
-  'oh-no': '/tejas_sad.gif',
-  thinking: '/tejas_thinking.gif',
-  speaking: '/tejas_speaking.gif',
-  listening: '/tejas_listening.gif',
+export const EXPRESSION_IMAGES = {
+  happy: '/tejas-expressions/tejas-happy.webp',
+  idle: '/tejas-expressions/tejas-happy.webp',
+  wink: '/tejas-expressions/tejas-wink.webp',
+  blink: '/tejas-expressions/tejas-wink.webp',
+  sad: '/tejas-expressions/tejas-sad.webp',
+  apology: '/tejas-expressions/tejas-sad.webp',
+  error: '/tejas-expressions/tejas-sad.webp',
+  excited: '/tejas-expressions/tejas-excited.webp',
+  celebrating: '/tejas-expressions/tejas-excited.webp',
+  success: '/tejas-expressions/tejas-excited.webp',
+  thinking: '/tejas-expressions/tejas-thinking.webp',
+  consulting: '/tejas-expressions/tejas-thinking.webp',
+  analyzing: '/tejas-expressions/tejas-thinking.webp',
+  surprised: '/tejas-expressions/tejas-surprised.webp',
+  love: '/tejas-expressions/tejas-love.webp',
+  gratitude: '/tejas-expressions/tejas-love.webp',
+  talking: '/tejas-expressions/tejas-talking.webp',
+  speaking: '/tejas-expressions/tejas-talking.webp',
+  confused: '/tejas-expressions/tejas-confused.webp',
+  'oh-no': '/tejas-expressions/tejas-confused.webp',
+  sleepy: '/tejas-expressions/tejas-sleepy.webp',
+  okay: '/tejas-expressions/tejas-okay.webp',
+  assisted: '/tejas-expressions/tejas-okay.webp',
+  handover: '/tejas-expressions/tejas-okay.webp',
+  support: '/tejas-expressions/tejas-okay.webp',
+  goodbye: '/tejas-expressions/tejas-goodbye.webp',
+  farewell: '/tejas-expressions/tejas-goodbye.webp',
+  listening: '/tejas-expressions/tejas-happy.webp',
 };
 
+const FALLBACK_LOGO = '/ask tejas final icon.png';
+
+// Preload expressions once in browser for instant, flicker-free swaps
+if (typeof window !== 'undefined') {
+  Object.values(EXPRESSION_IMAGES).forEach((src) => {
+    const img = new Image();
+    img.src = src;
+  });
+}
+
 const TejasAvatar = ({
-  expression = 'idle',
+  expression = 'happy',
   size = 48,
   className = '',
-  showReactionBadge = true,
+  showReactionBadge = false,
+  shape = 'circle',
   onClick,
 }) => {
-  const [imgSrc, setImgSrc] = useState(EXPRESSION_GIFS[expression] || DEFAULT_TEJAS_LOGO);
+  // Normalize expression key
+  const normalized = (expression || 'happy').toLowerCase();
 
-  // Update source when expression changes
+  // Autonomous Blink System State
+  const [isBlinking, setIsBlinking] = useState(false);
+
+  // States where automatic blinking must NOT interrupt
+  const isBlinkDisabled = useMemo(() => {
+    return [
+      'thinking',
+      'talking',
+      'speaking',
+      'sad',
+      'excited',
+      'celebrating',
+      'sleepy',
+      'wink',
+      'blink',
+    ].includes(normalized);
+  }, [normalized]);
+
+  // Autonomous blink interval: triggers tejas-wink.webp for ~180ms every 3.5 - 5.5s
   useEffect(() => {
-    const targetGif = EXPRESSION_GIFS[expression];
-    setImgSrc(targetGif || DEFAULT_TEJAS_LOGO);
-  }, [expression]);
+    if (isBlinkDisabled) {
+      setIsBlinking(false);
+      return;
+    }
 
-  // Gracefully fallback to original logo if specific GIF doesn't exist yet
+    let blinkDurationTimer;
+    let nextBlinkTimer;
+
+    const scheduleNextBlink = () => {
+      const delay = 3500 + Math.random() * 2000; // 3.5s to 5.5s
+      nextBlinkTimer = setTimeout(() => {
+        setIsBlinking(true);
+        blinkDurationTimer = setTimeout(() => {
+          setIsBlinking(false);
+          scheduleNextBlink();
+        }, 180); // Quick natural eye-wink duration
+      }, delay);
+    };
+
+    scheduleNextBlink();
+
+    return () => {
+      clearTimeout(nextBlinkTimer);
+      clearTimeout(blinkDurationTimer);
+    };
+  }, [isBlinkDisabled, normalized]);
+
+  // Determine current active expression key
+  const activeExpressionKey = isBlinking ? 'wink' : normalized;
+  const currentImgSrc = EXPRESSION_IMAGES[activeExpressionKey] || EXPRESSION_IMAGES.happy || FALLBACK_LOGO;
+
+  const [imgSrc, setImgSrc] = useState(currentImgSrc);
+
+  useEffect(() => {
+    setImgSrc(currentImgSrc);
+  }, [currentImgSrc]);
+
   const handleImageError = () => {
-    if (imgSrc !== DEFAULT_TEJAS_LOGO) {
-      setImgSrc(DEFAULT_TEJAS_LOGO);
+    if (imgSrc !== EXPRESSION_IMAGES.happy) {
+      setImgSrc(EXPRESSION_IMAGES.happy);
+    } else if (imgSrc !== FALLBACK_LOGO) {
+      setImgSrc(FALLBACK_LOGO);
     }
   };
 
-  const getExpressionEmoji = () => {
-    switch (expression) {
+  // Optional emoji badge for reaction indication
+  const getReactionEmoji = () => {
+    switch (activeExpressionKey) {
       case 'listening':
         return '🎙️';
       case 'thinking':
         return '⚡';
+      case 'talking':
       case 'speaking':
         return '💬';
-      case 'confused':
-      case 'oh-no':
-      case 'sad':
-        return '🥺';
-      case 'happy':
-        return '😊';
+      case 'excited':
       case 'celebrating':
       case 'success':
-        return '👑';
+        return '🎉';
+      case 'love':
+        return '❤️';
+      case 'confused':
+      case 'oh-no':
+        return '🤔';
+      case 'sad':
+        return '🥺';
+      case 'surprised':
+        return '✨';
+      case 'sleepy':
+        return '💤';
+      case 'okay':
+        return '👍';
+      case 'goodbye':
+        return '👋';
+      case 'wink':
+        return '😉';
+      case 'happy':
+      case 'idle':
       default:
         return null;
     }
   };
 
-  const emojiBadge = getExpressionEmoji();
+  const emojiBadge = getReactionEmoji();
 
-  const isHappy = expression === 'happy' || expression === 'celebrating' || expression === 'success';
-  const isThinking = expression === 'thinking';
-  const isListening = expression === 'listening';
-  const isSpeaking = expression === 'speaking';
-  const isConfused = expression === 'confused' || expression === 'oh-no' || expression === 'sad';
+  // Expression-based animation characteristics
+  const isListening = normalized === 'listening';
+  const isThinking = normalized === 'thinking';
+  const isTalking = normalized === 'talking' || normalized === 'speaking';
+  const isExcited = normalized === 'excited' || normalized === 'celebrating' || normalized === 'success';
+  const isLove = normalized === 'love';
+  const isConfused = normalized === 'confused' || normalized === 'oh-no';
+  const isSad = normalized === 'sad';
+  const isGoodbye = normalized === 'goodbye';
+  const isSleepy = normalized === 'sleepy';
+  const isSurprised = normalized === 'surprised';
+  const isOkay = normalized === 'okay';
+
+  // Get micro-movement animation for the mascot body
+  const getMascotMotion = () => {
+    if (isTalking) {
+      return {
+        animate: { y: [0, -1.8, 0], scale: [1, 1.018, 1] },
+        transition: { repeat: Infinity, duration: 0.75, ease: 'easeInOut' },
+      };
+    }
+    if (isExcited) {
+      return {
+        animate: { y: [0, -3.5, 0], scale: [1, 1.035, 1] },
+        transition: { repeat: Infinity, duration: 0.85, ease: 'easeInOut' },
+      };
+    }
+    if (isLove) {
+      return {
+        animate: { scale: [1, 1.03, 1] },
+        transition: { repeat: Infinity, duration: 1.6, ease: 'easeInOut' },
+      };
+    }
+    if (isConfused) {
+      return {
+        animate: { rotate: [-2.5, 2.5, -2.5] },
+        transition: { repeat: Infinity, duration: 2.4, ease: 'easeInOut' },
+      };
+    }
+    if (isThinking) {
+      return {
+        animate: { scale: [1, 0.985, 1], y: [0, -1.2, 0] },
+        transition: { repeat: Infinity, duration: 2.2, ease: 'easeInOut' },
+      };
+    }
+    if (isSad) {
+      return {
+        animate: { y: [0, 1.5, 0] },
+        transition: { repeat: Infinity, duration: 2.8, ease: 'easeInOut' },
+      };
+    }
+    if (isGoodbye) {
+      return {
+        animate: { rotate: [-3, 3, -3], y: [0, -1.5, 0] },
+        transition: { repeat: Infinity, duration: 1.2, ease: 'easeInOut' },
+      };
+    }
+    if (isSleepy) {
+      return {
+        animate: { y: [0, -1, 0] },
+        transition: { repeat: Infinity, duration: 4.8, ease: 'easeInOut' },
+      };
+    }
+    if (isSurprised) {
+      return {
+        animate: { scale: [1, 1.025, 1], y: [0, -1, 0] },
+        transition: { repeat: Infinity, duration: 1.4, ease: 'easeInOut' },
+      };
+    }
+    if (isOkay) {
+      return {
+        animate: { y: [0, -2, 0] },
+        transition: { repeat: Infinity, duration: 1.2, ease: 'easeInOut' },
+      };
+    }
+    // Default Happy / Idle: calm breathing float
+    return {
+      animate: { y: [0, -2, 0] },
+      transition: { repeat: Infinity, duration: 3.5, ease: 'easeInOut' },
+    };
+  };
+
+  const mascotMotion = getMascotMotion();
 
   return (
     <div
@@ -89,7 +266,7 @@ const TejasAvatar = ({
       style={{ width: size, height: size }}
       className={`relative select-none flex items-center justify-center shrink-0 ${onClick ? 'cursor-pointer' : ''} ${className}`}
     >
-      {/* ── Acoustic Wave Rings (Listening & Speaking) ── */}
+      {/* ── Acoustic Wave Rings (Voice Listening Mode) ── */}
       {isListening && (
         <>
           <motion.div
@@ -116,40 +293,51 @@ const TejasAvatar = ({
         />
       )}
 
-      {/* ── Celebrating Aura ── */}
-      {isHappy && expression === 'celebrating' && (
+      {/* ── Excited / Celebrating Aura ── */}
+      {isExcited && (
         <motion.div
-          animate={{ scale: [1, 1.25, 1], opacity: [0.8, 0.2, 0.8] }}
+          animate={{ scale: [1, 1.25, 1], opacity: [0.7, 0.2, 0.7] }}
           transition={{ repeat: Infinity, duration: 1.2 }}
           className="absolute -inset-1 rounded-full bg-gradient-to-r from-amber-400 to-yellow-300 opacity-60 blur-sm pointer-events-none"
         />
       )}
 
-      {/* ── Main Tejas Mascot Image / GIF with Expression Micro-Animations ── */}
+      {/* ── Love Warm Glow Aura ── */}
+      {isLove && (
+        <motion.div
+          animate={{ scale: [1, 1.2, 1], opacity: [0.6, 0.15, 0.6] }}
+          transition={{ repeat: Infinity, duration: 1.5 }}
+          className="absolute -inset-1 rounded-full bg-pink-400 opacity-40 blur-sm pointer-events-none"
+        />
+      )}
+
+      {/* ── Main Mascot Image with Smooth State Transitions ── */}
       <motion.div
-        animate={
-          isHappy
-            ? { y: [0, -3, 0], scale: [1, 1.03, 1] }
-            : isConfused
-            ? { rotate: [-2, 2, -2] }
-            : isThinking
-            ? { scale: [1, 0.97, 1] }
-            : isSpeaking
-            ? { y: [0, -2, 0], scale: [1, 1.02, 1] }
-            : { y: [0, -1.5, 0] }
-        }
-        transition={{
-          repeat: Infinity,
-          duration: isHappy ? 1.6 : isSpeaking ? 0.9 : 3.2,
-          ease: 'easeInOut',
-        }}
-        className="w-full h-full rounded-full overflow-hidden flex items-center justify-center bg-white shadow-xs p-0.5"
+        animate={mascotMotion.animate}
+        transition={mascotMotion.transition}
+        className={`w-full h-full ${
+          shape === 'rounded'
+            ? 'rounded-2xl'
+            : shape === 'none'
+              ? 'rounded-none'
+              : 'rounded-full'
+        } overflow-hidden flex items-center justify-center bg-white shadow-xs p-0.5 border border-teal-100/60`}
       >
-        <img
+        <motion.img
+          key={activeExpressionKey}
           src={imgSrc}
-          alt={`Tejas - ${expression}`}
+          alt={`Tejas ${activeExpressionKey}`}
           onError={handleImageError}
-          className="w-full h-full object-contain rounded-full select-none"
+          initial={{ opacity: 0, scale: 0.96, y: 3 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ duration: isBlinking ? 0.12 : 0.28, ease: 'easeOut' }}
+          className={`w-full h-full object-contain ${
+            shape === 'rounded'
+              ? 'rounded-2xl'
+              : shape === 'none'
+                ? 'rounded-none'
+                : 'rounded-full'
+          } select-none`}
         />
       </motion.div>
 

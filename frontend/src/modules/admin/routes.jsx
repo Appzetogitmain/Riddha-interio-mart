@@ -68,6 +68,7 @@ const SupportTicketsPage = React.lazy(() => import('./pages/SupportTicketsPage')
 const BOQSourcingRequestsPage = React.lazy(() => import('./pages/BOQSourcingRequestsPage'));
 const AdminCampaignBuilderPage = React.lazy(() => import('./pages/AdminCampaignBuilderPage'));
 const AdminRecommendationAnalytics = React.lazy(() => import('./pages/AdminRecommendationAnalytics'));
+const UnifiedRegistryPage = React.lazy(() => import('./pages/UnifiedRegistryPage'));
 import { RBACProvider } from './data/RBACContext';
 
 const AdminRoutes = () => {
@@ -135,8 +136,10 @@ const AdminRoutes = () => {
             <Route path="/delivery/assign" element={<AssignDeliveryPage />} />
           </Route>
 
-          {/* Sellers */}
+          {/* Sellers & Registry */}
           <Route element={<ProtectedRoute permission="sellers" />}>
+            <Route path="/directory" element={<UnifiedRegistryPage />} />
+            <Route path="/registry" element={<UnifiedRegistryPage />} />
             <Route path="/sellers" element={<ManageSellerListPage />} />
             <Route path="/sellers/pending" element={<PendingSellers />} />
             <Route path="/sellers/active" element={<ActiveSellers />} />

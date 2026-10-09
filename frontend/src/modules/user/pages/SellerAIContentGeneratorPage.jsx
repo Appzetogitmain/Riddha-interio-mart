@@ -141,10 +141,10 @@ const SellerAIContentGeneratorPage = () => {
               <LuSparkles className="text-amber-400" />
               <span>Seller AI Content Generator with Gemini</span>
             </div>
-            <h1 className="text-2xl sm:text-4xl font-display font-black text-white tracking-tight">
-              AI Copywriting & Marketing Studio
+            <h1 className="text-2xl sm:text-4xl font-display font-black text-white tracking-tight drop-shadow-sm" style={{ color: '#ffffff' }}>
+              AI Copywriting & <span className="text-amber-400" style={{ color: '#fbbf24' }}>Marketing Studio</span>
             </h1>
-            <p className="text-slate-200 text-xs sm:text-sm max-w-2xl leading-relaxed">
+            <p className="text-slate-200 text-xs sm:text-sm max-w-2xl leading-relaxed" style={{ color: '#e2e8f0' }}>
               Auto-generate high-converting product descriptions, SEO meta titles, hashtags, social media posts, email campaigns, and A/B test variants in seconds.
             </p>
           </div>
@@ -298,7 +298,7 @@ const SellerAIContentGeneratorPage = () => {
                 <div>
                   <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                     <div className="flex items-center space-x-2">
-                      <h3 className="text-base font-bold text-amber-400 font-display">Generated Output Workspace</h3>
+                      <h3 className="text-base font-bold text-amber-400 font-display" style={{ color: '#fbbf24' }}>Generated Output Workspace</h3>
                       {generatedOutput?.status && (
                         <span className="text-[10px] font-black uppercase bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/40">
                           {generatedOutput.status}

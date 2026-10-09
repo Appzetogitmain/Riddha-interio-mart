@@ -219,7 +219,14 @@ exports.loginSeller = async (req, res, next) => {
     const { email, password } = req.body;
     if (!email || !password) return res.status(400).json({ success: false, error: 'Please provide email and password' });
 
-    const seller = await Seller.findOne({ email }).select('+password');
+    const cleanEmail = String(email).trim().toLowerCase();
+    const seller = await Seller.findOne({
+      $or: [
+        { email: cleanEmail },
+        { email: new RegExp(`^${cleanEmail.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') }
+      ]
+    }).select('+password');
+
     if (!seller || !(await seller.matchPassword(password))) {
       return res.status(401).json({ success: false, error: 'Invalid credentials' });
     }

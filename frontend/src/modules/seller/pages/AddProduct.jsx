@@ -754,8 +754,8 @@ const AddProduct = () => {
                   onClick={() => setSelection("new")}
                   className="group relative bg-white border border-slate-200 p-10 rounded-[2.5rem] shadow-sm hover:shadow-2xl hover:border-seller-primary/30 transition-all duration-500 flex flex-col items-center text-center space-y-6"
                 >
-                  <div className="w-20 h-20 bg-slate-50 rounded-3xl flex items-center justify-center text-slate-400 group-hover:bg-seller-primary group-hover:text-white transition-all duration-500 shadow-sm">
-                    <Plus size={36} />
+                  <div className="w-20 h-20 bg-seller-primary text-white rounded-3xl flex items-center justify-center shadow-md group-hover:scale-105 group-hover:shadow-lg transition-all duration-300">
+                    <Plus size={36} strokeWidth={2.5} />
                   </div>
                   <div>
                     <h3 className="text-2xl font-bold text-slate-900">
@@ -779,8 +779,8 @@ const AddProduct = () => {
                   to="/seller/catalog"
                   className="group relative bg-white border border-slate-200 p-10 rounded-[2.5rem] shadow-sm hover:shadow-2xl hover:border-seller-primary/30 transition-all duration-500 flex flex-col items-center text-center space-y-6"
                 >
-                  <div className="w-20 h-20 bg-slate-50 rounded-3xl flex items-center justify-center text-slate-400 group-hover:bg-seller-primary group-hover:text-white transition-all duration-500 shadow-sm">
-                    <Database size={36} />
+                  <div className="w-20 h-20 bg-seller-primary text-white rounded-3xl flex items-center justify-center shadow-md group-hover:scale-105 group-hover:shadow-lg transition-all duration-300">
+                    <Database size={36} strokeWidth={2.5} />
                   </div>
                   <div>
                     <h3 className="text-2xl font-bold text-slate-900">

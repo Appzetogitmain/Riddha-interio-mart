@@ -1,6 +1,7 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import SellerLayout from './components/SellerLayout';
+import { SellerProvider } from './data/SellerContext';
 const Dashboard = React.lazy(() => import('./pages/Dashboard'));
 const BrowseCatalog = React.lazy(() => import('./pages/BrowseCatalog'));
 const AddProduct = React.lazy(() => import('./pages/AddProduct'));
@@ -40,7 +41,8 @@ const SellerBOQRequests = React.lazy(() => import('./pages/SellerBOQRequests'));
 
 const SellerRoutes = () => {
   return (
-    <Routes>
+    <SellerProvider>
+      <Routes>
       <Route path="/join" element={<SellerJoin />} />
       <Route path="/login" element={<SellerLogin />} />
       <Route path="/login-form" element={<SellerLoginForm />} />
@@ -86,6 +88,7 @@ const SellerRoutes = () => {
         <Route path="/offers/edit/:id" element={<OfferFormPage />} />
       </Route>
     </Routes>
+  </SellerProvider>
   );
 };
 

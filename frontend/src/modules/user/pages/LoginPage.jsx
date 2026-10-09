@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useUser } from "../data/UserContext";
+import { useSeller } from "../../seller/data/SellerContext";
 import {
   FiArrowLeft,
   FiUser,
@@ -25,6 +26,7 @@ const LoginPage = () => {
   const [error, setError] = useState("");
   const [unverifiedEmail, setUnverifiedEmail] = useState("");
   const { login, loading, setLoading } = useUser();
+  const { sellerLogin } = useSeller();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -101,11 +103,19 @@ const LoginPage = () => {
           throw new Error("Login response is missing session details.");
         }
 
-        login({ ...user, token });
-        if (role === "admin") navigate("/admin/dashboard");
-        else if (role === "seller") navigate("/seller/dashboard");
-        else if (role === "delivery") navigate("/delivery/dashboard");
-        else navigate("/");
+        if (role === "seller") {
+          sellerLogin({ ...user, token });
+          navigate("/seller/dashboard");
+        } else if (role === "admin") {
+          login({ ...user, token, role: "admin" });
+          navigate("/admin/dashboard");
+        } else if (role === "delivery") {
+          login({ ...user, token, role: "delivery" });
+          navigate("/delivery/dashboard");
+        } else {
+          login({ ...user, token, role: "user" });
+          navigate("/");
+        }
       }
     } catch (err) {
       if (err.response?.data?.unverified || err.response?.data?.isUnverified) {

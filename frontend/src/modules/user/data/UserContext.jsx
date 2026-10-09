@@ -6,15 +6,46 @@ const UserContext = createContext();
 export const useUser = () => {
   const context = useContext(UserContext);
   if (!context) {
-    throw new Error('useUser must be used within a UserProvider');
+    console.warn('[UserContext] useUser called outside of UserProvider. Providing safe fallback.');
+    return {
+      user: null,
+      loading: false,
+      setLoading: () => {},
+      isLoggedIn: false,
+      address: null,
+      addresses: [],
+      login: () => {},
+      logout: () => {},
+      saveAddress: async () => false,
+      updateAddress: async () => false,
+      deleteAddress: async () => false,
+      fetchAddresses: async () => {},
+      setUser: () => {}
+    };
   }
   return context;
+};
+
+const isCustomerRole = (role) => {
+  if (!role) return true;
+  return role === 'user' || role === 'customer';
 };
 
 export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
     const savedUser = localStorage.getItem('riddha_user');
-    return savedUser ? JSON.parse(savedUser) : null;
+    if (!savedUser) return null;
+    try {
+      const parsed = JSON.parse(savedUser);
+      if (!isCustomerRole(parsed?.role)) {
+        localStorage.removeItem('riddha_user');
+        return null;
+      }
+      return parsed;
+    } catch {
+      localStorage.removeItem('riddha_user');
+      return null;
+    }
   });
 
   const [loading, setLoading] = useState(false);
@@ -27,6 +58,13 @@ export const UserProvider = ({ children }) => {
   // that survives a token-refresh attempt.
   useEffect(() => {
     const syncSession = async () => {
+      const isPortal = typeof window !== 'undefined' && (
+        window.location.pathname.startsWith('/seller') ||
+        window.location.pathname.startsWith('/admin') ||
+        window.location.pathname.startsWith('/delivery')
+      );
+      if (isPortal) return;
+
       const savedUser = localStorage.getItem('riddha_user');
       if (!savedUser) return;
 
@@ -40,12 +78,24 @@ export const UserProvider = ({ children }) => {
         return;
       }
 
+      if (!isCustomerRole(currentUser?.role)) {
+        localStorage.removeItem('riddha_user');
+        setUser(null);
+        return;
+      }
+
       try {
         const res = await api.get('/auth/me');
         if (res.data.success && res.data.user) {
+          const freshData = res.data.user;
+          // Session isolation: ensure the active session from cookie/token is actually a customer!
+          if (!isCustomerRole(freshData.role)) {
+            console.info('[UserContext] Skipping customer session sync: returned role is', freshData.role, 'which belongs to another portal.');
+            return;
+          }
           setUser({
             ...currentUser,
-            ...res.data.user,
+            ...freshData,
             token: currentUser.token
           });
         }
@@ -73,13 +123,10 @@ export const UserProvider = ({ children }) => {
 
   // Sync user state with localStorage
   useEffect(() => {
-    if (user) {
-      const key = user.role === 'seller' ? 'riddha_seller' : user.role === 'admin' ? 'riddha_admin' : user.role === 'delivery' ? 'riddha_delivery' : 'riddha_user';
-      localStorage.setItem(key, JSON.stringify(user));
+    if (user && isCustomerRole(user.role)) {
+      localStorage.setItem('riddha_user', JSON.stringify(user));
       setIsLoggedIn(true);
-      if (user.role === 'user' || user.role === 'customer' || !user.role) {
-        fetchAddresses();
-      }
+      fetchAddresses();
     } else {
       localStorage.removeItem('riddha_user');
       setIsLoggedIn(false);
@@ -147,8 +194,14 @@ export const UserProvider = ({ children }) => {
   };
 
   const login = (userData) => {
-    const key = userData?.role === 'seller' ? 'riddha_seller' : userData?.role === 'admin' ? 'riddha_admin' : userData?.role === 'delivery' ? 'riddha_delivery' : 'riddha_user';
-    localStorage.setItem(key, JSON.stringify(userData));
+    if (!userData) return;
+    if (!isCustomerRole(userData.role)) {
+      // Non-customer roles (seller, admin, delivery) write to their isolated storage
+      const key = userData.role === 'seller' ? 'riddha_seller' : userData.role === 'admin' ? 'riddha_admin' : 'riddha_delivery';
+      localStorage.setItem(key, JSON.stringify(userData));
+      return;
+    }
+    localStorage.setItem('riddha_user', JSON.stringify(userData));
     setUser(userData);
   };
 
@@ -158,9 +211,11 @@ export const UserProvider = ({ children }) => {
     } catch (err) {
       console.error('[UserContext] Failed to call API logout:', err.message);
     } finally {
-      const key = user?.role === 'seller' ? 'riddha_seller' : user?.role === 'admin' ? 'riddha_admin' : user?.role === 'delivery' ? 'riddha_delivery' : 'riddha_user';
-      localStorage.removeItem(key);
+      localStorage.removeItem('riddha_user');
       setUser(null);
+      setIsLoggedIn(false);
+      setAddress(null);
+      setAddresses([]);
     }
   };
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import PageWrapper from '../components/PageWrapper';
-import { LuImage, LuBriefcase, LuTags, LuInfo, LuArrowLeft, LuPackage, LuCheck, LuClock, LuUpload, LuGrid2X2, LuVideo, LuX } from 'react-icons/lu';
+import { LuImage, LuBriefcase, LuTags, LuInfo, LuArrowLeft, LuPackage, LuCheck, LuClock, LuUpload, LuGrid2X2, LuVideo, LuX, LuUser, LuStore, LuPhone, LuMail, LuMapPin, LuShieldCheck } from 'react-icons/lu';
 import { FiPackage, FiTrash2, FiPlus } from 'react-icons/fi';
 import api from '../../../shared/utils/api';
 
@@ -14,6 +14,8 @@ const EditInventoryPage = () => {
   const [videoFile, setVideoFile] = useState(null);
   const [categories, setCategories] = useState([]);
   const [brands, setBrands] = useState([]);
+  const [sellers, setSellers] = useState([]);
+  const [sellerInfo, setSellerInfo] = useState(null);
   
   // Custom Dropdown State
   const [isCatOpen, setIsCatOpen] = useState(false);
@@ -39,21 +41,29 @@ const EditInventoryPage = () => {
     sellerPrice: 0,
     discountPrice: 0,
     dynamicAttributes: {},
+    seller: '',
+    sellerType: 'Seller',
   });
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [prodRes, catRes, brandRes] = await Promise.all([
+        const [prodRes, catRes, brandRes, sellerRes] = await Promise.all([
           api.get(`/products/${id}`),
           api.get('/categories'),
-          api.get('/brands')
+          api.get('/brands'),
+          api.get('/admin/sellers').catch(() => ({ data: { data: [] } }))
         ]);
         
         const product = prodRes.data.data;
         setCategories(catRes.data.data || []);
         setBrands(brandRes.data.data || []);
+        const loadedSellers = sellerRes.data?.data || [];
+        setSellers(loadedSellers);
+
+        const currentSeller = product.seller || null;
+        setSellerInfo(currentSeller);
         
         setFormData({
           name: product.name || '',
@@ -75,6 +85,8 @@ const EditInventoryPage = () => {
           sellerPrice: product.sellerPrice || product.price || 0,
           discountPrice: product.discountPrice || 0,
           dynamicAttributes: product.dynamicAttributes || {},
+          seller: typeof currentSeller === 'object' ? (currentSeller?._id || '') : (currentSeller || ''),
+          sellerType: product.sellerType || (product.seller ? 'Seller' : 'Admin'),
         });
       } catch (err) {
         console.error('Failed to fetch data:', err);
@@ -129,7 +141,9 @@ const EditInventoryPage = () => {
         price: Number(formData.price),
         countInStock: Number(formData.countInStock),
         maxB2CQty: formData.maxB2CQty !== '' ? Number(formData.maxB2CQty) : undefined,
-        videoUrl: finalVideoUrl
+        videoUrl: finalVideoUrl,
+        seller: formData.seller || undefined,
+        sellerType: formData.sellerType || 'Seller'
       };
 
       await api.put(`/products/${id}`, payload);
@@ -229,6 +243,101 @@ const EditInventoryPage = () => {
                         </div>
                       )}
                    </div>
+                </div>
+              </div>
+
+              {/* Seller Information & Ownership Card */}
+              <div className="bg-white rounded-3xl p-6 border border-soft-oatmeal shadow-sm space-y-4">
+                <div className="flex items-center justify-between border-b border-soft-oatmeal pb-3">
+                  <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest flex items-center gap-2">
+                    <LuStore size={14} /> Seller Information
+                  </label>
+                  {formData.sellerType === 'Admin' ? (
+                    <span className="px-2 py-0.5 bg-red-800/10 text-red-800 text-[8px] font-black uppercase tracking-widest rounded border border-red-800/20">
+                      Mart Direct
+                    </span>
+                  ) : (
+                    <span className="px-2 py-0.5 bg-emerald-600/10 text-emerald-700 text-[8px] font-black uppercase tracking-widest rounded border border-emerald-600/20 flex items-center gap-1">
+                      <LuShieldCheck size={10} /> {sellerInfo?.isVerified ? 'Verified Seller' : 'Registered Seller'}
+                    </span>
+                  )}
+                </div>
+
+                <div className="space-y-3">
+                  <div className="p-3 bg-soft-oatmeal/10 rounded-2xl space-y-2">
+                    <div>
+                      <p className="text-[9px] font-black text-warm-sand uppercase tracking-widest">Shop / Business</p>
+                      <p className="text-sm font-bold text-deep-espresso flex items-center gap-1.5 mt-0.5">
+                        <LuStore size={14} className="text-warm-sand shrink-0" />
+                        {formData.sellerType === 'Admin' ? 'Riddha Mart Official' : (sellerInfo?.shopName || 'Marketplace Seller')}
+                      </p>
+                    </div>
+
+                    {(sellerInfo?.fullName || formData.sellerType === 'Admin') && (
+                      <div className="pt-2 border-t border-soft-oatmeal/40">
+                        <p className="text-[9px] font-black text-warm-sand uppercase tracking-widest">Seller Name</p>
+                        <p className="text-xs font-semibold text-deep-espresso flex items-center gap-1.5 mt-0.5">
+                          <LuUser size={13} className="text-warm-sand shrink-0" />
+                          {formData.sellerType === 'Admin' ? 'Riddha Admin' : (sellerInfo?.fullName || 'N/A')}
+                        </p>
+                      </div>
+                    )}
+
+                    {sellerInfo?.email && (
+                      <div className="pt-1 text-xs text-deep-espresso flex items-center gap-1.5">
+                        <LuMail size={13} className="text-warm-sand shrink-0" />
+                        <span className="truncate text-[11px]">{sellerInfo.email}</span>
+                      </div>
+                    )}
+
+                    {sellerInfo?.phone && (
+                      <div className="text-xs text-deep-espresso flex items-center gap-1.5">
+                        <LuPhone size={13} className="text-warm-sand shrink-0" />
+                        <span className="text-[11px]">{sellerInfo.phone}</span>
+                      </div>
+                    )}
+
+                    {(sellerInfo?.shopAddress || sellerInfo?.location?.address) && (
+                      <div className="pt-1 text-xs text-warm-sand flex items-start gap-1.5">
+                        <LuMapPin size={13} className="text-warm-sand shrink-0 mt-0.5" />
+                        <span className="text-[10px] leading-tight text-warm-sand">
+                          {sellerInfo?.shopAddress || sellerInfo?.location?.address}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Reassign / Change Seller Dropdown */}
+                  <div className="space-y-1.5 pt-2">
+                    <label className="text-[9px] font-black text-warm-sand uppercase tracking-widest block">
+                      Assign / Reassign Seller
+                    </label>
+                    <select
+                      value={formData.sellerType === 'Admin' ? 'admin' : (formData.seller || '')}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === 'admin') {
+                          setFormData(prev => ({ ...prev, seller: '', sellerType: 'Admin' }));
+                          setSellerInfo({ fullName: 'Riddha Admin', email: 'riddhamart@gmail.com', shopName: 'Riddha Official Direct' });
+                        } else {
+                          const s = sellers.find(item => item._id === val);
+                          setFormData(prev => ({ ...prev, seller: val, sellerType: 'Seller' }));
+                          if (s) setSellerInfo(s);
+                        }
+                      }}
+                      className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-3 py-2.5 text-xs text-deep-espresso font-medium focus:outline-none"
+                    >
+                      <option value="admin">Mart Direct (Admin)</option>
+                      {sellers.map(s => (
+                        <option key={s._id} value={s._id}>
+                          {s.shopName ? `${s.shopName} (${s.fullName})` : s.fullName} — {s.email}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="text-[9px] text-warm-sand">
+                      Select which verified seller owns this product in their catalog.
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>

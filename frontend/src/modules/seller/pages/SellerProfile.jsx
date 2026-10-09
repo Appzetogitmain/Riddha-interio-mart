@@ -29,7 +29,7 @@ import {
 } from 'lucide-react';
 import sellerBanner from '../../../assets/seller_banner.png';
 import { useNavigate } from 'react-router-dom';
-import { useUser } from '../../user/data/UserContext';
+import { useSeller } from '../data/SellerContext';
 import api from '../../../shared/utils/api';
 import { uploadImage } from '../../../shared/utils/upload';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -37,7 +37,7 @@ import { toast } from 'react-hot-toast';
 
 const SellerProfile = () => {
   const navigate = useNavigate();
-  const { logout, user: currentUser, setUser } = useUser();
+  const { sellerLogout, seller: currentUser, setSeller: setUser } = useSeller();
   const avatarInputRef = useRef(null);
   const signatureInputRef = useRef(null);
   const [loading, setLoading] = useState(true);

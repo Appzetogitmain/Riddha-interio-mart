@@ -40,6 +40,7 @@ router.post('/login', [
 router.post('/verify-otp', verifySellerOtp);
 router.post('/resend-otp', resendSellerOtp);
 router.get('/me', protect, getSellerMe);
+router.get('/profile', protect, getSellerMe);
 router.put('/profile', protect, updateSellerProfile);
 router.get('/stock-status', protect, getSellerStockStatus);
 router.get('/analytics', protect, getSellerAnalytics);

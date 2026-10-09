@@ -77,6 +77,11 @@ export const useJourneyPageTracking = () => {
     if (lastPath.current === path) return;
     lastPath.current = path;
 
+    // Do not track seller, admin, or delivery portals in customer journey
+    if (path.startsWith('/seller') || path.startsWith('/admin') || path.startsWith('/delivery')) {
+      return;
+    }
+
     trackJourneyStep({ step: `Visited ${path}`, route: path, outcome: 'viewed' });
   }, [location.pathname]);
 };

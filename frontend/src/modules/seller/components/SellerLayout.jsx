@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, useNavigate, Link } from 'react-router-dom';
 import SellerSidebar from './SellerSidebar';
-import { useUser } from '../../user/data/UserContext';
+import { useSeller } from '../data/SellerContext';
 import { 
   Menu, 
   User, 
@@ -23,11 +23,17 @@ const SellerLayout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const { logout, user } = useUser();
+  const { sellerLogout, seller } = useSeller();
   const navigate = useNavigate();
 
-  const storedUser = JSON.parse(localStorage.getItem('riddha_seller') || localStorage.getItem('riddha_user') || 'null');
-  const activeUser = user || storedUser;
+  const storedSeller = (() => {
+    try {
+      return JSON.parse(localStorage.getItem('riddha_seller') || 'null');
+    } catch {
+      return null;
+    }
+  })();
+  const activeUser = seller || storedSeller;
   const hasValidSellerSession =
     Boolean(activeUser?.token) && activeUser?.role === 'seller';
 
@@ -50,7 +56,7 @@ const SellerLayout = () => {
   }
 
   const handleLogout = () => {
-    logout();
+    sellerLogout();
     navigate('/seller/login');
   };
 
@@ -120,15 +126,15 @@ const SellerLayout = () => {
                 className="flex items-center gap-2 md:gap-3 p-1 pr-2 hover:bg-slate-100 rounded-2xl transition-colors"
               >
                 <div className="w-8 h-8 md:w-9 md:h-9 rounded-xl bg-seller-primary flex items-center justify-center text-white shadow-md shadow-seller-primary/10 overflow-hidden border-2 border-white">
-                  {user?.avatar ? (
-                    <img src={user.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                  {activeUser?.avatar ? (
+                    <img src={activeUser.avatar} alt="Avatar" className="w-full h-full object-cover" />
                   ) : (
                     <User size={18} />
                   )}
                 </div>
                 <div className="text-left hidden sm:block">
                   <p className="text-xs font-bold text-slate-900 leading-none mb-1">
-                    {user?.shopName || 'Seller'}
+                    {activeUser?.shopName || 'Seller'}
                   </p>
                   <div className="flex items-center gap-1">
                      <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
@@ -149,8 +155,8 @@ const SellerLayout = () => {
                       className="absolute right-0 mt-3 w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-50 p-2"
                     >
                       <div className="px-4 py-3 border-b border-slate-50 mb-1">
-                        <p className="text-sm font-bold text-slate-900">{user?.fullName || 'Seller Name'}</p>
-                        <p className="text-[11px] text-slate-500 truncate">{user?.email || 'seller@example.com'}</p>
+                        <p className="text-sm font-bold text-slate-900">{activeUser?.fullName || activeUser?.name || 'Seller Name'}</p>
+                        <p className="text-[11px] text-slate-500 truncate">{activeUser?.email || 'seller@example.com'}</p>
                       </div>
                       <Link 
                         to="/seller/profile"

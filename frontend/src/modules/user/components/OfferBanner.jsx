@@ -148,7 +148,13 @@ const OfferBanner = () => {
                   {slide.badge || 'UP TO'}
                 </span>
 
-                <h3 className="text-xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-black text-white leading-none tracking-tight mt-0.5 sm:mt-1 drop-shadow-md">
+                <h3 className={`font-black text-white tracking-tight mt-0.5 sm:mt-1 drop-shadow-md leading-tight max-w-[95%] ${
+                  (slide.headline || '').length > 25
+                    ? 'text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl'
+                    : (slide.headline || '').length > 14
+                    ? 'text-sm sm:text-lg md:text-xl lg:text-2xl xl:text-3xl'
+                    : 'text-base sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl'
+                }`}>
                   {slide.headline || '50% OFF'}
                 </h3>
 

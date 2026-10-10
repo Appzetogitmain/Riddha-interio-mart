@@ -385,6 +385,7 @@ exports.getDashboardStats = async (req, res, next) => {
     const User = require('../models/User');
     const Delivery = require('../models/Delivery');
     const Product = require('../models/Product');
+    const Return = require('../models/Return');
 
     const [
       productsCount,
@@ -398,7 +399,8 @@ exports.getDashboardStats = async (req, res, next) => {
       userTypeCounts,
       pendingApprovalsCount,
       totalStockSum,
-      topSellingRaw
+      topSellingRaw,
+      returnMetricsFacet
     ] = await Promise.all([
       Catalog.countDocuments({ isActive: true }),
       Product.countDocuments({ isActive: true, isApproved: true }),
@@ -438,6 +440,7 @@ exports.getDashboardStats = async (req, res, next) => {
       Order.aggregate([
         { $match: { status: { $ne: 'Cancelled' } } },
         { $unwind: '$orderItems' },
+        { $match: { 'orderItems.returnStatus': { $nin: ['Received', 'Completed'] } } },
         {
           $group: {
             _id: '$orderItems.product',
@@ -451,12 +454,34 @@ exports.getDashboardStats = async (req, res, next) => {
         },
         { $sort: { totalQuantitySold: -1, totalRevenue: -1 } },
         { $limit: 10 }
+      ]),
+      Return.aggregate([
+        { $match: { status: { $ne: 'Rejected' } } },
+        {
+          $group: {
+            _id: null,
+            totalRefunded: { $sum: '$refundAmount' },
+            pendingCount: {
+              $sum: { $cond: [{ $in: ['$status', ['Pending', 'Approved']] }, 1, 0] }
+            },
+            completedCount: {
+              $sum: { $cond: [{ $in: ['$status', ['Received', 'Completed']] }, 1, 0] }
+            },
+            totalReturns: { $sum: 1 }
+          }
+        }
       ])
     ]);
 
     const revenueData = orderMetricsFacet[0]?.totalRevenue || [];
     const orderStatusCounts = orderMetricsFacet[0]?.statusCounts || [];
     const paymentMethodCounts = orderMetricsFacet[0]?.paymentCounts || [];
+    const returnStats = returnMetricsFacet[0] || { totalRefunded: 0, pendingCount: 0, completedCount: 0, totalReturns: 0 };
+
+    const grossRevenue = revenueData[0]?.total || 0;
+    const totalRefunded = returnStats.totalRefunded || 0;
+    const netRevenue = Math.max(0, grossRevenue - totalRefunded);
+    const platformProfit = Math.round(netRevenue * 0.10);
 
     // Consolidated aggregation pipeline: fetch 14 days of telemetry in a single optimized query
     const sevenDaysAgo = new Date();
@@ -467,21 +492,37 @@ exports.getDashboardStats = async (req, res, next) => {
     fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
     fourteenDaysAgo.setHours(0, 0, 0, 0);
 
-    const dailyStats14Days = await Order.aggregate([
-      { $match: { createdAt: { $gte: fourteenDaysAgo }, status: { $ne: 'Cancelled' } } },
-      {
-        $group: {
-          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
-          revenue: { $sum: "$totalPrice" },
-          orders: { $sum: 1 }
+    const [dailyStats14Days, dailyReturns14Days] = await Promise.all([
+      Order.aggregate([
+        { $match: { createdAt: { $gte: fourteenDaysAgo }, status: { $ne: 'Cancelled' } } },
+        {
+          $group: {
+            _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+            revenue: { $sum: "$totalPrice" },
+            orders: { $sum: 1 }
+          }
         }
-      }
+      ]),
+      Return.aggregate([
+        { $match: { createdAt: { $gte: fourteenDaysAgo }, status: { $ne: 'Rejected' } } },
+        {
+          $group: {
+            _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+            refunded: { $sum: "$refundAmount" }
+          }
+        }
+      ])
     ]);
 
-    // Construct a map for O(1) in-memory lookups
+    // Construct maps for O(1) in-memory lookups
     const dailyMap = {};
     dailyStats14Days.forEach(s => {
       dailyMap[s._id] = s;
+    });
+
+    const returnDailyMap = {};
+    dailyReturns14Days.forEach(r => {
+      returnDailyMap[r._id] = r.refunded || 0;
     });
 
     // Compute current 7-day stats and graph daily data in-memory
@@ -497,7 +538,9 @@ exports.getDashboardStats = async (req, res, next) => {
     const chartData = [];
     currDates.forEach(dateStr => {
       const dayData = dailyMap[dateStr];
-      const rev = dayData ? dayData.revenue : 0;
+      const refunded = returnDailyMap[dateStr] || 0;
+      const rawRev = dayData ? dayData.revenue : 0;
+      const rev = Math.max(0, rawRev - refunded);
       const ords = dayData ? dayData.orders : 0;
       currRevSum += rev;
       currOrdersSum += ords;
@@ -524,7 +567,10 @@ exports.getDashboardStats = async (req, res, next) => {
     let prevOrdersSum = 0;
     prevDates.forEach(dateStr => {
       const dayData = dailyMap[dateStr];
-      prevRevSum += dayData ? dayData.revenue : 0;
+      const refunded = returnDailyMap[dateStr] || 0;
+      const rawRev = dayData ? dayData.revenue : 0;
+      const rev = Math.max(0, rawRev - refunded);
+      prevRevSum += rev;
       prevOrdersSum += dayData ? dayData.orders : 0;
     });
 
@@ -641,7 +687,14 @@ exports.getDashboardStats = async (req, res, next) => {
         sellers: sellersCount,
         users: usersCount,
         delivery: deliveryCount,
-        totalRevenue: revenueData[0]?.total || 0,
+        totalRevenue: netRevenue,
+        grossRevenue: grossRevenue,
+        totalRefunded: totalRefunded,
+        netRevenue: netRevenue,
+        platformProfit: platformProfit,
+        totalReturns: returnStats.totalReturns || 0,
+        pendingReturns: returnStats.pendingCount || 0,
+        completedReturns: returnStats.completedCount || 0,
         statusBreakdown: orderStatusCounts,
         paymentBreakdown: paymentMethodCounts,
         userTypeBreakdown: userTypeCounts,
@@ -652,14 +705,24 @@ exports.getDashboardStats = async (req, res, next) => {
       },
       revenueChart: chartData,
       topSellingProducts,
-      recentActivity: recentOrders.map(o => ({
-        id: o._id,
-        action: `Order ${o.status}`,
-        target: `#${o._id.toString().slice(-6).toUpperCase()}`,
-        user: o.user?.fullName || 'Customer',
-        time: o.createdAt,
-        amount: o.totalPrice
-      }))
+      recentActivity: recentOrders.map(o => {
+        let action = `Order ${o.status}`;
+        if (o.status === 'Returned' || o.paymentStatus === 'refunded' || o.refundStatus === 'Refunded to Wallet') {
+          action = 'Return Completed (Refunded)';
+        }
+        return {
+          id: o._id,
+          orderId: o._id,
+          action,
+          target: o._id.toString().slice(-6).toUpperCase(),
+          user: o.user?.fullName || 'Customer',
+          time: o.createdAt,
+          amount: o.totalPrice,
+          paymentStatus: o.paymentStatus,
+          status: o.status,
+          refundStatus: o.refundStatus
+        };
+      })
     };
 
     // Store in-memory cache for 300 seconds (5 minutes)

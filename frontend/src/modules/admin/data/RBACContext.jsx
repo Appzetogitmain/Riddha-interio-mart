@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import api from '../../../shared/utils/api';
-import { useUser } from '../../user/data/UserContext';
 import { DEFAULT_ASSISTANT_PERMISSIONS } from './permissionsMap';
 
 const RBACContext = createContext();
@@ -14,8 +13,6 @@ export const useRBAC = () => {
 };
 
 export const RBACProvider = ({ children }) => {
-  const { user } = useUser();
-  
   const getStoredAdmin = () => {
     try {
       const stored = JSON.parse(localStorage.getItem('riddha_admin') || 'null');
@@ -25,7 +22,7 @@ export const RBACProvider = ({ children }) => {
     }
   };
 
-  const initialAdmin = (user?.role === 'admin') ? user : getStoredAdmin();
+  const initialAdmin = getStoredAdmin();
 
   // State for current role and permissions - synced with Admin session
   const [role, setRole] = useState(() => {
@@ -45,7 +42,7 @@ export const RBACProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const currentAdmin = (user?.role === 'admin') ? user : getStoredAdmin();
+    const currentAdmin = getStoredAdmin();
     if (currentAdmin) {
       const isAssistant = currentAdmin.type === 'assistant';
       setRole(isAssistant ? 'assistant' : 'admin');
@@ -56,9 +53,11 @@ export const RBACProvider = ({ children }) => {
       setRole(isInsideAdmin ? 'admin' : 'user');
       setCurrentPermissions(null);
     }
-  }, [user]);
+  }, []);
 
   const fetchAssistants = async () => {
+    const admin = getStoredAdmin();
+    if (!admin?.token) return;
     try {
       setLoading(true);
       const { data } = await api.get('/auth/admin/assistants');

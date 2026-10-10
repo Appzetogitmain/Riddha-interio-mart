@@ -97,23 +97,23 @@ const LoginPage = () => {
 
       if (response.data.success) {
         const authData = response.data.data || response.data;
-        const { token, user } = authData;
+        const { token, refreshToken, user } = authData;
 
         if (!token || !user) {
           throw new Error("Login response is missing session details.");
         }
 
         if (role === "seller") {
-          sellerLogin({ ...user, token });
+          sellerLogin({ ...user, token, refreshToken, role: "seller" });
           navigate("/seller/dashboard");
         } else if (role === "admin") {
-          login({ ...user, token, role: "admin" });
+          login({ ...user, token, refreshToken, role: "admin" });
           navigate("/admin/dashboard");
         } else if (role === "delivery") {
-          login({ ...user, token, role: "delivery" });
+          login({ ...user, token, refreshToken, role: "delivery" });
           navigate("/delivery/dashboard");
         } else {
-          login({ ...user, token, role: "user" });
+          login({ ...user, token, refreshToken, role: "user" });
           navigate("/");
         }
       }

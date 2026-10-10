@@ -17,9 +17,10 @@ exports.getProducts = async (req, res, next) => {
       console.error("Failed to dump products:", err);
     }
 
-    // 1. Generate unique cache key based on query parameters
+    // 1. Generate unique cache key based on query parameters and user role
     const cacheService = require('../services/cacheService');
-    const cacheKey = `products:list:${JSON.stringify(req.query)}`;
+    const userRole = req.user?.role || 'public';
+    const cacheKey = `products:list:${userRole}:${JSON.stringify(req.query)}`;
     const cachedData = cacheService.get(cacheKey);
     if (cachedData) {
       return res.status(200).json({
@@ -122,8 +123,13 @@ exports.getProducts = async (req, res, next) => {
         { $set: { isApproved: false } }
       ).catch(err => console.error('Product approval sync error:', err));
 
-      filter.isApproved = true;
-      filter.approvalStatus = { $in: ['approved', 'Approved'] };
+      // If a non-privileged caller specifically asked for pending/rejected products, don't return approved ones
+      if (req.query.approvalStatus && req.query.approvalStatus !== 'approved' && req.query.approvalStatus !== 'all') {
+        filter.approvalStatus = '__forbidden__';
+      } else {
+        filter.isApproved = true;
+        filter.approvalStatus = { $in: ['approved', 'Approved'] };
+      }
       filter.isActive = true;
 
       // Filter out products from unverified sellers

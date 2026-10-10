@@ -15,6 +15,7 @@ const STATUS_TABS = [
   { id: 'pending', label: 'Pending', statuses: ['Pending', 'Processing', 'Packed'] },
   { id: 'shipped', label: 'Shipped', statuses: ['Shipped'] },
   { id: 'completed', label: 'Completed', statuses: ['Delivered'] },
+  { id: 'returned', label: 'Returned', statuses: ['Returned'] },
   { id: 'cancelled', label: 'Cancelled', statuses: ['Cancelled'] }
 ];
 
@@ -103,6 +104,8 @@ const Orders = () => {
       case 'Delivered': return 'bg-green-50 text-green-700 border-green-100';
       case 'Processing': return 'bg-blue-50 text-blue-700 border-blue-100';
       case 'Shipped': return 'bg-purple-50 text-purple-700 border-purple-100';
+      case 'Returned': return 'bg-purple-50 text-purple-700 border-purple-200';
+      case 'Cancelled': return 'bg-rose-50 text-rose-700 border-rose-100';
       default: return 'bg-amber-50 text-amber-700 border-amber-100';
     }
   };
@@ -249,6 +252,11 @@ const Orders = () => {
                         <span className={`px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider border ${getStatusStyle(order.status)}`}>
                           {order.status}
                         </span>
+                        {(order.refundStatus === 'Refunded to Wallet' || order.paymentStatus === 'refunded') && (
+                          <span className="px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider bg-purple-100 text-purple-700 border border-purple-200">
+                            Refunded to Wallet
+                          </span>
+                        )}
                         <p className="text-lg font-bold text-gray-900">₹{order.totalPrice.toLocaleString()}</p>
                         {order.deliveryTimeline?.expectedDeliveryTime && !['Delivered', 'Cancelled'].includes(order.status) && (
                           <p className="text-[10px] font-bold text-teal-700 flex items-center gap-1">

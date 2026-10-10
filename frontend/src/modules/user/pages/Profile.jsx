@@ -5,7 +5,7 @@ import {
   FiChevronRight, FiGift, FiCopy, FiCheck, FiHeart,
   FiShield, FiPhone, FiFileText, FiAlertCircle, FiCompass, FiTruck, FiZap, FiCheckCircle, FiClock,
   FiCreditCard, FiExternalLink, FiBriefcase, FiLayers, FiDollarSign, FiEdit3, FiPlusCircle,
-  FiActivity, FiArrowUpRight, FiTool, FiCheckSquare, FiInfo, FiShoppingBag
+  FiActivity, FiArrowUpRight, FiTool, FiCheckSquare, FiInfo, FiShoppingBag, FiArrowDownLeft, FiRefreshCw
 } from 'react-icons/fi';
 import { Link, useNavigate } from 'react-router-dom';
 import { useUser } from '../data/UserContext';
@@ -134,6 +134,141 @@ const supportLinks = [
   { title: 'Cancellation Policy',        icon: FiAlertCircle,link: '/policies/cancellation' },
 ];
 
+/* ── Reusable Wallet Transactions Ledger ── */
+const WalletTransactionsLedger = ({ transactions = [], loading = false }) => {
+  return (
+    <div className="pt-2 space-y-4">
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <div>
+          <h4 className="text-base font-black text-slate-900 flex items-center gap-2">
+            <LuReceipt className="text-[#189D91]" /> Transaction History & Credit Ledger
+          </h4>
+          <p className="text-xs text-gray-500 font-medium">
+            Complete transaction record of return refunds, referral rewards, and order deductions.
+          </p>
+        </div>
+        <span className="text-xs font-bold text-gray-600 bg-gray-100 px-3 py-1 rounded-full border border-gray-200/60">
+          {transactions.length} transaction{transactions.length === 1 ? '' : 's'}
+        </span>
+      </div>
+
+      {loading ? (
+        <div className="py-12 flex flex-col items-center justify-center text-gray-400 space-y-2 bg-gray-50/50 rounded-2xl border border-gray-100">
+          <FiClock className="animate-spin text-2xl text-[#189D91]" />
+          <p className="text-xs font-medium">Loading ledger transactions...</p>
+        </div>
+      ) : transactions.length === 0 ? (
+        <div className="py-12 text-center bg-gray-50/60 rounded-2xl border border-dashed border-gray-200 p-8 space-y-2">
+          <div className="h-12 w-12 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center mx-auto">
+            <FiCreditCard className="text-xl" />
+          </div>
+          <p className="text-sm font-bold text-slate-800">No Transactions Yet</p>
+          <p className="text-xs text-gray-500 max-w-sm mx-auto">
+            Refund credits from returned orders and referral bonuses will be logged here automatically.
+          </p>
+        </div>
+      ) : (
+        <div className="divide-y divide-gray-100 rounded-2xl border border-gray-200/80 overflow-hidden bg-white shadow-sm">
+          {transactions.map((tx, idx) => {
+            const isCredit = tx.amount > 0 && tx.type !== 'purchase_debit';
+            const isRefund = tx.type === 'refund_credit';
+            const isReferral = tx.type === 'referral_bonus';
+            const isSignup = tx.type === 'signup_bonus';
+
+            return (
+              <div key={tx._id || idx} className="p-4 sm:p-5 flex items-start justify-between gap-4 hover:bg-gray-50/80 transition-colors">
+                <div className="flex items-start gap-3.5">
+                  <div className={`h-11 w-11 rounded-xl flex items-center justify-center shrink-0 mt-0.5 shadow-sm ${
+                    isRefund 
+                      ? 'bg-emerald-50 text-emerald-600 border border-emerald-100'
+                      : isReferral
+                      ? 'bg-indigo-50 text-indigo-600 border border-indigo-100'
+                      : isSignup
+                      ? 'bg-amber-50 text-amber-600 border border-amber-100'
+                      : isCredit
+                      ? 'bg-teal-50 text-teal-600 border border-teal-100'
+                      : 'bg-rose-50 text-rose-600 border border-rose-100'
+                  }`}>
+                    {isRefund ? (
+                      <FiRefreshCw className="text-lg" />
+                    ) : isReferral ? (
+                      <FiGift className="text-lg" />
+                    ) : isSignup ? (
+                      <LuSparkles className="text-lg" />
+                    ) : isCredit ? (
+                      <FiArrowDownLeft className="text-xl" />
+                    ) : (
+                      <FiArrowUpRight className="text-xl" />
+                    )}
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-sm font-black text-slate-900">
+                        {isRefund 
+                          ? 'Return Refund Credit' 
+                          : isReferral 
+                          ? 'Referral Reward' 
+                          : isSignup 
+                          ? 'Welcome Bonus' 
+                          : isCredit 
+                          ? 'Wallet Credit' 
+                          : 'Order Purchase Debit'}
+                      </span>
+                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                        isCredit 
+                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/80'
+                          : 'bg-rose-50 text-rose-700 border border-rose-200/80'
+                      }`}>
+                        {isCredit ? 'Credit Added' : 'Debited'}
+                      </span>
+                      {tx.status && (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold text-slate-500 bg-gray-100 border border-gray-200/60">
+                          {tx.status}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-700 font-medium leading-relaxed">
+                      {tx.description}
+                    </p>
+                    <div className="flex items-center gap-3 text-[11px] text-gray-400 font-medium pt-0.5 flex-wrap">
+                      <span className="flex items-center gap-1">
+                        <FiClock size={12} />
+                        {new Date(tx.createdAt).toLocaleDateString('en-IN', {
+                          day: 'numeric',
+                          month: 'short',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </span>
+                      {tx.referenceId && (
+                        <span className="font-mono text-gray-500 bg-gray-50 px-1.5 py-0.5 rounded border border-gray-200/60 text-[10px]">
+                          Ref: #{tx.referenceId.toString().slice(-6).toUpperCase()}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="text-right shrink-0">
+                  <span className={`text-base sm:text-lg font-black tracking-tight ${
+                    isCredit ? 'text-emerald-600' : 'text-slate-900'
+                  }`}>
+                    {isCredit ? '+' : '-'}₹{Math.abs(tx.amount).toLocaleString('en-IN')}
+                  </span>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">
+                    {isCredit ? 'Added to Balance' : 'Deducted'}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+};
+
 /* ══════════════════════════════════════════════════════════════════
    MAIN COMPONENT
    ══════════════════════════════════════════════════════════════════ */
@@ -144,6 +279,8 @@ const Profile = () => {
   const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
   const [isB2CModalOpen, setIsB2CModalOpen] = useState(false);
   const [walletBalance, setWalletBalance] = useState(null);
+  const [walletTransactions, setWalletTransactions] = useState([]);
+  const [walletLoading, setWalletLoading] = useState(false);
   
   // Active Sidebar Tab for Enterprise Dashboard
   const [activeTab, setActiveTab] = useState('overview');
@@ -162,9 +299,17 @@ const Profile = () => {
   const [ordersLoading, setOrdersLoading] = useState(false);
 
   useEffect(() => {
+    setWalletLoading(true);
     api.get('/referrals/wallet')
-      .then(({ data }) => setWalletBalance(data?.data?.balance ?? 0))
-      .catch(() => setWalletBalance(0));
+      .then(({ data }) => {
+        setWalletBalance(data?.data?.balance ?? 0);
+        setWalletTransactions(data?.data?.transactions || []);
+      })
+      .catch(() => {
+        setWalletBalance(0);
+        setWalletTransactions([]);
+      })
+      .finally(() => setWalletLoading(false));
   }, []);
 
   useEffect(() => {
@@ -1670,6 +1815,11 @@ const Profile = () => {
                           Wallet balance can be applied towards any material purchase, order adjustments, and subscription renewals.
                         </p>
                       </div>
+
+                      <WalletTransactionsLedger 
+                        transactions={walletTransactions} 
+                        loading={walletLoading} 
+                      />
                     </div>
                   </motion.div>
                 )}
@@ -2433,6 +2583,11 @@ const Profile = () => {
                         </h2>
                         <p className="text-xs text-white/80">Refunds and referral credits appear here. Usable on any checkout.</p>
                       </div>
+
+                      <WalletTransactionsLedger 
+                        transactions={walletTransactions} 
+                        loading={walletLoading} 
+                      />
                     </div>
                   </motion.div>
                 )}

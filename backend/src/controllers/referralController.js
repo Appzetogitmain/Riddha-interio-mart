@@ -20,9 +20,14 @@ exports.getWallet = async (req, res, next) => {
     wallet.balance = referralService._calculateActiveBalance(wallet.transactions);
     await wallet.save();
 
+    const walletObj = wallet.toObject();
+    if (walletObj.transactions && Array.isArray(walletObj.transactions)) {
+      walletObj.transactions.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    }
+
     res.status(200).json({
       success: true,
-      data: wallet
+      data: walletObj
     });
   } catch (err) {
     next(err);

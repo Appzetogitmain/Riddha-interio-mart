@@ -85,7 +85,7 @@ const generateAgreementPDF = (role, termsContent, privacyContent, fullName = '',
     try {
       const doc = new PDFDocument({
         size: 'A4',
-        margin: 50,
+        margins: { top: 50, bottom: 90, left: 50, right: 50 },
         bufferPages: true
       });
 
@@ -216,7 +216,7 @@ const generateSellerFullAgreementPDF = async (seller, docSettings = {}) => {
     try {
       const doc = new PDFDocument({
         size: 'A4',
-        margin: 50,
+        margins: { top: 50, bottom: 90, left: 50, right: 50 },
         bufferPages: true
       });
 
@@ -277,11 +277,14 @@ const generateSellerFullAgreementPDF = async (seller, docSettings = {}) => {
       ];
 
       let yPos = 150;
-      doc.fontSize(8.5).font('Helvetica');
+      doc.fontSize(8.5);
       details.forEach(([label, val]) => {
-        doc.font('Helvetica-Bold').fillColor('#333333').text(label, 50, yPos, { width: 180 });
+        const lh = doc.heightOfString(label, { width: 175 });
+        const vh = doc.heightOfString(val, { width: 315 });
+        const rh = Math.max(lh, vh);
+        doc.font('Helvetica-Bold').fillColor('#333333').text(label, 50, yPos, { width: 175 });
         doc.font('Helvetica').fillColor('#444444').text(val, 230, yPos, { width: 315 });
-        yPos += 14;
+        yPos += Math.max(rh, 14) + 2;
       });
 
       yPos += 10;
@@ -301,9 +304,12 @@ const generateSellerFullAgreementPDF = async (seller, docSettings = {}) => {
 
       doc.fontSize(8.5);
       bankInfo.forEach(([label, val]) => {
-        doc.font('Helvetica-Bold').fillColor('#333333').text(label, 50, yPos, { width: 180 });
+        const lh = doc.heightOfString(label, { width: 175 });
+        const vh = doc.heightOfString(val, { width: 315 });
+        const rh = Math.max(lh, vh);
+        doc.font('Helvetica-Bold').fillColor('#333333').text(label, 50, yPos, { width: 175 });
         doc.font('Helvetica').fillColor('#444444').text(val, 230, yPos, { width: 315 });
-        yPos += 14;
+        yPos += Math.max(rh, 14) + 2;
       });
 
       yPos += 10;
@@ -322,9 +328,12 @@ const generateSellerFullAgreementPDF = async (seller, docSettings = {}) => {
 
       doc.fontSize(8);
       consents.forEach(([label, val]) => {
-        doc.font('Helvetica-Bold').fillColor('#189D91').text(label, 50, yPos, { width: 180 });
+        const labelHeight = doc.heightOfString(label, { width: 175 });
+        const valHeight = doc.heightOfString(val, { width: 315 });
+        const rowHeight = Math.max(labelHeight, valHeight);
+        doc.font('Helvetica-Bold').fillColor('#189D91').text(label, 50, yPos, { width: 175 });
         doc.font('Helvetica').fillColor('#222222').text(val, 230, yPos, { width: 315 });
-        yPos += 16;
+        yPos += Math.max(rowHeight, 14) + 5;
       });
 
       // Page 2: Standard Operating Procedure (SOP) & Canvas Signature

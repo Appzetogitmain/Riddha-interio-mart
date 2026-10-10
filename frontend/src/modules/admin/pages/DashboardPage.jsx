@@ -146,7 +146,9 @@ const DashboardPage = () => {
   const topSellingProducts = data?.topSellingProducts || [];
   
   const totalOrders = stats.statusBreakdown?.reduce((sum, item) => sum + item.count, 0) || 0;
-  const platformProfit = Math.round((stats.totalRevenue || 0) * 0.10);
+  const platformProfit = stats.platformProfit !== undefined
+    ? stats.platformProfit
+    : Math.round((stats.netRevenue ?? (stats.totalRevenue || 0)) * 0.10);
 
   const statusPieData = (stats.statusBreakdown || []).map(item => ({
     name: item._id,
@@ -166,10 +168,10 @@ const DashboardPage = () => {
   // Define 8 premium enterprise KPI cards
   const kpis = [
     {
-      title: 'Gross Revenue',
-      value: loading ? '...' : `₹${stats.totalRevenue?.toLocaleString()}`,
+      title: stats.totalRefunded > 0 ? 'Net Revenue' : 'Gross Revenue',
+      value: loading ? '...' : `₹${(stats.netRevenue !== undefined ? stats.netRevenue : (stats.totalRevenue || 0)).toLocaleString()}`,
       trend: stats.trends?.revenue || '+0.0%',
-      compareText: 'vs last week',
+      compareText: stats.totalRefunded > 0 ? `₹${stats.totalRefunded?.toLocaleString()} in returns` : 'vs last week',
       icon: LuIndianRupee,
       color: '#189D91',
       sparkData: stats.sparklines?.revenue || [0, 0, 0, 0, 0, 0, 0],
@@ -239,7 +241,7 @@ const DashboardPage = () => {
       title: 'Platform Profit',
       value: loading ? '...' : `₹${platformProfit.toLocaleString()}`,
       trend: stats.trends?.profit || '+0.0%',
-      compareText: '10% system share',
+      compareText: stats.totalRefunded > 0 ? '10% net platform share' : '10% system share',
       icon: LuTrendingUp,
       color: '#2A458A',
       sparkData: stats.sparklines?.profit || [0, 0, 0, 0, 0, 0, 0],
@@ -840,13 +842,14 @@ const DashboardPage = () => {
                       className="group hover:bg-slate-50 transition-colors cursor-pointer text-xs"
                     >
                       <td className="py-3.5 pr-4 font-bold text-[var(--color-primary)]">
-                        #{item.target?.toString().slice(-8).toUpperCase() || 'SYS'}
+                        #{item.target?.toString().replace(/^#+/, '').slice(-8).toUpperCase() || 'SYS'}
                       </td>
                       <td className="py-3.5 pr-4 font-medium text-slate-600">{item.user}</td>
                       <td className="py-3.5 pr-4">
                         <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border ${
-                          item.action.includes('Delivered') ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 
-                          item.action.includes('Shipped') ? 'bg-blue-50 text-blue-700 border-blue-100' :
+                          item.action?.includes('Refunded') || item.action?.includes('Returned') ? 'bg-purple-50 text-purple-700 border-purple-200' :
+                          item.action?.includes('Delivered') ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 
+                          item.action?.includes('Shipped') ? 'bg-blue-50 text-blue-700 border-blue-100' :
                           'bg-teal-50 text-[var(--color-primary)] border-teal-100'
                         }`}>
                           {item.action}

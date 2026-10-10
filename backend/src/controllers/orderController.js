@@ -180,6 +180,15 @@ exports.addOrderItems = async (req, res) => {
     // 3. Secure backend calculation of all items
     const checkoutPricing = await pricingService.calculateCartPricing(orderItems, req.user.userType);
 
+    const Wallet = require('../models/Wallet');
+    let userWallet = null;
+    if (paymentMethod === 'Wallet') {
+      userWallet = await Wallet.findOne({ user: req.user.id }).session(session);
+      if (!userWallet || userWallet.balance < checkoutPricing.totalPrice) {
+        throw new Error(`Insufficient wallet balance. You have ₹${userWallet?.balance || 0}, but order total is ₹${checkoutPricing.totalPrice}`);
+      }
+    }
+
     // 4. Group items by Seller
     const groupedItems = {};
     for (const item of checkoutPricing.enrichedItems) {
@@ -277,6 +286,7 @@ exports.addOrderItems = async (req, res) => {
       }
       
       const isCod = paymentMethod === 'COD';
+      const isWallet = paymentMethod === 'Wallet';
       
       // Geocode Shipping Address
       const shippingAddressText = `${shippingAddress.fullAddress}, ${shippingAddress.city}, ${shippingAddress.pincode}`;
@@ -321,10 +331,10 @@ exports.addOrderItems = async (req, res) => {
           totalPrice: Number((groupPricing.totalPrice - couponDiscount).toFixed(2))
         },
         totalPrice: Number((groupPricing.totalPrice - couponDiscount).toFixed(2)),
-        isPaid: false,
-        paidAt: undefined,
-        paymentStatus: 'pending',
-        status: isCod ? 'Processing' : 'Pending',
+        isPaid: isWallet ? true : false,
+        paidAt: isWallet ? new Date() : undefined,
+        paymentStatus: isWallet ? 'paid' : 'pending',
+        status: (isCod || isWallet) ? 'Processing' : 'Pending',
         businessDetails,
         shippingCoordinates: resolvedShippingCoords,
         sellerCoordinates: resolvedSellerCoords
@@ -349,7 +359,7 @@ exports.addOrderItems = async (req, res) => {
           { session }
         );
 
-        if (isCod) {
+        if (isCod || isWallet) {
           await inventoryService.commitReservation(matchedRes._id, session);
 
           // Fetch updated product for low stock alerts check
@@ -368,12 +378,59 @@ exports.addOrderItems = async (req, res) => {
       }
     }
 
+    // Deduct user wallet balance inside transaction if paid via Wallet
+    if (paymentMethod === 'Wallet' && userWallet) {
+      const totalDebited = createdOrders.reduce((sum, o) => sum + o.totalPrice, 0);
+      userWallet.balance = Math.max(0, Number((userWallet.balance - totalDebited).toFixed(2)));
+      for (const ord of createdOrders) {
+        userWallet.transactions.push({
+          amount: ord.totalPrice,
+          type: 'purchase_debit',
+          description: `Payment for Order #${ord._id.toString().slice(-8).toUpperCase()}`,
+          status: 'active',
+          referenceId: ord._id,
+          createdAt: new Date()
+        });
+      }
+      await userWallet.save({ session });
+    }
+
     // 6. Clear user cart inside transaction
     await Cart.findOneAndUpdate({ user: req.user.id }, { items: [] }, { session });
 
     // Commit transaction atomically
     await session.commitTransaction();
     session.endSession();
+
+    // Auto-save shipping address to user's profile address book if not already saved
+    try {
+      const Address = require('../models/Address');
+      const cleanPhone = (shippingAddress.mobileNumber || req.user.phone || '').replace(/\D/g, '').slice(-10);
+      const cleanPin = (shippingAddress.pincode || '').replace(/\D/g, '').slice(0, 6);
+      if (cleanPhone.length === 10 && cleanPin.length === 6 && shippingAddress.fullAddress && shippingAddress.city) {
+        const existing = await Address.findOne({
+          user: req.user.id,
+          fullAddress: shippingAddress.fullAddress,
+          pincode: cleanPin
+        });
+        if (!existing) {
+          const hasDefault = await Address.exists({ user: req.user.id, isDefault: true });
+          await Address.create({
+            user: req.user.id,
+            fullName: shippingAddress.fullName || req.user.fullName || 'Customer',
+            mobileNumber: cleanPhone,
+            pincode: cleanPin,
+            city: shippingAddress.city,
+            fullAddress: shippingAddress.fullAddress,
+            landmark: shippingAddress.landmark || '',
+            addressType: 'Home',
+            isDefault: !hasDefault
+          });
+        }
+      }
+    } catch (saveAddrErr) {
+      console.warn('Could not auto-save order shipping address to profile addresses:', saveAddrErr.message);
+    }
 
     // 7. Post-Commit Actions (Low stock alerts, invoice processing, socket notifications)
     for (const alert of lowStockAlerts) {
@@ -413,8 +470,8 @@ exports.addOrderItems = async (req, res) => {
         console.error('Audit logging error:', logErr.message);
       }
 
-      // Post-commit actions for COD ONLY (Online actions happen in verifyPayment)
-      if (paymentMethod === 'COD') {
+      // Post-commit actions for COD or Wallet orders (Online actions happen in verifyPayment)
+      if (paymentMethod === 'COD' || paymentMethod === 'Wallet') {
         // Fire notifications
         try {
           const payload = buildSellerOrderNotifyPayload(savedOrder, req.user?.fullName);
@@ -466,7 +523,7 @@ exports.addOrderItems = async (req, res) => {
     }
 
     let razorpayOrder = null;
-    if (paymentMethod !== 'COD') {
+    if (paymentMethod !== 'COD' && paymentMethod !== 'Wallet') {
       const { createRazorpayOrder } = require('../utils/paymentGateway');
       const totalAmount = createdOrders.reduce((sum, order) => sum + order.totalPrice, 0);
       try {

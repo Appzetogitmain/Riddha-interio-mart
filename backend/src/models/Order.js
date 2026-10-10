@@ -131,8 +131,17 @@ const OrderSchema = new mongoose.Schema({
   },
   paymentStatus: {
     type: String,
-    enum: ['pending', 'paid', 'failed'],
+    enum: ['pending', 'paid', 'failed', 'refunded'],
     default: 'pending'
+  },
+  refundStatus: {
+    type: String,
+    enum: ['None', 'Pending', 'Refunded to Wallet', 'Refunded to Source'],
+    default: 'None'
+  },
+  refundAmount: {
+    type: Number,
+    default: 0.0
   },
   invoiceUrl: {
     type: String
@@ -156,7 +165,7 @@ const OrderSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['Pending', 'Processing', 'Packed', 'Shipped', 'Delivered', 'Cancelled'],
+    enum: ['Pending', 'Processing', 'Packed', 'Shipped', 'Delivered', 'Cancelled', 'Returned'],
     default: 'Pending'
   },
   deliveryBoy: {

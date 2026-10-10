@@ -200,7 +200,7 @@ const buildPdfContent = (doc, order, user, settings) => {
       doc.text("WEIGHT", 268, tableTop + 8, { width: 55, align: "center" });
       doc.text("QTY", 328, tableTop + 8, { width: 40, align: "center" });
       doc.text("RATE", 373, tableTop + 8, { width: 75, align: "right" });
-      doc.text("AMOUNT", 453, tableTop + 8, { width: 92, align: "right" });
+      doc.text("AMOUNT", 453, tableTop + 8, { width: 84, align: "right" });
 
       doc.moveDown(1);
       doc.moveTo(50, tableTop + 24).lineTo(545, tableTop + 24).strokeColor("#eeeeee").stroke();
@@ -219,7 +219,7 @@ const buildPdfContent = (doc, order, user, settings) => {
         doc.fontSize(9).fillColor("#000000").text(weight, 268, rowY, { width: 55, align: "center" });
         doc.text(item.quantity.toString(), 328, rowY, { width: 40, align: "center" });
         doc.font("Helvetica").text(`Rs. ${item.price.toLocaleString()}`, 373, rowY, { width: 75, align: "right" });
-        doc.font("Helvetica-Bold").text(`Rs. ${(item.price * item.quantity).toLocaleString()}`, 453, rowY, { width: 92, align: "right" });
+        doc.font("Helvetica-Bold").text(`Rs. ${(item.price * item.quantity).toLocaleString()}`, 453, rowY, { width: 84, align: "right" });
 
         rowY += 36;
       });
@@ -245,7 +245,7 @@ const buildPdfContent = (doc, order, user, settings) => {
         .fillColor("#000000")
         .text(
           `Rs. ${Number(subExclTax.toFixed(2)).toLocaleString()}`,
-          453, summaryY, { width: 92, align: "right" },
+          453, summaryY, { width: 84, align: "right" },
         );
 
       let gstPercentage = 0;
@@ -261,7 +261,7 @@ const buildPdfContent = (doc, order, user, settings) => {
         .fillColor("#000000")
         .text(
           `Rs. ${Number(taxAmt.toFixed(2)).toLocaleString()}`,
-          453, summaryY + 20, { width: 92, align: "right" },
+          453, summaryY + 20, { width: 84, align: "right" },
         );
 
       doc.fontSize(10).font("Helvetica").fillColor("#888888");
@@ -271,7 +271,7 @@ const buildPdfContent = (doc, order, user, settings) => {
         .fillColor("#B71C1C")
         .text(
           `-Rs. ${Number(discAmt.toFixed(2)).toLocaleString()}`,
-          453, summaryY + 40, { width: 92, align: "right" },
+          453, summaryY + 40, { width: 84, align: "right" },
         );
 
       doc.fontSize(10).font("Helvetica").fillColor("#888888");
@@ -280,7 +280,7 @@ const buildPdfContent = (doc, order, user, settings) => {
       doc
         .font("Helvetica-Bold")
         .fillColor("#000000")
-        .text(shippingText, 453, summaryY + 60, { width: 92, align: "right" });
+        .text(shippingText, 453, summaryY + 60, { width: 84, align: "right" });
 
       doc
         .moveTo(340, summaryY + 85)
@@ -293,7 +293,7 @@ const buildPdfContent = (doc, order, user, settings) => {
       doc
         .fontSize(14)
         .text(`Rs. ${order.totalPrice.toLocaleString()}`, 453, summaryY + 99, {
-          width: 92,
+          width: 84,
           align: "right",
         });
 

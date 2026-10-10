@@ -7,6 +7,8 @@ import {
   LuShoppingBag,
   LuArrowRight,
   LuClock,
+  LuWallet,
+  LuRotateCcw,
 } from "react-icons/lu";
 import api from "../../../shared/utils/api";
 import { useNavigate } from "react-router-dom";
@@ -45,11 +47,30 @@ const UserPaymentsPage = () => {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
+  const isOrderRefunded = (o) => 
+    o.paymentStatus === 'refunded' || o.status === 'Returned' || o.refundStatus === 'Refunded to Wallet';
+
   const filteredOrders = orders.filter((o) => {
-    if (filterStatus === "Paid") return o.isPaid;
-    if (filterStatus === "Unpaid") return !o.isPaid;
+    const refunded = isOrderRefunded(o);
+    if (filterStatus === "Paid") return o.isPaid && !refunded;
+    if (filterStatus === "Unpaid") return !o.isPaid && !refunded;
+    if (filterStatus === "Refunded") return refunded;
     return true;
   });
+
+  const netCollection = orders.reduce((sum, o) => {
+    return sum + (o.isPaid && !isOrderRefunded(o) ? o.totalPrice : 0);
+  }, 0);
+
+  const totalRefundedToWallet = orders.reduce((sum, o) => {
+    return sum + (isOrderRefunded(o) ? (o.refundAmount || o.totalPrice) : 0);
+  }, 0);
+
+  const pendingCod = orders.reduce((sum, o) => {
+    return sum + (!o.isPaid && !isOrderRefunded(o) ? o.totalPrice : 0);
+  }, 0);
+
+  const activePaidCount = orders.filter(o => o.isPaid && !isOrderRefunded(o)).length;
 
   return (
     <PageWrapper>
@@ -61,49 +82,62 @@ const UserPaymentsPage = () => {
               User Payments
             </h1>
             <p className="text-warm-sand text-sm md:text-base">
-              Monitor customer order payments and transactional history.
+              Monitor customer order payments, wallet refunds, and transactional history.
             </p>
           </div>
         </div>
 
         {/* Stats Summary */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-white p-6 rounded-2xl border border-soft-oatmeal shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center text-green-600">
-              <LuIndianRupee size={24} />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-white p-5 rounded-2xl border border-soft-oatmeal shadow-sm flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center text-green-600 shrink-0">
+              <LuIndianRupee size={22} />
             </div>
             <div>
               <p className="text-[10px] text-warm-sand font-black uppercase tracking-wider">
-                Total Collection
+                Net Collection
               </p>
               <h4 className="text-xl font-black text-deep-espresso">
-                ₹{orders.reduce((sum, o) => sum + (o.isPaid ? o.totalPrice : 0), 0).toLocaleString()}
+                ₹{netCollection.toLocaleString()}
               </h4>
             </div>
           </div>
-          <div className="bg-white p-6 rounded-2xl border border-soft-oatmeal shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600">
-              <LuClock size={24} />
+          <div className="bg-white p-5 rounded-2xl border border-purple-100 shadow-sm flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-purple-50 flex items-center justify-center text-purple-600 shrink-0">
+              <LuRotateCcw size={22} />
+            </div>
+            <div>
+              <p className="text-[10px] text-purple-500 font-black uppercase tracking-wider">
+                Refunded to Wallet
+              </p>
+              <h4 className="text-xl font-black text-purple-900">
+                ₹{totalRefundedToWallet.toLocaleString()}
+              </h4>
+            </div>
+          </div>
+          <div className="bg-white p-5 rounded-2xl border border-soft-oatmeal shadow-sm flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600 shrink-0">
+              <LuClock size={22} />
             </div>
             <div>
               <p className="text-[10px] text-warm-sand font-black uppercase tracking-wider">
                 Pending COD
               </p>
               <h4 className="text-xl font-black text-deep-espresso">
-                ₹{orders.reduce((sum, o) => sum + (!o.isPaid ? o.totalPrice : 0), 0).toLocaleString()}
+                ₹{pendingCod.toLocaleString()}
               </h4>
             </div>
           </div>
-          <div className="bg-white p-6 rounded-2xl border border-soft-oatmeal shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
-              <LuShoppingBag size={24} />
+          <div className="bg-white p-5 rounded-2xl border border-soft-oatmeal shadow-sm flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 shrink-0">
+              <LuShoppingBag size={22} />
             </div>
             <div>
               <p className="text-[10px] text-warm-sand font-black uppercase tracking-wider">
-                Paid Orders
+                Active Paid Orders
               </p>
               <h4 className="text-xl font-black text-deep-espresso">
-                {orders.filter(o => o.isPaid).length}
+                {activePaidCount}
               </h4>
             </div>
           </div>
@@ -133,6 +167,7 @@ const UserPaymentsPage = () => {
               <option value="All">All Payments</option>
               <option value="Paid">Paid Only</option>
               <option value="Unpaid">Unpaid Only</option>
+              <option value="Refunded">Refunded (Wallet)</option>
             </select>
           </div>
         </div>
@@ -189,7 +224,11 @@ const UserPaymentsPage = () => {
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2 text-xs font-bold text-gray-600">
-                           <LuCreditCard size={14} className="text-warm-sand" />
+                           {o.paymentMethod === 'Wallet' ? (
+                             <LuWallet size={14} className="text-purple-600" />
+                           ) : (
+                             <LuCreditCard size={14} className="text-warm-sand" />
+                           )}
                            {o.paymentMethod}
                         </div>
                       </td>
@@ -197,15 +236,21 @@ const UserPaymentsPage = () => {
                         ₹{o.totalPrice.toLocaleString()}
                       </td>
                       <td className="px-6 py-4">
-                        <span
-                          className={`text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border ${
-                            o.isPaid
-                              ? "text-green-700 bg-green-50 border-green-700/10"
-                              : "text-amber-700 bg-amber-50 border-amber-700/10"
-                          }`}
-                        >
-                          {o.isPaid ? 'Paid' : 'Unpaid'}
-                        </span>
+                        {isOrderRefunded(o) ? (
+                          <span className="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border text-purple-700 bg-purple-50 border-purple-300">
+                            Refunded (Wallet)
+                          </span>
+                        ) : (
+                          <span
+                            className={`text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border ${
+                              o.isPaid
+                                ? "text-green-700 bg-green-50 border-green-700/10"
+                                : "text-amber-700 bg-amber-50 border-amber-700/10"
+                            }`}
+                          >
+                            {o.isPaid ? 'Paid' : 'Unpaid'}
+                          </span>
+                        )}
                       </td>
                       <td className="px-6 py-4 text-xs text-deep-espresso/70 font-bold uppercase">
                         {new Date(o.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}

@@ -5,7 +5,7 @@ import { LuWallet } from 'react-icons/lu';
 import toast from 'react-hot-toast';
 import api from '../../../shared/utils/api';
 
-const WalletPayment = ({ cartTotal }) => {
+const WalletPayment = ({ cartTotal, onPayWithWallet, isProcessing }) => {
   const [balance, setBalance] = useState(0);
   const [loading, setLoading] = useState(true);
 
@@ -18,7 +18,6 @@ const WalletPayment = ({ cartTotal }) => {
         }
       } catch (err) {
         console.error('Failed to fetch wallet balance:', err);
-        // Silently default to 0 to keep UX clean
         setBalance(0);
       } finally {
         setLoading(false);
@@ -28,11 +27,19 @@ const WalletPayment = ({ cartTotal }) => {
     fetchWalletBalance();
   }, []);
 
+  const hasSufficientBalance = balance >= cartTotal;
+
   const handleWalletPay = () => {
-    toast.error('Wallet Payment is temporarily disabled for standard checkout. Please select Pay Online or COD for now!', {
-      duration: 5000,
-      icon: <FiAlertCircle className="text-amber-500" />
-    });
+    if (!hasSufficientBalance) {
+      toast.error(`Insufficient wallet balance. You have ₹${balance.toLocaleString('en-IN')}, but order total is ₹${cartTotal.toLocaleString('en-IN')}`, {
+        duration: 5000,
+        icon: <FiAlertCircle className="text-rose-500" />
+      });
+      return;
+    }
+    if (onPayWithWallet) {
+      onPayWithWallet();
+    }
   };
 
   return (
@@ -73,18 +80,32 @@ const WalletPayment = ({ cartTotal }) => {
       <div className="space-y-3">
         <div className="flex items-center gap-2.5 p-3.5 bg-white border border-gray-200/60 rounded-xl">
           <FiInfo className="text-[#189D91] shrink-0" size={16} />
-          <p className="text-[10px] text-gray-500 font-medium leading-relaxed">
-            Your wallet balance can be accumulated via referral earnings. 
-            Accumulate up to ₹1,000 for standard purchase deductions.
+          <p className="text-[10px] text-gray-600 font-medium leading-relaxed">
+            Order amount of <strong className="text-gray-900 font-bold">₹{cartTotal.toLocaleString('en-IN')}</strong> will be debited directly from your active wallet balance.
           </p>
         </div>
 
-        <button
-          onClick={handleWalletPay}
-          className="w-full py-4 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-md shadow-amber-500/10 active:scale-[0.98] flex items-center justify-center gap-2"
-        >
-          <span>PAY WITH WALLET (COMING SOON)</span>
-        </button>
+        {hasSufficientBalance ? (
+          <button
+            onClick={handleWalletPay}
+            disabled={isProcessing || loading}
+            className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-md shadow-emerald-600/10 active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+          >
+            <span>{isProcessing ? 'PROCESSING WALLET DEBIT...' : `PAY ₹${cartTotal.toLocaleString('en-IN')} WITH WALLET`}</span>
+          </button>
+        ) : (
+          <div className="space-y-2">
+            <button
+              disabled
+              className="w-full py-4 bg-gray-200 text-gray-400 rounded-xl font-black text-xs uppercase tracking-widest cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              <span>INSUFFICIENT WALLET BALANCE</span>
+            </button>
+            <p className="text-center text-[10px] text-rose-500 font-bold">
+              You need ₹{Math.max(0, cartTotal - balance).toLocaleString('en-IN')} more to pay via wallet. Please choose Pay Online or COD.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

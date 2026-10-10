@@ -558,7 +558,10 @@ const Sidebar = ({ isOpen, onClose }) => {
           (p) => p.approvalStatus === "Pending",
         );
         setDeliveryCount(pendingPartners.length);
-        setProductCount(productRes.data.data.length);
+        const pendingProducts = (productRes.data?.data || []).filter(
+          (p) => p.approvalStatus === "pending" || p.approvalStatus === "Pending"
+        );
+        setProductCount(pendingProducts.length);
         setBatchCount(batchRes.data.data.length);
         const pendingReturns = returnsRes.data.data.filter(r => r.status === "Pending");
         setReturnCount(pendingReturns.length);

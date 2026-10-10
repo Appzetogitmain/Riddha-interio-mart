@@ -12,7 +12,7 @@ const tokenService = require('../utils/tokenService');
  */
 exports.refreshToken = async (req, res, next) => {
   try {
-    const token = req.cookies?.refresh_token;
+    const token = req.body?.refreshToken || req.cookies?.refresh_token;
     if (!token) {
       return res.status(401).json({ success: false, error: 'Session expired. Please log in again.' });
     }

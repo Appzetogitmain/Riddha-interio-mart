@@ -5,7 +5,41 @@ const Address = require('../models/Address');
 // @access  Private
 exports.getAddresses = async (req, res) => {
   try {
-    const addresses = await Address.find({ user: req.user.id }).sort('-isDefault -createdAt');
+    let addresses = await Address.find({ user: req.user.id }).sort('-isDefault -createdAt');
+
+    // If user has no saved addresses, look up their latest order that has a shippingAddress
+    if (addresses.length === 0) {
+      const Order = require('../models/Order');
+      const latestOrder = await Order.findOne({
+        user: req.user.id,
+        'shippingAddress.fullAddress': { $exists: true, $ne: '' }
+      }).sort('-createdAt');
+
+      if (latestOrder && latestOrder.shippingAddress) {
+        const s = latestOrder.shippingAddress;
+        const cleanMobile = (s.mobileNumber || req.user.phone || '').replace(/\D/g, '').slice(-10);
+        const cleanPincode = (s.pincode || '').replace(/\D/g, '').slice(0, 6);
+
+        if (cleanMobile.length === 10 && cleanPincode.length === 6 && s.fullAddress && s.city) {
+          try {
+            const restoredAddress = await Address.create({
+              user: req.user.id,
+              fullName: s.fullName || req.user.fullName || 'Customer',
+              mobileNumber: cleanMobile,
+              pincode: cleanPincode,
+              city: s.city,
+              fullAddress: s.fullAddress,
+              landmark: s.landmark || '',
+              addressType: 'Home',
+              isDefault: true
+            });
+            addresses = [restoredAddress];
+          } catch (createErr) {
+            console.warn('Could not auto-create address from order:', createErr.message);
+          }
+        }
+      }
+    }
 
     res.status(200).json({
       success: true,

@@ -14,7 +14,8 @@ import {
   LuUser,
   LuChevronRight,
   LuX,
-  LuDownload
+  LuDownload,
+  LuRotateCcw
 } from "react-icons/lu";
 import { FiCheckCircle, FiXCircle, FiFlag } from "react-icons/fi";
 import { toast } from "react-hot-toast";
@@ -92,6 +93,7 @@ const statusIcons = {
   Shipped: FiFlag,
   "Out For Delivery": LuTruck,
   Delivered: FiCheckCircle,
+  Returned: LuRotateCcw,
   Cancelled: FiXCircle,
 };
 
@@ -486,11 +488,18 @@ const OrderListPage = ({ specificStatus }) => {
                         <td className="px-6 py-4">
                           <div className="flex flex-col gap-1">
                             <div className="flex items-center gap-2">
-                               <StatusIcon size={14} className="text-warm-sand" />
-                               <span className="text-[10px] font-bold uppercase tracking-widest text-deep-espresso/70">
+                               <StatusIcon size={14} className={order.status === 'Returned' ? 'text-purple-600' : 'text-warm-sand'} />
+                               <span className={`text-[10px] font-bold uppercase tracking-widest ${
+                                 order.status === 'Returned' ? 'text-purple-700 font-black' : 'text-deep-espresso/70'
+                               }`}>
                                  {order.status || 'Pending'}
                                </span>
                             </div>
+                            {(order.refundStatus === 'Refunded to Wallet' || order.paymentStatus === 'refunded') && (
+                              <span className="inline-flex w-fit px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-widest bg-purple-50 text-purple-700 border border-purple-200">
+                                Refunded to Wallet
+                              </span>
+                            )}
                             {order.sellerType !== 'Admin' && (
                               order.sellerResponse && order.sellerResponse !== 'Pending' ? (
                                 <span className={`inline-flex w-fit px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest ${

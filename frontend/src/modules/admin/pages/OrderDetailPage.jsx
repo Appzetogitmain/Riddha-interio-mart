@@ -56,6 +56,15 @@ const initialOrders = [
   }
 ];
 
+const statusColors = {
+  Pending: 'bg-amber-50 text-amber-700 border-amber-200',
+  Processing: 'bg-blue-50 text-blue-700 border-blue-200',
+  Shipped: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+  Delivered: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  Returned: 'bg-purple-50 text-purple-700 border-purple-200',
+  Cancelled: 'bg-rose-50 text-rose-700 border-rose-200'
+};
+
 const OrderDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -64,7 +73,7 @@ const OrderDetailPage = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
 
-  const availableStatuses = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
+  const availableStatuses = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Returned', 'Cancelled'];
 
   const fetchOrderDetail = async () => {
     try {
@@ -325,8 +334,24 @@ const OrderDetailPage = () => {
                   {order.paymentMethod} Payment
                 </p>
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                  <span className="text-xs font-bold text-green-600 uppercase tracking-widest">{order.isPaid ? 'Paid' : 'Pending'}</span>
+                  {order.paymentStatus === 'refunded' || order.status === 'Returned' || order.refundStatus === 'Refunded to Wallet' ? (
+                    <>
+                      <div className="w-2 h-2 rounded-full bg-purple-500"></div>
+                      <span className="text-xs font-bold text-purple-700 uppercase tracking-widest">
+                        Refunded to Wallet (₹{(order.refundAmount || order.totalPrice).toLocaleString()})
+                      </span>
+                    </>
+                  ) : order.isPaid ? (
+                    <>
+                      <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                      <span className="text-xs font-bold text-green-600 uppercase tracking-widest">Paid</span>
+                    </>
+                  ) : (
+                    <>
+                      <div className="w-2 h-2 rounded-full bg-amber-500"></div>
+                      <span className="text-xs font-bold text-amber-600 uppercase tracking-widest">Pending</span>
+                    </>
+                  )}
                 </div>
               </div>
 

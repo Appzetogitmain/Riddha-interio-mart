@@ -95,12 +95,64 @@ const PaymentPage = () => {
     if (selectedSection === "cod") {
       handleCodPayment();
     } else if (selectedSection === "wallet") {
-      // Graceful block handled by the WalletPayment component
-      toast.error(
-        "Standard checkout with wallet is currently disabled. Please select Online or COD!",
-      );
+      handleWalletPayment();
     } else {
       handleOnlinePayment();
+    }
+  };
+
+  const handleWalletPayment = async () => {
+    setIsProcessing(true);
+    const walletToast = toast.loading("Processing payment from your Riddha Wallet...");
+    try {
+      const orderData = {
+        orderItems: cart.map((item) => ({
+          name: item.name,
+          quantity: item.quantity,
+          image: Array.isArray(item.images) ? item.images[0] : item.image,
+          price: item.price,
+          product: item._id || item.id,
+          seller: item.seller,
+        })),
+        shippingAddress: {
+          fullName: address.fullName,
+          mobileNumber: address.mobileNumber,
+          pincode: address.pincode,
+          city: address.city,
+          fullAddress: address.fullAddress,
+          landmark: address.landmark,
+        },
+        paymentMethod: "Wallet",
+        itemsPrice: baseTotal,
+        shippingPrice: 0,
+        totalPrice: finalTotal,
+        couponCode: appliedCoupon?.code,
+        businessDetails: user?.businessDetails,
+      };
+
+      const response = await api.post("/orders", orderData);
+
+      if (response.data.success) {
+        const orderIds = response.data.data.map((order) => order._id);
+        localStorage.setItem("last_order_ids", JSON.stringify(orderIds));
+
+        // Clear coupon data from session
+        sessionStorage.removeItem("applied_coupon");
+
+        setTimeout(() => {
+          toast.success("Order placed successfully with your wallet balance!", { id: walletToast });
+          setIsProcessing(false);
+          clearCart();
+          navigate("/order-success");
+        }, 1200);
+      }
+    } catch (err) {
+      console.error("Failed to place Wallet order:", err);
+      setIsProcessing(false);
+      const errMsg =
+        err.response?.data?.message ||
+        "Failed to place order using Wallet balance. Please try another method.";
+      toast.error(errMsg, { id: walletToast });
     }
   };
 
@@ -610,7 +662,11 @@ const PaymentPage = () => {
                     exit={{ height: 0 }}
                     className="overflow-hidden bg-gray-50/30 px-4 md:px-5 pb-4 md:pb-5 space-y-2"
                   >
-                    <WalletPayment cartTotal={finalTotal} />
+                    <WalletPayment
+                      cartTotal={finalTotal}
+                      onPayWithWallet={handleWalletPayment}
+                      isProcessing={isProcessing}
+                    />
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -632,13 +688,13 @@ const PaymentPage = () => {
         <button
           onClick={handlePayNow}
           disabled={
+            isProcessing ||
             (selectedSection === "cod" &&
-              (!codEligibility.eligible || codEligibility.loading)) ||
-            selectedSection === "wallet"
+              (!codEligibility.eligible || codEligibility.loading))
           }
-          className={`px-10 py-4 rounded-xl font-black text-xs uppercase tracking-[0.2em] transition-all ${
+          className={`px-10 py-4 rounded-xl font-black text-xs uppercase tracking-[0.2em] transition-all cursor-pointer ${
             selectedSection === "wallet"
-              ? "bg-amber-500 hover:bg-amber-600 text-white shadow-lg shadow-amber-100"
+              ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-600/15"
               : selectedSection === "cod"
                 ? !codEligibility.eligible || codEligibility.loading
                   ? "bg-gray-300 text-gray-400 cursor-not-allowed"
@@ -646,21 +702,23 @@ const PaymentPage = () => {
                 : "bg-black hover:bg-[#189D91] text-white shadow-lg"
           }`}
         >
-          {selectedSection === "cod"
-            ? "PLACE COD ORDER"
-            : selectedSection === "wallet"
-              ? "PAY WITH WALLET"
-              : "PAY NOW"}
+          {isProcessing
+            ? "PROCESSING..."
+            : selectedSection === "cod"
+              ? "PLACE COD ORDER"
+              : selectedSection === "wallet"
+                ? "PAY WITH WALLET"
+                : "PAY NOW"}
         </button>
       </div>
 
       {/* Processing Loader Overlay */}
-      {isProcessing && selectedSection === "cod" && (
+      {isProcessing && (selectedSection === "cod" || selectedSection === "wallet") && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="bg-white p-8 rounded-3xl shadow-2xl flex flex-col items-center space-y-6 max-w-sm w-full mx-4">
             <div className="w-16 h-16 border-4 border-[#189D91]/20 border-t-[#189D91] rounded-full animate-spin" />
             <h3 className="text-sm font-black text-gray-800 uppercase tracking-widest text-center">
-              Placing COD Order
+              {selectedSection === "wallet" ? "Deducting Wallet Balance" : "Placing COD Order"}
             </h3>
             <p className="text-[9px] text-gray-400 font-bold uppercase tracking-[0.2em] text-center">
               Please do not refresh or close this tab

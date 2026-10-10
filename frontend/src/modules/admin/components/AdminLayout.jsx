@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Outlet, useNavigate, Link } from "react-router-dom";
 import Sidebar from "./Sidebar";
-import { useUser } from "../../user/data/UserContext";
 import {
   FiMenu,
   FiUser,
@@ -15,14 +14,19 @@ import AiAssistantWidget from "../../user/components/AiAssistantWidget";
 const AdminLayoutContent = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const { logout, user } = useUser();
   const { role } = useRBAC();
   const navigate = useNavigate();
 
-  const storedUser = JSON.parse(localStorage.getItem("riddha_admin") || localStorage.getItem("riddha_user") || "null");
-  const activeUser = user || storedUser;
+  const storedAdmin = (() => {
+    try {
+      return JSON.parse(localStorage.getItem("riddha_admin") || "null");
+    } catch {
+      return null;
+    }
+  })();
+  const user = storedAdmin;
   const hasValidAdminSession =
-    Boolean(activeUser?.token) && (activeUser?.role === "admin" || activeUser?.role === "superadmin");
+    Boolean(storedAdmin?.token) && (storedAdmin?.role === "admin" || storedAdmin?.role === "superadmin");
 
   useEffect(() => {
     if (!hasValidAdminSession) {
@@ -32,7 +36,6 @@ const AdminLayoutContent = () => {
 
   const handleLogout = () => {
     localStorage.removeItem("riddha_admin");
-    logout();
     navigate("/admin/login");
   };
 

@@ -51,6 +51,11 @@ exports.requestReturn = async (req, res, next) => {
     order.orderItems[itemIndex].returnRequest = returnRequest._id;
     await order.save();
 
+    try {
+      const cacheService = require('../services/cacheService');
+      cacheService.del('analytics:admin:dashboard');
+    } catch (_) {}
+
     res.status(201).json({
       success: true,
       data: returnRequest
@@ -243,6 +248,20 @@ exports.updateReturnStatus = async (req, res, next) => {
             quantity: order.orderItems[itemIndex].quantity
           }]);
         }
+
+        // Update overall order status & refund indicators
+        const allReturned = order.orderItems.every(
+          i => i.returnStatus === 'Received' || i.returnStatus === 'Completed' || i._id.toString() === returnReq.orderItem.toString()
+        );
+        if (allReturned) {
+          order.status = 'Returned';
+        }
+        order.paymentStatus = 'refunded';
+        order.refundStatus = (order.paymentMethod === 'COD' || order.paymentMethod === 'Wallet' || !order.paymentResult?.id)
+          ? 'Refunded to Wallet'
+          : 'Refunded to Source';
+        order.refundAmount = (order.refundAmount || 0) + returnReq.refundAmount;
+        await order.save();
       } catch (refundErr) {
         console.error('Failed to log wallet refund operations:', refundErr.message);
       }
@@ -276,6 +295,11 @@ exports.updateReturnStatus = async (req, res, next) => {
         console.error('Failed to queue refund email:', emailErr.message);
       }
     }
+
+    try {
+      const cacheService = require('../services/cacheService');
+      cacheService.del('analytics:admin:dashboard');
+    } catch (_) {}
 
     res.status(200).json({
       success: true,

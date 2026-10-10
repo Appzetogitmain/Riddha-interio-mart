@@ -26,9 +26,7 @@ const downloadImage = (url) => {
 
 // Helper to draw table rows in pdfkit
 const drawTableRow = (doc, y, values, widths, alignments, isHeader = false) => {
-  // Must match the x=40 the surrounding table/row rects are drawn at (see tableTop
-  // rects below) — starting 10pt further right than the rects caused the last
-  // column ("Total (Rs)") to spill past the table border and the page margin.
+  // Must match the x=40 the surrounding table/row rects are drawn at
   let currentX = 40;
   doc.fontSize(isHeader ? 8 : 7).font(isHeader ? "Helvetica-Bold" : "Helvetica");
   
@@ -36,10 +34,18 @@ const drawTableRow = (doc, y, values, widths, alignments, isHeader = false) => {
     const val = values[i] !== undefined && values[i] !== null ? values[i].toString() : "";
     const w = widths[i];
     const align = alignments[i] || "left";
-    // Note: pdfkit's `lineBreak: false` only suppresses wrapping when `width` is omitted —
-    // with an explicit column width (as here) it still wraps. So a header label MUST fit its
-    // column at this font size, or it wraps to 2 lines and bleeds into the row below.
-    doc.text(val, currentX, y, { width: w, align: align });
+    
+    // Add cell padding so rightmost text and table headers never touch or cut on borders
+    const isLastCol = i === values.length - 1;
+    if (align === "right") {
+      const rightPad = isLastCol ? 8 : 4;
+      doc.text(val, currentX, y, { width: w - rightPad, align: "right" });
+    } else if (align === "left") {
+      const leftPad = i === 1 ? 4 : 2;
+      doc.text(val, currentX + leftPad, y, { width: w - leftPad, align: "left" });
+    } else {
+      doc.text(val, currentX, y, { width: w, align: align });
+    }
     currentX += w;
   }
 };
@@ -158,10 +164,10 @@ class InvoicePdfService {
     // Total Row
     doc.rect(40, currentY, 515, 26).fill("#f1f5f9").stroke("#cccccc");
     doc.fillColor("#000000").font("Helvetica-Bold").fontSize(8);
-    doc.text("Total", 40, currentY + 9);
+    doc.text("Total", 48, currentY + 9);
     doc.text(`${order.orderItems.reduce((acc, curr) => acc + curr.quantity, 0)} Items`, 210, currentY + 9);
-    doc.text(`Rs. ${order.itemsPrice.toFixed(2)}`, 370, currentY + 9, { align: "right", width: 80 });
-    doc.fillColor("#0f766e").fontSize(10).text(`Rs. ${order.totalPrice.toFixed(2)}`, 460, currentY + 8, { align: "right", width: 95 });
+    doc.text(`Rs. ${order.itemsPrice.toFixed(2)}`, 370, currentY + 9, { align: "right", width: 75 });
+    doc.fillColor("#0f766e").fontSize(10).text(`Rs. ${order.totalPrice.toFixed(2)}`, 450, currentY + 8, { align: "right", width: 97 });
     doc.fillColor("#000000");
     currentY += 31;
 
@@ -522,10 +528,10 @@ class InvoicePdfService {
     // Total Row
     doc.rect(40, currentY, 515, 26).fill("#f1f5f9").stroke("#cccccc");
     doc.fillColor("#000000").font("Helvetica-Bold").fontSize(8);
-    doc.text("Total", 40, currentY + 9);
+    doc.text("Total", 48, currentY + 9);
     doc.text(`${order.orderItems.reduce((acc, curr) => acc + curr.quantity, 0)} Items`, 210, currentY + 9);
-    doc.text(`Rs. ${order.itemsPrice.toFixed(2)}`, 370, currentY + 9, { align: "right", width: 80 });
-    doc.fillColor("#e11d48").fontSize(10).text(`Rs. ${order.totalPrice.toFixed(2)}`, 460, currentY + 8, { align: "right", width: 95 });
+    doc.text(`Rs. ${order.itemsPrice.toFixed(2)}`, 370, currentY + 9, { align: "right", width: 75 });
+    doc.fillColor("#e11d48").fontSize(10).text(`Rs. ${order.totalPrice.toFixed(2)}`, 450, currentY + 8, { align: "right", width: 97 });
     doc.fillColor("#000000");
     currentY += 31;
 

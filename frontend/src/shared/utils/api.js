@@ -205,20 +205,22 @@ api.interceptors.response.use(
         isRefreshing = true;
 
         return new Promise((resolve, reject) => {
-          console.log('[API Interceptor] Access token expired. Attempting silent token refresh...');
+          console.log('[API Interceptor] Access token expired. Attempting silent token refresh for:', targetStorageKey);
+          const currentAuth = safeJsonParse(localStorage.getItem(targetStorageKey)) || {};
           axios.post(
             `${api.defaults.baseURL}/auth/refresh`,
-            {},
+            { refreshToken: currentAuth.refreshToken },
             { withCredentials: true }
           )
             .then((refreshRes) => {
               if (refreshRes.data && refreshRes.data.success) {
-                const { token, user } = refreshRes.data;
-                const currentAuth = safeJsonParse(localStorage.getItem(targetStorageKey)) || {};
+                const { token, refreshToken, user } = refreshRes.data;
+                const freshAuth = safeJsonParse(localStorage.getItem(targetStorageKey)) || {};
                 const updatedAuth = {
-                  ...currentAuth,
+                  ...freshAuth,
                   ...user,
-                  token: token || currentAuth.token
+                  token: token || freshAuth.token,
+                  refreshToken: refreshToken || freshAuth.refreshToken
                 };
                 localStorage.setItem(targetStorageKey, JSON.stringify(updatedAuth));
                 

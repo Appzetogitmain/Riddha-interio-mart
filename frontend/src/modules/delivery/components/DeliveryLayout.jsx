@@ -77,16 +77,13 @@ const DeliveryLayout = () => {
     }
   }, [hasValidDeliverySession, navigate]);
 
-  if (!hasValidDeliverySession) {
-    return null;
-  }
-
   const handleLogout = () => {
     logout();
     navigate('/delivery/login');
   };
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = React.useCallback(async () => {
+    if (!hasValidDeliverySession) return;
     try {
       const { data } = await api.get('/notifications?limit=50');
       if (data.success && data.data) {
@@ -106,13 +103,14 @@ const DeliveryLayout = () => {
     } catch (err) {
       console.error('Failed to fetch notifications in Layout:', err);
     }
-  };
+  }, [hasValidDeliverySession]);
 
   React.useEffect(() => {
+    if (!hasValidDeliverySession) return;
     fetchNotifications();
     window.addEventListener('delivery_notifications_updated', fetchNotifications);
     return () => window.removeEventListener('delivery_notifications_updated', fetchNotifications);
-  }, []);
+  }, [hasValidDeliverySession, fetchNotifications]);
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -160,7 +158,7 @@ const DeliveryLayout = () => {
 
   // Socket setup
   React.useEffect(() => {
-    if (!user || user?.role !== 'delivery') return;
+    if (!hasValidDeliverySession || !user || user?.role !== 'delivery') return;
 
     const socket = connectSocket({ token: user.token || 'cookie' });
 
@@ -257,6 +255,10 @@ const DeliveryLayout = () => {
       setUpdatingStatus(false);
     }
   };
+
+  if (!hasValidDeliverySession) {
+    return null;
+  }
 
   return (
     <div className="flex h-screen w-full bg-[#F8FAFC] text-slate-900 overflow-hidden font-sans">

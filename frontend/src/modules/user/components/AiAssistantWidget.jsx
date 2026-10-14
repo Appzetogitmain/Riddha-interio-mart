@@ -856,7 +856,7 @@ const AiAssistantWidget = () => {
 
   return (
     <>
-      <div className={`fixed right-6 z-[99999] print:hidden ${roleContext === 'user' ? 'bottom-28 md:bottom-24' : 'bottom-6 md:bottom-6'}`}>
+      <div className={`fixed right-3 sm:right-6 z-[99999] print:hidden ${roleContext === 'user' ? 'bottom-[152px] sm:bottom-36 md:bottom-24' : 'bottom-6 md:bottom-6'}`}>
         
         {/* ── Animated Mascot Trigger Button ── */}
         <motion.div
@@ -867,7 +867,7 @@ const AiAssistantWidget = () => {
           <button
             onClick={() => setIsOpen(!isOpen)}
             aria-label="Ask Tejas"
-            className={`w-18 h-18 sm:w-20 sm:h-20 rounded-full flex items-center justify-center shadow-2xl transition-all focus:outline-none overflow-hidden ${
+            className={`w-15 h-15 sm:w-18 sm:h-18 rounded-full flex items-center justify-center shadow-2xl transition-all focus:outline-none overflow-hidden ${
               isOpen ? 'bg-[#189D91] text-white ring-4 ring-[#189D91]/20' : 'bg-white p-1 hover:shadow-[0_20px_35px_rgba(24,157,145,0.25)] border-2 border-teal-100'
             }`}
           >

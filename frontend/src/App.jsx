@@ -48,7 +48,7 @@ function App() {
     location.pathname.endsWith('/forgot-password');
   const isDashboardLayout = isAdminPath || isSellerPath || isDeliveryPath || isAuthPath || isInitPath;
   const isProductPage = location.pathname.startsWith('/product/') || location.pathname.startsWith('/products/');
-  const checkoutPaths = ['/cart', '/address', '/payment'];
+  const checkoutPaths = ['/address', '/payment'];
   const userSpecialPaths = ['/order-success', '/orders', '/profile', '/profile/edit'];
   const isTrackOrderPath = location.pathname.startsWith('/track-order/');
   const isCheckoutPath = checkoutPaths.includes(location.pathname);

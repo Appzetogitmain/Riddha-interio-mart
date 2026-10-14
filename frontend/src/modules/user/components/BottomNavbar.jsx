@@ -12,7 +12,7 @@ const BottomNavbar = () => {
   const isProActive = user?.userType === 'enterpriser' && user?.subscription?.status === 'active' && user?.subscription?.endDate && new Date(user.subscription.endDate) > new Date();
 
   const location = useLocation();
-  const hideOnRoutes = ['/cart', '/checkout', '/address', '/payment', '/splash', '/onboarding'];
+  const hideOnRoutes = ['/checkout', '/address', '/payment', '/splash', '/onboarding'];
   const shouldHide = hideOnRoutes.some(route => location.pathname.toLowerCase().includes(route));
 
   const [isKeyboardVisible, setIsKeyboardVisible] = React.useState(false);

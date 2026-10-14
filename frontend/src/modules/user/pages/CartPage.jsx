@@ -60,18 +60,28 @@ const CartPage = () => {
 
   if (cart.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[70vh] px-6 text-center">
-        <div className="w-20 h-20 bg-[#189D91]/5 rounded-full flex items-center justify-center mb-6 border border-[#189D91]/10">
-          <FiShoppingBag className="text-3xl text-[#189D91]/55" />
+      <div className="min-h-[70vh] flex flex-col justify-between pb-32">
+        {/* Mobile Header for consistency */}
+        <div className="md:hidden bg-[#189D91] text-white px-5 py-4 flex items-center justify-between sticky top-0 z-20">
+          <button onClick={() => window.history.back()} className="text-white hover:text-white/80 transition-colors">
+            <FiArrowLeft size={22} />
+          </button>
+          <h1 className="text-lg font-bold flex-1 text-center pr-5">Cart</h1>
         </div>
-        <h2 className="text-xl font-bold text-slate-800 mb-2">Your cart is empty</h2>
-        <p className="text-gray-400 mb-8 text-xs font-semibold">Add some beautiful pieces to your collection!</p>
-        <button
-          onClick={() => navigate('/products')}
-          className="px-10 py-3.5 bg-[#189D91] hover:bg-[#14847a] text-white font-bold rounded-xl text-xs uppercase tracking-wider transition-all duration-300 shadow-md shadow-[#189D91]/15 hover:shadow-lg active:scale-[0.98]"
-        >
-          START SHOPPING
-        </button>
+
+        <div className="flex flex-col items-center justify-center flex-grow px-6 py-16 text-center">
+          <div className="w-20 h-20 bg-[#189D91]/5 rounded-full flex items-center justify-center mb-6 border border-[#189D91]/10">
+            <FiShoppingBag className="text-3xl text-[#189D91]/55" />
+          </div>
+          <h2 className="text-xl font-bold text-slate-800 mb-2">Your cart is empty</h2>
+          <p className="text-gray-400 mb-8 text-xs font-semibold">Add some beautiful pieces to your collection!</p>
+          <button
+            onClick={() => navigate('/products')}
+            className="px-10 py-3.5 bg-[#189D91] hover:bg-[#14847a] text-white font-bold rounded-xl text-xs uppercase tracking-wider transition-all duration-300 shadow-md shadow-[#189D91]/15 hover:shadow-lg active:scale-[0.98]"
+          >
+            START SHOPPING
+          </button>
+        </div>
       </div>
     );
   }

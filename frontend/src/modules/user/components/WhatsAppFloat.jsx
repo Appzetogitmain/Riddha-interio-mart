@@ -35,7 +35,7 @@ const WhatsAppFloat = ({ number, message = "Hi Riddha Interio, I'm interested in
       animate={{ scale: 1, opacity: 1 }}
       whileHover={{ scale: 1.1 }}
       whileTap={{ scale: 0.9 }}
-      className="fixed bottom-20 md:bottom-6 right-6 z-[9999] flex items-center justify-center w-13 h-13 md:w-15 md:h-15 bg-[#25D366] text-white rounded-full shadow-2xl hover:shadow-[#25D366]/50 transition-shadow duration-300 group print:hidden"
+      className="fixed bottom-20 md:bottom-6 right-4 sm:right-6 z-[9999] flex items-center justify-center w-12 h-12 md:w-14 md:h-14 bg-[#25D366] text-white rounded-full shadow-2xl hover:shadow-[#25D366]/50 transition-shadow duration-300 group print:hidden"
       aria-label="Contact on WhatsApp"
     >
       <div className="absolute -left-36 md:-left-44 top-1/2 -translate-y-1/2 bg-white text-gray-900 text-xs md:text-sm font-bold py-2 px-4 rounded-xl shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none whitespace-nowrap border border-gray-100">

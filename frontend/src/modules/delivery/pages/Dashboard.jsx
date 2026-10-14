@@ -38,7 +38,13 @@ import { useUser } from '../../user/data/UserContext';
 import { useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
-  const { user, setUser } = useUser();
+  const [deliveryUser, setDeliveryUser] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('riddha_delivery') || 'null');
+    } catch {
+      return null;
+    }
+  });
   const navigate = useNavigate();
   const [updating, setUpdating] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -85,7 +91,11 @@ const Dashboard = () => {
       setLoading(true);
       const { data: profileData } = await api.get('/delivery/me');
       if (profileData.success) {
-        setUser(prev => ({ ...prev, ...profileData.data }));
+        setDeliveryUser(prev => {
+          const updated = { ...prev, ...profileData.data };
+          localStorage.setItem('riddha_delivery', JSON.stringify(updated));
+          return updated;
+        });
       }
       const { data: analyticsData } = await api.get('/delivery/analytics');
       if (analyticsData.success) {
@@ -113,9 +123,9 @@ const Dashboard = () => {
   // Tick-by-tick shift timer tracking
   useEffect(() => {
     let intervalId;
-    if (user?.status === 'Available' && user?.lastOnlineTime) {
+    if (deliveryUser?.status === 'Available' && deliveryUser?.lastOnlineTime) {
       const updateTimer = () => {
-        const diffMs = Date.now() - new Date(user.lastOnlineTime).getTime();
+        const diffMs = Date.now() - new Date(deliveryUser.lastOnlineTime).getTime();
         if (diffMs <= 0) {
           setActiveShiftTime('00h 00m 00s');
           return;
@@ -138,20 +148,24 @@ const Dashboard = () => {
     return () => {
       if (intervalId) clearInterval(intervalId);
     };
-  }, [user?.status, user?.lastOnlineTime]);
+  }, [deliveryUser?.status, deliveryUser?.lastOnlineTime]);
 
   const toggleStatus = async () => {
-    if (user?.approvalStatus !== 'Approved') return;
+    if (deliveryUser?.approvalStatus !== 'Approved') return;
     setUpdating(true);
     try {
-      const nextStatus = user?.status === 'Available' ? 'Offline' : 'Available';
+      const nextStatus = deliveryUser?.status === 'Available' ? 'Offline' : 'Available';
       const { data } = await api.put('/delivery/status', { status: nextStatus });
       if (data.success) {
-        setUser(prev => ({ 
-          ...prev, 
-          status: data.data.status, 
-          lastOnlineTime: data.data.lastOnlineTime 
-        }));
+        setDeliveryUser(prev => {
+          const updated = { 
+            ...prev, 
+            status: data.data.status, 
+            lastOnlineTime: data.data.lastOnlineTime 
+          };
+          localStorage.setItem('riddha_delivery', JSON.stringify(updated));
+          return updated;
+        });
       }
     } catch (err) {
       console.error('Status update failed:', err);
@@ -233,14 +247,14 @@ const Dashboard = () => {
                    onClick={toggleStatus}
                    disabled={updating}
                    className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all ${
-                     user?.status === 'Available' 
+                     deliveryUser?.status === 'Available' 
                        ? 'bg-emerald-50 text-emerald-600 border-emerald-100 shadow-sm' 
                        : 'bg-slate-50 text-slate-500 border-slate-200'
                    }`}
                  >
-                    <div className={`w-1.5 h-1.5 rounded-full ${user?.status === 'Available' ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`} />
+                    <div className={`w-1.5 h-1.5 rounded-full ${deliveryUser?.status === 'Available' ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`} />
                     <span className="text-[10px] font-bold uppercase tracking-wider">
-                       {user?.status === 'Available' ? 'Online' : 'Offline'}
+                       {deliveryUser?.status === 'Available' ? 'Online' : 'Offline'}
                     </span>
                  </button>
               </div>

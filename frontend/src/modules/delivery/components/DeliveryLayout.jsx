@@ -51,7 +51,14 @@ const DeliveryLayout = () => {
   const [approvalNotification, setApprovalNotification] = React.useState(null);
   const [notification, setNotification] = React.useState(null);
   const [isOnline, setIsOnline] = React.useState(navigator.onLine);
-  const { user, setUser, logout } = useUser();
+  const { logout } = useUser();
+  const [deliveryUser, setDeliveryUser] = React.useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('riddha_delivery') || 'null');
+    } catch {
+      return null;
+    }
+  });
   const [updatingStatus, setUpdatingStatus] = React.useState(false);
   const navigate = useNavigate();
 
@@ -66,8 +73,7 @@ const DeliveryLayout = () => {
     };
   }, []);
 
-  const storedUser = JSON.parse(localStorage.getItem('riddha_delivery') || localStorage.getItem('riddha_user') || 'null');
-  const activeUser = user || storedUser;
+  const activeUser = deliveryUser;
   const hasValidDeliverySession =
     Boolean(activeUser?.token) && activeUser?.role === 'delivery';
 
@@ -78,6 +84,8 @@ const DeliveryLayout = () => {
   }, [hasValidDeliverySession, navigate]);
 
   const handleLogout = () => {
+    localStorage.removeItem('riddha_delivery');
+    setDeliveryUser(null);
     logout();
     navigate('/delivery/login');
   };
@@ -142,7 +150,7 @@ const DeliveryLayout = () => {
     if (notif.link) navigate(notif.link);
   };
 
-  const status = user?.status || 'Offline';
+  const status = activeUser?.status || 'Offline';
 
   // Sync status if user profile changes - Removed redundant useEffect as we use status variable now
 
@@ -158,9 +166,9 @@ const DeliveryLayout = () => {
 
   // Socket setup
   React.useEffect(() => {
-    if (!hasValidDeliverySession || !user || user?.role !== 'delivery') return;
+    if (!hasValidDeliverySession || !activeUser || activeUser?.role !== 'delivery') return;
 
-    const socket = connectSocket({ token: user.token || 'cookie' });
+    const socket = connectSocket({ token: activeUser.token || 'cookie' });
 
     const onAssigned = (payload) => {
       if (isSoundEnabled()) playNotificationSound();
@@ -170,7 +178,11 @@ const DeliveryLayout = () => {
     const onApprovalUpdate = (payload) => {
       setApprovalNotification(payload);
       if (payload.status === 'Approved') {
-        setUser(prev => ({ ...prev, approvalStatus: 'Approved' }));
+        setDeliveryUser(prev => {
+          const updated = { ...prev, approvalStatus: 'Approved' };
+          localStorage.setItem('riddha_delivery', JSON.stringify(updated));
+          return updated;
+        });
       }
     };
 
@@ -216,7 +228,7 @@ const DeliveryLayout = () => {
       socket.off('delivery:approval_update', onApprovalUpdate);
       socket.off('notification:new', onNotificationNew);
     };
-  }, [user?.token, user?.role]);
+  }, [hasValidDeliverySession, activeUser?.token, activeUser?.role]);
 
   React.useEffect(() => {
     if (notification) {
@@ -235,13 +247,17 @@ const DeliveryLayout = () => {
   };
 
   const toggleStatus = async () => {
-    if (user?.approvalStatus !== 'Approved') return;
+    if (activeUser?.approvalStatus !== 'Approved') return;
     setUpdatingStatus(true);
     const newStatus = status === 'Available' ? 'Offline' : 'Available';
     try {
       const { data } = await api.put('/delivery/status', { status: newStatus });
       if (data.success) {
-        setUser({ ...user, status: data.data.status });
+        setDeliveryUser(prev => {
+          const updated = { ...prev, status: data.data.status };
+          localStorage.setItem('riddha_delivery', JSON.stringify(updated));
+          return updated;
+        });
         if (newStatus === 'Available') {
           toast.success('You are now Online — orders will be assigned to you', { icon: '🟢' });
         } else {
@@ -410,7 +426,7 @@ const DeliveryLayout = () => {
 
           <div className="flex items-center gap-4">
             {/* Status Toggle */}
-            {user?.approvalStatus === 'Approved' && (
+            {activeUser?.approvalStatus === 'Approved' && (
               <button
                 onClick={(e) => { e.stopPropagation(); toggleStatus(); }}
                 disabled={updatingStatus}
@@ -519,13 +535,13 @@ const DeliveryLayout = () => {
                    className="flex items-center gap-3 cursor-pointer group"
                  >
                    <div className="text-right hidden sm:block">
-                     <p className="text-sm font-semibold text-slate-900">{user?.fullName || 'Partner'}</p>
+                     <p className="text-sm font-semibold text-slate-900">{activeUser?.fullName || 'Partner'}</p>
                      <p className="text-xs text-slate-500 mt-0.5">
-                       {user?.approvalStatus === 'Approved' ? 'Active' : 'Pending'}
+                       {activeUser?.approvalStatus === 'Approved' ? 'Active' : 'Pending'}
                      </p>
                    </div>
                    <div className="w-10 h-10 rounded-full overflow-hidden border border-slate-200 shadow-sm transition-all">
-                      <img src={user?.avatar || `https://ui-avatars.com/api/?name=${user?.fullName || 'Partner'}&background=189D91&color=fff`} className="w-full h-full object-cover" alt="avatar" />
+                      <img src={activeUser?.avatar || `https://ui-avatars.com/api/?name=${activeUser?.fullName || 'Partner'}&background=189D91&color=fff`} className="w-full h-full object-cover" alt="avatar" />
                    </div>
                  </div>
 

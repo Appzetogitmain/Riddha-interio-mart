@@ -8,7 +8,7 @@ const BottomNavbar = () => {
   const { cartCount } = useCart();
 
   const location = useLocation();
-  const hideOnRoutes = ['/cart', '/address', '/payment'];
+  const hideOnRoutes = ['/address', '/payment'];
   const shouldHide = hideOnRoutes.includes(location.pathname);
 
   const [isKeyboardVisible, setIsKeyboardVisible] = React.useState(false);

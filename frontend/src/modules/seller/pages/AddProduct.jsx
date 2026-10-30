@@ -1,3 +1,4 @@
+import { compressImageFiles } from '../../../shared/utils/imageCompressor';
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate, useLocation, useParams } from "react-router-dom";
 import PageWrapper from "../components/PageWrapper";
@@ -621,7 +622,12 @@ const AddProduct = () => {
       let finalVideoUrl = formData.videoUrl;
 
       if (imgFiles.length > 0 || videoFile) {
-        const { data: uploadRes } = await api.post("/upload/bulk", uploadData, {
+        const compressedImages = await compressImageFiles(imgFiles);
+        const compressedUploadData = new FormData();
+        compressedImages.forEach(file => compressedUploadData.append('images', file));
+        if (videoFile) compressedUploadData.append('video', videoFile);
+
+        const { data: uploadRes } = await api.post("/upload/bulk", compressedUploadData, {
           headers: { "Content-Type": "multipart/form-data" },
         });
         uploadedUrls = uploadRes.images || [];
@@ -634,34 +640,33 @@ const AddProduct = () => {
       uploadedUrls = [...existingUrls, ...uploadedUrls];
 
       let finalBrand = formData.brand;
-      if (formData.brand === 'other' && customBrandName) {
-        try {
-          const brandRes = await api.post('/brands', { name: customBrandName });
-          finalBrand = brandRes.data?.data?._id || brandRes.data?._id;
-        } catch (e) {
-          const errorMsg = e.response?.data?.error || e.message || "";
-          if (errorMsg.toLowerCase().includes("already exists")) {
+      if (formData.brand === 'other' && customBrandName.trim()) {
+        const brandNameTrimmed = customBrandName.trim();
+        const existingInState = brands.find(b => b.name?.trim().toLowerCase() === brandNameTrimmed.toLowerCase());
+        if (existingInState) {
+          finalBrand = existingInState._id;
+        } else {
+          try {
+            const brandRes = await api.post('/brands', { name: brandNameTrimmed });
+            finalBrand = brandRes.data?.data?._id || brandRes.data?._id;
+          } catch (e) {
+            const errorMsg = e.response?.data?.error || e.message || "";
+            let matched = null;
             try {
-              // Try to fetch active brands or all admin brands to resolve the conflict
               const { data: brandListRes } = await api.get('/brands');
-              const matched = (brandListRes.data || []).find(b => b.name.toLowerCase() === customBrandName.trim().toLowerCase());
-              if (matched) {
-                finalBrand = matched._id;
-              } else {
-                // If it exists but is inactive, check admin brands if possible
+              matched = (brandListRes.data || []).find(b => b.name?.trim().toLowerCase() === brandNameTrimmed.toLowerCase());
+            } catch (_) {}
+            if (!matched) {
+              try {
                 const { data: adminBrandRes } = await api.get('/brands/admin');
-                const matchedAdmin = (adminBrandRes.data || []).find(b => b.name.toLowerCase() === customBrandName.trim().toLowerCase());
-                if (matchedAdmin) {
-                  finalBrand = matchedAdmin._id;
-                } else {
-                  throw e;
-                }
-              }
-            } catch (err) {
-              throw new Error("This brand is already registered or pending approval. Please select it from the brand list.");
+                matched = (adminBrandRes.data || []).find(b => b.name?.trim().toLowerCase() === brandNameTrimmed.toLowerCase());
+              } catch (_) {}
             }
-          } else {
-            throw new Error("Failed to request new brand approval: " + errorMsg);
+            if (matched) {
+              finalBrand = matched._id;
+            } else {
+              finalBrand = brandNameTrimmed;
+            }
           }
         }
       }
@@ -682,6 +687,9 @@ const AddProduct = () => {
         gstRate: formData.gstRate !== "" ? Number(formData.gstRate) : undefined,
         source: selection,
       };
+
+      if (!payload.subcategory) delete payload.subcategory;
+      if (!payload.subsubcategory) delete payload.subsubcategory;
 
       let res;
       if (id) {
@@ -1300,20 +1308,32 @@ const AddProduct = () => {
                 {/* Side Column - Media & Financials */}
                 <div className="space-y-10">
                   <AIContentPanel
-                    formData={formData}
+                    formData={{
+                      ...formData,
+                      brandName: formData.brand === 'other'
+                        ? customBrandName.trim()
+                        : (brands.find(b => b._id === formData.brand)?.name || '')
+                    }}
                     onApply={(data) => {
                       console.log("Seller page applying AI content:", data);
 
-                      let matchedBrandId = "";
-                      if (data.brandName) {
+                      // If user already added/selected a brand, do not replace it
+                      const userAlreadyHasBrand = Boolean(
+                        formData.brand && 
+                        (formData.brand !== 'other' || customBrandName.trim())
+                      );
+
+                      let nextBrand = formData.brand;
+                      if (!userAlreadyHasBrand && data.brandName) {
                         const matched = brands.find(
-                          (b) => b.name.toLowerCase() === data.brandName.toLowerCase()
+                          (b) => b.name?.trim().toLowerCase() === data.brandName.trim().toLowerCase()
                         );
                         if (matched) {
-                          matchedBrandId = matched._id;
+                          nextBrand = matched._id;
+                          setCustomBrandName('');
                         } else {
-                          matchedBrandId = "other";
-                          setCustomBrandName(data.brandName);
+                          nextBrand = "other";
+                          setCustomBrandName(data.brandName.trim());
                         }
                       }
 
@@ -1340,7 +1360,7 @@ const AddProduct = () => {
                         description: data.description,
                         hsnCode: data.hsnCode,
                         sku: data.sku,
-                        brand: matchedBrandId || prev.brand,
+                        brand: userAlreadyHasBrand ? prev.brand : (nextBrand || prev.brand),
                         dimensions: data.dimensions?.height && data.dimensions?.width
                           ? `${data.dimensions.height} x ${data.dimensions.width} ${data.dimensions.unit || ''}`.trim()
                           : prev.dimensions,

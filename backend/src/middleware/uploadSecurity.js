@@ -37,7 +37,7 @@ const storage = multer.diskStorage({
 });
 
 // 3. Size Limits: 5MB for images/docs, 50MB for videos
-const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+const MAX_IMAGE_SIZE = 15 * 1024 * 1024;
 const MAX_VIDEO_SIZE = 50 * 1024 * 1024;
 
 // 4. File Magic Numbers / Signatures Verification
@@ -153,7 +153,7 @@ const validateUploadedFiles = async (req, res, next) => {
       cleanupLocalFiles(filesList);
       return res.status(400).json({
         success: false,
-        error: `File size limit exceeded for ${file.originalname}. Max limit is ${isVideo ? '50MB' : '5MB'}.`
+        error: `File size limit exceeded for ${file.originalname}. Max limit is ${isVideo ? '50MB' : '15MB'}.`
       });
     }
 

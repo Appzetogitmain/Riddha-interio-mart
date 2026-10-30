@@ -1,4 +1,6 @@
 const Catalog = require('../models/Catalog');
+const Brand = require('../models/Brand');
+const mongoose = require('mongoose');
 
 // @desc    Get all catalog items
 // @route   GET /api/catalog
@@ -17,6 +19,39 @@ exports.getCatalogItems = async (req, res, next) => {
 // @access  Private/Admin
 exports.createCatalogItem = async (req, res, next) => {
   try {
+    // Resolve brand if passed as a string or custom name
+    if (req.body.brand && typeof req.body.brand === 'string') {
+      if (!mongoose.Types.ObjectId.isValid(req.body.brand)) {
+        let targetBrandName = req.body.brand;
+        if (targetBrandName === 'other' && req.body.customBrandName) {
+          targetBrandName = req.body.customBrandName;
+        }
+        if (targetBrandName && targetBrandName !== 'other') {
+          let foundBrand = await Brand.findOne({
+            name: { $regex: new RegExp(`^${targetBrandName.trim().replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')}$`, 'i') }
+          });
+          if (!foundBrand) {
+            foundBrand = await Brand.create({
+              name: targetBrandName.trim(),
+              isActive: true
+            });
+          }
+          req.body.brand = foundBrand._id;
+        }
+      }
+    }
+
+    if (!req.body.brand || req.body.brand === 'other') {
+      let defaultBrand = await Brand.findOne({ name: 'General' });
+      if (!defaultBrand) {
+        defaultBrand = await Brand.findOne();
+      }
+      if (!defaultBrand) {
+        defaultBrand = await Brand.create({ name: 'General', isActive: true });
+      }
+      req.body.brand = defaultBrand._id;
+    }
+
     const item = await Catalog.create(req.body);
     res.status(201).json({ success: true, data: item });
   } catch (error) {
@@ -47,6 +82,27 @@ exports.getCatalogItem = async (req, res, next) => {
 // @access  Private/Admin
 exports.updateCatalogItem = async (req, res, next) => {
   try {
+    if (req.body.brand && typeof req.body.brand === 'string') {
+      if (!mongoose.Types.ObjectId.isValid(req.body.brand)) {
+        let targetBrandName = req.body.brand;
+        if (targetBrandName === 'other' && req.body.customBrandName) {
+          targetBrandName = req.body.customBrandName;
+        }
+        if (targetBrandName && targetBrandName !== 'other') {
+          let foundBrand = await Brand.findOne({
+            name: { $regex: new RegExp(`^${targetBrandName.trim().replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')}$`, 'i') }
+          });
+          if (!foundBrand) {
+            foundBrand = await Brand.create({
+              name: targetBrandName.trim(),
+              isActive: true
+            });
+          }
+          req.body.brand = foundBrand._id;
+        }
+      }
+    }
+
     const item = await Catalog.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true

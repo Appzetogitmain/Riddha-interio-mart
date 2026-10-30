@@ -94,7 +94,7 @@ const AIContentPanel = ({
         category: formData.category,
         subcategory: formData.subcategory,
         subsubcategory: formData.subsubcategory,
-        brand: formData.brand,
+        brand: formData.brandName || formData.brand,
         material: formData.material,
         color: formData.color,
         dimensions: formData.dimensions,
@@ -230,6 +230,7 @@ const AIContentPanel = ({
             <div><span className="font-bold">Category:</span> {formData.category || "—"}</div>
             <div><span className="font-bold">Subcategory:</span> {formData.subcategory || "—"}</div>
             <div><span className="font-bold">Sub-subcategory:</span> {formData.subsubcategory || "—"}</div>
+            <div><span className="font-bold">Brand:</span> {formData.brandName || (formData.brand && formData.brand !== 'other' ? formData.brand : "—")}</div>
           </div>
         </div>
 

@@ -39,12 +39,35 @@ exports.getBrand = async (req, res) => {
   }
 };
 
-// @desc    Create new brand
+// @desc    Create new brand or return existing if already exists
 // @route   POST /api/brands
 // @access  Private/Admin or Seller
 exports.createBrand = async (req, res) => {
   try {
     const brandData = { ...req.body };
+    if (!brandData.name || !brandData.name.trim()) {
+      return res.status(400).json({ success: false, error: 'Please add a brand name' });
+    }
+    const trimmedName = brandData.name.trim();
+
+    // Check if brand already exists (case-insensitive)
+    const existing = await Brand.findOne({
+      name: { $regex: new RegExp(`^${trimmedName.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')}$`, 'i') }
+    });
+
+    if (existing) {
+      if (req.user && req.user.role === 'admin' && !existing.isActive) {
+        existing.isActive = true;
+        await existing.save();
+      }
+      return res.status(200).json({
+        success: true,
+        data: existing,
+        isExisting: true,
+        message: 'Brand already exists, using existing brand'
+      });
+    }
+
     if (req.user && req.user.role === 'seller') {
       brandData.isActive = false;
     }
@@ -53,6 +76,16 @@ exports.createBrand = async (req, res) => {
   } catch (error) {
     console.error('Create Brand Error:', error);
     if (error.code === 11000) {
+      const existing = await Brand.findOne({
+        name: { $regex: new RegExp(`^${req.body.name?.trim().replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')}$`, 'i') }
+      });
+      if (existing) {
+        if (req.user && req.user.role === 'admin' && !existing.isActive) {
+          existing.isActive = true;
+          await existing.save();
+        }
+        return res.status(200).json({ success: true, data: existing, isExisting: true });
+      }
       return res.status(400).json({ success: false, error: 'Brand name already exists' });
     }
     res.status(400).json({ success: false, error: error.message });

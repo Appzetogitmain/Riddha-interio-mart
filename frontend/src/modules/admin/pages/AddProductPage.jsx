@@ -1,3 +1,4 @@
+import { compressImageFiles } from '../../../shared/utils/imageCompressor';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageWrapper from '../components/PageWrapper';
@@ -348,19 +349,20 @@ const AddProductPage = () => {
       setSubmitting(true);
       setStatusMessage('');
 
-      // Prepare multi-media upload
-      const uploadData = new FormData();
-      imgFiles.forEach(file => {
-        uploadData.append('images', file);
-      });
-      if (videoFile) {
-        uploadData.append('video', videoFile);
-      }
-
+      // Prepare multi-media upload with client-side compression
       let uploadedUrls = [];
       let finalVideoUrl = formData.videoUrl;
 
       if (imgFiles.length > 0 || videoFile) {
+        const compressedImages = await compressImageFiles(imgFiles);
+        const uploadData = new FormData();
+        compressedImages.forEach(file => {
+          uploadData.append('images', file);
+        });
+        if (videoFile) {
+          uploadData.append('video', videoFile);
+        }
+
         const { data: uploadRes } = await api.post('/upload/bulk', uploadData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
@@ -368,20 +370,40 @@ const AddProductPage = () => {
         if (uploadRes.videoUrl) finalVideoUrl = uploadRes.videoUrl;
       }
 
+      // Preserve already existing URLs (including Cloudinary AI generated URLs)
+      const existingUrls = formData.images.filter(
+        (img) => typeof img === 'string' && !img.startsWith('data:')
+      );
+      const allImages = [...existingUrls, ...uploadedUrls];
+
       let finalBrand = formData.brand;
       if (formData.brand === 'other' && customBrandName.trim()) {
-        try {
-          const { data: brandRes } = await api.post('/brands', { name: customBrandName.trim() });
-          finalBrand = brandRes.data?._id || brandRes._id;
-        } catch (e) {
-          const errorMsg = e.response?.data?.error || e.message || '';
-          if (errorMsg.toLowerCase().includes('already exists')) {
-            const { data: brandListRes } = await api.get('/brands');
-            const matched = (brandListRes.data || []).find(b => b.name.toLowerCase() === customBrandName.trim().toLowerCase());
-            if (matched) finalBrand = matched._id;
-            else throw new Error('This brand name is already taken. Please pick a different name or select it from the list.');
-          } else {
-            throw new Error('Failed to create new brand: ' + errorMsg);
+        const brandNameTrimmed = customBrandName.trim();
+        const existingInState = brands.find(b => b.name?.trim().toLowerCase() === brandNameTrimmed.toLowerCase());
+        if (existingInState) {
+          finalBrand = existingInState._id;
+        } else {
+          try {
+            const brandRes = await api.post('/brands', { name: brandNameTrimmed });
+            finalBrand = brandRes.data?.data?._id || brandRes.data?._id;
+          } catch (e) {
+            const errorMsg = e.response?.data?.error || e.message || '';
+            let matched = null;
+            try {
+              const { data: adminBrandRes } = await api.get('/brands/admin');
+              matched = (adminBrandRes.data || []).find(b => b.name?.trim().toLowerCase() === brandNameTrimmed.toLowerCase());
+            } catch (_) {}
+            if (!matched) {
+              try {
+                const { data: brandListRes } = await api.get('/brands');
+                matched = (brandListRes.data || []).find(b => b.name?.trim().toLowerCase() === brandNameTrimmed.toLowerCase());
+              } catch (_) {}
+            }
+            if (matched) {
+              finalBrand = matched._id;
+            } else {
+              finalBrand = brandNameTrimmed;
+            }
           }
         }
       }
@@ -394,10 +416,13 @@ const AddProductPage = () => {
         b2bMinQty: formData.b2bMinQty !== '' ? Number(formData.b2bMinQty) : undefined,
         maxB2CQty: formData.maxB2CQty !== '' ? Number(formData.maxB2CQty) : undefined,
         countInStock: Number(formData.stock),
-        images: uploadedUrls,
+        images: allImages,
         videoUrl: finalVideoUrl,
         gstRate: formData.gstRate !== '' ? Number(formData.gstRate) : undefined
       };
+
+      if (!payload.subcategory) delete payload.subcategory;
+      if (!payload.subsubcategory) delete payload.subsubcategory;
 
       await api.post('/catalog', payload);
       toast.success('Product added to catalog successfully!');
@@ -583,49 +608,61 @@ const AddProductPage = () => {
               {/* AI Content */}
               <div className="">
                    <AIContentPanel
-                     formData={formData}
-                     onApply={(data) => {
-                       console.log("Admin Catalog page applying AI content:", data);
-                       
-                       let matchedBrandId = "";
-                       if (data.brandName) {
-                         const matched = brands.find(
-                           (b) => b.name.toLowerCase() === data.brandName.toLowerCase()
-                         );
-                         if (matched) {
-                           matchedBrandId = matched._id;
-                         } else {
-                           matchedBrandId = "other";
-                           setCustomBrandName(data.brandName);
-                         }
-                       }
+                      formData={{
+                        ...formData,
+                        brandName: formData.brand === 'other'
+                          ? customBrandName.trim()
+                          : (brands.find(b => b._id === formData.brand)?.name || '')
+                      }}
+                      onApply={(data) => {
+                        console.log("Admin Catalog page applying AI content:", data);
+                        
+                        // If user already added/selected a brand, do not replace it
+                        const userAlreadyHasBrand = Boolean(
+                          formData.brand && 
+                          (formData.brand !== 'other' || customBrandName.trim())
+                        );
 
-                       const aiImages = (data.images && data.images.length > 0) ? data.images : (data.image ? [data.image] : []);
-                       // Skip any image already sitting in the product (e.g. Apply clicked twice on the same selection).
-                       const newAiImages = aiImages.filter((imgSrc) => !formData.images.includes(imgSrc));
-                       newAiImages.forEach((imgSrc, idx) => {
-                         if (imgSrc && imgSrc.startsWith('data:')) {
-                           fetch(imgSrc)
-                             .then(res => res.blob())
-                             .then(blob => {
-                               const mimeType = blob.type || 'image/jpeg';
-                               let ext = '.jpg';
-                               if (mimeType.includes('png')) ext = '.png';
-                               else if (mimeType.includes('webp')) ext = '.webp';
-                               else if (mimeType.includes('avif')) ext = '.avif';
-                               const file = new File([blob], `ai_generated_${Date.now()}_${idx}${ext}`, { type: mimeType });
-                               setImgFiles(prev => [...prev, file]);
-                             })
-                             .catch(err => console.error("Failed to convert base64 image to File:", err));
-                         }
-                       });
+                        let nextBrand = formData.brand;
+                        if (!userAlreadyHasBrand && data.brandName) {
+                          const matched = brands.find(
+                            (b) => b.name?.trim().toLowerCase() === data.brandName.trim().toLowerCase()
+                          );
+                          if (matched) {
+                            nextBrand = matched._id;
+                            setCustomBrandName('');
+                          } else {
+                            nextBrand = "other";
+                            setCustomBrandName(data.brandName.trim());
+                          }
+                        }
 
-                       setFormData((prev) => ({
-                         ...prev,
-                         description: data.description,
-                         hsnCode: data.hsnCode,
-                         sku: data.sku,
-                         brand: matchedBrandId || prev.brand,
+                        const aiImages = (data.images && data.images.length > 0) ? data.images : (data.image ? [data.image] : []);
+                        // Skip any image already sitting in the product (e.g. Apply clicked twice on the same selection).
+                        const newAiImages = aiImages.filter((imgSrc) => !formData.images.includes(imgSrc));
+                        newAiImages.forEach((imgSrc, idx) => {
+                          if (imgSrc && imgSrc.startsWith('data:')) {
+                            fetch(imgSrc)
+                              .then(res => res.blob())
+                              .then(blob => {
+                                const mimeType = blob.type || 'image/jpeg';
+                                let ext = '.jpg';
+                                if (mimeType.includes('png')) ext = '.png';
+                                else if (mimeType.includes('webp')) ext = '.webp';
+                                else if (mimeType.includes('avif')) ext = '.avif';
+                                const file = new File([blob], `ai_generated_${Date.now()}_${idx}${ext}`, { type: mimeType });
+                                setImgFiles(prev => [...prev, file]);
+                              })
+                              .catch(err => console.error("Failed to convert base64 image to File:", err));
+                          }
+                        });
+
+                        setFormData((prev) => ({
+                          ...prev,
+                          description: data.description,
+                          hsnCode: data.hsnCode,
+                          sku: data.sku,
+                          brand: userAlreadyHasBrand ? prev.brand : (nextBrand || prev.brand),
                          dimensions: data.dimensions?.height && data.dimensions?.width
                            ? `${data.dimensions.height} x ${data.dimensions.width} ${data.dimensions.unit || ''}`.trim()
                            : prev.dimensions,

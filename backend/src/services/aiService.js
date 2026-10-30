@@ -1,6 +1,33 @@
 const openaiClient = require('./openaiService');
 const OpenAIErrorHandler = require('../utils/openaiErrorHandler');
 const OpenAIUsageTracker = require('./openaiUsageTracker');
+const { cloudinary } = require('../config/cloudinary');
+
+// Stream image Buffer directly to Cloudinary so frontend receives small, fast CDN URLs
+const uploadBufferToCloudinary = (buffer) => {
+  return new Promise((resolve) => {
+    if (!process.env.CLOUDINARY_NAME || !process.env.CLOUDINARY_API_KEY) {
+      return resolve(null);
+    }
+    const uploadStream = cloudinary.uploader.upload_stream(
+      {
+        folder: 'riddha_mart/images',
+        transformation: [
+          { width: 1000, height: 1000, crop: 'limit', quality: 'auto', fetch_format: 'auto' }
+        ]
+      },
+      (error, result) => {
+        if (error) {
+          console.warn('[Cloudinary AI Upload Error]:', error.message);
+          resolve(null);
+        } else {
+          resolve(result.secure_url);
+        }
+      }
+    );
+    uploadStream.end(buffer);
+  });
+};
 
 // Utility: sleep for ms milliseconds
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -169,7 +196,7 @@ INPUTS:
 - Category: ${category || 'N/A'}
 - Subcategory: ${subcategory || 'N/A'}
 - Sub-subcategory: ${subsubcategory || 'N/A'}
-- Brand (Current Selection): ${brand || 'N/A'}
+- Brand (Current Selection): ${brand && brand !== 'other' && brand !== 'N/A' ? brand : 'None selected yet'}
 - Material (Current Selection): ${material || 'N/A'}
 - Color (Current Selection): ${color || 'N/A'}
 - Dimensions (Current Selection): ${dimensions || 'N/A'}
@@ -188,7 +215,7 @@ YOUR TASK — Return the following:
 1. **Description**: Premium, SEO-optimized product description (50-80 words), professional catalog tone, highlighting quality, durability, application, and installation where relevant.
 2. **Short Description**: ONE single sentence (max 25 words) written like a formal BOQ line item, e.g. "Providing and fixing Hettich AvantTech YOU 101mm height drawer system, comprising slim metal drawer sides, concealed Actro YOU full-extension soft-close runners, complete with installation."
 3. **HSN Code**: The most appropriate 6-digit HSN code under Indian GST rules for this product.
-4. **Brand Name**: Inferred brand/manufacturer name from the SKU/Model Number, Product Name, and Category (e.g., Hettich, Polycab, CenturyPly, Kajaria, Jaquar, Asian Paints). If not inferable, return the Brand (Current Selection) or "other".
+4. **Brand Name**: If Brand (Current Selection) is provided and not 'None selected yet', return that exact brand name. If NO brand is currently selected (or is 'None selected yet'), infer or suggest a realistic, reputable brand name suitable for this exact product type and category (e.g., Andres, Hettich, Polycab, CenturyPly, Kajaria, Jaquar, Asian Paints, Godrej, Philips). Do not return generic words like 'Generic' or 'Unknown' or 'other' unless completely impossible to infer.
 5. **SEO Keywords**: Array of 5-8 high-traffic search terms.
 6. **Specifications**: Flat JSON of 6-10 technical attributes specific to THIS product type only (follow the CRITICAL RULE above). For example, a drawer system: {"Make": "Hettich", "Model/Series": "AvantTech YOU", "Drawer Side Height": "101 mm", "Type": "Full Extension / Soft Close", "Application": "Modular Kitchen / Wardrobe", "Finish": "Anthracite", "Unit": "Set Nos"}. A wire: {"Make": "Polycab", "Size": "1.5 Sq.mm", "Core": "Single Core", "Conductor": "99.97% Electrolytic Copper", "Insulation": "FR-PVC", "Voltage Grade": "1100V", "Standard": "IS 694"}. If a "Material" attribute is included, state the specific raw material (e.g. "Copper", "Teak Wood", "Ceramic") rather than vague adjectives like "Premium" or "First Quality".
 7. **Dimensions & Thickness**: ONLY populate if this product type genuinely has a standard length/width/height and/or thickness (per the CRITICAL RULE). Return a flat JSON object with "height", "width", "thickness", "unit" — leave ALL of them as empty strings "" if this product type does not use generic dimensions/thickness (e.g. lights, wires, switches). Never invent numbers you are not reasonably confident about.
@@ -270,10 +297,17 @@ YOUR TASK — Return the following:
         if (!contentType.startsWith('image/')) continue;
         const arrayBuffer = await imgRes.arrayBuffer();
         if (arrayBuffer.byteLength < 3000) continue; // skip broken/placeholder pixels
-        const b64 = `data:${contentType};base64,${Buffer.from(arrayBuffer).toString('base64')}`;
-        images.push(b64);
-        if (cacheKey) imageCache.set(cacheKey, b64);
-        console.log(`[ImageGen] Found real product image via search (${arrayBuffer.byteLength} bytes)`);
+        const buffer = Buffer.from(arrayBuffer);
+        let finalUrl = null;
+        try {
+          finalUrl = await uploadBufferToCloudinary(buffer);
+        } catch (_) {}
+        if (!finalUrl) {
+          finalUrl = `data:${contentType};base64,${buffer.toString('base64')}`;
+        }
+        images.push(finalUrl);
+        if (cacheKey) imageCache.set(cacheKey, finalUrl);
+        console.log(`[ImageGen] Found real product image via search (${arrayBuffer.byteLength} bytes) -> ${finalUrl.startsWith('http') ? 'Cloudinary' : 'Base64'}`);
       }
 
       if (images.length > 0) {
@@ -340,8 +374,13 @@ YOUR TASK — Return the following:
 
           if (imageRes && imageRes.ok) {
             const arrayBuffer = await imageRes.arrayBuffer();
-            imageBase64 = `data:image/jpeg;base64,${Buffer.from(arrayBuffer).toString('base64')}`;
-            console.log(`[ImageGen] SUCCESS on ${label}. Size: ${imageBase64.length} chars`);
+            const buffer = Buffer.from(arrayBuffer);
+            let uploadedUrl = null;
+            try {
+              uploadedUrl = await uploadBufferToCloudinary(buffer);
+            } catch (_) {}
+            imageBase64 = uploadedUrl || `data:image/jpeg;base64,${buffer.toString('base64')}`;
+            console.log(`[ImageGen] SUCCESS on ${label}. Mode: ${uploadedUrl ? 'Cloudinary CDN' : 'Base64 fallback'}`);
             break;
           }
 

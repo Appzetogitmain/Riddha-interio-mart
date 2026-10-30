@@ -587,19 +587,46 @@ exports.createProduct = async (req, res, next) => {
   try {
     const { source = 'new' } = req.body;
     
-    // Clean up empty string brand to avoid BSON Error and assign a default brand fallback
-    if (req.body.brand === '') {
-      delete req.body.brand;
-    }
+    // Clean up empty string fields to avoid BSON CastErrors
+    ['category', 'subcategory', 'subsubcategory', 'brand'].forEach(field => {
+      if (req.body[field] === '' || req.body[field] === null || req.body[field] === 'undefined') {
+        delete req.body[field];
+      }
+    });
     
-    if (!req.body.brand) {
+    // Resolve brand if passed as brand name string or 'other'
+    if (req.body.brand && typeof req.body.brand === 'string') {
+      const mongoose = require('mongoose');
+      const Brand = require('../models/Brand');
+      if (!mongoose.Types.ObjectId.isValid(req.body.brand)) {
+        let targetBrandName = req.body.brand;
+        if (targetBrandName === 'other' && req.body.customBrandName) {
+          targetBrandName = req.body.customBrandName;
+        }
+        if (targetBrandName && targetBrandName !== 'other') {
+          const escaped = targetBrandName.trim().replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+          let foundBrand = await Brand.findOne({
+            name: { $regex: new RegExp('^' + escaped + '$', 'i') }
+          });
+          if (!foundBrand) {
+            foundBrand = await Brand.create({
+              name: targetBrandName.trim(),
+              isActive: req.user?.role === 'admin'
+            });
+          }
+          req.body.brand = foundBrand._id;
+        }
+      }
+    }
+
+    if (!req.body.brand || req.body.brand === 'other') {
       const Brand = require('../models/Brand');
       let defaultBrand = await Brand.findOne({ name: 'General' });
       if (!defaultBrand) {
         defaultBrand = await Brand.findOne();
       }
       if (!defaultBrand) {
-        defaultBrand = await Brand.create({ name: 'General' });
+        defaultBrand = await Brand.create({ name: 'General', isActive: true });
       }
       req.body.brand = defaultBrand._id;
     }
@@ -684,10 +711,10 @@ exports.createProduct = async (req, res, next) => {
     // Safety net: ensure any remaining subcategory/subsubcategory are valid ObjectIds
     // to prevent Cast to ObjectId errors
     const mongoose = require('mongoose');
-    if (req.body.subcategory && !mongoose.Types.ObjectId.isValid(req.body.subcategory)) {
+    if (!req.body.subcategory || req.body.subcategory === '' || !mongoose.Types.ObjectId.isValid(req.body.subcategory)) {
       delete req.body.subcategory;
     }
-    if (req.body.subsubcategory && !mongoose.Types.ObjectId.isValid(req.body.subsubcategory)) {
+    if (!req.body.subsubcategory || req.body.subsubcategory === '' || !mongoose.Types.ObjectId.isValid(req.body.subsubcategory)) {
       delete req.body.subsubcategory;
     }
 
@@ -1289,13 +1316,23 @@ exports.generateProductContentHandler = async (req, res, next) => {
       ? Math.min(Math.max(parsedImageCount, 1), 10)
       : null;
     console.log("POST /api/products/generate-content body:", req.body, "parsed generateImage:", generateImageBool, "imageCount:", resolvedImageCount);
+    let resolvedBrandName = brand;
+    if (brand && typeof brand === 'string' && brand !== 'other' && brand !== 'N/A') {
+      const mongoose = require('mongoose');
+      if (mongoose.Types.ObjectId.isValid(brand)) {
+        const Brand = require('../models/Brand');
+        const b = await Brand.findById(brand).select('name');
+        if (b) resolvedBrandName = b.name;
+      }
+    }
+
     const aiService = require('../services/aiService');
     const content = await aiService.generateProductContent(
       name,
       category,
       subcategory,
       subsubcategory,
-      brand,
+      resolvedBrandName,
       material,
       color,
       dimensions,

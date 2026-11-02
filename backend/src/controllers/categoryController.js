@@ -1,4 +1,5 @@
 const Category = require('../models/Category');
+const escapeRegex = require('../utils/escapeRegex');
 
 // @desc    Get all categories
 exports.getCategories = async (req, res, next) => {

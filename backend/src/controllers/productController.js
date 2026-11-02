@@ -1,6 +1,7 @@
 const Product = require('../models/Product');
 const Seller = require('../models/Seller');
 const paginate = require('../utils/paginate');
+const escapeRegex = require('../utils/escapeRegex');
 
 // @desc    Get all products (Filter by Verified Sellers only for Public)
 exports.getProducts = async (req, res, next) => {
@@ -40,7 +41,7 @@ exports.getProducts = async (req, res, next) => {
       if (mongoose.Types.ObjectId.isValid(req.query.category)) {
         filter.category = req.query.category;
       } else {
-        const foundCat = await Category.findOne({ name: { $regex: new RegExp(`^${req.query.category.trim()}$`, 'i') } });
+        const foundCat = await Category.findOne({ name: { $regex: new RegExp(`^${escapeRegex(req.query.category.trim())}$`, 'i') } });
         if (foundCat) {
           filter.category = foundCat._id;
           
@@ -49,7 +50,7 @@ exports.getProducts = async (req, res, next) => {
             if (mongoose.Types.ObjectId.isValid(req.query.subcategory)) {
                subcatId = req.query.subcategory;
             } else {
-               const subRegex = new RegExp(`^${req.query.subcategory.trim()}$`, 'i');
+               const subRegex = new RegExp(`^${escapeRegex(req.query.subcategory.trim())}$`, 'i');
                const subObj = foundCat.subcategories.find(s => subRegex.test(s.name));
                if (subObj) subcatId = subObj._id;
             }
@@ -61,7 +62,7 @@ exports.getProducts = async (req, res, next) => {
                  if (mongoose.Types.ObjectId.isValid(req.query.subsubcategory)) {
                     subsubId = req.query.subsubcategory;
                  } else {
-                    const subsubRegex = new RegExp(`^${req.query.subsubcategory.trim()}$`, 'i');
+                    const subsubRegex = new RegExp(`^${escapeRegex(req.query.subsubcategory.trim())}$`, 'i');
                     const targetSub = foundCat.subcategories.find(s => s._id.toString() === subcatId.toString());
                     if (targetSub && targetSub.subsubcategories) {
                        const subsubObj = targetSub.subsubcategories.find(ss => subsubRegex.test(ss.name));
@@ -84,7 +85,7 @@ exports.getProducts = async (req, res, next) => {
       if (mongoose.Types.ObjectId.isValid(req.query.subcategory)) {
          filter.subcategory = req.query.subcategory;
       } else {
-         const subRegex = new RegExp(`^${req.query.subcategory.trim()}$`, 'i');
+         const subRegex = new RegExp(`^${escapeRegex(req.query.subcategory.trim())}$`, 'i');
          const cats = await Category.find({ "subcategories.name": subRegex });
          const subIds = [];
          cats.forEach(c => {
@@ -103,7 +104,7 @@ exports.getProducts = async (req, res, next) => {
         filter.brand = req.query.brand;
       } else {
         const Brand = require('../models/Brand');
-        const foundBrand = await Brand.findOne({ name: { $regex: new RegExp(`^${req.query.brand.trim()}$`, 'i') } });
+        const foundBrand = await Brand.findOne({ name: { $regex: new RegExp(`^${escapeRegex(req.query.brand.trim())}$`, 'i') } });
         if (foundBrand) {
           filter.brand = foundBrand._id;
         } else {
@@ -667,20 +668,20 @@ exports.createProduct = async (req, res, next) => {
       const mongoose = require('mongoose');
       const Category = require('../models/Category');
       if (!mongoose.Types.ObjectId.isValid(req.body.category)) {
-        const foundCat = await Category.findOne({ name: { $regex: new RegExp(`^${req.body.category.trim()}$`, 'i') } });
+        const foundCat = await Category.findOne({ name: { $regex: new RegExp(`^${escapeRegex(req.body.category.trim())}$`, 'i') } });
         if (foundCat) {
           req.body.category = foundCat._id;
           
           if (req.body.subcategory && typeof req.body.subcategory === 'string') {
             if (!mongoose.Types.ObjectId.isValid(req.body.subcategory)) {
-              const subRegex = new RegExp(`^${req.body.subcategory.trim()}$`, 'i');
+              const subRegex = new RegExp(`^${escapeRegex(req.body.subcategory.trim())}$`, 'i');
               const subObj = foundCat.subcategories.find(s => subRegex.test(s.name));
               if (subObj) {
                 req.body.subcategory = subObj._id;
                 
                 if (req.body.subsubcategory && typeof req.body.subsubcategory === 'string') {
                   if (!mongoose.Types.ObjectId.isValid(req.body.subsubcategory)) {
-                    const subsubRegex = new RegExp(`^${req.body.subsubcategory.trim()}$`, 'i');
+                    const subsubRegex = new RegExp(`^${escapeRegex(req.body.subsubcategory.trim())}$`, 'i');
                     if (subObj.subsubcategories) {
                       const subsubObj = subObj.subsubcategories.find(ss => subsubRegex.test(ss.name));
                       if (subsubObj) {
@@ -1022,20 +1023,20 @@ exports.updateProduct = async (req, res, next) => {
       const mongoose = require('mongoose');
       const Category = require('../models/Category');
       if (!mongoose.Types.ObjectId.isValid(req.body.category)) {
-        const foundCat = await Category.findOne({ name: { $regex: new RegExp(`^${req.body.category.trim()}$`, 'i') } });
+        const foundCat = await Category.findOne({ name: { $regex: new RegExp(`^${escapeRegex(req.body.category.trim())}$`, 'i') } });
         if (foundCat) {
           req.body.category = foundCat._id;
           
           if (req.body.subcategory && typeof req.body.subcategory === 'string') {
             if (!mongoose.Types.ObjectId.isValid(req.body.subcategory)) {
-              const subRegex = new RegExp(`^${req.body.subcategory.trim()}$`, 'i');
+              const subRegex = new RegExp(`^${escapeRegex(req.body.subcategory.trim())}$`, 'i');
               const subObj = foundCat.subcategories.find(s => subRegex.test(s.name));
               if (subObj) {
                 req.body.subcategory = subObj._id;
                 
                 if (req.body.subsubcategory && typeof req.body.subsubcategory === 'string') {
                   if (!mongoose.Types.ObjectId.isValid(req.body.subsubcategory)) {
-                    const subsubRegex = new RegExp(`^${req.body.subsubcategory.trim()}$`, 'i');
+                    const subsubRegex = new RegExp(`^${escapeRegex(req.body.subsubcategory.trim())}$`, 'i');
                     if (subObj.subsubcategories) {
                       const subsubObj = subObj.subsubcategories.find(ss => subsubRegex.test(ss.name));
                       if (subsubObj) {
@@ -1091,7 +1092,7 @@ exports.createBulkProducts = async (req, res, next) => {
       
       // If brand is a string (name), find or create it
       if (typeof p.brand === 'string' && p.brand.trim() !== '') {
-        let brand = await Brand.findOne({ name: { $regex: new RegExp(`^${p.brand.trim()}$`, 'i') } });
+        let brand = await Brand.findOne({ name: { $regex: new RegExp(`^${escapeRegex(p.brand.trim())}$`, 'i') } });
         if (!brand) {
           console.log(`Creating new brand: ${p.brand.trim()}`);
           brand = await Brand.create({ name: p.brand.trim() });
@@ -1113,16 +1114,16 @@ exports.createBulkProducts = async (req, res, next) => {
         const mongoose = require('mongoose');
         const Category = require('../models/Category');
         if (!mongoose.Types.ObjectId.isValid(p.category)) {
-          const foundCat = await Category.findOne({ name: { $regex: new RegExp(`^${p.category.trim()}$`, 'i') } });
+          const foundCat = await Category.findOne({ name: { $regex: new RegExp(`^${escapeRegex(p.category.trim())}$`, 'i') } });
           if (foundCat) {
             catId = foundCat._id;
             if (p.subcategory && typeof p.subcategory === 'string' && !mongoose.Types.ObjectId.isValid(p.subcategory)) {
-              const subRegex = new RegExp(`^${p.subcategory.trim()}$`, 'i');
+              const subRegex = new RegExp(`^${escapeRegex(p.subcategory.trim())}$`, 'i');
               const subObj = foundCat.subcategories.find(s => subRegex.test(s.name));
               if (subObj) {
                 subcatId = subObj._id;
                 if (p.subsubcategory && typeof p.subsubcategory === 'string' && !mongoose.Types.ObjectId.isValid(p.subsubcategory)) {
-                  const subsubRegex = new RegExp(`^${p.subsubcategory.trim()}$`, 'i');
+                  const subsubRegex = new RegExp(`^${escapeRegex(p.subsubcategory.trim())}$`, 'i');
                   if (subObj.subsubcategories) {
                     const subsubObj = subObj.subsubcategories.find(ss => subsubRegex.test(ss.name));
                     if (subsubObj) subsubId = subsubObj._id;

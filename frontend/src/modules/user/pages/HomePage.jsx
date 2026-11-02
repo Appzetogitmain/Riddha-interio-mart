@@ -14,6 +14,7 @@ import { Link } from 'react-router-dom';
 import api from '../../../shared/utils/api';
 import ShopByCategory from '../components/ShopByCategory';
 import { LuChevronRight, LuChevronLeft } from 'react-icons/lu';
+import ZoomableImage from '../components/ZoomableImage';
 
 const SectionGrid = ({ products, loading, containerVariants, autoSlide = false, fadeColor = "from-white/90" }) => {
   const scrollRef = useRef(null);
@@ -139,18 +140,18 @@ const SectionGrid = ({ products, loading, containerVariants, autoSlide = false, 
               >
                 {/* Product Image */}
                 <div className="relative aspect-square overflow-hidden bg-stone-50">
-                  <img
+                  <ZoomableImage
                     src={getProductImage(product)}
                     alt={product?.name || 'Product'}
                     loading="lazy"
-                    className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-108"
+                    className="h-full w-full"
                   />
                   {hasDiscount && (
-                    <span className="absolute top-2 left-2 bg-[#0F172A] text-amber-300 border border-amber-400/30 text-[8px] font-black px-2 py-0.5 rounded-md shadow-xs tracking-wider">
+                    <span className="pointer-events-none absolute top-2 left-2 bg-[#0F172A] text-amber-300 border border-amber-400/30 text-[8px] font-black px-2 py-0.5 rounded-md shadow-xs tracking-wider z-10">
                       SALE
                     </span>
                   )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10" />
                 </div>
 
                 {/* Product Info */}

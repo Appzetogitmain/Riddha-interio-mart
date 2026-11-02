@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Sparkles, Check, Loader2, RefreshCw, X, Plus } from "lucide-react";
+import { Sparkles, Check, Loader2, RefreshCw, X, Plus, Camera } from "lucide-react";
+import { useRef } from "react";
 import api from "../utils/api";
 
 const AIContentPanel = ({
@@ -19,6 +20,24 @@ const AIContentPanel = ({
   const [generateImage, setGenerateImage] = useState(true);
   const [imageCount, setImageCount] = useState(3);
   const [selectedImages, setSelectedImages] = useState(new Set());
+  const [originalImage, setOriginalImage] = useState(null); // Optional uploaded original product image
+  const originalInputRef = useRef(null);
+
+  const handleOriginalImageChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      alert('Please upload an image file (JPG, PNG, WEBP).');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setOriginalImage(reader.result);
+      setImageCount(10); // Automatically suggest 10 images when original photo is uploaded
+      setGenerateImage(true);
+    };
+    reader.readAsDataURL(file);
+  };
 
   // AI results state
   const [generatedData, setGeneratedData] = useState({
@@ -102,7 +121,8 @@ const AIContentPanel = ({
         sku: formData.sku,
         generateImage: isAdmin && generateImage,
         imageCount: isAdmin && generateImage ? imageCount : undefined,
-        customPrompt: customPrompt
+        customPrompt: customPrompt,
+        originalImage: (isAdmin && generateImage && originalImage) ? originalImage : undefined
       });
 
       if (response.data.success) {
@@ -249,25 +269,96 @@ const AIContentPanel = ({
               </label>
             </div>
             {generateImage && (
-              <div className="flex items-center gap-2.5 pl-6">
-                <label htmlFor="image-count-input" className="text-xs font-bold text-slate-500">
-                  Number of images:
-                </label>
-                <input
-                  type="number"
-                  id="image-count-input"
-                  min={1}
-                  max={10}
-                  value={imageCount}
-                  onChange={(e) => {
-                    const val = parseInt(e.target.value, 10);
-                    setImageCount(Number.isFinite(val) ? Math.min(Math.max(val, 1), 10) : 1);
-                    setGenerateImage(true);
-                  }}
-                  className={`w-20 px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 bg-slate-50 focus:outline-none focus:ring-2 ${ringColor}`}
-                />
-                <span className="text-[10px] font-semibold text-slate-400">(max 10)</span>
-              </div>
+              <>
+                <div className="flex items-center gap-2.5 pl-6">
+                  <label htmlFor="image-count-input" className="text-xs font-bold text-slate-500">
+                    Number of images:
+                  </label>
+                  <input
+                    type="number"
+                    id="image-count-input"
+                    min={1}
+                    max={10}
+                    value={imageCount}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value, 10);
+                      setImageCount(Number.isFinite(val) ? Math.min(Math.max(val, 1), 10) : 1);
+                      setGenerateImage(true);
+                    }}
+                    className={`w-20 px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 bg-slate-50 focus:outline-none focus:ring-2 ${ringColor}`}
+                  />
+                  <span className="text-[10px] font-semibold text-slate-400">(max 10)</span>
+                </div>
+
+                {/* Optional Original Product Image Upload Option */}
+                <div className="pl-6 space-y-2 pt-2 border-t border-slate-100">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-slate-600 flex items-center gap-1.5">
+                      <Camera size={13} className="text-blue-600" />
+                      <span>Upload Original Product Image <span className="text-[10px] text-slate-400 font-normal">(Optional)</span></span>
+                    </label>
+                    {originalImage && (
+                      <button
+                        type="button"
+                        onClick={() => setOriginalImage(null)}
+                        className="text-[10px] text-red-500 hover:text-red-700 font-bold"
+                      >
+                        Remove Photo
+                      </button>
+                    )}
+                  </div>
+
+                  {!originalImage ? (
+                    <div
+                      onClick={() => originalInputRef.current?.click()}
+                      className="border border-dashed border-slate-300 hover:border-blue-500 bg-slate-50/60 hover:bg-blue-50/20 rounded-xl p-3 flex items-center gap-3 cursor-pointer transition-all group"
+                    >
+                      <div className="w-9 h-9 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+                        <Camera size={16} />
+                      </div>
+                      <div className="text-left">
+                        <div className="text-[11px] font-bold text-slate-700 group-hover:text-blue-700 transition-colors">
+                          Choose 1 Original Product Photo
+                        </div>
+                        <div className="text-[9px] text-slate-500 leading-tight">
+                          AI will maintain exact color, shape, materials & generate 10 matching angles / lifestyle views.
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-3 p-2 bg-blue-50/80 border border-blue-200 rounded-xl">
+                      <img
+                        src={originalImage}
+                        alt="Original product preview"
+                        className="w-12 h-12 rounded-lg object-cover border border-blue-300 flex-shrink-0 shadow-xs"
+                      />
+                      <div className="min-w-0 flex-1 text-left">
+                        <div className="text-[11px] font-bold text-blue-900 flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
+                          Original Image Attached
+                        </div>
+                        <div className="text-[9px] text-blue-700 leading-tight">
+                          AI will generate 10 identity-preserving perspective shots (front, side, back, macro, room views).
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => originalInputRef.current?.click()}
+                        className="px-2 py-1 bg-white border border-blue-200 text-blue-700 hover:bg-blue-50 rounded-lg text-[10px] font-bold shadow-xs cursor-pointer"
+                      >
+                        Change
+                      </button>
+                    </div>
+                  )}
+                  <input
+                    type="file"
+                    ref={originalInputRef}
+                    accept="image/*"
+                    hidden
+                    onChange={handleOriginalImageChange}
+                  />
+                </div>
+              </>
             )}
           </div>
         )}

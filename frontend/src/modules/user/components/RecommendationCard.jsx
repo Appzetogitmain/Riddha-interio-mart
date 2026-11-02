@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Sparkles, Heart, ShoppingBag, Star, Info } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../../../shared/utils/api';
+import ZoomableImage from './ZoomableImage';
 
 const RecommendationCard = ({ item, onExplain, onTrack }) => {
   const navigate = useNavigate();
@@ -62,15 +63,15 @@ const RecommendationCard = ({ item, onExplain, onTrack }) => {
 
       {/* Product Image */}
       <div className="relative w-full h-48 rounded-xl overflow-hidden bg-gray-50 mb-3">
-        <img
+        <ZoomableImage
           src={image}
           alt={name}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          className="w-full h-full"
         />
         {onExplain && (
           <button
             onClick={(e) => { e.stopPropagation(); onExplain(item); }}
-            className="absolute bottom-2 right-2 px-2.5 py-1 bg-gray-950/90 hover:bg-black text-white text-[10px] font-bold rounded-lg flex items-center gap-1.5 shadow-md border border-gray-700"
+            className="absolute bottom-2 right-2 px-2.5 py-1 bg-gray-950/90 hover:bg-black text-white text-[10px] font-bold rounded-lg flex items-center gap-1.5 shadow-md border border-gray-700 z-10"
           >
             <Info className="w-3.5 h-3.5 text-[#189D91]" />
             <span>Why Recommended?</span>

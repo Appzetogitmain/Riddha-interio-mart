@@ -1306,7 +1306,7 @@ async function attachOfferPricing(products) {
 // @access  Private/Admin or Seller
 exports.generateProductContentHandler = async (req, res, next) => {
   try {
-    const { name, category, subcategory, subsubcategory, brand, material, color, dimensions, thickness, sku, generateImage, customPrompt, imageCount } = req.body;
+    const { name, category, subcategory, subsubcategory, brand, material, color, dimensions, thickness, sku, generateImage, customPrompt, imageCount, originalImage } = req.body;
     // Image generation is admin-only: sellers can still generate description/SKU/HSN/SEO
     // content, but any requested image generation is ignored server-side for non-admins,
     // regardless of what the client sends.
@@ -1315,8 +1315,8 @@ exports.generateProductContentHandler = async (req, res, next) => {
     const parsedImageCount = parseInt(imageCount, 10);
     const resolvedImageCount = generateImageBool && Number.isFinite(parsedImageCount)
       ? Math.min(Math.max(parsedImageCount, 1), 10)
-      : null;
-    console.log("POST /api/products/generate-content body:", req.body, "parsed generateImage:", generateImageBool, "imageCount:", resolvedImageCount);
+      : (originalImage ? 10 : null);
+    console.log("POST /api/products/generate-content body:", req.body, "parsed generateImage:", generateImageBool, "imageCount:", resolvedImageCount, "hasOriginalImage:", !!originalImage);
     let resolvedBrandName = brand;
     if (brand && typeof brand === 'string' && brand !== 'other' && brand !== 'N/A') {
       const mongoose = require('mongoose');
@@ -1341,7 +1341,8 @@ exports.generateProductContentHandler = async (req, res, next) => {
       sku,
       generateImageBool,
       customPrompt,
-      resolvedImageCount
+      resolvedImageCount,
+      originalImage
     );
 
     if (content) {
@@ -1352,6 +1353,50 @@ exports.generateProductContentHandler = async (req, res, next) => {
   } catch (error) {
     console.error('Product Content Generation Error:', error);
     res.status(500).json({ success: false, error: 'AI Service Error: ' + error.message });
+  }
+};
+
+// @desc    Analyze uploaded product photo with GPT-4o Vision & generate matching photos
+// @route   POST /api/products/ai-scan-photo
+// @access  Private/Admin or Seller
+exports.analyzeProductPhotoHandler = async (req, res, next) => {
+  try {
+    const { image, generateMatchingImages = true, imageCount = 3, customInstructions = '' } = req.body;
+    if (!image) {
+      return res.status(400).json({ success: false, error: 'Please upload an image to analyze.' });
+    }
+
+    const Category = require('../models/Category');
+    const categories = await Category.find({}).select('name subcategories.name subcategories.subsubcategories.name').lean();
+    
+    // Format categories for AI context
+    const categorySummary = categories.map(c => ({
+      category: c.name,
+      subcategories: (c.subcategories || []).map(s => ({
+        subcategory: s.name,
+        subsubcategories: (s.subsubcategories || []).map(ss => ss.name)
+      }))
+    }));
+
+    const aiService = require('../services/aiService');
+    const parsedCount = parseInt(imageCount, 10);
+    const resolvedCount = Number.isFinite(parsedCount) ? Math.min(Math.max(parsedCount, 1), 5) : 3;
+
+    const result = await aiService.analyzeProductPhotoAndGenerate(
+      image,
+      categorySummary,
+      generateMatchingImages === true || generateMatchingImages === 'true',
+      resolvedCount,
+      customInstructions
+    );
+
+    res.status(200).json({
+      success: true,
+      data: result
+    });
+  } catch (error) {
+    console.error('Analyze Product Photo Error:', error);
+    res.status(500).json({ success: false, error: 'AI Photo Analysis Error: ' + error.message });
   }
 };
 

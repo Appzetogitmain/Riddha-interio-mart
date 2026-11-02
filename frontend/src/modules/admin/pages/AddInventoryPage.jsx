@@ -6,9 +6,12 @@ import { LuPlus, LuImage, LuBriefcase, LuTags, LuInfo, LuArrowLeft, LuPackage, L
 import { FiPackage, FiEdit3, FiTrash2, FiPlus } from 'react-icons/fi';
 import api from '../../../shared/utils/api';
 import AIContentPanel from '../../../shared/components/AIContentPanel';
+import AIPhotoStudio from '../../../shared/components/AIPhotoStudio';
 import ImagePreviewModal from '../../../shared/components/ImagePreviewModal';
 import UnitSelect from '../../../shared/components/UnitSelect';
 import ProductVariantsEditor from '../../seller/components/ProductVariantsEditor';
+import DeliveryOptionsForm from '../../seller/components/DeliveryOptionsForm';
+import PaymentOptionsForm from '../../seller/components/PaymentOptionsForm';
 
 const AddInventoryPage = () => {
   const navigate = useNavigate();
@@ -49,7 +52,13 @@ const AddInventoryPage = () => {
     unit: 'piece',
     unitValue: '1',
     maxB2CQty: '',
-    seoKeywords: []
+    seoKeywords: [],
+    deliveryOptions: {
+      availableDeliveryDays: [],
+      deliveryTypes: [],
+      freeDeliveryEligibility: []
+    },
+    paymentOptions: []
   });
   
   // SKU availability tracking state
@@ -153,6 +162,95 @@ const AddInventoryPage = () => {
     }
   };
 
+
+
+  const handleAIPhotoStudioApply = ({ details, generatedImages, originalImage }) => {
+    if (!details) return;
+
+    const incomingImages = [];
+    if (originalImage && !formData.images.includes(originalImage)) {
+      incomingImages.push(originalImage);
+    }
+    (generatedImages || []).forEach(img => {
+      if (img && !formData.images.includes(img) && !incomingImages.includes(img)) {
+        incomingImages.push(img);
+      }
+    });
+
+    incomingImages.forEach((imgSrc, idx) => {
+      if (imgSrc && imgSrc.startsWith('data:')) {
+        fetch(imgSrc)
+          .then(res => res.blob())
+          .then(blob => {
+            const mimeType = blob.type || 'image/jpeg';
+            let ext = '.jpg';
+            if (mimeType.includes('png')) ext = '.png';
+            else if (mimeType.includes('webp')) ext = '.webp';
+            const file = new File([blob], `ai_studio_${Date.now()}_${idx}${ext}`, { type: mimeType });
+            setImgFiles(prev => [...prev, file]);
+          })
+          .catch(err => console.error('Failed to convert image to File:', err));
+      }
+    });
+
+    let matchedCategory = formData.category;
+    let matchedSubcategory = formData.subcategory;
+    let matchedSubsubcategory = formData.subsubcategory;
+
+    if (details.category) {
+      const foundCat = categories.find(c =>
+        c.name.trim().toLowerCase() === details.category.trim().toLowerCase() ||
+        details.category.trim().toLowerCase().includes(c.name.trim().toLowerCase()) ||
+        c.name.trim().toLowerCase().includes(details.category.trim().toLowerCase())
+      );
+      if (foundCat) {
+        matchedCategory = foundCat.name;
+        if (details.subcategory && Array.isArray(foundCat.subcategories)) {
+          const foundSub = foundCat.subcategories.find(s =>
+            s.name.trim().toLowerCase() === details.subcategory.trim().toLowerCase() ||
+            details.subcategory.trim().toLowerCase().includes(s.name.trim().toLowerCase()) ||
+            s.name.trim().toLowerCase().includes(details.subcategory.trim().toLowerCase())
+          );
+          if (foundSub) {
+            matchedSubcategory = foundSub.name;
+            if (details.subsubcategory && Array.isArray(foundSub.subsubcategories)) {
+              const foundSubSub = foundSub.subsubcategories.find(ss =>
+                ss.name.trim().toLowerCase() === details.subsubcategory.trim().toLowerCase()
+              );
+              if (foundSubSub) {
+                matchedSubsubcategory = foundSubSub.name;
+              }
+            }
+          }
+        }
+      } else {
+        matchedCategory = details.category;
+        if (details.subcategory) matchedSubcategory = details.subcategory;
+        if (details.subsubcategory) matchedSubsubcategory = details.subsubcategory;
+      }
+    }
+
+    setFormData(prev => ({
+      ...prev,
+      name: details.name || prev.name,
+      sku: details.sku || prev.sku,
+      category: matchedCategory || prev.category,
+      subcategory: matchedSubcategory || prev.subcategory,
+      subsubcategory: matchedSubsubcategory || prev.subsubcategory,
+      material: details.material || prev.material,
+      color: details.color || prev.color,
+      dimensions: details.dimensions || prev.dimensions,
+      thickness: details.thickness || prev.thickness,
+      description: details.description || prev.description,
+      hsnCode: details.hsnCode || prev.hsnCode,
+      seoKeywords: details.seoKeywords && details.seoKeywords.length > 0 ? details.seoKeywords : prev.seoKeywords,
+      images: [...prev.images, ...incomingImages].slice(0, 10),
+      dynamicAttributes: {
+        ...(prev.dynamicAttributes || {}),
+        ...(details.specifications || {})
+      }
+    }));
+  };
 
   const filteredCategories = categories.filter(cat => 
     cat.name.toLowerCase().includes(catSearch.toLowerCase())
@@ -323,6 +421,9 @@ const AddInventoryPage = () => {
             <div className="xl:col-span-1 min-w-0 space-y-6">
               <div className="bg-white rounded-3xl p-6 border border-soft-oatmeal shadow-sm h-fit space-y-6">
                 <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest mb-4 block text-center">Product Media</label>
+                <div className="mb-4">
+                  <AIPhotoStudio onApply={handleAIPhotoStudioApply} theme="admin" />
+                </div>
                 
                 <div className="grid grid-cols-2 gap-3">
                    {formData.images.map((img, idx) => (
@@ -804,6 +905,12 @@ const AddInventoryPage = () => {
                     </div>
                   </div>
                 )}
+
+                {/* Delivery & Payment Options */}
+                <div className="space-y-6 pt-6 border-t border-soft-oatmeal/50">
+                  <DeliveryOptionsForm formData={formData} handleFieldChange={(field, value) => setFormData({...formData, [field]: value})} />
+                  <PaymentOptionsForm formData={formData} handleFieldChange={(field, value) => setFormData({...formData, [field]: value})} />
+                </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-soft-oatmeal/50">
                    <div className="space-y-2">

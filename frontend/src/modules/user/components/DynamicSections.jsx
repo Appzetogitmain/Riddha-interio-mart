@@ -4,6 +4,7 @@ import { motion as Motion } from 'framer-motion';
 import { LuChevronRight, LuLoader } from 'react-icons/lu';
 import api from '../../../shared/utils/api';
 import Banner from './Banner';
+import ZoomableImage from './ZoomableImage';
 
 const DEFAULT_PRODUCT_IMAGE =
   'https://images.unsplash.com/photo-1513519245088-0e12902e35ca?w=800&q=80';
@@ -51,17 +52,17 @@ const ProductTile = ({ product }) => {
     >
       {/* Product Image */}
       <div className="relative aspect-square overflow-hidden bg-stone-50">
-        <img
+        <ZoomableImage
           src={getProductImage(product)}
           alt={product?.name || 'Product'}
-          className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-108"
+          className="h-full w-full"
         />
         {hasDiscount && (
-          <span className="absolute top-2 left-2 bg-[#0F172A] text-amber-300 border border-amber-400/30 text-[8px] font-black px-2 py-0.5 rounded-md shadow-xs tracking-wider">
+          <span className="pointer-events-none absolute top-2 left-2 bg-[#0F172A] text-amber-300 border border-amber-400/30 text-[8px] font-black px-2 py-0.5 rounded-md shadow-xs tracking-wider z-10">
             SALE
           </span>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10" />
       </div>
 
       {/* Product Info */}

@@ -6,7 +6,7 @@ import {
   FiShoppingCart, FiArrowLeft, FiTruck, FiShield, FiRotateCcw,
   FiPlus, FiMinus, FiCheck, FiChevronDown, FiChevronUp,
   FiPlay, FiStar, FiPackage, FiBox, FiExternalLink, FiMaximize,
-  FiChevronRight, FiHeart, FiZap, FiShare2, FiCopy, FiX
+  FiChevronRight, FiHeart, FiZap, FiShare2, FiCopy, FiX, FiCreditCard
 } from 'react-icons/fi';
 import { FaStar, FaWhatsapp, FaFacebook, FaTwitter } from 'react-icons/fa';
 import toast from 'react-hot-toast';
@@ -23,6 +23,7 @@ import BulkOrderModal from '../components/BulkOrderModal';
 // Requirement A — B2B quote & sample entry points
 import RequestQuoteButton from '../components/RFQ/RequestQuoteButton';
 import RequestSampleButton from '../components/Samples/RequestSampleButton';
+import ZoomableImage from '../components/ZoomableImage';
 
 // Smart bundles that include this product — a thin fetch-and-render row, kept local
 // since it's only used here on the product detail page.
@@ -362,10 +363,11 @@ const ProductDetailsPage = () => {
                       allowFullScreen
                     />
                   ) : (
-                    <img
+                    <ZoomableImage
                       src={allMedia[activeMediaIndex] || product.images?.[0]}
                       alt={product.name}
-                      className="h-full w-full object-cover"
+                      zoomScale={2.5}
+                      className="h-full w-full"
                     />
                   )}
                 </motion.div>
@@ -527,12 +529,49 @@ const ProductDetailsPage = () => {
               </div>
             </div>
 
-            {/* Delivery estimate */}
-            <div className="flex items-center gap-2 mt-3 text-[12px]">
-              <FiTruck size={14} className="text-[#189D91]" />
-              <span className="text-gray-500">Deliver in</span>
-              <span className="font-bold text-[#189D91]">{deliveryEstimate.time}</span>
-              <span className="text-gray-400">to {pincode}</span>
+            {/* Delivery estimate & Options */}
+            <div className="space-y-2 mt-3 pt-2 border-t border-gray-100">
+              <div className="flex flex-wrap items-center gap-2 text-[12px]">
+                <FiTruck size={14} className="text-[#189D91]" />
+                <span className="text-gray-500">Deliver in</span>
+                <span className="font-bold text-[#189D91]">
+                  {product?.deliveryOptions?.availableDeliveryDays?.length > 0 
+                    ? product.deliveryOptions.availableDeliveryDays.join(' / ') 
+                    : deliveryEstimate.time}
+                </span>
+                <span className="text-gray-400">to {pincode}</span>
+              </div>
+
+              {/* Delivery types & Free delivery eligibility badges */}
+              {((product?.deliveryOptions?.deliveryTypes?.length > 0) || (product?.deliveryOptions?.freeDeliveryEligibility?.length > 0)) && (
+                <div className="flex flex-wrap gap-1.5 pt-0.5">
+                  {product.deliveryOptions.deliveryTypes?.map((type, i) => (
+                    <span key={`dtype-${i}`} className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200">
+                      ⚡ {type}
+                    </span>
+                  ))}
+                  {product.deliveryOptions.freeDeliveryEligibility?.map((opt, i) => (
+                    <span key={`fdel-${i}`} className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      ✓ {opt}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {/* Accepted Payment Options */}
+              {product?.paymentOptions?.length > 0 && (
+                <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                  <div className="flex items-center gap-1 text-[11px] font-bold text-gray-500 mr-1">
+                    <FiCreditCard size={13} className="text-[#189D91]" />
+                    <span>Payment:</span>
+                  </div>
+                  {product.paymentOptions.map((opt, i) => (
+                    <span key={`popt-${i}`} className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 border border-purple-200">
+                      {opt}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Desktop action buttons */}
@@ -687,6 +726,69 @@ const ProductDetailsPage = () => {
             </button>
           </div>
         </AccordionSection>
+
+        {/* Shipping & Payment Policy */}
+        {((product?.deliveryOptions && (product.deliveryOptions.availableDeliveryDays?.length > 0 || product.deliveryOptions.deliveryTypes?.length > 0 || product.deliveryOptions.freeDeliveryEligibility?.length > 0)) || (product?.paymentOptions?.length > 0)) && (
+          <AccordionSection
+            label="Delivery & Payment Options"
+            open={openSection === 'deliveryPayment'}
+            onToggle={() => toggleSection('deliveryPayment')}
+          >
+            <div className="px-5 py-4 space-y-4 text-xs">
+              {product.deliveryOptions?.availableDeliveryDays?.length > 0 && (
+                <div>
+                  <p className="font-bold text-gray-700 uppercase tracking-wider text-[10px] mb-1.5">Estimated Dispatch & Delivery Days</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {product.deliveryOptions.availableDeliveryDays.map((d, i) => (
+                      <span key={i} className="px-2.5 py-1 rounded bg-slate-100 text-slate-800 font-semibold border border-slate-200">
+                        {d}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {product.deliveryOptions?.deliveryTypes?.length > 0 && (
+                <div>
+                  <p className="font-bold text-gray-700 uppercase tracking-wider text-[10px] mb-1.5">Supported Delivery Types</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {product.deliveryOptions.deliveryTypes.map((t, i) => (
+                      <span key={i} className="px-2.5 py-1 rounded bg-blue-50 text-blue-800 font-semibold border border-blue-200">
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {product.deliveryOptions?.freeDeliveryEligibility?.length > 0 && (
+                <div>
+                  <p className="font-bold text-gray-700 uppercase tracking-wider text-[10px] mb-1.5">Free / Reduced Delivery Terms</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {product.deliveryOptions.freeDeliveryEligibility.map((f, i) => (
+                      <span key={i} className="px-2.5 py-1 rounded bg-emerald-50 text-emerald-800 font-semibold border border-emerald-200">
+                        {f}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {product.paymentOptions?.length > 0 && (
+                <div>
+                  <p className="font-bold text-gray-700 uppercase tracking-wider text-[10px] mb-1.5">Accepted Payment Methods</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {product.paymentOptions.map((p, i) => (
+                      <span key={i} className="px-2.5 py-1 rounded bg-purple-50 text-purple-800 font-semibold border border-purple-200">
+                        {p}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </AccordionSection>
+        )}
 
         {/* Reviews */}
         <AccordionSection

@@ -192,6 +192,12 @@ const AddProduct = () => {
         b2bPrice: item.b2bPrice || "",
         b2bMinQty: item.b2bMinQty || "",
         maxB2CQty: item.maxB2CQty || "",
+        deliveryOptions: item.deliveryOptions || {
+          availableDeliveryDays: [],
+          deliveryTypes: [],
+          freeDeliveryEligibility: []
+        },
+        paymentOptions: item.paymentOptions || []
       });
     } catch (err) {
       console.error("Failed to load product for edit:", err);

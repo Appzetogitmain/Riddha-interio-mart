@@ -8,6 +8,7 @@ import { toast } from 'react-hot-toast';
 import BulkUploadModal from '../components/BulkUploadModal';
 import { FiUploadCloud } from 'react-icons/fi';
 import AIContentPanel from '../../../shared/components/AIContentPanel';
+import AIPhotoStudio from '../../../shared/components/AIPhotoStudio';
 import ImagePreviewModal from '../../../shared/components/ImagePreviewModal';
 import UnitSelect from '../../../shared/components/UnitSelect';
 import DeliveryOptionsForm from '../../seller/components/DeliveryOptionsForm';
@@ -149,6 +150,95 @@ const AddProductPage = () => {
     }
   };
   
+
+  const handleAIPhotoStudioApply = ({ details, generatedImages, originalImage }) => {
+    if (!details) return;
+
+    const incomingImages = [];
+    if (originalImage && !formData.images.includes(originalImage)) {
+      incomingImages.push(originalImage);
+    }
+    (generatedImages || []).forEach(img => {
+      if (img && !formData.images.includes(img) && !incomingImages.includes(img)) {
+        incomingImages.push(img);
+      }
+    });
+
+    incomingImages.forEach((imgSrc, idx) => {
+      if (imgSrc && imgSrc.startsWith('data:')) {
+        fetch(imgSrc)
+          .then(res => res.blob())
+          .then(blob => {
+            const mimeType = blob.type || 'image/jpeg';
+            let ext = '.jpg';
+            if (mimeType.includes('png')) ext = '.png';
+            else if (mimeType.includes('webp')) ext = '.webp';
+            const file = new File([blob], `ai_studio_${Date.now()}_${idx}${ext}`, { type: mimeType });
+            setImgFiles(prev => [...prev, file]);
+          })
+          .catch(err => console.error('Failed to convert image to File:', err));
+      }
+    });
+
+    let matchedCategory = formData.category;
+    let matchedSubcategory = formData.subcategory;
+    let matchedSubsubcategory = formData.subsubcategory;
+
+    if (details.category) {
+      const foundCat = categories.find(c =>
+        c.name.trim().toLowerCase() === details.category.trim().toLowerCase() ||
+        details.category.trim().toLowerCase().includes(c.name.trim().toLowerCase()) ||
+        c.name.trim().toLowerCase().includes(details.category.trim().toLowerCase())
+      );
+      if (foundCat) {
+        matchedCategory = foundCat.name;
+        if (details.subcategory && Array.isArray(foundCat.subcategories)) {
+          const foundSub = foundCat.subcategories.find(s =>
+            s.name.trim().toLowerCase() === details.subcategory.trim().toLowerCase() ||
+            details.subcategory.trim().toLowerCase().includes(s.name.trim().toLowerCase()) ||
+            s.name.trim().toLowerCase().includes(details.subcategory.trim().toLowerCase())
+          );
+          if (foundSub) {
+            matchedSubcategory = foundSub.name;
+            if (details.subsubcategory && Array.isArray(foundSub.subsubcategories)) {
+              const foundSubSub = foundSub.subsubcategories.find(ss =>
+                ss.name.trim().toLowerCase() === details.subsubcategory.trim().toLowerCase()
+              );
+              if (foundSubSub) {
+                matchedSubsubcategory = foundSubSub.name;
+              }
+            }
+          }
+        }
+      } else {
+        matchedCategory = details.category;
+        if (details.subcategory) matchedSubcategory = details.subcategory;
+        if (details.subsubcategory) matchedSubsubcategory = details.subsubcategory;
+      }
+    }
+
+    setFormData(prev => ({
+      ...prev,
+      name: details.name || prev.name,
+      sku: details.sku || prev.sku,
+      category: matchedCategory || prev.category,
+      subcategory: matchedSubcategory || prev.subcategory,
+      subsubcategory: matchedSubsubcategory || prev.subsubcategory,
+      material: details.material || prev.material,
+      color: details.color || prev.color,
+      dimensions: details.dimensions || prev.dimensions,
+      thickness: details.thickness || prev.thickness,
+      description: details.description || prev.description,
+      hsnCode: details.hsnCode || prev.hsnCode,
+      seoKeywords: details.seoKeywords && details.seoKeywords.length > 0 ? details.seoKeywords : prev.seoKeywords,
+      images: [...prev.images, ...incomingImages].slice(0, 10),
+      dynamicAttributes: {
+        ...(prev.dynamicAttributes || {}),
+        ...(details.specifications || {})
+      }
+    }));
+  };
+
   const filteredCategories = categories.filter(cat => 
     cat.name.toLowerCase().includes(catSearch.toLowerCase())
   );
@@ -484,6 +574,9 @@ const AddProductPage = () => {
           <div className="bg-white rounded-3xl md:rounded-[32px] border border-soft-oatmeal shadow-xl grid grid-cols-1 xl:grid-cols-2 relative">
              {/* Left: Image Preview Area */}
              <div className="p-6 md:p-8 bg-soft-oatmeal/10 border-b xl:border-r xl:border-b-0 border-soft-oatmeal min-w-0 space-y-6">
+                <div className="mb-2">
+                  <AIPhotoStudio onApply={handleAIPhotoStudioApply} theme="admin" />
+                </div>
                 <input 
                   type="file" 
                   multiple

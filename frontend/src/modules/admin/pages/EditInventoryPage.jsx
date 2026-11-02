@@ -3,6 +3,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import PageWrapper from '../components/PageWrapper';
 import { LuImage, LuBriefcase, LuTags, LuInfo, LuArrowLeft, LuPackage, LuCheck, LuClock, LuUpload, LuGrid2X2, LuVideo, LuX, LuUser, LuStore, LuPhone, LuMail, LuMapPin, LuShieldCheck } from 'react-icons/lu';
 import { FiPackage, FiTrash2, FiPlus } from 'react-icons/fi';
+import DeliveryOptionsForm from '../../seller/components/DeliveryOptionsForm';
+import PaymentOptionsForm from '../../seller/components/PaymentOptionsForm';
 import api from '../../../shared/utils/api';
 
 const EditInventoryPage = () => {
@@ -43,6 +45,12 @@ const EditInventoryPage = () => {
     dynamicAttributes: {},
     seller: '',
     sellerType: 'Seller',
+    deliveryOptions: {
+      availableDeliveryDays: [],
+      deliveryTypes: [],
+      freeDeliveryEligibility: []
+    },
+    paymentOptions: []
   });
 
   useEffect(() => {
@@ -87,6 +95,12 @@ const EditInventoryPage = () => {
           dynamicAttributes: product.dynamicAttributes || {},
           seller: typeof currentSeller === 'object' ? (currentSeller?._id || '') : (currentSeller || ''),
           sellerType: product.sellerType || (product.seller ? 'Seller' : 'Admin'),
+          deliveryOptions: product.deliveryOptions || {
+            availableDeliveryDays: [],
+            deliveryTypes: [],
+            freeDeliveryEligibility: []
+          },
+          paymentOptions: product.paymentOptions || []
         });
       } catch (err) {
         console.error('Failed to fetch data:', err);
@@ -549,6 +563,12 @@ const EditInventoryPage = () => {
                     </div>
                   </div>
                 )}
+
+                {/* Delivery & Payment Options */}
+                <div className="space-y-6 pt-6 border-t border-soft-oatmeal/50">
+                  <DeliveryOptionsForm formData={formData} handleFieldChange={(field, value) => setFormData({...formData, [field]: value})} />
+                  <PaymentOptionsForm formData={formData} handleFieldChange={(field, value) => setFormData({...formData, [field]: value})} />
+                </div>
 
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest">Description</label>

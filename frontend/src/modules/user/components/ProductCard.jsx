@@ -7,6 +7,7 @@ import { useWishlist } from '../data/WishlistContext';
 import { useUser } from '../data/UserContext';
 import OptimizedImage from '../../../shared/components/OptimizedImage';
 import Button from '../../../shared/components/Button';
+import ZoomableImage from './ZoomableImage';
 // Requirement A — per-card B2B quote & sample entry points
 import RequestQuoteButton from './RFQ/RequestQuoteButton';
 import RequestSampleButton from './Samples/RequestSampleButton';
@@ -141,10 +142,10 @@ const ProductCard = ({ product, index = 0, variant = 'grid' }) => {
         className={`relative block overflow-hidden shrink-0 bg-white ${isList ? 'w-[40%] md:w-full aspect-square md:aspect-auto md:h-40' : 'aspect-[4/3.2] md:aspect-video md:h-40 w-full'
           }`}
       >
-        <OptimizedImage
+        <ZoomableImage
           src={productImage}
           alt={product.name}
-          className="h-full w-full object-contain md:object-cover object-center transition-transform duration-700 group-hover:scale-110"
+          className="h-full w-full"
         />
 
 

@@ -4,26 +4,68 @@ const InventoryHistoryLog = require('../models/InventoryHistoryLog');
 const mongoose = require('mongoose');
 
 class InventoryService {
+  /** On-hand units for the product, or for one variant when variantId is given. */
+  _onHand(product, variantId = null) {
+    if (variantId) {
+      const v = product.variants.id(variantId);
+      return v ? (v.countInStock || 0) : 0;
+    }
+    return product.countInStock || 0;
+  }
+
+  /** Units not currently held by a reservation. */
+  _available(product, variantId = null) {
+    if (variantId) {
+      const v = product.variants.id(variantId);
+      return v ? (v.countInStock || 0) - (v.reservedStock || 0) : 0;
+    }
+    return (product.countInStock || 0) - (product.reservedStock || 0);
+  }
+
+  /** Remaining on-hand stock used for low-stock alerts. */
+  getRemainingStock(product, variantId = null) {
+    return this._onHand(product, variantId);
+  }
+
   /**
    * Atomically reserve stock for a customer during checkout.
    */
-  async reserveStock(userId, productId, quantity, durationMinutes = 15, session = null) {
+  async reserveStock(userId, productId, quantity, durationMinutes = 15, session = null, variantId = null) {
     const expiresAt = new Date(Date.now() + durationMinutes * 60 * 1000);
 
     // Atomically increment reservedStock only if available stock is sufficient
-    const product = await Product.findOneAndUpdate(
-      {
-        _id: productId,
-        $expr: {
-          $gte: [{ $subtract: ['$countInStock', '$reservedStock'] }, quantity]
-        }
-      },
-      { $inc: { reservedStock: quantity } },
-      { new: true, session }
-    );
+    let product;
+    if (variantId) {
+      // Variant stock is tracked per variant inside Product.variants
+      const vId = new mongoose.Types.ObjectId(String(variantId));
+      product = await Product.findOneAndUpdate(
+        {
+          _id: productId,
+          variants: {
+            $elemMatch: {
+              _id: vId,
+              $expr: { $gte: [{ $subtract: ['$$this.countInStock', { $ifNull: ['$$this.reservedStock', 0] }] }, quantity] }
+            }
+          }
+        },
+        { $inc: { 'variants.$[v].reservedStock': quantity } },
+        { new: true, session, arrayFilters: [{ 'v._id': vId }] }
+      );
+    } else {
+      product = await Product.findOneAndUpdate(
+        {
+          _id: productId,
+          $expr: {
+            $gte: [{ $subtract: ['$countInStock', '$reservedStock'] }, quantity]
+          }
+        },
+        { $inc: { reservedStock: quantity } },
+        { new: true, session }
+      );
+    }
 
     if (!product) {
-      throw new Error(`Insufficient available stock for product: ${productId}`);
+      throw new Error(`Insufficient available stock for product: ${productId}${variantId ? ' (selected variant)' : ''}`);
     }
 
     // Record the reservation hold in DB
@@ -31,6 +73,7 @@ class InventoryService {
       [
         {
           product: productId,
+          variantId: variantId || null,
           user: userId,
           quantity,
           expiresAt,
@@ -47,8 +90,8 @@ class InventoryService {
           product: productId,
           action: 'reservation',
           quantity,
-          stockBefore: product.countInStock - (product.reservedStock - quantity),
-          stockAfter: product.countInStock - product.reservedStock,
+          stockBefore: this._available(product, variantId) + quantity,
+          stockAfter: this._available(product, variantId),
           details: `Reserved ${quantity} units for User ${userId}. Reservation ID: ${reservation._id}`
         }
       ],
@@ -69,16 +112,27 @@ class InventoryService {
     }
 
     // Atomic update to subtract actual countInStock and reservedStock
-    const product = await Product.findOneAndUpdate(
-      { _id: reservation.product },
-      {
-        $inc: {
-          countInStock: -reservation.quantity,
-          reservedStock: -reservation.quantity
-        }
-      },
-      { new: true, session }
-    );
+    const product = reservation.variantId
+      ? await Product.findOneAndUpdate(
+          { _id: reservation.product },
+          {
+            $inc: {
+              'variants.$[v].countInStock': -reservation.quantity,
+              'variants.$[v].reservedStock': -reservation.quantity
+            }
+          },
+          { new: true, session, arrayFilters: [{ 'v._id': reservation.variantId }] }
+        )
+      : await Product.findOneAndUpdate(
+          { _id: reservation.product },
+          {
+            $inc: {
+              countInStock: -reservation.quantity,
+              reservedStock: -reservation.quantity
+            }
+          },
+          { new: true, session }
+        );
 
     if (!product) {
       throw new Error(`Product not found during reservation commit: ${reservation.product}`);
@@ -94,8 +148,8 @@ class InventoryService {
           product: reservation.product,
           action: 'sale',
           quantity: reservation.quantity,
-          stockBefore: product.countInStock + reservation.quantity,
-          stockAfter: product.countInStock,
+          stockBefore: this._onHand(product, reservation.variantId) + reservation.quantity,
+          stockAfter: this._onHand(product, reservation.variantId),
           details: `Committed reservation ${reservation._id}. Units permanently sold.`
         }
       ],
@@ -112,11 +166,17 @@ class InventoryService {
     const reservation = await InventoryReservation.findOne({ _id: reservationId, status: 'reserved' }).session(session);
     if (!reservation) return null;
 
-    const product = await Product.findOneAndUpdate(
-      { _id: reservation.product },
-      { $inc: { reservedStock: -reservation.quantity } },
-      { new: true, session }
-    );
+    const product = reservation.variantId
+      ? await Product.findOneAndUpdate(
+          { _id: reservation.product },
+          { $inc: { 'variants.$[v].reservedStock': -reservation.quantity } },
+          { new: true, session, arrayFilters: [{ 'v._id': reservation.variantId }] }
+        )
+      : await Product.findOneAndUpdate(
+          { _id: reservation.product },
+          { $inc: { reservedStock: -reservation.quantity } },
+          { new: true, session }
+        );
 
     reservation.status = 'released';
     await reservation.save({ session });
@@ -129,8 +189,8 @@ class InventoryService {
             product: reservation.product,
             action: 'release',
             quantity: reservation.quantity,
-            stockBefore: product.countInStock - (product.reservedStock + reservation.quantity),
-            stockAfter: product.countInStock - product.reservedStock,
+            stockBefore: this._available(product, reservation.variantId) - reservation.quantity,
+            stockAfter: this._available(product, reservation.variantId),
             details: `Released stock hold for reservation ${reservation._id}.`
           }
         ],
@@ -144,12 +204,18 @@ class InventoryService {
   /**
    * Release stock atomically upon cancellations or returns
    */
-  async returnStock(productId, quantity, session = null) {
-    const product = await Product.findOneAndUpdate(
-      { _id: productId },
-      { $inc: { countInStock: quantity } },
-      { new: true, session }
-    );
+  async returnStock(productId, quantity, session = null, variantId = null) {
+    const product = variantId
+      ? await Product.findOneAndUpdate(
+          { _id: productId },
+          { $inc: { 'variants.$[v].countInStock': quantity } },
+          { new: true, session, arrayFilters: [{ 'v._id': new mongoose.Types.ObjectId(String(variantId)) }] }
+        )
+      : await Product.findOneAndUpdate(
+          { _id: productId },
+          { $inc: { countInStock: quantity } },
+          { new: true, session }
+        );
 
     if (!product) {
       throw new Error(`Product not found for returning stock: ${productId}`);
@@ -162,8 +228,8 @@ class InventoryService {
           product: productId,
           action: 'return',
           quantity,
-          stockBefore: product.countInStock - quantity,
-          stockAfter: product.countInStock,
+          stockBefore: this._onHand(product, variantId) - quantity,
+          stockAfter: this._onHand(product, variantId),
           details: `Returned ${quantity} units to inventory due to order cancellation or return approval.`
         }
       ],

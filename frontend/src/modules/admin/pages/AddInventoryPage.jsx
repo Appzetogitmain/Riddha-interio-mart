@@ -4,6 +4,8 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import PageWrapper from '../components/PageWrapper';
 import { LuPlus, LuImage, LuBriefcase, LuTags, LuInfo, LuArrowLeft, LuPackage, LuCheck, LuGrid2X2, LuUpload, LuVideo, LuX } from 'react-icons/lu';
 import { FiPackage, FiEdit3, FiTrash2, FiPlus } from 'react-icons/fi';
+import DimensionsInput from '../../../shared/components/DimensionsInput';
+import { dimensionsFromAi } from '../../../shared/utils/dimensions';
 import api from '../../../shared/utils/api';
 import AIContentPanel from '../../../shared/components/AIContentPanel';
 import AIPhotoStudio from '../../../shared/components/AIPhotoStudio';
@@ -553,9 +555,7 @@ const AddInventoryPage = () => {
                           hsnCode: data.hsnCode,
                           sku: data.sku,
                           brand: userAlreadyHasBrand ? prev.brand : (nextBrand || prev.brand),
-                         dimensions: data.dimensions?.height && data.dimensions?.width
-                           ? `${data.dimensions.height} x ${data.dimensions.width} ${data.dimensions.unit || ''}`.trim()
-                           : prev.dimensions,
+                         dimensions: dimensionsFromAi(data.dimensions, prev.dimensions),
                          thickness: data.dimensions?.thickness || prev.thickness,
                          seoKeywords: data.seoKeywords,
                          images: newAiImages.length > 0 ? [...prev.images, ...newAiImages].slice(0, 10) : prev.images,
@@ -925,12 +925,10 @@ const AddInventoryPage = () => {
                    </div>
                    <div className="space-y-2">
                       <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest">Dimensions</label>
-                      <input 
-                        type="text"
-                        placeholder="e.g. 30x30 cm"
+                      <DimensionsInput
                         value={formData.dimensions}
-                        onChange={(e) => setFormData({...formData, dimensions: e.target.value})}
-                        className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none"
+                        onChange={(v) => setFormData(prev => ({...prev, dimensions: v}))}
+                        categoryText={`${formData.name || ''} ${formData.category || ''} ${formData.subcategory || ''}`}
                       />
                    </div>
                 </div>

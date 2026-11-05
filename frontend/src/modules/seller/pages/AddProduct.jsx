@@ -33,6 +33,8 @@ import {
 } from "lucide-react";
 import api from "../../../shared/utils/api";
 import ProductVariantsEditor from "../components/ProductVariantsEditor";
+import DimensionsInput from "../../../shared/components/DimensionsInput";
+import { dimensionsFromAi } from "../../../shared/utils/dimensions";
 import AIContentPanel from "../../../shared/components/AIContentPanel";
 import UnitSelect from "../../../shared/components/UnitSelect";
 import DeliveryOptionsForm from "../components/DeliveryOptionsForm";
@@ -197,7 +199,18 @@ const AddProduct = () => {
           deliveryTypes: [],
           freeDeliveryEligibility: []
         },
-        paymentOptions: item.paymentOptions || []
+        paymentOptions: item.paymentOptions || [],
+        dynamicAttributes: item.dynamicAttributes || {},
+        variants: (item.variants || []).map(v => ({
+          _id: v._id,
+          sku: v.sku || "",
+          price: v.price ?? "",
+          discountPrice: v.discountPrice ?? "",
+          countInStock: v.countInStock ?? "",
+          image: v.image || "",
+          images: v.images && v.images.length ? v.images : (v.image ? [v.image] : []),
+          attributes: v.attributes || {}
+        }))
       });
     } catch (err) {
       console.error("Failed to load product for edit:", err);
@@ -692,6 +705,18 @@ const AddProduct = () => {
         videoUrl: finalVideoUrl,
         gstRate: formData.gstRate !== "" ? Number(formData.gstRate) : undefined,
         source: selection,
+        variants: (formData.variants || [])
+          .filter(v => Object.values(v.attributes || {}).some(Boolean))
+          .map(v => ({
+            ...(v._id ? { _id: v._id } : {}),
+            sku: v.sku,
+            price: Number(v.price) || Number(formData.price),
+            discountPrice: v.discountPrice ? Number(v.discountPrice) : undefined,
+            countInStock: Number(v.countInStock) || 0,
+            image: (v.images && v.images[0]) || v.image || undefined,
+            images: v.images && v.images.length ? v.images : (v.image ? [v.image] : []),
+            attributes: v.attributes
+          })),
       };
 
       if (!payload.subcategory) delete payload.subcategory;
@@ -1284,12 +1309,11 @@ const AddProduct = () => {
                         <label className="text-xs font-bold text-slate-600 uppercase tracking-wider ml-1">
                           Dimensions
                         </label>
-                        <input
-                          type="text"
-                          placeholder="e.g. 60x60 cm or 3x6 ft"
+                        <DimensionsInput
                           value={formData.dimensions || ""}
-                          onChange={(e) => handleFieldChange('dimensions', e.target.value)}
-                          className={`w-full px-6 py-4 rounded-2xl border-none font-semibold text-sm transition-all bg-slate-50 text-slate-900 focus:ring-2 focus:ring-seller-primary/10`}
+                          onChange={(v) => handleFieldChange('dimensions', v)}
+                          categoryText={`${formData.name || ''} ${formData.category || ''} ${formData.subcategory || ''} ${formData.subsubcategory || ''}`}
+                          inputClassName="w-full px-4 py-4 rounded-2xl border-none font-semibold text-sm transition-all bg-slate-50 text-slate-900 focus:ring-2 focus:ring-seller-primary/10"
                         />
                       </div>
                       <div className="space-y-2 md:col-span-2">
@@ -1367,9 +1391,7 @@ const AddProduct = () => {
                         hsnCode: data.hsnCode,
                         sku: data.sku,
                         brand: userAlreadyHasBrand ? prev.brand : (nextBrand || prev.brand),
-                        dimensions: data.dimensions?.height && data.dimensions?.width
-                          ? `${data.dimensions.height} x ${data.dimensions.width} ${data.dimensions.unit || ''}`.trim()
-                          : prev.dimensions,
+                        dimensions: dimensionsFromAi(data.dimensions, prev.dimensions),
                         thickness: data.dimensions?.thickness || prev.thickness,
                         seoKeywords: data.seoKeywords,
                         images: aiImages.length > 0 ? [...prev.images, ...aiImages].slice(0, 10) : prev.images,

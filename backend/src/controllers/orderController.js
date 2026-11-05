@@ -169,7 +169,8 @@ exports.addOrderItems = async (req, res) => {
           item.product,
           item.quantity,
           15,
-          session
+          session,
+          item.variantId || null
         );
         reservationsList.push(reservation);
       }
@@ -223,7 +224,7 @@ exports.addOrderItems = async (req, res) => {
       
       // Calculate exact pricing details for this seller order group
       const groupPricing = await pricingService.calculateCartPricing(
-        group.items.map(i => ({ product: i.product, quantity: i.quantity })),
+        group.items.map(i => ({ product: i.product, variantId: i.variantId, quantity: i.quantity })),
         req.user.userType
       );
 
@@ -347,7 +348,7 @@ exports.addOrderItems = async (req, res) => {
       // Commit reservations (Atomic and Concurrency-Safe inside session)
       const InventoryReservation = require('../models/InventoryReservation');
       for (const item of group.items) {
-        const matchedRes = reservationsList.find(res => res.product.toString() === item.product.toString());
+        const matchedRes = reservationsList.find(res => res.product.toString() === item.product.toString() && String(res.variantId || '') === String(item.variantId || ''));
         if (!matchedRes) {
           throw new Error(`Active stock hold reservation not found for ${item.name}`);
         }
@@ -364,13 +365,13 @@ exports.addOrderItems = async (req, res) => {
 
           // Fetch updated product for low stock alerts check
           const updatedProduct = await Product.findById(item.product).session(session);
-          if (updatedProduct && updatedProduct.countInStock <= 5) {
+          if (updatedProduct && inventoryService.getRemainingStock(updatedProduct, matchedRes.variantId) <= 5) {
             lowStockAlerts.push({
               seller: updatedProduct.seller,
               data: {
                 productId: updatedProduct._id,
                 name: updatedProduct.name,
-                remainingStock: updatedProduct.countInStock
+                remainingStock: inventoryService.getRemainingStock(updatedProduct, matchedRes.variantId)
               }
             });
           }
@@ -920,7 +921,7 @@ exports.updateOrderStatus = async (req, res) => {
         // Restore stock atomically
         const inventoryService = require('../services/inventoryService');
         for (const item of order.orderItems) {
-          await inventoryService.returnStock(item.product, item.quantity);
+          await inventoryService.returnStock(item.product, item.quantity, null, item.variantId);
         }
 
         // Refund the customer's own wallet if they already paid online, and reverse
@@ -1318,7 +1319,7 @@ exports.respondToNewOrder = async (req, res) => {
       order.status = 'Cancelled';
       const inventoryService = require('../services/inventoryService');
       for (const item of order.orderItems) {
-        await inventoryService.returnStock(item.product, item.quantity);
+        await inventoryService.returnStock(item.product, item.quantity, null, item.variantId);
       }
 
       // Refund the customer's own wallet if they already paid online, and reverse the
@@ -1493,13 +1494,13 @@ exports.verifyPayment = async (req, res) => {
 
         // Fetch updated product for low stock alerts check
         const updatedProduct = await Product.findById(reservation.product).session(session);
-        if (updatedProduct && updatedProduct.countInStock <= 5) {
+        if (updatedProduct && inventoryService.getRemainingStock(updatedProduct, reservation.variantId) <= 5) {
           lowStockAlerts.push({
             seller: updatedProduct.seller,
             data: {
               productId: updatedProduct._id,
               name: updatedProduct.name,
-              remainingStock: updatedProduct.countInStock
+              remainingStock: inventoryService.getRemainingStock(updatedProduct, reservation.variantId)
             }
           });
         }
@@ -1644,13 +1645,13 @@ exports.handleRazorpayWebhook = async (req, res) => {
 
         // Fetch updated product for low stock alerts check
         const updatedProduct = await Product.findById(reservation.product).session(session);
-        if (updatedProduct && updatedProduct.countInStock <= 5) {
+        if (updatedProduct && inventoryService.getRemainingStock(updatedProduct, reservation.variantId) <= 5) {
           lowStockAlerts.push({
             seller: updatedProduct.seller,
             data: {
               productId: updatedProduct._id,
               name: updatedProduct.name,
-              remainingStock: updatedProduct.countInStock
+              remainingStock: inventoryService.getRemainingStock(updatedProduct, reservation.variantId)
             }
           });
         }
@@ -1915,7 +1916,7 @@ exports.validateCoupon = async (req, res, next) => {
     // Calculate exact pricing details for this seller order group
     const group = groupedItems[couponSellerId];
     const groupPricing = await pricingService.calculateCartPricing(
-      group.items.map(i => ({ product: i.product, quantity: i.quantity }))
+      group.items.map(i => ({ product: i.product, variantId: i.variantId, quantity: i.quantity }))
     );
 
     const groupSellingTotal = groupPricing.subtotal - groupPricing.discountAmount;

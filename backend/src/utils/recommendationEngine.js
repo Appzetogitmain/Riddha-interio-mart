@@ -156,9 +156,92 @@ function calculateProductScore(product, userProfile) {
 }
 
 /**
- * Get Personalized Recommendations for User
+ * Derive what the user actually engaged with (viewed / wishlisted / bought products).
+ */
+async function getEngagementSignals(profile) {
+  const bd = profile?.behaviorData || {};
+  const ids = [...(bd.browsedProductIds || []), ...(bd.wishlistProductIds || []), ...(bd.purchaseHistory || [])];
+  const signals = { ids: new Set(ids.map(String)), purchased: new Set((bd.purchaseHistory || []).map(String)), categories: new Set(), colors: new Set(), materials: new Set(), tags: new Set(), names: [] };
+  (bd.browsedCategories || []).forEach(c => signals.categories.add(String(c).toLowerCase()));
+  if (!ids.length) return signals;
+  const seen = await Product.find({ _id: { $in: ids } }).select('name category color material tags').populate('category', 'name').lean();
+  seen.forEach(p => {
+    if (p.category?._id) signals.categories.add(String(p.category._id));
+    if (p.category?.name) signals.categories.add(p.category.name.toLowerCase());
+    if (p.color) signals.colors.add(String(p.color).toLowerCase());
+    if (p.material) signals.materials.add(String(p.material).toLowerCase());
+    (p.tags || []).forEach(t => signals.tags.add(String(t).toLowerCase()));
+    signals.names.push(String(p.name || '').toLowerCase());
+  });
+  return signals;
+}
+
+const hasCategory = (p, signals) =>
+  signals.categories.has(String(p.category?._id || '')) || signals.categories.has(String(p.category?.name || '').toLowerCase());
+
+// Picks For You: behaviour driven (what they browsed / wishlisted / bought) + hybrid profile score + quality
+function behaviourScore(p, profile, signals) {
+  let score = profile ? calculateProductScore(p, profile) : 0.4;
+  if (hasCategory(p, signals)) score += 0.25;
+  if (signals.ids.has(String(p._id))) score += 0.1;
+  score += Math.min(0.15, (p.totalReviews || 0) / 200) + ((p.averageRating || 0) / 5) * 0.1;
+  if (signals.purchased.has(String(p._id))) score -= 0.5; // already bought
+  return score;
+}
+
+// Based on Your Style: look, not popularity: style / colour / material / tags / room
+function styleScore(p, profile, signals) {
+  const styles = (profile?.stylePreferences || []).map(s => String(s).toLowerCase());
+  const colors = [...(profile?.colorPreferences || []), ...signals.colors].map(c => String(c).toLowerCase());
+  const materials = [...(profile?.materialPreferences || []), ...signals.materials].map(m => String(m).toLowerCase());
+  const hay = `${p.name || ''} ${p.style || ''} ${(p.tags || []).join(' ')}`.toLowerCase();
+  let score = 0;
+  if (styles.some(s => hay.includes(s))) score += 0.4;
+  if (colors.some(c => c && String(p.color || '').toLowerCase().includes(c))) score += 0.25;
+  if (materials.some(m => m && String(p.material || '').toLowerCase().includes(m))) score += 0.25;
+  if ((p.tags || []).some(t => signals.tags.has(String(t).toLowerCase()))) score += 0.15;
+  if (profile?.designProfile?.roomType && p.roomType === profile.designProfile.roomType) score += 0.1;
+  score += calculateFreshness(p.createdAt) * 0.05;
+  return score;
+}
+
+// Complete the Look: complementary categories of what the user has seen
+function lookScore(p, signals) {
+  const target = signals.names.join(' ');
+  const hay = `${p.name || ''} ${p.category?.name || ''}`.toLowerCase();
+  let score = 0;
+  COMPLEMENT_GROUPS.forEach(g => {
+    if (g.match.some(m => target.includes(m)) && g.complements.some(c => hay.includes(c))) score += 1;
+  });
+  if (hasCategory(p, signals)) score -= 0.5; // complement, not more of the same
+  return score;
+}
+
+// Interleave across categories so one category can't fill the whole row
+function diversify(items, limit) {
+  const buckets = new Map();
+  items.forEach(i => {
+    const k = String(i.category || 'other');
+    if (!buckets.has(k)) buckets.set(k, []);
+    buckets.get(k).push(i);
+  });
+  const out = [];
+  while (out.length < limit && [...buckets.values()].some(b => b.length)) {
+    for (const b of buckets.values()) {
+      if (b.length && out.length < limit) out.push(b.shift());
+    }
+  }
+  return out;
+}
+
+/**
+ * Get Personalized Recommendations for User.
+ * type: personalized | style | trending | cross-sell. Each ranks differently, and
+ * `style` / `cross-sell` avoid repeating the top Picks For You where possible.
  */
 async function getPersonalizedForUser(userId, limit = 10, type = 'all') {
+  if (type === 'trending') return getTrendingProducts(limit);
+
   let profile = null;
   if (userId) {
     profile = await UserProfile.findOne({ userId }).lean();
@@ -176,27 +259,44 @@ async function getPersonalizedForUser(userId, limit = 10, type = 'all') {
       }
     }
   }
+  const signals = await getEngagementSignals(profile);
 
   const products = await Product.find(baseVisibilityFilter())
     .select(CARD_FIELDS)
     .populate('category', 'name')
     .sort({ averageRating: -1, totalReviews: -1 })
-    .limit(50)
+    .limit(150)
     .lean();
 
-  const scored = products.map(p => {
-    const score = profile ? calculateProductScore(p, profile) : (p.averageRating / 5);
-    let reason = 'Popular top-rated item';
-    if (profile?.stylePreferences?.length) {
-      reason = `Matches your ${profile.stylePreferences[0]} style preference`;
-    } else if (p.style) {
-      reason = `Trending in ${p.style} design`;
-    }
-    return formatRecommendation(p, reason, score, type === 'all' ? 'personalized' : type);
-  });
+  const toRec = (p, score, reason, t) => formatRecommendation(p, reason, score, t);
+  const picks = products
+    .map(p => ({ p, s: behaviourScore(p, profile, signals) }))
+    .sort((a, b) => b.s - a.s);
+  const picksRecs = picks.map(({ p, s }) => toRec(p, s, signals.ids.size || profile ? (hasCategory(p, signals) ? 'Because you explored similar products' : 'Picked for you') : 'Popular top-rated item', 'personalized'));
 
-  scored.sort((a, b) => b.score - a.score);
-  return scored.slice(0, limit);
+  if (type === 'style') {
+    const exclude = new Set(picksRecs.slice(0, Math.min(limit, 8)).map(r => String(r.id)));
+    const styled = products
+      .map(p => ({ p, s: styleScore(p, profile, signals) }))
+      .sort((a, b) => b.s - a.s)
+      .map(({ p, s }) => toRec(p, s, profile?.stylePreferences?.[0] ? `Matches your ${profile.stylePreferences[0]} style` : 'Similar in look, colour and material', 'style'));
+    const fresh = styled.filter(r => !exclude.has(String(r.id)));
+    const rest = styled.filter(r => exclude.has(String(r.id)));
+    return [...diversify(fresh, limit), ...rest].slice(0, limit);
+  }
+
+  if (type === 'cross-sell') {
+    const exclude = new Set(picksRecs.slice(0, Math.min(limit, 8)).map(r => String(r.id)));
+    const looks = products
+      .map(p => ({ p, s: lookScore(p, signals) }))
+      .filter(x => x.s > 0 && !signals.ids.has(String(x.p._id)))
+      .sort((a, b) => b.s - a.s)
+      .map(({ p, s }) => toRec(p, Math.min(0.95, 0.6 + s * 0.1), 'Completes the look of items you viewed', 'cross-sell'));
+    const fresh = looks.filter(r => !exclude.has(String(r.id)));
+    return diversify(fresh.length ? fresh : looks, limit);
+  }
+
+  return picksRecs.slice(0, limit);
 }
 
 /**

@@ -14,6 +14,8 @@ import UnitSelect from '../../../shared/components/UnitSelect';
 import DeliveryOptionsForm from '../../seller/components/DeliveryOptionsForm';
 import PaymentOptionsForm from '../../seller/components/PaymentOptionsForm';
 import ProductVariantsEditor from '../../seller/components/ProductVariantsEditor';
+import DimensionsInput from '../../../shared/components/DimensionsInput';
+import { dimensionsFromAi } from '../../../shared/utils/dimensions';
 
 const AddProductPage = () => {
   const navigate = useNavigate();
@@ -226,7 +228,7 @@ const AddProductPage = () => {
       subsubcategory: matchedSubsubcategory || prev.subsubcategory,
       material: details.material || prev.material,
       color: details.color || prev.color,
-      dimensions: details.dimensions || prev.dimensions,
+      dimensions: (typeof details.dimensions === 'string' ? details.dimensions : dimensionsFromAi(details.dimensions, '')) || prev.dimensions,
       thickness: details.thickness || prev.thickness,
       description: details.description || prev.description,
       hsnCode: details.hsnCode || prev.hsnCode,
@@ -756,9 +758,7 @@ const AddProductPage = () => {
                           hsnCode: data.hsnCode,
                           sku: data.sku,
                           brand: userAlreadyHasBrand ? prev.brand : (nextBrand || prev.brand),
-                         dimensions: data.dimensions?.height && data.dimensions?.width
-                           ? `${data.dimensions.height} x ${data.dimensions.width} ${data.dimensions.unit || ''}`.trim()
-                           : prev.dimensions,
+                         dimensions: dimensionsFromAi(data.dimensions, prev.dimensions),
                          thickness: data.dimensions?.thickness || prev.thickness,
                          seoKeywords: data.seoKeywords,
                          images: newAiImages.length > 0 ? [...prev.images, ...newAiImages].slice(0, 10) : prev.images,
@@ -1180,12 +1180,11 @@ const AddProductPage = () => {
                       />
                    </div>
                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest">Dimensions</label>
-                      <input 
-                        type="text" placeholder="e.g. 60x60 cm or 3x6 ft"
+                      <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest">Dimensions (L × W/D × H)</label>
+                      <DimensionsInput
                         value={formData.dimensions}
-                        onChange={(e) => setFormData({...formData, dimensions: e.target.value})}
-                        className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-4 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-warm-sand transition-all font-medium"
+                        onChange={(v) => setFormData(prev => ({ ...prev, dimensions: v }))}
+                        categoryText={`${formData.name || ''} ${formData.category || ''} ${formData.subcategory || ''}`}
                       />
                    </div>
                    <div className="space-y-2">

@@ -223,7 +223,7 @@ exports.updateReturnStatus = async (req, res, next) => {
       // 2. Restore Stock
       if (itemIndex !== -1) {
         const inventoryService = require('../services/inventoryService');
-        await inventoryService.returnStock(returnReq.product, order.orderItems[itemIndex].quantity);
+        await inventoryService.returnStock(returnReq.product, order.orderItems[itemIndex].quantity, null, order.orderItems[itemIndex].variantId);
       }
 
       // 3. Process Wallet Refund Deduction, Customer Wallet Credit & Tax Rollback Log

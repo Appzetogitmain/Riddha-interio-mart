@@ -22,6 +22,24 @@ const ProductSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Please add a description']
   },
+  shortDescription: {
+    type: String,
+    trim: true,
+    maxlength: 300,
+    default: ''
+  },
+  metaTitle: {
+    type: String,
+    trim: true,
+    maxlength: 70,
+    default: ''
+  },
+  metaDescription: {
+    type: String,
+    trim: true,
+    maxlength: 170,
+    default: ''
+  },
   price: {
     type: Number,
     required: [true, 'Please add a price'] // Final Price (shown to user)
@@ -88,7 +106,7 @@ const ProductSchema = new mongoose.Schema({
     trim: true,
     validate: {
       validator: function(v) {
-        return !v || /^(\d+(\.\d+)?\s*[xX]\s*\d+(\.\d+)?(\s*[xX]\s*\d+(\.\d+)?)?\s*(mm|cm|inches|inch|feet|ft|m|mtrs|in)?)$|^([a-zA-Z0-9\s\-\/\(\)\.\,]+)$/i.test(v.trim());
+        return !v || /^(\d+(\.\d+)?\s*[xX×]\s*\d+(\.\d+)?(\s*[xX×]\s*\d+(\.\d+)?)?\s*(mm|cm|inches|inch|feet|ft|m|mtrs|in)?)$|^([a-zA-Z0-9\s\-\/\(\)\.\,×]+)$/i.test(v.trim());
       },
       message: props => `${props.value} is not a valid dimensions layout! Must be a numeric size (e.g., 600x600 mm, 24x24 inches) or descriptive text (e.g., Standard, King Size).`
     }
@@ -227,7 +245,12 @@ const ProductSchema = new mongoose.Schema({
       type: Number,
       default: 0
     },
-    image: String
+    reservedStock: {
+      type: Number,
+      default: 0
+    },
+    image: String,
+    images: [String]
   }],
   seller: {
     type: mongoose.Schema.ObjectId,

@@ -5,6 +5,7 @@ import { FiArrowLeft, FiImage, FiSave, FiInfo, FiTag, FiDollarSign, FiType } fro
 import { adminCategories } from '../../models/adminCategories';
 import { adminProducts } from '../../models/adminProducts';
 
+import DimensionsInput from '../../../../shared/components/DimensionsInput';
 const EditProductPage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -176,12 +177,7 @@ const EditProductPage = () => {
                    </div>
                    <div className="space-y-2">
                       <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest">Dimensions</label>
-                      <input 
-                        type="text" placeholder="e.g. 60x60x2 cm"
-                        value={formData.dimensions}
-                        onChange={(e) => setFormData({...formData, dimensions: e.target.value})}
-                        className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-4 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-warm-sand transition-all"
-                      />
+                      <DimensionsInput value={formData.dimensions} onChange={(v) => setFormData(prev => ({ ...prev, dimensions: v }))} categoryText={`${formData.name || ''} ${formData.category || ''}`} />
                    </div>
                 </div>
 

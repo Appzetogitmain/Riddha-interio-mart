@@ -13,6 +13,10 @@ const InventoryReservationSchema = new mongoose.Schema({
     required: true,
     index: true
   },
+  variantId: {
+    type: mongoose.Schema.ObjectId,
+    default: null
+  },
   quantity: {
     type: Number,
     required: true,

@@ -21,7 +21,7 @@ const CartPage = () => {
 
   const handleIncrement = async (item) => {
     const nextQty = item.quantity + 1;
-    const result = await updateQuantity(item._id || item.id, nextQty);
+    const result = await updateQuantity(item._id || item.id, nextQty, item.variantId || null);
     if (result?.capped) {
       setBulkPrefill({
         id: item._id || item.id,
@@ -123,7 +123,7 @@ const CartPage = () => {
               <AnimatePresence>
                 {cart.map((item) => (
                   <motion.div
-                    key={item._id || item.id}
+                    key={`${item._id || item.id}-${item.variantId || ''}`}
                     className="border border-[#189D91]/30 rounded-xl p-5 flex gap-6 bg-white shadow-sm relative overflow-hidden"
                   >
                     {/* Active border accent like the 'Home' card in screenshot */}
@@ -142,7 +142,7 @@ const CartPage = () => {
                           <p className="text-sm font-semibold text-gray-500 mt-1">₹{item.price?.toLocaleString('en-IN')}</p>
                         </div>
                         <button
-                          onClick={() => removeFromCart(item._id || item.id)}
+                          onClick={() => removeFromCart(item._id || item.id, item.variantId || null)}
                           className="text-gray-400 hover:text-red-500 transition-colors p-1"
                         >
                           <FiX size={22} />
@@ -153,7 +153,7 @@ const CartPage = () => {
                         <span className="text-sm font-medium text-gray-500">Qty:</span>
                         <div className="flex items-center gap-3">
                           <button
-                            onClick={() => updateQuantity(item._id || item.id, item.quantity - 1)}
+                            onClick={() => updateQuantity(item._id || item.id, item.quantity - 1, item.variantId || null)}
                             className="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-md text-gray-600 hover:bg-gray-200"
                           >
                             <FiMinus size={14} />
@@ -190,7 +190,7 @@ const CartPage = () => {
               {/* Mini Cart Items (like screenshot) */}
               <div className="space-y-5 mb-6 border-b border-gray-100 pb-6">
                 {cart.map((item) => (
-                  <div key={item._id || item.id} className="flex gap-4 items-center">
+                  <div key={`${item._id || item.id}-${item.variantId || ''}`} className="flex gap-4 items-center">
                     <img src={item.images?.[0] || item.image} alt={item.name} className="w-[60px] h-[60px] rounded-lg object-cover bg-gray-50 border border-gray-100" />
                     <div className="flex-1">
                       <div className="flex justify-between items-start">
@@ -298,7 +298,7 @@ const CartPage = () => {
           <AnimatePresence>
             {cart.map((item) => (
               <motion.div
-                key={item._id || item.id}
+                key={`${item._id || item.id}-${item.variantId || ''}`}
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, x: -20 }}
@@ -307,7 +307,7 @@ const CartPage = () => {
                 <div className="flex flex-col gap-4">
                   <div className="flex gap-4 relative">
                     <button
-                      onClick={() => removeFromCart(item._id || item.id)}
+                      onClick={() => removeFromCart(item._id || item.id, item.variantId || null)}
                       className="absolute top-0 right-0 text-gray-400 hover:text-gray-600 p-1 z-10 bg-white rounded-full"
                     >
                       <FiX size={18} />
@@ -328,7 +328,7 @@ const CartPage = () => {
                     <span className="text-[15px] font-semibold text-gray-900">Quantity</span>
                     <div className="flex items-center bg-gray-50 rounded-[10px] p-0.5 border border-gray-100/80">
                       <button
-                        onClick={() => updateQuantity(item._id || item.id, item.quantity - 1)}
+                        onClick={() => updateQuantity(item._id || item.id, item.quantity - 1, item.variantId || null)}
                         className="w-8 h-8 flex items-center justify-center text-gray-500 hover:bg-white hover:shadow-sm rounded-lg transition-all"
                       >
                         <FiMinus size={14} className="stroke-[2.5px]" />

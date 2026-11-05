@@ -1514,3 +1514,28 @@ exports.getProductsWithFilters = async (req, res, next) => {
     res.status(500).json({ success: false, error: error.message });
   }
 };
+
+// @desc    Generate the same product in selected colours from one original image (AI)
+// @route   POST /api/products/generate-colour-variants
+// @access  Private (seller, admin)
+exports.generateColourVariantsHandler = async (req, res) => {
+  try {
+    const { originalImage, colours, name } = req.body;
+    const colourList = Array.isArray(colours)
+      ? [...new Set(colours.map(c => String(c).trim()).filter(Boolean))].slice(0, 8)
+      : [];
+    if (!originalImage) {
+      return res.status(400).json({ success: false, error: 'Original product image is required.' });
+    }
+    if (colourList.length === 0) {
+      return res.status(400).json({ success: false, error: 'Select at least one colour.' });
+    }
+
+    const aiService = require('../services/aiService');
+    const variants = await aiService.generateColourVariantImages(originalImage, colourList, { name });
+    res.status(200).json({ success: true, variants });
+  } catch (error) {
+    console.error('Colour Variant Generation Error:', error);
+    res.status(500).json({ success: false, error: 'AI Service Error: ' + error.message });
+  }
+};

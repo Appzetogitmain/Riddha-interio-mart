@@ -12,6 +12,7 @@ const {
   checkProductSku,
   generateHSNCodeHandler,
   generateProductContentHandler,
+  generateColourVariantsHandler,
   analyzeProductPhotoHandler,
   smartSearch
 } = require('../controllers/productController');
@@ -31,6 +32,7 @@ router.get('/check-sku/:sku', protect, authorize('seller', 'admin'), checkProduc
 
 router.post('/generate-hsn', protect, authorize('seller', 'admin'), generateHSNCodeHandler);
 router.post('/generate-content', protect, authorize('seller', 'admin'), generateProductContentHandler);
+router.post('/generate-colour-variants', protect, authorize('seller', 'admin'), generateColourVariantsHandler);
 router.post('/ai-scan-photo', protect, authorize('seller', 'admin'), analyzeProductPhotoHandler);
 
 

@@ -37,8 +37,22 @@ exports.calculateCartPricing = async (items, userType = 'customer') => {
     }
 
     const qty = Number(item.quantity) || 1;
-    const originalPrice = Number(product.price) || 0;
-    const discountPrice = Number(product.discountPrice) || 0;
+
+    // Resolve the selected variant (if any). Products that define variants must be
+    // ordered with a valid variantId; products without variants ignore it.
+    let variant = null;
+    if (product.variants && product.variants.length > 0) {
+      if (!item.variantId) {
+        throw new Error(`Please select a variant for "${product.name}"`);
+      }
+      variant = product.variants.id(item.variantId);
+      if (!variant) {
+        throw new Error(`Selected variant is no longer available for "${product.name}"`);
+      }
+    }
+
+    const originalPrice = Number((variant && variant.price) || product.price) || 0;
+    const discountPrice = Number(variant ? variant.discountPrice : product.discountPrice) || 0;
     const gstRate = Number(product.gstRate) || 18; // Default to 18% if not configured
 
     // Selling price logic
@@ -70,11 +84,18 @@ exports.calculateCartPricing = async (items, userType = 'customer') => {
     discountAmount += lineDiscount;
     taxAmount += lineTax;
 
+    const variantLabel = variant && variant.attributes
+      ? Array.from(variant.attributes.values()).filter(Boolean).join(' / ')
+      : '';
+
     enrichedItems.push({
       product: product._id,
-      name: product.name,
+      variantId: variant ? variant._id : null,
+      variantAttributes: variant && variant.attributes ? Object.fromEntries(variant.attributes) : undefined,
+      sku: variant && variant.sku ? variant.sku : product.sku,
+      name: variantLabel ? `${product.name} (${variantLabel})` : product.name,
       quantity: qty,
-      image: product.images && product.images.length > 0 ? product.images[0] : (product.image || ''),
+      image: (variant && variant.image) || (product.images && product.images.length > 0 ? product.images[0] : (product.image || '')),
       price: displayPrice, // Persisted selling price validated from DB
       seller: product.seller,
       sellerType: product.sellerType || 'Seller',

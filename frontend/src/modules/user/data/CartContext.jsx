@@ -1,8 +1,32 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import api from '../../../shared/utils/api';
 import { useUser } from './UserContext';
 
 const CartContext = createContext();
+
+// A cart line is identified by product + variant (variantId is null for products without variants)
+const sameLine = (item, productId, variantId = null) =>
+  (item._id || item.id) === productId && String(item.variantId || '') === String(variantId || '');
+
+// Overlay the chosen variant's price / stock / image / sku onto the product so
+// every cart view reads the right values from the item itself.
+const applyVariant = (product, variant) => {
+  if (!variant) return product;
+  const images = variant.image
+    ? [variant.image, ...(product.images || []).filter(img => img !== variant.image)]
+    : product.images;
+  return {
+    ...product,
+    price: variant.price || product.price,
+    discountPrice: variant.discountPrice,
+    countInStock: variant.countInStock,
+    sku: variant.sku || product.sku,
+    images,
+    variantId: variant._id,
+    variantAttributes: variant.attributes || {},
+  };
+};
 
 export const useCart = () => {
   const context = useContext(CartContext);
@@ -59,11 +83,17 @@ export const CartProvider = ({ children }) => {
         // Map backend structure (product object) to frontend structure
         const mappedCart = response.data.data.items
           .filter(item => item.product != null)
-          .map(item => ({
-            ...item.product,
-            quantity: item.quantity,
-            _id: item.product._id // Ensure _id is clear
-          }));
+          .map(item => {
+            const variant = item.variantId
+              ? (item.product.variants || []).find(v => String(v._id) === String(item.variantId))
+              : null;
+            return {
+              ...applyVariant(item.product, variant),
+              variantId: item.variantId || null,
+              quantity: item.quantity,
+              _id: item.product._id // Ensure _id is clear
+            };
+          });
         setCart(mappedCart);
       }
     } catch (err) {
@@ -87,27 +117,38 @@ export const CartProvider = ({ children }) => {
     return null;
   };
 
-  const addToCart = async (product, quantity = 1) => {
+  // `variant` is the selected entry of product.variants; required for products that have variants.
+  const addToCart = async (product, quantity = 1, variant = null) => {
     const productId = product._id || product.id;
 
+    if (!variant && product.variantId) {
+      // Caller passed a cart item that already carries its variant
+      variant = (product.variants || []).find(v => String(v._id) === String(product.variantId)) || null;
+    }
+    if (!variant && product.variants?.length > 0) {
+      toast.error('Please choose a variant (e.g. colour) on the product page first.');
+      return { capped: false, needsVariant: true };
+    }
+    const variantId = variant ? variant._id : null;
+
     // Check if already in local cart for optimistic update
-    const itemIndex = cart.findIndex(item => (item._id || item.id) === productId);
+    const itemIndex = cart.findIndex(item => sameLine(item, productId, variantId));
 
     if (itemIndex > -1) {
       // If already exists, use updateQuantity logic
       const existingItem = cart[itemIndex];
-      return updateQuantity(productId, existingItem.quantity + quantity);
+      return updateQuantity(productId, existingItem.quantity + quantity, variantId);
     }
 
     const capResult = checkQtyCap(product, quantity);
     if (capResult) return capResult;
 
     // Add new item optimistically
-    setCart(prev => [...prev, { ...product, quantity, _id: productId }]);
+    setCart(prev => [...prev, { ...applyVariant(product, variant), quantity, _id: productId }]);
 
     if (isLoggedIn) {
       try {
-        const response = await api.post('/cart', { productId, quantity });
+        const response = await api.post('/cart', { productId, quantity, variantId });
         if (response.data.success) {
           // refresh cart from server to get accurate data and populated fields
           fetchCart();
@@ -120,43 +161,43 @@ export const CartProvider = ({ children }) => {
     return { capped: false };
   };
 
-  const removeFromCart = async (productId) => {
-    setCart(prev => prev.filter(item => (item._id || item.id) !== productId));
+  const removeFromCart = async (productId, variantId = null) => {
+    setCart(prev => prev.filter(item => !sameLine(item, productId, variantId)));
 
     if (isLoggedIn) {
       try {
-        await api.delete(`/cart/${productId}`);
+        await api.delete(`/cart/${productId}`, { params: variantId ? { variantId } : {} });
       } catch (err) {
         console.error('Failed to remove from cart on backend:', err);
       }
     }
   };
 
-  const updateQuantity = async (productId, quantity) => {
+  const updateQuantity = async (productId, quantity, variantId = null) => {
     if (quantity < 1) {
-      removeFromCart(productId);
+      removeFromCart(productId, variantId);
       return { capped: false };
     }
 
-    const existingItem = cart.find(item => (item._id || item.id) === productId);
+    const existingItem = cart.find(item => sameLine(item, productId, variantId));
     const capResult = existingItem ? checkQtyCap(existingItem, quantity) : null;
     if (capResult) return capResult;
 
     // Local update
     setCart(prev =>
       prev.map(item =>
-        (item._id || item.id) === productId ? { ...item, quantity } : item
+        sameLine(item, productId, variantId) ? { ...item, quantity } : item
       )
     );
 
     if (isLoggedIn) {
       try {
-        await api.put(`/cart/${productId}`, { quantity });
+        await api.put(`/cart/${productId}`, { quantity }, { params: variantId ? { variantId } : {} });
       } catch (err) {
         if (err.response && err.response.status === 404) {
            console.warn('Item not found in backend cart, attempting to add it...');
            // If update fails with 404, it might be a race condition. Try adding it.
-           await api.post('/cart', { productId, quantity });
+           await api.post('/cart', { productId, quantity, variantId });
         } else {
            console.error('Failed to update quantity on backend:', err);
         }
@@ -165,9 +206,15 @@ export const CartProvider = ({ children }) => {
     return { capped: false };
   };
 
-  const getItemQuantity = (productId) => {
-    const item = cart.find(item => (item._id || item.id) === productId);
-    return item ? item.quantity : 0;
+  // With a variantId: that exact line. Without: the total across all variants of the product.
+  const getItemQuantity = (productId, variantId) => {
+    if (variantId !== undefined) {
+      const item = cart.find(item => sameLine(item, productId, variantId));
+      return item ? item.quantity : 0;
+    }
+    return cart
+      .filter(item => (item._id || item.id) === productId)
+      .reduce((sum, item) => sum + item.quantity, 0);
   };
 
   const clearCart = async () => {
@@ -218,6 +265,7 @@ export const CartProvider = ({ children }) => {
         const payload = {
           orderItems: validItems.map(item => ({
             product: item._id || item.id,
+            variantId: item.variantId || undefined,
             quantity: item.quantity
           })),
           userType: user?.userType

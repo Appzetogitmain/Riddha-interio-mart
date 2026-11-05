@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Sparkles, Check, Loader2, RefreshCw, X, Plus, Camera } from "lucide-react";
 import { useRef } from "react";
 import api from "../utils/api";
+import { formatSpecLabel, formatSpecValue } from '../utils/textFormat';
 
 const AIContentPanel = ({
   formData,
@@ -584,8 +585,8 @@ const AIContentPanel = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-2.5 p-3.5 bg-slate-50 rounded-2xl border border-slate-100 text-xs font-bold text-slate-700">
             {Object.entries(generatedData.specifications).map(([key, val]) => (
               <div key={key} className="flex flex-col min-w-0">
-                <span className="text-[9px] uppercase tracking-wider text-slate-400 font-semibold truncate">{key}</span>
-                <span className="text-slate-800 mt-0.5 break-words font-extrabold leading-snug">{val}</span>
+                <span className="text-[10px] tracking-wide text-slate-400 font-semibold truncate">{formatSpecLabel(key)}</span>
+                <span className="text-slate-800 mt-0.5 break-words font-extrabold leading-snug">{formatSpecValue(val)}</span>
               </div>
             ))}
           </div>

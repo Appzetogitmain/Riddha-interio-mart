@@ -24,6 +24,7 @@ import BulkOrderModal from '../components/BulkOrderModal';
 import RequestQuoteButton from '../components/RFQ/RequestQuoteButton';
 import RequestSampleButton from '../components/Samples/RequestSampleButton';
 import ZoomableImage from '../components/ZoomableImage';
+import { formatSpecLabel, formatSpecValue } from '../../../shared/utils/textFormat';
 
 // Smart bundles that include this product — a thin fetch-and-render row, kept local
 // since it's only used here on the product detail page.
@@ -76,13 +77,37 @@ const ProductDetailsPage = () => {
   const [bulkModalOpen, setBulkModalOpen] = useState(false);
   const [bulkPrefill, setBulkPrefill] = useState(null);
 
+  const variantImages = currentVariant?.images?.length ? currentVariant.images : (currentVariant?.image ? [currentVariant.image] : []);
   const allMedia = product ? [
-    ...(product.images || []),
+    ...variantImages,
+    ...(product.images || []).filter(img => !variantImages.includes(img)),
     ...(product.videoUrl ? [{ type: 'video', url: product.videoUrl }] : [])
   ] : [];
 
-  const currentQuantity = getItemQuantity(product?._id || product?.id);
+  const hasVariants = product?.variants?.length > 0;
+  const currentVariantId = currentVariant?._id || null;
+  const currentQuantity = getItemQuantity(product?._id || product?.id, currentVariantId);
+  // Stock for the selected variant when the product has variants, else product-level stock
+  const availableStock = hasVariants ? currentVariant?.countInStock : product?.countInStock;
+  const isOutOfStock = availableStock !== undefined && availableStock <= 0;
   const deliveryEstimate = getDeliveryEstimate(pincode);
+
+  // Admin-defined SEO title / description (falls back to the product name)
+  useEffect(() => {
+    if (!product) return undefined;
+    const prevTitle = document.title;
+    document.title = product.metaTitle || product.name || prevTitle;
+    let tag = document.querySelector('meta[name="description"]');
+    const created = !tag;
+    if (!tag) { tag = document.createElement('meta'); tag.setAttribute('name', 'description'); document.head.appendChild(tag); }
+    const prevDesc = tag.getAttribute('content');
+    const desc = product.metaDescription || product.shortDescription;
+    if (desc) tag.setAttribute('content', desc);
+    return () => {
+      document.title = prevTitle;
+      if (created) tag.remove(); else if (prevDesc !== null) tag.setAttribute('content', prevDesc);
+    };
+  }, [product]);
   const wishlisted = product ? isInWishlist(product._id || product.id) : false;
 
   const specItems = React.useMemo(() => {
@@ -162,7 +187,7 @@ const ProductDetailsPage = () => {
         
         // Initialize variants if they exist
         if (found.variants && found.variants.length > 0) {
-          const initialVariant = found.variants[0];
+          const initialVariant = found.variants.find(v => v.countInStock > 0) || found.variants[0];
           setSelectedVariantOptions(initialVariant.attributes || {});
           setCurrentVariant(initialVariant);
         }
@@ -210,17 +235,18 @@ const ProductDetailsPage = () => {
   };
 
   const handleAddToCart = async () => {
-    const result = await addToCart(product, 1);
+    const result = await addToCart(product, 1, currentVariant);
     if (result?.capped) openBulkOrderForCap(1, result.maxQty);
   };
   const handleIncrementQuantity = async () => {
     const nextQty = currentQuantity + 1;
-    const result = await updateQuantity(product._id || product.id, nextQty);
+    const result = await updateQuantity(product._id || product.id, nextQty, currentVariantId);
     if (result?.capped) openBulkOrderForCap(nextQty, result.maxQty);
   };
   const handleBuyNow = async () => {
     if (currentQuantity === 0) {
-      const result = await addToCart(product, 1);
+      const result = await addToCart(product, 1, currentVariant);
+      if (result?.needsVariant) return;
       if (result?.capped) return openBulkOrderForCap(1, result.maxQty);
     }
     navigate('/cart');
@@ -269,10 +295,16 @@ const ProductDetailsPage = () => {
     
     // Find matching variant
     if (product?.variants) {
-      const match = product.variants.find(v => {
-        return Object.keys(newOptions).every(key => v.attributes?.[key] === newOptions[key]);
-      });
-      if (match) setCurrentVariant(match);
+      const exact = product.variants.find(v =>
+        Object.keys(newOptions).every(key => v.attributes?.[key] === newOptions[key])
+      );
+      // If the combination doesn't exist, fall back to the first variant that has the clicked option
+      const match = exact || product.variants.find(v => v.attributes?.[attrName] === value);
+      if (match) {
+        setCurrentVariant(match);
+        setSelectedVariantOptions({ ...(match.attributes || {}) });
+        setActiveMediaIndex(0);
+      }
     }
   };
 
@@ -474,21 +506,31 @@ const ProductDetailsPage = () => {
               <div className="mt-6 space-y-4 border-t border-gray-100 pt-5">
                 {Object.keys(variantAttributesMap).map(attrName => (
                   <div key={attrName}>
-                    <h4 className="text-[10px] font-bold text-gray-700 uppercase tracking-widest mb-2">{attrName}</h4>
+                    <h4 className="text-[12px] font-bold text-gray-700 mb-2">{formatSpecLabel(attrName)}</h4>
                     <div className="flex flex-wrap gap-2">
-                      {Array.from(variantAttributesMap[attrName]).map(val => (
-                        <button
-                          key={val}
-                          onClick={() => handleVariantSelect(attrName, val)}
-                          className={`px-4 py-2 text-xs font-semibold rounded-lg border transition-all ${
-                            selectedVariantOptions[attrName] === val
-                              ? 'border-[#189D91] bg-[#189D91]/10 text-[#189D91]'
-                              : 'border-gray-200 text-gray-600 hover:border-gray-300'
-                          }`}
-                        >
-                          {val}
-                        </button>
-                      ))}
+                      {Array.from(variantAttributesMap[attrName]).map(val => {
+                        const isSelected = selectedVariantOptions[attrName] === val;
+                        // Colour options show the variant's photo as a swatch when one exists
+                        const swatch = /colou?r/i.test(attrName)
+                          ? product.variants.find(v => v.attributes?.[attrName] === val && v.image)?.image
+                          : null;
+                        const soldOut = !product.variants.some(v => v.attributes?.[attrName] === val && v.countInStock > 0);
+                        return (
+                          <button
+                            key={val}
+                            type="button"
+                            onClick={() => handleVariantSelect(attrName, val)}
+                            className={`flex items-center gap-2 text-xs font-semibold rounded-lg border transition-all ${swatch ? 'p-1.5 pr-3' : 'px-4 py-2'} ${
+                              isSelected
+                                ? 'border-[#189D91] bg-[#189D91]/10 text-[#189D91]'
+                                : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                            } ${soldOut ? 'opacity-50' : ''}`}
+                          >
+                            {swatch && <img src={swatch} alt="" className="w-9 h-9 rounded-md object-cover" />}
+                            <span>{val}{soldOut ? ' (sold out)' : ''}</span>
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                 ))}
@@ -506,24 +548,24 @@ const ProductDetailsPage = () => {
               <div className="divide-y divide-gray-100 border border-gray-200 rounded-xl overflow-hidden shadow-xs">
                 {specItems.map(([k, v], i) => (
                   <div key={`spec-${k}`} className={`flex py-2.5 px-4 text-[13px] ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50/40'}`}>
-                    <span className="w-36 text-gray-400 font-semibold uppercase text-[10px] tracking-wider shrink-0">{k}</span>
-                    <span className="text-gray-800 font-bold">{v}</span>
+                    <span className="w-36 text-gray-500 font-semibold text-[12px] shrink-0">{formatSpecLabel(k)}</span>
+                    <span className="text-gray-800 font-bold">{formatSpecValue(v)}</span>
                   </div>
                 ))}
                 {product.sku && (
                   <div className="flex py-2.5 px-4 text-[13px] bg-white">
-                    <span className="w-36 text-gray-400 font-semibold uppercase text-[10px] tracking-wider shrink-0">SKU</span>
+                    <span className="w-36 text-gray-500 font-semibold text-[12px] shrink-0">SKU</span>
                     <span className="text-gray-800 font-bold">{product.sku}</span>
                   </div>
                 )}
                 <div className="flex py-2.5 px-4 text-[13px] bg-gray-50/40">
-                  <span className="w-36 text-gray-400 font-semibold uppercase text-[10px] tracking-wider shrink-0">Stock Status</span>
+                  <span className="w-36 text-gray-500 font-semibold text-[12px] shrink-0">Stock status</span>
                   <span className={`text-[11px] font-bold px-2 py-0.5 border rounded ${
-                    (product.countInStock !== undefined && product.countInStock <= 0) 
+                    isOutOfStock 
                       ? 'bg-red-50 border-red-100 text-red-600' 
                       : 'bg-emerald-50 border-emerald-100 text-emerald-600'
                   }`}>
-                    {(product.countInStock !== undefined && product.countInStock <= 0) ? 'Out of Stock' : `In Stock (${product.countInStock || 0})`}
+                    {isOutOfStock ? 'Out of Stock' : `In Stock (${availableStock || 0})`}
                   </span>
                 </div>
               </div>
@@ -576,7 +618,7 @@ const ProductDetailsPage = () => {
 
             {/* Desktop action buttons */}
             <div className="hidden lg:flex gap-2 mt-5 max-w-md">
-              {product.countInStock !== undefined && product.countInStock <= 0 ? (
+              {isOutOfStock ? (
                 <button
                   disabled
                   className="w-full h-11 bg-gray-200 text-gray-400 font-bold text-[11px] uppercase tracking-wider cursor-not-allowed flex items-center justify-center gap-2"
@@ -595,7 +637,7 @@ const ProductDetailsPage = () => {
                   ) : (
                     <div className="flex-1 h-11 flex items-center border-2 border-[#189D91] bg-white">
                       <button
-                        onClick={() => updateQuantity(product._id || product.id, Math.max(0, currentQuantity - 1))}
+                        onClick={() => updateQuantity(product._id || product.id, Math.max(0, currentQuantity - 1), currentVariantId)}
                         className="w-11 h-full flex items-center justify-center text-[#189D91] hover:bg-[#189D91]/5 transition-colors"
                       >
                         <FiMinus size={14} />
@@ -686,7 +728,7 @@ const ProductDetailsPage = () => {
             <div className="px-5 py-4 grid grid-cols-3 gap-4">
               {product.material && (
                 <div>
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">Primary Material</p>
+                  <p className="text-[10px] font-black text-gray-400 tracking-wide mb-1">Primary material</p>
                   <p className="text-sm font-bold text-gray-800">{product.material}</p>
                 </div>
               )}
@@ -819,7 +861,7 @@ const ProductDetailsPage = () => {
 
       {/* ── Mobile fixed action bar ── */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-white px-4 py-3 pb-5 flex gap-3 border-t border-gray-100 shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
-        {product.countInStock !== undefined && product.countInStock <= 0 ? (
+        {isOutOfStock ? (
           <button
             disabled
             className="w-full h-12 bg-gray-200 text-gray-400 font-bold text-[13px] uppercase tracking-wider cursor-not-allowed flex items-center justify-center gap-2"

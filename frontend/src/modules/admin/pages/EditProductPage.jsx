@@ -4,6 +4,7 @@ import PageWrapper from '../components/PageWrapper';
 import { FiArrowLeft, FiImage, FiVideo, FiSave, FiInfo, FiTag, FiDollarSign, FiType, FiUser, FiPackage, FiTrash2, FiPlus, FiX, FiCamera } from 'react-icons/fi';
 import { LuIndianRupee } from 'react-icons/lu';
 import api from '../../../shared/utils/api';
+import DimensionsInput from '../../../shared/components/DimensionsInput';
 
 const EditProductPage = () => {
   const navigate = useNavigate();
@@ -14,6 +15,7 @@ const EditProductPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
   const [videoFile, setVideoFile] = useState(null);
+  const [, setImgFiles] = useState([]);
   
   // Custom Dropdown State
   const [isCatOpen, setIsCatOpen] = useState(false);
@@ -72,6 +74,7 @@ const EditProductPage = () => {
           description: product.description || '',
           material: product.material || '',
           dimensions: product.dimensions || '',
+          thickness: product.thickness || '',
           stock: product.stock || 0,
           unit: product.unit || 'piece',
           unitValue: product.unitValue || '1',
@@ -695,12 +698,11 @@ const EditProductPage = () => {
                       />
                    </div>
                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest">Dimensions</label>
-                      <input 
-                        type="text" placeholder="e.g. 60x60 cm or 3x6 ft"
+                      <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest">Dimensions (L × W/D × H)</label>
+                      <DimensionsInput
                         value={formData.dimensions}
-                        onChange={(e) => setFormData({...formData, dimensions: e.target.value})}
-                        className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-4 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-warm-sand transition-all font-medium"
+                        onChange={(v) => setFormData(prev => ({ ...prev, dimensions: v }))}
+                        categoryText={`${formData.name || ''} ${formData.category || ''}`}
                       />
                    </div>
                    <div className="space-y-2">

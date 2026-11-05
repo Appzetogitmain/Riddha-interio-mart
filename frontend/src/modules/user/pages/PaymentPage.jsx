@@ -52,6 +52,7 @@ const PaymentPage = () => {
         const payload = {
           orderItems: cart.map((item) => ({
             product: item._id || item.id,
+            variantId: item.variantId || undefined,
             name: item.name,
             quantity: item.quantity,
           })),
@@ -112,6 +113,7 @@ const PaymentPage = () => {
           image: Array.isArray(item.images) ? item.images[0] : item.image,
           price: item.price,
           product: item._id || item.id,
+            variantId: item.variantId || undefined,
           seller: item.seller,
         })),
         shippingAddress: {
@@ -167,6 +169,7 @@ const PaymentPage = () => {
           image: Array.isArray(item.images) ? item.images[0] : item.image,
           price: item.price,
           product: item._id || item.id,
+            variantId: item.variantId || undefined,
           seller: item.seller,
         })),
         shippingAddress: {
@@ -246,6 +249,7 @@ const PaymentPage = () => {
           image: Array.isArray(item.images) ? item.images[0] : item.image,
           price: item.price,
           product: item._id || item.id,
+            variantId: item.variantId || undefined,
           seller: item.seller,
         })),
         shippingAddress: {

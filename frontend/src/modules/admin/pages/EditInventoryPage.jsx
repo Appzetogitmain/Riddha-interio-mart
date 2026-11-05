@@ -5,6 +5,8 @@ import { LuImage, LuBriefcase, LuTags, LuInfo, LuArrowLeft, LuPackage, LuCheck, 
 import { FiPackage, FiTrash2, FiPlus } from 'react-icons/fi';
 import DeliveryOptionsForm from '../../seller/components/DeliveryOptionsForm';
 import PaymentOptionsForm from '../../seller/components/PaymentOptionsForm';
+import ProductVariantsEditor from '../../seller/components/ProductVariantsEditor';
+import DimensionsInput from '../../../shared/components/DimensionsInput';
 import api from '../../../shared/utils/api';
 
 const EditInventoryPage = () => {
@@ -33,6 +35,11 @@ const EditInventoryPage = () => {
     images: [],
     videoUrl: '',
     description: '',
+    shortDescription: '',
+    metaTitle: '',
+    metaDescription: '',
+    approvalStatus: 'approved',
+    rejectionReason: '',
     material: '',
     dimensions: '',
     countInStock: 0,
@@ -43,6 +50,27 @@ const EditInventoryPage = () => {
     sellerPrice: 0,
     discountPrice: 0,
     dynamicAttributes: {},
+    subcategory: '',
+    subsubcategory: '',
+    color: '',
+    thickness: '',
+    weight: '',
+    gstRate: '',
+    sellerB2bPrice: '',
+    b2bAdminCommission: 0,
+    b2bPrice: '',
+    b2bMinQty: '',
+    stock: 'in_stock',
+    isActive: true,
+    isCodAllowed: true,
+    sampleAvailable: false,
+    sampleCharge: 0,
+    roomType: '',
+    projectApplication: [],
+    professionalGrade: false,
+    seoKeywordsText: '',
+    tagsText: '',
+    specifications: {},
     seller: '',
     sellerType: 'Seller',
     deliveryOptions: {
@@ -73,16 +101,48 @@ const EditInventoryPage = () => {
         const currentSeller = product.seller || null;
         setSellerInfo(currentSeller);
         
+        const allCategories = catRes.data.data || [];
+        const catId = String(product.category?._id || product.category || '');
+        const catObj = allCategories.find(c => String(c._id) === catId || c.name === product.category?.name || c.name === product.category);
+        const subObj = (catObj?.subcategories || []).find(sc => String(sc._id) === String(product.subcategory?._id || product.subcategory));
+        const subsubObj = (subObj?.subsubcategories || []).find(ss => String(ss._id) === String(product.subsubcategory?._id || product.subsubcategory));
+
         setFormData({
           name: product.name || '',
           sku: product.sku || '',
           hsnCode: product.hsnCode || '',
-          category: product.category || '',
-          brand: product.brand || '',
+          category: catObj?.name || product.category?.name || (typeof product.category === 'string' ? product.category : ''),
+          subcategory: subObj?.name || '',
+          subsubcategory: subsubObj?.name || '',
+          brand: typeof product.brand === 'object' ? (product.brand?._id || '') : (product.brand || ''),
+          color: product.color || '',
+          thickness: product.thickness || '',
+          weight: product.weight ?? '',
+          gstRate: product.gstRate ?? '',
+          sellerB2bPrice: product.sellerB2bPrice || '',
+          b2bAdminCommission: product.b2bAdminCommission || 0,
+          b2bPrice: product.b2bPrice || '',
+          b2bMinQty: product.b2bMinQty || '',
+          stock: product.stock || 'in_stock',
+          isActive: product.isActive !== false,
+          isCodAllowed: product.isCodAllowed !== false,
+          sampleAvailable: !!product.sampleAvailable,
+          sampleCharge: product.sampleCharge || 0,
+          roomType: product.roomType || '',
+          projectApplication: product.projectApplication || [],
+          professionalGrade: !!product.professionalGrade,
+          seoKeywordsText: (product.seoKeywords || []).join(', '),
+          tagsText: (product.tags || []).join(', '),
+          specifications: product.specifications || {},
           price: product.price || '',
           images: product.images || [],
           videoUrl: product.videoUrl || '',
           description: product.description || '',
+          shortDescription: product.shortDescription || '',
+          metaTitle: product.metaTitle || '',
+          metaDescription: product.metaDescription || '',
+          approvalStatus: product.approvalStatus || (product.isApproved ? 'approved' : 'pending'),
+          rejectionReason: product.rejectionReason || '',
           material: product.material || '',
           dimensions: product.dimensions || '',
           countInStock: product.countInStock || 0,
@@ -100,7 +160,18 @@ const EditInventoryPage = () => {
             deliveryTypes: [],
             freeDeliveryEligibility: []
           },
-          paymentOptions: product.paymentOptions || []
+          paymentOptions: product.paymentOptions || [],
+          variants: (product.variants || []).map(v => ({
+            _id: v._id,
+            sku: v.sku || '',
+            price: v.price ?? '',
+            sellerPrice: v.sellerPrice ?? '',
+            discountPrice: v.discountPrice ?? '',
+            countInStock: v.countInStock ?? '',
+            image: v.image || '',
+          images: v.images && v.images.length ? v.images : (v.image ? [v.image] : []),
+            attributes: v.attributes || {}
+          }))
         });
       } catch (err) {
         console.error('Failed to fetch data:', err);
@@ -150,21 +221,50 @@ const EditInventoryPage = () => {
         finalVideoUrl = uploadRes.url;
       }
 
+      const toNum = (v) => (v === '' || v === null || v === undefined ? undefined : Number(v));
+      const toList = (text) => String(text || '').split(',').map(t => t.trim()).filter(Boolean);
+      const { seoKeywordsText, tagsText, ...rest } = formData;
       const payload = {
-        ...formData,
+        ...rest,
+        isApproved: formData.approvalStatus === 'approved',
+        seoKeywords: toList(seoKeywordsText),
+        tags: toList(tagsText),
+        roomType: formData.roomType || null,
+        weight: toNum(formData.weight),
+        gstRate: toNum(formData.gstRate),
+        sellerB2bPrice: toNum(formData.sellerB2bPrice),
+        b2bAdminCommission: toNum(formData.b2bAdminCommission) ?? 0,
+        b2bPrice: toNum(formData.b2bPrice),
+        b2bMinQty: toNum(formData.b2bMinQty),
+        sampleCharge: toNum(formData.sampleCharge) ?? 0,
+        subcategory: formData.subcategory || undefined,
+        subsubcategory: formData.subsubcategory || undefined,
         price: Number(formData.price),
         countInStock: Number(formData.countInStock),
         maxB2CQty: formData.maxB2CQty !== '' ? Number(formData.maxB2CQty) : undefined,
         videoUrl: finalVideoUrl,
         seller: formData.seller || undefined,
-        sellerType: formData.sellerType || 'Seller'
+        sellerType: formData.sellerType || 'Seller',
+        variants: (formData.variants || [])
+          .filter(v => Object.values(v.attributes || {}).some(Boolean))
+          .map(v => ({
+            ...(v._id ? { _id: v._id } : {}),
+            sku: v.sku,
+            price: Number(v.price) || Number(formData.price),
+            sellerPrice: v.sellerPrice !== undefined && v.sellerPrice !== '' ? Number(v.sellerPrice) : undefined,
+            discountPrice: v.discountPrice ? Number(v.discountPrice) : undefined,
+            countInStock: Number(v.countInStock) || 0,
+            image: (v.images && v.images[0]) || v.image || undefined,
+            images: v.images && v.images.length ? v.images : (v.image ? [v.image] : []),
+            attributes: v.attributes
+          }))
       };
 
       await api.put(`/products/${id}`, payload);
       navigate('/admin/inventory');
     } catch (err) {
       console.error('Failed to update product:', err);
-      alert('Error updating product.');
+      alert(err.response?.data?.error || 'Error updating product.');
     } finally {
       setSaving(false);
     }
@@ -212,7 +312,7 @@ const EditInventoryPage = () => {
                         </button>
                      </div>
                    ))}
-                   {formData.images.length < 5 && (
+                   {formData.images.length < 10 && (
                      <div 
                        onClick={() => fileInputRef.current.click()}
                        className="aspect-square bg-soft-oatmeal/10 rounded-xl border-2 border-dashed border-soft-oatmeal flex flex-col items-center justify-center text-warm-sand hover:border-warm-sand hover:text-deep-espresso transition-all cursor-pointer group"
@@ -404,7 +504,8 @@ const EditInventoryPage = () => {
                                 key={cat._id}
                                 type="button"
                                 onClick={() => {
-                                  setFormData({...formData, category: cat.name});
+                                  setFormData({...formData, category: cat.name, subcategory: '', subsubcategory: ''});
+                                  setCatSearch('');
                                   setIsCatOpen(false);
                                 }}
                                 className="w-full text-left px-5 py-3.5 text-sm font-medium hover:bg-soft-oatmeal/30"
@@ -469,11 +570,20 @@ const EditInventoryPage = () => {
                   <div className="grid grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest">Final Consumer Price (₹)</label>
-                      <input 
-                        type="number" 
-                        readOnly
-                        value={formData.price} 
-                        className="w-full bg-[#240046]/5 border border-[#240046]/10 rounded-xl px-4 py-3 text-sm focus:outline-none font-black text-[#240046]" 
+                      <input
+                        type="number"
+                        value={formData.price}
+                        onChange={(e) => {
+                          // Editing the final price keeps the seller price and recalculates the admin commission
+                          const finalPrice = Number(e.target.value);
+                          const sPrice = Number(formData.sellerPrice) || 0;
+                          setFormData({
+                            ...formData,
+                            price: finalPrice,
+                            adminCommission: sPrice > 0 ? Number(((finalPrice / sPrice - 1) * 100).toFixed(2)) : formData.adminCommission
+                          });
+                        }}
+                        className="w-full bg-[#240046]/5 border border-[#240046]/10 rounded-xl px-4 py-3 text-sm focus:outline-none font-black text-[#240046]"
                       />
                     </div>
                     <div className="space-y-2">
@@ -508,10 +618,15 @@ const EditInventoryPage = () => {
                       >
                          <option value="piece">Piece (Pcs)</option>
                          <option value="kg">Kilogram (Kg)</option>
+                         <option value="gm">Gram (g)</option>
+                         <option value="ml">Millilitre (ml)</option>
                          <option value="ltr">Litre (Ltr)</option>
                          <option value="watt">Watt (W)</option>
                          <option value="mtr">Meter (m)</option>
+                         <option value="ft">Feet (ft)</option>
+                         <option value="sqft">Sq. Ft.</option>
                          <option value="box">Box</option>
+                         <option value="bundle">Bundle</option>
                          <option value="pack">Pack</option>
                       </select>
                     </div>
@@ -538,36 +653,190 @@ const EditInventoryPage = () => {
                   <p className="text-[9px] text-warm-sand/70 font-medium">Customers wanting more than this must submit a Bulk Order Request.</p>
                 </div>
 
-                {/* Dynamic Specifications */}
-                {formData.dynamicAttributes && Object.keys(formData.dynamicAttributes).length > 0 && (
-                  <div className="space-y-4 pt-4 border-t border-soft-oatmeal/30">
-                    <h3 className="text-xs font-black text-warm-sand uppercase tracking-widest">Specifications</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {Object.entries(formData.dynamicAttributes).map(([key, val]) => (
-                        <div key={key} className="space-y-2">
-                          <label className="text-[10px] font-bold text-warm-sand uppercase tracking-wider">{key}</label>
-                          <input 
-                            type="text" 
-                            value={val || ''} 
-                            onChange={(e) => setFormData(prev => ({
-                              ...prev,
-                              dynamicAttributes: {
-                                ...prev.dynamicAttributes,
-                                [key]: e.target.value
-                              }
-                            }))} 
-                            className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none" 
-                          />
-                        </div>
-                      ))}
+                {/* Subcategory / Sub-subcategory */}
+                {(() => {
+                  const catObj = categories.find(c => c.name === formData.category);
+                  const subs = catObj?.subcategories || [];
+                  const subObj = subs.find(sc => sc.name === formData.subcategory);
+                  const subsubs = subObj?.subsubcategories || [];
+                  const selectCls = 'w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none';
+                  return (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest">Subcategory</label>
+                        <select value={formData.subcategory} onChange={(e) => setFormData({ ...formData, subcategory: e.target.value, subsubcategory: '' })} className={selectCls}>
+                          <option value="">{subs.length ? 'Select subcategory' : 'None available'}</option>
+                          {subs.map(sc => <option key={sc._id || sc.name} value={sc.name}>{sc.name}</option>)}
+                        </select>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest">Sub-subcategory</label>
+                        <select value={formData.subsubcategory} onChange={(e) => setFormData({ ...formData, subsubcategory: e.target.value })} className={selectCls}>
+                          <option value="">{subsubs.length ? 'Select sub-subcategory' : 'None available'}</option>
+                          {subsubs.map(ss => <option key={ss._id || ss.name} value={ss.name}>{ss.name}</option>)}
+                        </select>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
+
+                {/* More product details: everything else on the product is editable here */}
+                {(() => {
+                  const inputCls = 'w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none';
+                  const labelCls = 'text-[10px] font-black text-warm-sand uppercase tracking-widest';
+                  const setSpec = (key, value) => setFormData(prev => ({ ...prev, specifications: { ...(prev.specifications || {}), [key]: value } }));
+                  const spec = formData.specifications || {};
+                  const APPLICATIONS = ['home', 'office', 'retail', 'hotel', 'restaurant', 'hospital', 'school', 'corporate', 'industrial', 'institutional'];
+                  const Toggle = ({ label, checked, onChange }) => (
+                    <label className="flex items-center gap-2 text-xs font-semibold text-gray-700 cursor-pointer">
+                      <input type="checkbox" checked={!!checked} onChange={(e) => onChange(e.target.checked)} className="rounded border-gray-300" />
+                      {label}
+                    </label>
+                  );
+                  return (
+                    <div className="space-y-6 pt-6 border-t border-soft-oatmeal/50">
+                      <h3 className="text-xs font-black text-warm-sand uppercase tracking-widest">Product Details</h3>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="space-y-2"><label className={labelCls}>Colour</label><input type="text" value={formData.color} onChange={(e) => setFormData({ ...formData, color: e.target.value })} className={inputCls} /></div>
+                        <div className="space-y-2"><label className={labelCls}>Thickness</label><input type="text" placeholder="e.g. 12 mm" value={formData.thickness} onChange={(e) => setFormData({ ...formData, thickness: e.target.value })} className={inputCls} /></div>
+                        <div className="space-y-2"><label className={labelCls}>Weight (kg)</label><input type="number" step="any" value={formData.weight} onChange={(e) => setFormData({ ...formData, weight: e.target.value })} className={inputCls} /></div>
+                        <div className="space-y-2"><label className={labelCls}>GST Rate (%)</label><input type="number" step="any" value={formData.gstRate} onChange={(e) => setFormData({ ...formData, gstRate: e.target.value })} className={inputCls} /></div>
+                      </div>
+
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="space-y-2"><label className={labelCls}>Seller B2B Price (₹)</label><input type="number" value={formData.sellerB2bPrice} onChange={(e) => setFormData({ ...formData, sellerB2bPrice: e.target.value, b2bPrice: Math.round(Number(e.target.value) * (1 + (Number(formData.b2bAdminCommission) || 0) / 100)) || '' })} className={inputCls} /></div>
+                        <div className="space-y-2"><label className={labelCls}>B2B Commission (%)</label><input type="number" step="any" value={formData.b2bAdminCommission} onChange={(e) => setFormData({ ...formData, b2bAdminCommission: e.target.value, b2bPrice: Math.round(Number(formData.sellerB2bPrice) * (1 + (Number(e.target.value) || 0) / 100)) || '' })} className={inputCls} /></div>
+                        <div className="space-y-2"><label className={labelCls}>Final B2B Price (₹)</label><input type="number" value={formData.b2bPrice} readOnly title="Calculated from Seller B2B Price and commission" className={inputCls + ' opacity-70'} /></div>
+                        <div className="space-y-2"><label className={labelCls}>B2B Min Qty</label><input type="number" value={formData.b2bMinQty} onChange={(e) => setFormData({ ...formData, b2bMinQty: e.target.value })} className={inputCls} /></div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="space-y-2">
+                          <label className={labelCls}>Stock Status</label>
+                          <select value={formData.stock} onChange={(e) => setFormData({ ...formData, stock: e.target.value })} className={inputCls}>
+                            {['in_stock', 'limited_stock', 'made_to_order', 'pre_order', 'available_on_request', 'out_of_stock'].map(v => <option key={v} value={v}>{v.replace(/_/g, ' ')}</option>)}
+                          </select>
+                        </div>
+                        <div className="space-y-2">
+                          <label className={labelCls}>Room Type</label>
+                          <select value={formData.roomType} onChange={(e) => setFormData({ ...formData, roomType: e.target.value })} className={inputCls}>
+                            <option value="">Not specified</option>
+                            {['living', 'bedroom', 'bathroom', 'kitchen', 'office', 'dining', 'outdoor'].map(v => <option key={v} value={v}>{v}</option>)}
+                          </select>
+                        </div>
+                        <div className="space-y-2">
+                          <label className={labelCls}>Grade</label>
+                          <select value={spec.grade || 'residential'} onChange={(e) => setSpec('grade', e.target.value)} className={inputCls}>
+                            {['residential', 'commercial', 'industrial'].map(v => <option key={v} value={v}>{v}</option>)}
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        {[['finish', 'Finish'], ['pattern', 'Pattern'], ['warranty', 'Warranty'], ['model', 'Model / Series'], ['fireRating', 'Fire Rating'], ['waterproofRating', 'Waterproof Rating'], ['maintenanceRequirements', 'Maintenance'], ['size', 'Size'], ['sku', 'Spec SKU'], ['Brand', 'Spec Brand'], ['installationCost', 'Installation Cost (₹)']].map(([key, label]) => (
+                          <div key={key} className="space-y-2"><label className={labelCls}>{label}</label><input type="text" value={spec[key] || ''} onChange={(e) => setSpec(key, e.target.value)} className={inputCls} /></div>
+                        ))}
+                      </div>
+
+                      <div className="flex flex-wrap gap-x-6 gap-y-3">
+                        <Toggle label="Waterproof" checked={spec.waterproof} onChange={(v) => setSpec('waterproof', v)} />
+                        <Toggle label="Fire proof" checked={spec.fireProof} onChange={(v) => setSpec('fireProof', v)} />
+                        <Toggle label="Anti-slip" checked={spec.antiSlip} onChange={(v) => setSpec('antiSlip', v)} />
+                        <Toggle label="Dust proof" checked={spec.dustProof} onChange={(v) => setSpec('dustProof', v)} />
+                        <Toggle label="Eco friendly" checked={spec.ecoFriendly} onChange={(v) => setSpec('ecoFriendly', v)} />
+                        <Toggle label="Sustainable material" checked={spec.sustainableMaterial} onChange={(v) => setSpec('sustainableMaterial', v)} />
+                        <Toggle label="Needs professional installation" checked={spec.requiresProfessionalInstallation} onChange={(v) => setSpec('requiresProfessionalInstallation', v)} />
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className={labelCls}>Suitable for projects</label>
+                        <div className="flex flex-wrap gap-x-5 gap-y-2">
+                          {APPLICATIONS.map(app => (
+                            <Toggle
+                              key={app}
+                              label={app}
+                              checked={formData.projectApplication.includes(app)}
+                              onChange={(v) => setFormData(prev => ({ ...prev, projectApplication: v ? [...prev.projectApplication, app] : prev.projectApplication.filter(a => a !== app) }))}
+                            />
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+                        <Toggle label="Active (visible to customers)" checked={formData.isActive} onChange={(v) => setFormData({ ...formData, isActive: v })} />
+                        <Toggle label="Cash on delivery allowed" checked={formData.isCodAllowed} onChange={(v) => setFormData({ ...formData, isCodAllowed: v })} />
+                        <Toggle label="Professional grade" checked={formData.professionalGrade} onChange={(v) => setFormData({ ...formData, professionalGrade: v })} />
+                        <Toggle label="Samples available" checked={formData.sampleAvailable} onChange={(v) => setFormData({ ...formData, sampleAvailable: v })} />
+                        {formData.sampleAvailable && (
+                          <div className="flex items-center gap-2">
+                            <span className={labelCls}>Sample charge (₹)</span>
+                            <input type="number" min="0" value={formData.sampleCharge} onChange={(e) => setFormData({ ...formData, sampleCharge: e.target.value })} className={inputCls + ' w-28'} />
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="space-y-4 pt-4 border-t border-soft-oatmeal/30">
+                        <h3 className="text-xs font-black text-warm-sand uppercase tracking-widest">SEO</h3>
+                        <div className="space-y-2">
+                          <label className={labelCls}>Meta title <span className="normal-case font-medium">({(formData.metaTitle || '').length}/70)</span></label>
+                          <input type="text" maxLength={70} value={formData.metaTitle} onChange={(e) => setFormData({ ...formData, metaTitle: e.target.value })} className={inputCls} />
+                        </div>
+                        <div className="space-y-2">
+                          <label className={labelCls}>Meta description <span className="normal-case font-medium">({(formData.metaDescription || '').length}/170)</span></label>
+                          <textarea rows={2} maxLength={170} value={formData.metaDescription} onChange={(e) => setFormData({ ...formData, metaDescription: e.target.value })} className={inputCls + ' resize-none'} />
+                        </div>
+                        <div className="space-y-2">
+                          <label className={labelCls}>SEO keywords (comma separated)</label>
+                          <textarea rows={2} value={formData.seoKeywordsText} onChange={(e) => setFormData({ ...formData, seoKeywordsText: e.target.value })} className={inputCls + ' resize-none'} />
+                        </div>
+                        <div className="space-y-2">
+                          <label className={labelCls}>Tags (comma separated)</label>
+                          <textarea rows={2} value={formData.tagsText} onChange={(e) => setFormData({ ...formData, tagsText: e.target.value })} className={inputCls + ' resize-none'} />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* Dimensions: Length x Width/Depth x Height */}
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest">Dimensions (L × W/D × H)</label>
+                  <DimensionsInput
+                    value={formData.dimensions}
+                    onChange={(v) => setFormData(prev => ({ ...prev, dimensions: v }))}
+                    categoryText={`${formData.name || ''} ${formData.category || ''} ${formData.subcategory || ''}`}
+                  />
+                </div>
+
+                {/* Specifications & Variants (colour, size, etc.) */}
+                <ProductVariantsEditor formData={formData} setFormData={setFormData} categories={categories} />
 
                 {/* Delivery & Payment Options */}
                 <div className="space-y-6 pt-6 border-t border-soft-oatmeal/50">
                   <DeliveryOptionsForm formData={formData} handleFieldChange={(field, value) => setFormData({...formData, [field]: value})} />
                   <PaymentOptionsForm formData={formData} handleFieldChange={(field, value) => setFormData({...formData, [field]: value})} />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest">Short description <span className="normal-case font-medium">({(formData.shortDescription || '').length}/300)</span></label>
+                  <textarea rows={2} maxLength={300} value={formData.shortDescription} onChange={(e) => setFormData({...formData, shortDescription: e.target.value})} className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none resize-none" />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest">Approval status</label>
+                    <select value={formData.approvalStatus} onChange={(e) => setFormData({...formData, approvalStatus: e.target.value})} className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none">
+                      <option value="pending">Pending</option>
+                      <option value="approved">Approved</option>
+                      <option value="rejected">Rejected</option>
+                    </select>
+                  </div>
+                  {formData.approvalStatus === 'rejected' && (
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest">Rejection reason</label>
+                      <input type="text" value={formData.rejectionReason} onChange={(e) => setFormData({...formData, rejectionReason: e.target.value})} className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none" />
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-2">

@@ -1,6 +1,22 @@
 const Cart = require('../models/Cart');
 const Product = require('../models/Product');
 
+const sameLine = (item, productId, variantId) =>
+  item.product.toString() === String(productId) &&
+  String(item.variantId || '') === String(variantId || '');
+
+// Returns { variant, stock, error } for a product/variant pair. Products with
+// variants must be added with a valid variantId; others must not carry one.
+const resolveStock = (product, variantId) => {
+  if (product.variants && product.variants.length > 0) {
+    if (!variantId) return { error: 'Please select a variant.' };
+    const variant = product.variants.id(variantId);
+    if (!variant) return { error: 'Selected variant is no longer available.' };
+    return { variant, stock: variant.countInStock };
+  }
+  return { variant: null, stock: product.countInStock };
+};
+
 // @desc    Get current user's cart
 // @route   GET /api/cart
 // @access  Private
@@ -26,6 +42,7 @@ exports.getCart = async (req, res) => {
 // @access  Private
 exports.addToCart = async (req, res) => {
   const { productId, quantity } = req.body;
+  const variantId = req.body.variantId || null;
   const requestedQuantity = quantity || 1;
 
   try {
@@ -34,38 +51,43 @@ exports.addToCart = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Product not found' });
     }
 
+    const { stock, error } = resolveStock(product, variantId);
+    if (error) {
+      return res.status(400).json({ success: false, message: error });
+    }
+
     let cart = await Cart.findOne({ user: req.user.id });
 
     // Validate Stock
     let currentCartQuantity = 0;
     if (cart) {
-      const existingItem = cart.items.find(item => item.product.toString() === productId);
+      const existingItem = cart.items.find(item => sameLine(item, productId, variantId));
       if (existingItem) {
         currentCartQuantity = existingItem.quantity;
       }
     }
 
-    if (product.countInStock < (currentCartQuantity + requestedQuantity)) {
-      return res.status(400).json({ 
-        success: false, 
-        message: `Only ${product.countInStock} items available in stock.` 
+    if (stock < (currentCartQuantity + requestedQuantity)) {
+      return res.status(400).json({
+        success: false,
+        message: `Only ${stock} items available in stock.`
       });
     }
 
     if (!cart) {
       cart = await Cart.create({
         user: req.user.id,
-        items: [{ product: productId, quantity: requestedQuantity }]
+        items: [{ product: productId, variantId, quantity: requestedQuantity }]
       });
     } else {
-      const itemIndex = cart.items.findIndex(item => item.product.toString() === productId);
+      const itemIndex = cart.items.findIndex(item => sameLine(item, productId, variantId));
 
       if (itemIndex > -1) {
-        // Product already exists in cart, update quantity
+        // Same product + variant already in cart, update quantity
         cart.items[itemIndex].quantity += requestedQuantity;
       } else {
-        // Product not in cart, add new item
-        cart.items.push({ product: productId, quantity: requestedQuantity });
+        // Not in cart, add new line
+        cart.items.push({ product: productId, variantId, quantity: requestedQuantity });
       }
       await cart.save();
     }
@@ -87,6 +109,7 @@ exports.addToCart = async (req, res) => {
 exports.updateQuantity = async (req, res) => {
   const { quantity } = req.body;
   const { productId } = req.params;
+  const variantId = req.query.variantId || req.body.variantId || null;
 
   try {
     let cart = await Cart.findOne({ user: req.user.id });
@@ -94,7 +117,7 @@ exports.updateQuantity = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Cart not found' });
     }
 
-    const itemIndex = cart.items.findIndex(item => item.product.toString() === productId);
+    const itemIndex = cart.items.findIndex(item => sameLine(item, productId, variantId));
 
     if (itemIndex === -1) {
       return res.status(404).json({ success: false, message: 'Item not found in cart' });
@@ -102,11 +125,17 @@ exports.updateQuantity = async (req, res) => {
 
     if (quantity > 0) {
       const product = await Product.findById(productId);
-      if (product && product.countInStock < quantity) {
-        return res.status(400).json({ 
-          success: false, 
-          message: `Only ${product.countInStock} items available in stock.` 
-        });
+      if (product) {
+        const { stock, error } = resolveStock(product, variantId);
+        if (error) {
+          return res.status(400).json({ success: false, message: error });
+        }
+        if (stock < quantity) {
+          return res.status(400).json({
+            success: false,
+            message: `Only ${stock} items available in stock.`
+          });
+        }
       }
     }
 
@@ -133,6 +162,7 @@ exports.updateQuantity = async (req, res) => {
 // @access  Private
 exports.removeFromCart = async (req, res) => {
   const { productId } = req.params;
+  const variantId = req.query.variantId || null;
 
   try {
     let cart = await Cart.findOne({ user: req.user.id });
@@ -140,7 +170,7 @@ exports.removeFromCart = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Cart not found' });
     }
 
-    cart.items = cart.items.filter(item => item.product.toString() !== productId);
+    cart.items = cart.items.filter(item => !sameLine(item, productId, variantId));
     await cart.save();
     cart = await Cart.findById(cart._id).populate('items.product');
 

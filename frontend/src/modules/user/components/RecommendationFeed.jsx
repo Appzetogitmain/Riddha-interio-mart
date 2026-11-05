@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, TrendingUp, Compass, Flame, ArrowRight, RefreshCw } from 'lucide-react';
+import { Sparkles, TrendingUp, Compass, Flame, ArrowRight, ArrowLeft, RefreshCw } from 'lucide-react';
 import RecommendationCard from './RecommendationCard';
 import RecommendationExplanationModal from './RecommendationExplanationModal';
 import api from '../../../shared/utils/api';
@@ -16,32 +16,47 @@ const RecommendationFeed = () => {
   const carouselRef = useRef(null);
 
   useEffect(() => {
-    fetchRecommendations();
     fetchTrending();
   }, []);
 
+  // Refetch whenever the tab changes, using the NEW tab (not the stale one)
+  useEffect(() => {
+    fetchRecommendations(activeTab);
+    carouselRef.current?.scrollTo({ left: 0 });
+  }, [activeTab]);
+
   // Auto-slide the recommendations carousel
+  const pausedUntil = useRef(0);
+
+  const scrollByCard = (dir) => {
+    const el = carouselRef.current;
+    if (!el) return;
+    const card = el.querySelector('[data-rec-card]');
+    const amount = card ? card.offsetWidth + 24 : el.clientWidth * 0.8;
+    const atEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 4;
+    if (dir > 0 && atEnd) el.scrollTo({ left: 0, behavior: 'smooth' });
+    else if (dir < 0 && el.scrollLeft <= 4) el.scrollTo({ left: el.scrollWidth, behavior: 'smooth' });
+    else el.scrollBy({ left: dir * amount, behavior: 'smooth' });
+  };
+
+  const manualScroll = (dir) => {
+    pausedUntil.current = Date.now() + 8000; // let the user browse before auto-scroll resumes
+    scrollByCard(dir);
+  };
+
   useEffect(() => {
     if (recommendations.length <= 2) return;
     const timer = setInterval(() => {
-      const el = carouselRef.current;
-      if (!el) return;
-      const card = el.querySelector('[data-rec-card]');
-      const amount = card ? card.offsetWidth + 24 : el.clientWidth * 0.8;
-      const atEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 4;
-      if (atEnd) {
-        el.scrollTo({ left: 0, behavior: 'smooth' });
-      } else {
-        el.scrollBy({ left: amount, behavior: 'smooth' });
-      }
+      if (Date.now() < pausedUntil.current) return;
+      scrollByCard(1);
     }, 4000);
     return () => clearInterval(timer);
   }, [recommendations.length]);
 
-  const fetchRecommendations = async () => {
+  const fetchRecommendations = async (tab = activeTab) => {
     try {
       setLoading(true);
-      const res = await api.get('/recommendations/for-user', { params: { limit: 12, type: activeTab } });
+      const res = await api.get('/recommendations/for-user', { params: { limit: 12, type: tab } });
       setRecommendations(res.data?.data?.recommendations || []);
     } catch (err) {
       setRecommendations([]);
@@ -65,8 +80,8 @@ const RecommendationFeed = () => {
   const handleRefresh = async () => {
     try {
       setLoading(true);
-      const res = await api.post('/recommendations/regenerate', { context: 'homepage' });
-      setRecommendations(res.data?.data?.recommendations || []);
+      await api.post('/recommendations/regenerate', { context: 'homepage' }).catch(() => {});
+      await fetchRecommendations(activeTab);
     } catch (err) {
     } finally {
       setLoading(false);
@@ -121,7 +136,7 @@ const RecommendationFeed = () => {
             return (
               <button
                 key={tab.id}
-                onClick={() => { setActiveTab(tab.id); fetchRecommendations(); }}
+                onClick={() => setActiveTab(tab.id)}
                 className={`relative px-4 py-2.5 rounded-xl text-xs font-black flex items-center gap-2 whitespace-nowrap transition-all duration-300 active:scale-95 ${
                   isActive
                     ? 'text-white'
@@ -158,8 +173,27 @@ const RecommendationFeed = () => {
             </p>
           </div>
         ) : (
+          <div className="relative">
+          <button
+            type="button"
+            aria-label="Previous"
+            onClick={() => manualScroll(-1)}
+            className="absolute left-1 sm:-left-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white border border-gray-200 shadow-lg flex items-center justify-center text-gray-800 hover:bg-[#189D91] hover:text-white transition-all active:scale-95"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </button>
+          <button
+            type="button"
+            aria-label="Next"
+            onClick={() => manualScroll(1)}
+            className="absolute right-1 sm:-right-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white border border-gray-200 shadow-lg flex items-center justify-center text-gray-800 hover:bg-[#189D91] hover:text-white transition-all active:scale-95"
+          >
+            <ArrowRight className="w-4 h-4" />
+          </button>
           <div
             ref={carouselRef}
+            onTouchStart={() => { pausedUntil.current = Date.now() + 8000; }}
+            onWheel={() => { pausedUntil.current = Date.now() + 8000; }}
             className="flex gap-6 overflow-x-auto no-scrollbar scroll-smooth snap-x snap-mandatory pb-2"
           >
             {recommendations.map(item => (
@@ -170,6 +204,7 @@ const RecommendationFeed = () => {
                 />
               </div>
             ))}
+          </div>
           </div>
         )}
 

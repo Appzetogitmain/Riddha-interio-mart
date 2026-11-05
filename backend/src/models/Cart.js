@@ -14,6 +14,11 @@ const CartSchema = new mongoose.Schema({
         ref: 'Product',
         required: true
       },
+      // Set only for products that have variants (e.g. colour); null otherwise
+      variantId: {
+        type: mongoose.Schema.ObjectId,
+        default: null
+      },
       quantity: {
         type: Number,
         required: true,

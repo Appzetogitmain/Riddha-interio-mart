@@ -192,6 +192,9 @@ All ${targetCount} prompts MUST preserve the original product's exact identity:
 - Exactly the same color palette, hues, and pattern
 - Exactly the same material (e.g. specific wood grain, fabric weave/texture, marble veining, metal polish)
 - Exactly the same hardware, handles, legs, joints, seams, or buttons
+- Exactly the same NUMBER OF SEATS / units / drawers / doors / shelves / legs (a 3-seater sofa must never become a 2-seater or 1-seater; a 4-seater table must stay 4-seater)
+- Exactly the same overall dimensions and width-to-height-to-depth proportions, armrests, backrest, cushions and base
+- Only the camera angle, viewpoint, lighting, background or staging may change. The product itself must NEVER change.
 - Every prompt must explicitly state: "Showing the exact same product as reference with identical design, color, materials and form"`;
 
   const userPrompt = `Carefully examine this uploaded original product image.
@@ -204,6 +207,7 @@ Product context:
 ${customPrompt ? `- Custom vendor instructions: ${customPrompt}` : ''}
 
 Analyze the product:
+0. Write "structuralSpec": one precise sentence that locks the product's physical identity, e.g. "3-seater sofa, three seat cushions and three back cushions, two low rolled armrests, four tapered wooden legs, width about 2.3x depth". Count seats/cushions/legs carefully from the image. This sentence will be repeated verbatim in every prompt.
 1. Identify product type: is it Furniture (e.g. chair, table, sofa, bed, storage) or another interior category (Tiles/Flooring, Sanitaryware, Lighting, Kitchen, Hardware, Decor)?
 2. Note the exact geometry, materials, color finish, and distinctive craft details.
 
@@ -223,6 +227,7 @@ Generate 10 distinct, category-appropriate commercial views (such as full flat-l
 
 Return STRICT JSON:
 {
+  "structuralSpec": "exact seat count / structure sentence",
   "categoryIdentified": "${isFurniture ? 'Furniture' : 'General'}",
   "visualSummary": "brief visual description",
   "prompts": [
@@ -245,11 +250,142 @@ Return STRICT JSON:
     const rawText = response.text;
     if (!rawText) return [];
     const parsed = JSON.parse(rawText.replace(/\`\`\`json/g, '').replace(/\`\`\`/g, '').trim());
-    return Array.isArray(parsed.prompts) ? parsed.prompts : [];
+    const structuralSpec = typeof parsed.structuralSpec === 'string' ? parsed.structuralSpec.trim() : '';
+    const prompts = Array.isArray(parsed.prompts) ? parsed.prompts : [];
+    return { prompts, structuralSpec };
   } catch (err) {
     console.error('[ImageGen] Failed to generate perspective prompts from original image:', err);
-    return [];
+    return { prompts: [], structuralSpec: '' };
   }
+};
+
+// Wraps a scene prompt so the image model edits the reference photo instead of re-imagining the product.
+const buildIdentityLockedPrompt = (scenePrompt, structuralSpec) =>
+  `Use the provided reference photo as the exact product. Keep the product 100% identical: ${structuralSpec || 'same product type, same number of seats/units, same proportions'}. ` +
+  `Do NOT change the number of seats, size, proportions, armrests, backrest, cushions, legs, material, stitching or colour. ` +
+  `Do NOT turn it into a different model or a smaller/larger variant (e.g. never a 2-seater instead of a 3-seater). ` +
+  `Change ONLY the camera angle, viewpoint, lighting, background and staging as follows: ${scenePrompt}`;
+
+// Accepts a data URL, an http(s) URL, or { base64, mimeType }; returns { buffer, mimeType } or null.
+const resolveImageBuffer = async (image) => {
+  try {
+    if (!image) return null;
+    if (typeof image === 'object') {
+      if (Buffer.isBuffer(image.buffer)) return { buffer: image.buffer, mimeType: image.mimeType || 'image/png' };
+      if (image.base64) return { buffer: Buffer.from(image.base64, 'base64'), mimeType: image.mimeType || 'image/png' };
+      return null;
+    }
+    const dataMatch = /^data:(image\/[\w.+-]+);base64,(.+)$/s.exec(image);
+    if (dataMatch) return { buffer: Buffer.from(dataMatch[2], 'base64'), mimeType: dataMatch[1] };
+    if (/^https?:\/\//.test(image)) {
+      const res = await fetchImage(image, 15000);
+      if (!res || !res.ok) return null;
+      const mimeType = (res.headers.get('content-type') || 'image/png').split(';')[0].trim();
+      return { buffer: Buffer.from(await res.arrayBuffer()), mimeType };
+    }
+  } catch (err) {
+    console.warn('[ImageGen] Could not read original image:', err.message);
+  }
+  return null;
+};
+
+// Image-to-image generation anchored to the reference photo. Returns a CDN URL / data URL, or null.
+const generateFromReference = async (prompt, reference) => {
+  const result = await callOpenAIWithRetry(() =>
+    openaiClient.editImage(prompt, reference, { size: '1024x1024', quality: 'medium' })
+  );
+  if (!result || !result.base64) return null;
+  await OpenAIUsageTracker.trackUsage(
+    { inputTokens: result.inputTokens, outputTokens: result.outputTokens, totalTokens: result.totalTokens },
+    'product-image', null, '/api/products/generate-content', result.model
+  ).catch(() => {});
+  const uploaded = await uploadBufferToCloudinary(Buffer.from(result.base64, 'base64'));
+  return uploaded || result.dataUrl;
+};
+
+/**
+ * Generates the same product in several colours from one original photo.
+ * Only the colour changes; every structural detail is locked to the original.
+ * Returns [{ colour, image }] (image is null when generation failed for that colour).
+ */
+const generateColourVariantImages = async (originalImage, colours, { name } = {}) => {
+  const reference = await resolveImageBuffer(originalImage);
+  if (!reference) throw new Error('Could not read the original product image.');
+
+  // Lock the structure once from the original, then reuse it for every colour.
+  let structuralSpec = '';
+  try {
+    const response = await callOpenAIWithRetry(() =>
+      openaiClient.generateWithVision(
+        'Describe this product\'s exact physical structure in ONE sentence: product type, exact number of seats/units, cushions, armrests, legs, shape and proportions. Be precise about counts.',
+        originalImage,
+        { modelType: 'vision', temperature: 0.1, maxTokens: 120 }
+      )
+    );
+    structuralSpec = (response.text || '').trim();
+  } catch (err) {
+    console.warn('[ColourVariants] Structure analysis failed, continuing with generic lock:', err.message);
+  }
+
+  const results = [];
+  for (const colour of colours) {
+    const prompt =
+      `Use the provided reference photo as the exact product. Recolour ONLY the main upholstery/body of the product to ${colour}. ` +
+      `Everything else stays pixel-faithful to the reference: ${structuralSpec || 'same product type, same number of seats/units, same proportions'}. ` +
+      `Keep the same camera angle, framing, background, lighting, shadows, shape, size, proportions, seat count, armrests, backrest, cushions, legs, stitching and texture. ` +
+      `Do not redesign, resize, add or remove any part. Realistic ${colour} colour with natural fabric/material shading.` +
+      (name ? ` Product: ${name}.` : '');
+    let image = null;
+    try {
+      image = await generateFromReference(prompt, reference);
+    } catch (err) {
+      console.error(`[ColourVariants] ${colour} failed:`, err.message);
+    }
+    results.push({ colour, image });
+  }
+  return results;
+};
+
+// =============================================================================
+// Dimensions: always Length x Width/Depth x Height, never partial for 3-D furniture
+// =============================================================================
+const THREE_D_KEYWORDS = [
+  'table', 'wardrobe', 'almirah', 'bed', 'cabinet', 'sofa', 'couch', 'chair', 'desk', 'shelf',
+  'bookcase', 'dresser', 'sideboard', 'tv unit', 'stool', 'bench', 'furniture', 'cupboard',
+  'drawer', 'ottoman', 'recliner', 'shoe rack',
+];
+
+const cleanNumber = (v) => {
+  const m = String(v ?? '').replace(/,/g, '').match(/\d+(\.\d+)?/);
+  return m ? m[0] : '';
+};
+
+/**
+ * Normalises the AI "dimensions" object.
+ *  - accepts depth as an alias of width, and the legacy { height, width } shape
+ *  - for 3-D furniture, formatted is only produced when length, width and height are ALL known;
+ *    otherwise it is '' and needsManualEntry is true (values are never invented)
+ */
+const normalizeDimensions = (raw, contextText = '') => {
+  const d = raw && typeof raw === 'object' ? raw : {};
+  const length = cleanNumber(d.length);
+  const width = cleanNumber(d.width || d.depth);
+  const height = cleanNumber(d.height);
+  const thickness = typeof d.thickness === 'string' ? d.thickness.trim() : (d.thickness ? String(d.thickness) : '');
+  const unit = (String(d.unit || '').trim().toLowerCase()) || ((length || width || height) ? 'cm' : '');
+  const requiresThree = THREE_D_KEYWORDS.some(k => contextText.toLowerCase().includes(k));
+
+  let formatted = '';
+  let needsManualEntry = false;
+  if (requiresThree) {
+    if (length && width && height) formatted = `${length} × ${width} × ${height} ${unit}`.trim();
+    else needsManualEntry = true;
+  } else if (length && width) {
+    formatted = [length, width, height].filter(Boolean).join(' × ') + ` ${unit}`;
+    formatted = formatted.trim();
+  }
+
+  return { length, width, height, thickness, unit, formatted, requiresThreeDimensions: requiresThree, needsManualEntry };
 };
 
 // =============================================================================
@@ -292,7 +428,7 @@ Different product types have completely different relevant specifications. Do NO
 - Wires / cables: NO dimensions/thickness — instead use Size (Sq.mm), Core, Conductor, Insulation, Voltage Grade, Standard, Packing/Coil Length.
 - Drawer systems / channels / kitchen hardware / fittings: use a specific named measurement instead of generic "Dimensions" (e.g. "Drawer Side Height", "Channel Length", "Load Capacity") plus Make, Model/Series, Type, Application, Finish, Unit.
 - Tiles / marble / plywood / glass / sheets: DO use Dimensions AND Thickness (e.g. 600x600mm, 12mm).
-- Furniture: use Dimensions (LxWxH) and Material/Finish; Thickness only if relevant (e.g. tabletop).
+- Furniture (tables, dining tables, wardrobes, beds, cabinets, sofas, chairs, desks, shelves, etc.): ALWAYS three-dimensional. Use Length x Width/Depth x Height (in that exact order) plus Material/Finish; Thickness only if relevant (e.g. tabletop).
 Only output a field if it is something a genuine manufacturer datasheet for this exact product type would actually list.
 
 YOUR TASK — Return the following:
@@ -302,7 +438,13 @@ YOUR TASK — Return the following:
 4. **Brand Name**: If Brand (Current Selection) is provided and not 'None selected yet', return that exact brand name. If NO brand is currently selected (or is 'None selected yet'), infer or suggest a realistic, reputable brand name suitable for this exact product type and category (e.g., Andres, Hettich, Polycab, CenturyPly, Kajaria, Jaquar, Asian Paints, Godrej, Philips). Do not return generic words like 'Generic' or 'Unknown' or 'other' unless completely impossible to infer.
 5. **SEO Keywords**: Array of 5-8 high-traffic search terms.
 6. **Specifications**: Flat JSON of 6-10 technical attributes specific to THIS product type only (follow the CRITICAL RULE above). For example, a drawer system: {"Make": "Hettich", "Model/Series": "AvantTech YOU", "Drawer Side Height": "101 mm", "Type": "Full Extension / Soft Close", "Application": "Modular Kitchen / Wardrobe", "Finish": "Anthracite", "Unit": "Set Nos"}. A wire: {"Make": "Polycab", "Size": "1.5 Sq.mm", "Core": "Single Core", "Conductor": "99.97% Electrolytic Copper", "Insulation": "FR-PVC", "Voltage Grade": "1100V", "Standard": "IS 694"}. If a "Material" attribute is included, state the specific raw material (e.g. "Copper", "Teak Wood", "Ceramic") rather than vague adjectives like "Premium" or "First Quality".
-7. **Dimensions & Thickness**: ONLY populate if this product type genuinely has a standard length/width/height and/or thickness (per the CRITICAL RULE). Return a flat JSON object with "height", "width", "thickness", "unit" — leave ALL of them as empty strings "" if this product type does not use generic dimensions/thickness (e.g. lights, wires, switches). Never invent numbers you are not reasonably confident about.
+7. **Dimensions & Thickness**: ONLY populate if this product type genuinely has a standard size and/or thickness (per the CRITICAL RULE). Return a flat JSON object with "length", "width", "height", "thickness", "unit".
+   - First identify the exact product type (e.g. dining table, coffee table, wardrobe, bed, cabinet, tile).
+   - THREE-DIMENSIONAL products (any furniture such as tables, dining tables, wardrobes, beds, cabinets, sofas, chairs, desks, shelves): provide ALL THREE of "length", "width" (this is the Width/Depth) and "height". Never return only two of them.
+   - Flat products (tiles, sheets, glass, plywood): "length" and "width" (and "thickness"); leave "height" empty.
+   - Numbers only (no units inside the values); put the unit in "unit" (use "cm" for furniture, "mm" for tiles/sheets).
+   - Use real values from the SKU / datasheet / the current selection above when known. If you cannot determine a measurement with reasonable confidence, leave that field as an empty string "". NEVER invent or guess numbers; empty is correct when unsure.
+   - Leave everything empty for products that do not use generic dimensions (lights, wires, switches).
 8. **Image Prompts**: An array of ${imagePromptCount} highly descriptive, professional studio product photography prompts (each 20-30 words), one per distinct angle/shot so the listing has multiple real reference images — e.g. index 0: full product overall shot, index 1: close-up material/texture/detail shot, index 2: packaging/box or in-use/installed shot. Each prompt must describe exact material, color, finish, angle, professional studio lighting, and a clean minimalist backdrop.
 `;
 
@@ -319,8 +461,9 @@ YOUR TASK — Return the following:
   "seo_keywords": ["keyword1", "keyword2"],
   "specifications": { "Attribute1": "Value1" },
   "dimensions": {
-    "height": "...",
+    "length": "...",
     "width": "...",
+    "height": "...",
     "thickness": "...",
     "unit": "..."
   },
@@ -355,18 +498,20 @@ YOUR TASK — Return the following:
     if (!text) return null;
 
     const parsed = JSON.parse(text.replace(/```json/g, '').replace(/```/g, '').trim());
+    parsed.dimensions = normalizeDimensions(parsed.dimensions, `${name || ''} ${category || ''} ${subcategory || ''} ${subsubcategory || ''}`);
     const images = [];
 
     // ── Image Sourcing (only when vendor explicitly requests it) ────────────────
     if (generateImage) {
       const baseCacheKey = (sku || name || '').trim().toLowerCase();
       let prompts = [];
+      let referenceImage = null;
 
       // If an original product image was uploaded, analyze it with GPT-4o Vision to produce
       // identity-preserving multi-angle perspective prompts (up to targetCount, e.g. 10).
       if (originalImage) {
         console.log(`[ImageGen] Original product image supplied! Generating ${targetCount} identity-preserving perspective prompts...`);
-        prompts = await generateTenPerspectivePromptsFromImage(originalImage, {
+        const perspective = await generateTenPerspectivePromptsFromImage(originalImage, {
           name,
           category,
           subcategory,
@@ -375,7 +520,9 @@ YOUR TASK — Return the following:
           customPrompt,
           targetCount
         });
-        console.log(`[ImageGen] Generated ${prompts.length} perspective prompts from original image.`);
+        prompts = perspective.prompts.map(pr => buildIdentityLockedPrompt(pr, perspective.structuralSpec));
+        referenceImage = await resolveImageBuffer(originalImage);
+        console.log(`[ImageGen] Generated ${prompts.length} identity-locked prompts from original image (reference ${referenceImage ? 'loaded' : 'MISSING'}).`);
       } else {
         // 1) Real image search by product name + SKU (only when no original image was provided)
         const searchQuery = `${name || ''} ${sku || ''}`.trim();
@@ -426,6 +573,19 @@ YOUR TASK — Return the following:
       }
 
       for (let i = 0; i < prompts.length; i++) {
+        // With an original photo we edit THAT photo (image-to-image), so the product cannot drift.
+        // There is deliberately no text-to-image fallback here: a missing angle is better than a wrong product.
+        if (referenceImage) {
+          try {
+            const refUrl = await generateFromReference(prompts[i], referenceImage);
+            if (refUrl) images.push(refUrl);
+            else console.error(`[ImageGen] Reference-based image ${i} returned no data.`);
+          } catch (err) {
+            console.error(`[ImageGen] Reference-based image ${i} failed:`, err.message);
+          }
+          continue;
+        }
+
         const cacheKey = baseCacheKey ? `${baseCacheKey}::${i}` : '';
         if (cacheKey && imageCache.has(cacheKey)) {
           console.log(`[ImageGen] Serving image ${i} from cache for key: ${cacheKey}`);
@@ -674,4 +834,5 @@ module.exports = {
   generateHSNCode,
   generateProductContent,
   analyzeProductPhotoAndGenerate,
+  generateColourVariantImages,
 };

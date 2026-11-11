@@ -6,3 +6,5 @@ backend/temp_uploads/
 backend/debug_products.json
 backend/db_dump.json
 
+config.bat
+node_modules

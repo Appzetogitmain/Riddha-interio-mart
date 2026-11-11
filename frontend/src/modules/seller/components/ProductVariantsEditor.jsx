@@ -60,6 +60,20 @@ const ProductVariantsEditor = ({ formData, setFormData, categories }) => {
 
   const [uploadingIndex, setUploadingIndex] = useState(null);
 
+  // Categories without variant attributes still get a Colour column, so a seller can always
+  // create colour variants (the storefront shows one option per distinct value).
+  const categoryVariantAttributes = attributes.filter(a => a.isVariant);
+  const variantAttributes = categoryVariantAttributes.length > 0
+    ? categoryVariantAttributes
+    : [{ name: 'Colour', type: 'text', isVariant: true }];
+  const generalAttributesBase = attributes.filter(a => !a.isVariant);
+  const dynamicKeys = formData.dynamicAttributes ? Object.keys(formData.dynamicAttributes) : [];
+  const existingAttrNames = attributes.map(a => a.name);
+  const extraAttrs = dynamicKeys
+    .filter(key => !existingAttrNames.includes(key))
+    .map(key => ({ name: key, type: 'text', isVariant: false }));
+  const generalAttributes = [...generalAttributesBase, ...extraAttrs];
+
   const handleVariantImageUpload = async (index, fileList) => {
     const files = Array.from(fileList || []);
     if (files.length === 0) return;
@@ -179,20 +193,6 @@ const ProductVariantsEditor = ({ formData, setFormData, categories }) => {
       setNewAttrIsVariant(false);
     }
   };
-
-  // Categories without variant attributes still get a Colour column, so a seller can always
-  // create colour variants (the storefront shows one option per distinct value).
-  const categoryVariantAttributes = attributes.filter(a => a.isVariant);
-  const variantAttributes = categoryVariantAttributes.length > 0
-    ? categoryVariantAttributes
-    : [{ name: 'Colour', type: 'text', isVariant: true }];
-  const generalAttributesBase = attributes.filter(a => !a.isVariant);
-  const dynamicKeys = formData.dynamicAttributes ? Object.keys(formData.dynamicAttributes) : [];
-  const existingAttrNames = attributes.map(a => a.name);
-  const extraAttrs = dynamicKeys
-    .filter(key => !existingAttrNames.includes(key))
-    .map(key => ({ name: key, type: 'text', isVariant: false }));
-  const generalAttributes = [...generalAttributesBase, ...extraAttrs];
 
   return (
     <div className="space-y-6 bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mt-6">

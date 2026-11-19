@@ -38,18 +38,57 @@ class InventoryService {
     if (variantId) {
       // Variant stock is tracked per variant inside Product.variants
       const vId = new mongoose.Types.ObjectId(String(variantId));
+      // $expr is only allowed at the top level of a query (not inside $elemMatch), so the
+      // "enough available stock" check uses $filter, and the increment is a pipeline update.
+      const qty = Number(quantity);
       product = await Product.findOneAndUpdate(
         {
           _id: productId,
-          variants: {
-            $elemMatch: {
-              _id: vId,
-              $expr: { $gte: [{ $subtract: ['$$this.countInStock', { $ifNull: ['$$this.reservedStock', 0] }] }, quantity] }
-            }
+          $expr: {
+            $gt: [
+              {
+                $size: {
+                  $filter: {
+                    input: { $ifNull: ['$variants', []] },
+                    as: 'v',
+                    cond: {
+                      $and: [
+                        { $eq: ['$$v._id', vId] },
+                        {
+                          $gte: [
+                            { $subtract: [{ $ifNull: ['$$v.countInStock', 0] }, { $ifNull: ['$$v.reservedStock', 0] }] },
+                            qty
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                }
+              },
+              0
+            ]
           }
         },
-        { $inc: { 'variants.$[v].reservedStock': quantity } },
-        { new: true, session, arrayFilters: [{ 'v._id': vId }] }
+        [
+          {
+            $set: {
+              variants: {
+                $map: {
+                  input: '$variants',
+                  as: 'v',
+                  in: {
+                    $cond: [
+                      { $eq: ['$$v._id', vId] },
+                      { $mergeObjects: ['$$v', { reservedStock: { $add: [{ $ifNull: ['$$v.reservedStock', 0] }, qty] } }] },
+                      '$$v'
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        ],
+        { new: true, session, updatePipeline: true }
       );
     } else {
       product = await Product.findOneAndUpdate(

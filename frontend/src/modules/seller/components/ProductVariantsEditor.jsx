@@ -5,7 +5,8 @@ import { formatSpecLabel } from '../../../shared/utils/textFormat';
 
 const ProductVariantsEditor = ({ formData, setFormData, categories }) => {
   const [selectedCategory, setSelectedCategory] = useState(null);
-  
+  const [preview, setPreview] = useState(null); // { images, index }
+
   useEffect(() => {
     if (formData.category && categories.length > 0) {
       // formData.category could be name or ID. Let's find it.
@@ -63,9 +64,20 @@ const ProductVariantsEditor = ({ formData, setFormData, categories }) => {
   // Categories without variant attributes still get a Colour column, so a seller can always
   // create colour variants (the storefront shows one option per distinct value).
   const categoryVariantAttributes = attributes.filter(a => a.isVariant);
-  const variantAttributes = categoryVariantAttributes.length > 0
+  // Attribute names already saved on this product's variants (e.g. "Color", "Size") must
+  // always get a column, even if the category doesn't define them as variant attributes.
+  const savedVariantAttrNames = Array.from(new Set(
+    (formData.variants || []).flatMap(v => Object.keys(v.attributes || {}))
+  ));
+  const baseVariantAttributes = categoryVariantAttributes.length > 0
     ? categoryVariantAttributes
-    : [{ name: 'Colour', type: 'text', isVariant: true }];
+    : (savedVariantAttrNames.length > 0 ? [] : [{ name: 'Colour', type: 'text', isVariant: true }]);
+  const variantAttributes = [
+    ...baseVariantAttributes,
+    ...savedVariantAttrNames
+      .filter(n => !baseVariantAttributes.some(a => a.name === n))
+      .map(n => ({ name: n, type: 'text', isVariant: true })),
+  ];
   const generalAttributesBase = attributes.filter(a => !a.isVariant);
   const dynamicKeys = formData.dynamicAttributes ? Object.keys(formData.dynamicAttributes) : [];
   const existingAttrNames = attributes.map(a => a.name);
@@ -436,16 +448,27 @@ const ProductVariantsEditor = ({ formData, setFormData, categories }) => {
                           onChange={(e) => handleVariantChange(index, 'countInStock', e.target.value)}
                         />
                       </td>
-                      <td className="px-2 py-2">
-                        <label className="flex items-center gap-2 cursor-pointer">
-                          {variant.image ? (
-                            <span className="relative">
-                              <img src={variant.image} alt="" className="w-9 h-9 rounded-lg object-cover border border-gray-200" />
+                      <td className="px-2 py-2 min-w-[150px] whitespace-nowrap">
+                        <div className="flex items-center gap-2">
+                          {variant.image && (
+                            <button
+                              type="button"
+                              title="View image"
+                              onClick={() => setPreview({
+                                images: variant.images?.length ? variant.images : [variant.image],
+                                index: 0,
+                              })}
+                              className="relative shrink-0 group"
+                            >
+                              <img src={variant.image} alt="" className="w-12 h-12 rounded-lg object-cover border border-gray-200 group-hover:ring-2 group-hover:ring-[#189D91]" />
+                              <span className="absolute inset-0 rounded-lg bg-black/40 text-white text-[9px] font-bold flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">View</span>
                               {variant.images?.length > 1 && (
                                 <span className="absolute -top-1 -right-1 bg-[#189D91] text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">{variant.images.length}</span>
                               )}
-                            </span>
-                          ) : (
+                            </button>
+                          )}
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          {!variant.image && (
                             <span className="w-9 h-9 rounded-lg border border-dashed border-gray-300 flex items-center justify-center text-gray-400">
                               <ImagePlus className="w-4 h-4" />
                             </span>
@@ -461,6 +484,7 @@ const ProductVariantsEditor = ({ formData, setFormData, categories }) => {
                             onChange={(e) => handleVariantImageUpload(index, e.target.files)}
                           />
                         </label>
+                        </div>
                       </td>
                       <td className="px-2 py-2 text-center">
                         <button
@@ -481,6 +505,42 @@ const ProductVariantsEditor = ({ formData, setFormData, categories }) => {
             </div>
           )}
         </div>
+
+      {preview && (
+        <div
+          className="fixed inset-0 z-[100000] bg-black/80 flex items-center justify-center p-4"
+          onClick={() => setPreview(null)}
+        >
+          <div className="relative max-w-2xl w-full" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              onClick={() => setPreview(null)}
+              className="absolute -top-3 -right-3 z-10 w-8 h-8 rounded-full bg-white text-gray-700 font-bold shadow-lg"
+            >
+              ×
+            </button>
+            <img
+              src={preview.images[preview.index]}
+              alt=""
+              className="w-full max-h-[75vh] object-contain rounded-2xl bg-white"
+            />
+            {preview.images.length > 1 && (
+              <div className="flex justify-center gap-2 mt-3 flex-wrap">
+                {preview.images.map((img, i) => (
+                  <button
+                    type="button"
+                    key={i}
+                    onClick={() => setPreview({ ...preview, index: i })}
+                    className={`w-14 h-14 rounded-lg overflow-hidden border-2 ${i === preview.index ? 'border-[#189D91]' : 'border-transparent opacity-70'}`}
+                  >
+                    <img src={img} alt="" className="w-full h-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

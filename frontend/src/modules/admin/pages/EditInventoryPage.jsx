@@ -281,7 +281,7 @@ const EditInventoryPage = () => {
 
   return (
     <PageWrapper>
-      <div className="max-w-4xl mx-auto space-y-6 pb-12">
+      <div className="w-full max-w-[1500px] mx-auto space-y-4 pb-10">
         <div className="flex items-center justify-between">
           <button 
             onClick={() => navigate('/admin/inventory')}
@@ -292,11 +292,11 @@ const EditInventoryPage = () => {
           <h1 className="text-2xl font-display font-bold text-deep-espresso">Edit Product</h1>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
-            {/* Image Section */}
-            <div className="lg:col-span-1 space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div className="grid grid-cols-1 lg:grid-cols-[320px_minmax(0,1fr)] xl:grid-cols-[340px_minmax(0,1fr)] gap-5 items-start">
+
+            {/* Image Section: stays in view while the long form on the right scrolls */}
+            <div className="space-y-5 lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto lg:pr-1">
               <div className="bg-white rounded-3xl p-6 border border-soft-oatmeal shadow-sm h-fit space-y-6">
                 <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest block text-center">Product Media</label>
                 
@@ -457,8 +457,8 @@ const EditInventoryPage = () => {
             </div>
 
             {/* Form Section */}
-            <div className="lg:col-span-2 space-y-6">
-              <div className="bg-white rounded-3xl p-8 border border-soft-oatmeal shadow-sm space-y-6">
+            <div className="min-w-0 space-y-5">
+              <div className="bg-white rounded-3xl p-6 border border-soft-oatmeal shadow-sm space-y-5">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest flex items-center gap-2">

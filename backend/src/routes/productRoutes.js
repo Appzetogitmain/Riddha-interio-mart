@@ -14,6 +14,7 @@ const {
   generateProductContentHandler,
   generateColourVariantsHandler,
   analyzeProductPhotoHandler,
+  generateSellerAiImagesHandler,
   smartSearch
 } = require('../controllers/productController');
 const { protect, authorize, tryProtect } = require('../middleware/auth');
@@ -34,6 +35,7 @@ router.post('/generate-hsn', protect, authorize('seller', 'admin'), generateHSNC
 router.post('/generate-content', protect, authorize('seller', 'admin'), generateProductContentHandler);
 router.post('/generate-colour-variants', protect, authorize('seller', 'admin'), generateColourVariantsHandler);
 router.post('/ai-scan-photo', protect, authorize('seller', 'admin'), analyzeProductPhotoHandler);
+router.post('/ai-generate-images', protect, authorize('seller', 'admin'), generateSellerAiImagesHandler);
 
 
 router.route('/')

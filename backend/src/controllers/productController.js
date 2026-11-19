@@ -1400,6 +1400,24 @@ exports.analyzeProductPhotoHandler = async (req, res, next) => {
   }
 };
 
+// @desc    Generate matching AI images from a seller's uploaded product photo
+// @route   POST /api/products/ai-generate-images
+// @access  Private/Admin or Seller
+exports.generateSellerAiImagesHandler = async (req, res) => {
+  try {
+    const { image, imageCount = 3, customInstructions = '' } = req.body;
+    if (!image) {
+      return res.status(400).json({ success: false, error: 'Please upload a product photo first.' });
+    }
+    const aiService = require('../services/aiService');
+    const images = await aiService.generateSellerAiImages(image, imageCount, customInstructions);
+    res.status(200).json({ success: true, data: { images } });
+  } catch (error) {
+    console.error('Seller AI Images Error:', error);
+    res.status(500).json({ success: false, error: 'AI image generation failed: ' + error.message });
+  }
+};
+
 // @desc    Get available filter options for the UI
 // @route   GET /api/products/filters/options
 // @access  Public

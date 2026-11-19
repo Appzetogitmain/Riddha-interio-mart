@@ -830,7 +830,47 @@ Output strictly valid JSON with no markdown backticks or commentary:
   }
 };
 
+/**
+ * Seller AI images: generates `count` extra photos of the SAME product from the
+ * seller's uploaded photo (image-to-image, identity locked).
+ * Returns [{ url, perspective }]. Throws if nothing could be generated.
+ */
+const generateSellerAiImages = async (originalImage, count = 3, customPrompt = '') => {
+  const reference = await resolveImageBuffer(originalImage);
+  if (!reference) throw new Error('Could not read the uploaded product photo.');
+
+  const targetCount = Math.min(Math.max(parseInt(count, 10) || 3, 1), 3);
+  const { prompts, structuralSpec } = await generateTenPerspectivePromptsFromImage(originalImage, {
+    customPrompt,
+    targetCount: 10,
+  });
+  if (!prompts || prompts.length === 0) throw new Error('Could not analyse the uploaded photo.');
+
+  // Pick evenly spaced, varied views (angle, detail, lifestyle) from the generated set.
+  const picks = [];
+  for (let i = 0; i < targetCount; i++) {
+    picks.push(prompts[Math.floor((i * prompts.length) / targetCount)]);
+  }
+
+  const results = [];
+  let lastError = null;
+  for (let i = 0; i < picks.length; i++) {
+    try {
+      const url = await generateFromReference(buildIdentityLockedPrompt(picks[i], structuralSpec), reference);
+      if (url) results.push({ url, perspective: `AI View ${i + 1}` });
+    } catch (err) {
+      lastError = err;
+      console.error(`[SellerAiImages] View ${i + 1} failed:`, err.message);
+    }
+  }
+  if (results.length === 0) {
+    throw new Error(lastError?.message || 'AI image generation returned no images.');
+  }
+  return results;
+};
+
 module.exports = {
+  generateSellerAiImages,
   generateHSNCode,
   generateProductContent,
   analyzeProductPhotoAndGenerate,

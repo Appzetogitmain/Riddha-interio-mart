@@ -138,7 +138,7 @@ class OpenAIServiceClient {
    * Get the image model used for generation and editing
    */
   getImageModel() {
-    return process.env.OPENAI_IMAGE_MODEL || 'gpt-image-1';
+    return process.env.OPENAI_IMAGE_MODEL || 'gpt-image-1.5';
   }
 
   /**

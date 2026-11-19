@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import api from "../../../shared/utils/api";
 import ProductVariantsEditor from "../components/ProductVariantsEditor";
+import SellerAIImageGenerator from "../components/SellerAIImageGenerator";
 import DimensionsInput from "../../../shared/components/DimensionsInput";
 import { dimensionsFromAi } from "../../../shared/utils/dimensions";
 import AIContentPanel from "../../../shared/components/AIContentPanel";
@@ -1698,6 +1699,33 @@ const AddProduct = () => {
                       hidden
                       ref={cameraInputRef}
                       onChange={handleCameraFileChange}
+                    />
+
+                    {/* AI Images: unlocks once the seller has uploaded at least one photo */}
+                    <SellerAIImageGenerator
+                      sourceImage={formData.images.find((img) => typeof img === "string" && img)}
+                      remainingSlots={10 - formData.images.length}
+                      onGenerated={(urls) => {
+                        urls.forEach((imgSrc, idx) => {
+                          if (imgSrc.startsWith("data:")) {
+                            fetch(imgSrc)
+                              .then((r) => r.blob())
+                              .then((blob) => {
+                                const mime = blob.type || "image/jpeg";
+                                const ext = mime.includes("png") ? ".png" : mime.includes("webp") ? ".webp" : ".jpg";
+                                setImgFiles((prev) => [
+                                  ...prev,
+                                  new File([blob], `ai_image_${Date.now()}_${idx}${ext}`, { type: mime }),
+                                ]);
+                              })
+                              .catch((e) => console.error("AI image to File failed:", e));
+                          }
+                        });
+                        setFormData((prev) => ({
+                          ...prev,
+                          images: [...prev.images, ...urls].slice(0, 10),
+                        }));
+                      }}
                     />
 
                     {/* Image required error */}

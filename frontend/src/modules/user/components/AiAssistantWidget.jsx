@@ -191,9 +191,30 @@ const getMsgExpression = (msg) => {
 
 
 const AiAssistantWidget = () => {
-  const { user } = useUser();
+  const { user: customerUser } = useUser();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Seller / delivery / admin sessions live in their own localStorage keys,
+  // not in the customer UserContext, so resolve the session per portal.
+  const user = useMemo(() => {
+    const path = location.pathname;
+    const key = path.startsWith('/seller') ? 'riddha_seller'
+      : path.startsWith('/delivery') ? 'riddha_delivery'
+      : path.startsWith('/admin') ? 'riddha_admin'
+      : null;
+    if (!key) return customerUser;
+    try {
+      const parsed = JSON.parse(localStorage.getItem(key) || 'null');
+      if (!parsed) return null;
+      const token = parsed.token || parsed.user?.token;
+      if (!token) return null;
+      return { ...(parsed.user || {}), ...parsed, token };
+    } catch {
+      return null;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname, customerUser]);
 
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([]);
@@ -908,7 +929,7 @@ const AiAssistantWidget = () => {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 30, scale: 0.95 }}
               transition={{ type: 'spring', damping: 25, stiffness: 350 }}
-              className="absolute bottom-[86px] right-0 w-[350px] sm:w-[400px] h-[520px] max-h-[calc(100vh-140px)] bg-white rounded-3xl shadow-2xl border border-gray-100 flex flex-col overflow-hidden"
+              className={`absolute bottom-[86px] right-0 w-[350px] sm:w-[400px] h-[520px] ${roleContext === 'user' ? 'max-h-[calc(100dvh-254px)] sm:max-h-[calc(100dvh-220px)] md:max-h-[calc(100dvh-200px)]' : 'max-h-[calc(100dvh-120px)]'} bg-white rounded-3xl shadow-2xl border border-gray-100 flex flex-col overflow-hidden`}
             >
               {/* Header with Avatar & Audio Controls */}
               <div className="bg-gradient-to-r from-[#0E544D] via-[#189D91] to-[#127F75] text-white px-4 py-3.5 flex items-center justify-between border-b border-white/10 shadow-md">

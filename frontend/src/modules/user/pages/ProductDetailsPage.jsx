@@ -78,9 +78,9 @@ const ProductDetailsPage = () => {
   const [bulkPrefill, setBulkPrefill] = useState(null);
 
   const variantImages = currentVariant?.images?.length ? currentVariant.images : (currentVariant?.image ? [currentVariant.image] : []);
+  // Default product images until a variant is chosen; then that variant's images.
   const allMedia = product ? [
-    ...variantImages,
-    ...(product.images || []).filter(img => !variantImages.includes(img)),
+    ...(variantImages.length > 0 ? variantImages : (product.images || [])),
     ...(product.videoUrl ? [{ type: 'video', url: product.videoUrl }] : [])
   ] : [];
 
@@ -185,12 +185,11 @@ const ProductDetailsPage = () => {
         }
         setProduct(found);
         
-        // Initialize variants if they exist
-        if (found.variants && found.variants.length > 0) {
-          const initialVariant = found.variants.find(v => v.countInStock > 0) || found.variants[0];
-          setSelectedVariantOptions(initialVariant.attributes || {});
-          setCurrentVariant(initialVariant);
-        }
+        // No variant is pre-selected: the default product images show first, and a
+        // variant's own images appear only after the customer picks that variant.
+        setSelectedVariantOptions({});
+        setCurrentVariant(null);
+        setActiveMediaIndex(0);
 
         // Add to recently viewed products
         try {
@@ -290,6 +289,13 @@ const ProductDetailsPage = () => {
   const toggleSection = (key) => setOpenSection(prev => prev === key ? null : key);
 
   const handleVariantSelect = (attrName, value) => {
+    // Clicking the already-selected option clears it and returns to the default images
+    if (selectedVariantOptions[attrName] === value) {
+      setSelectedVariantOptions({});
+      setCurrentVariant(null);
+      setActiveMediaIndex(0);
+      return;
+    }
     const newOptions = { ...selectedVariantOptions, [attrName]: value };
     setSelectedVariantOptions(newOptions);
     

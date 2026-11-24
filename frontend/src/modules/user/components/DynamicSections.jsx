@@ -4,7 +4,6 @@ import { motion as Motion } from 'framer-motion';
 import { LuChevronRight, LuLoader } from 'react-icons/lu';
 import api from '../../../shared/utils/api';
 import Banner from './Banner';
-import ZoomableImage from './ZoomableImage';
 
 const DEFAULT_PRODUCT_IMAGE =
   'https://images.unsplash.com/photo-1513519245088-0e12902e35ca?w=800&q=80';
@@ -52,10 +51,11 @@ const ProductTile = ({ product }) => {
     >
       {/* Product Image */}
       <div className="relative aspect-square overflow-hidden bg-stone-50">
-        <ZoomableImage
+        <img
           src={getProductImage(product)}
           alt={product?.name || 'Product'}
-          className="h-full w-full"
+          loading="lazy"
+          className="h-full w-full object-cover"
         />
         {hasDiscount && (
           <span className="pointer-events-none absolute top-2 left-2 bg-[#0F172A] text-amber-300 border border-amber-400/30 text-[8px] font-black px-2 py-0.5 rounded-md shadow-xs tracking-wider z-10">
@@ -130,15 +130,15 @@ const SECTION_THEMES = [
   },
   {
     name: 'blue',
-    gradient: 'linear-gradient(180deg, #DBEAFE 0%, #E8F2FF 50%, #D3E5FD 100%)',
-    borderColor: '#BAD6FC',
-    badgeBg: '#DBEAFE',
-    badgeText: '#1D4ED8',
-    badgeBorder: '#BFDBFE',
-    actionColor: '#2563EB',
-    actionBorder: '#BAD6FC',
-    pillActiveBg: '#2563EB',
-    pillInactiveBorder: '#BAD6FC',
+    gradient: 'linear-gradient(180deg, #E4F3F8 0%, #EEF8FB 50%, #DCEEF4 100%)',
+    borderColor: '#BFE0EA',
+    badgeBg: '#DDF0F6',
+    badgeText: '#2A7A92',
+    badgeBorder: '#BFE0EA',
+    actionColor: '#3A93AB',
+    actionBorder: '#BFE0EA',
+    pillActiveBg: '#3A93AB',
+    pillInactiveBorder: '#BFE0EA',
   },
   {
     name: 'lavender',

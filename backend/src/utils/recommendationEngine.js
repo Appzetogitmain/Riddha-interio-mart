@@ -3,6 +3,7 @@ const Category = require('../models/Category');
 const UserProfile = require('../models/UserProfile');
 const ProductAffinity = require('../models/ProductAffinity');
 const UserQuizResult = require('../models/UserQuizResult');
+const RecommendationPin = require('../models/RecommendationPin');
 
 const CARD_FIELDS = 'name price discountPrice images category subcategory brand tags roomType style color material averageRating totalReviews countInStock createdAt';
 
@@ -239,7 +240,7 @@ function diversify(items, limit) {
  * type: personalized | style | trending | cross-sell. Each ranks differently, and
  * `style` / `cross-sell` avoid repeating the top Picks For You where possible.
  */
-async function getPersonalizedForUser(userId, limit = 10, type = 'all') {
+async function getAlgorithmicForUser(userId, limit = 10, type = 'all') {
   if (type === 'trending') return getTrendingProducts(limit);
 
   let profile = null;
@@ -293,10 +294,45 @@ async function getPersonalizedForUser(userId, limit = 10, type = 'all') {
       .sort((a, b) => b.s - a.s)
       .map(({ p, s }) => toRec(p, Math.min(0.95, 0.6 + s * 0.1), 'Completes the look of items you viewed', 'cross-sell'));
     const fresh = looks.filter(r => !exclude.has(String(r.id)));
-    return diversify(fresh.length ? fresh : looks, limit);
+    const matched = fresh.length ? fresh : looks;
+    if (matched.length) return diversify(matched, limit);
+    // No browsing history yet (new visitor): show a varied top-rated mix instead of an empty tab
+    return diversify(picksRecs.map(r => ({ ...r, type: 'cross-sell', reason: 'Popular pairing for your home' })), limit);
   }
 
   return picksRecs.slice(0, limit);
+}
+
+const PIN_TABS = ['personalized', 'trending', 'cross-sell'];
+
+/**
+ * Public entry point: admin-pinned products for the tab come first (in the admin's order),
+ * then the algorithm fills the remaining slots.
+ */
+async function getPersonalizedForUser(userId, limit = 10, type = 'all') {
+  const tab = PIN_TABS.includes(type) ? type : (type === 'style' ? 'personalized' : 'personalized');
+  let pinned = [];
+  try {
+    const pins = await RecommendationPin.find({ tab }).sort({ order: 1, createdAt: 1 }).lean();
+    if (pins.length) {
+      const docs = await Product.find({ _id: { $in: pins.map(p => p.product) }, ...baseVisibilityFilter() })
+        .select(CARD_FIELDS)
+        .populate('category', 'name')
+        .lean();
+      const byId = new Map(docs.map(d => [String(d._id), d]));
+      pinned = pins
+        .map(p => byId.get(String(p.product)))
+        .filter(Boolean)
+        .map(d => formatRecommendation(d, 'Hand-picked by our team', 1, tab));
+    }
+  } catch (err) {
+    console.error('[RECOMMENDATION PINS ERROR]', err.message);
+  }
+
+  const algo = await getAlgorithmicForUser(userId, limit + pinned.length, type);
+  const seen = new Set(pinned.map(r => String(r.id)));
+  const rest = algo.filter(r => !seen.has(String(r.id)));
+  return [...pinned, ...rest].slice(0, Math.max(limit, pinned.length));
 }
 
 /**

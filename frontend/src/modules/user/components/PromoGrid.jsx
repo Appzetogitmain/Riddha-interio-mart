@@ -1,105 +1,96 @@
 import React from 'react';
-import { motion } from 'framer-motion';
-import { FiArrowRight } from 'react-icons/fi';
+import { motion, useReducedMotion } from 'framer-motion';
+import { FiArrowRight, FiCheckCircle } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 import api from '../../../shared/utils/api';
 
-// Asset Imports
-import ContractorImg from '../../../assets/3.png';
-import DesignerImg from '../../../assets/2 (2).png';
-import BuildingImg from '../../../assets/4.png';
-import GiftImg from '../../../assets/1 (2).png';
+// Fallback images (used only when a card has no image set in the admin panel)
+import ContractorImg from '../../../assets/promo-art-1.png';
+import DesignerImg from '../../../assets/promo-art-2.png';
+import BuildingImg from '../../../assets/promo-art-3.png';
+import GiftImg from '../../../assets/promo-art-4.png';
+
+// Old built-in default artwork saved by earlier seeds — replaced by the new artwork above
+const isLegacyDefaultImg = (url) => typeof url === 'string' && /riddha_mart\/images\/\d_png/.test(url);
+
+const NAVY = '#14213D';
 
 const CARD_THEMES = [
   {
-    // Contractor Benefits - Rich Mint / Teal
-    gradient: 'linear-gradient(135deg, #D2F5EE 0%, #E4FAF5 50%, #BEEFE4 100%)',
-    borderColor: '#5EEAD4',
-    titleColor: 'text-[#0D746B]',
-    textColor: '#0D746B',
-    badgeBg: '#B2EBE1',
-    badgeText: '#0D746B',
-    badgeBorder: '#5EEAD4',
-    btnColor: 'text-[#0D746B] border-[#5EEAD4] hover:bg-[#0D746B] hover:text-white',
+    // Teal
+    gradient: 'linear-gradient(135deg, #FFFFFF 0%, #E6F7F4 100%)',
+    accent: '#0F9488',
+    btnFilled: true,
     fallbackImg: ContractorImg,
   },
   {
-    // Interior Designer Zone - Rich Rose / Coral Pink
-    gradient: 'linear-gradient(135deg, #FFDEE5 0%, #FFEFF2 50%, #FFCAD6 100%)',
-    borderColor: '#FDA4AF',
-    titleColor: 'text-[#9F1239]',
-    textColor: '#9F1239',
-    badgeBg: '#FECDD6',
-    badgeText: '#9F1239',
-    badgeBorder: '#FDA4AF',
-    btnColor: 'text-[#9F1239] border-[#FDA4AF] hover:bg-[#9F1239] hover:text-white',
+    // Warm gold
+    gradient: 'linear-gradient(135deg, #FFFFFF 0%, #FEF3E2 100%)',
+    accent: '#D99A1E',
+    btnFilled: false,
     fallbackImg: DesignerImg,
   },
   {
-    // Builder Benefits - Rich Warm Gold / Amber
-    gradient: 'linear-gradient(135deg, #FDE68A 0%, #FEF3C7 50%, #FCD34D 100%)',
-    borderColor: '#F59E0B',
-    titleColor: 'text-[#B45309]',
-    textColor: '#B45309',
-    badgeBg: '#FDE68A',
-    badgeText: '#B45309',
-    badgeBorder: '#F59E0B',
-    btnColor: 'text-[#B45309] border-[#F59E0B] hover:bg-[#B45309] hover:text-white',
+    // Green / mint
+    gradient: 'linear-gradient(135deg, #FFFFFF 0%, #E3F6EE 100%)',
+    accent: '#0F9488',
+    btnFilled: false,
     fallbackImg: BuildingImg,
   },
   {
-    // Refer & Earn - Rich Royal Blue / Indigo (Clearly visible and high-contrast against lavender background)
-    gradient: 'linear-gradient(135deg, #DCE7FE 0%, #EDF3FE 50%, #C4D7FE 100%)',
-    borderColor: '#93B4FA',
-    titleColor: 'text-[#1E3A8A]',
-    textColor: '#1E3A8A',
-    badgeBg: '#BFD5FE',
-    badgeText: '#1E3A8A',
-    badgeBorder: '#93B4FA',
-    btnColor: 'text-[#1E3A8A] border-[#93B4FA] hover:bg-[#1E3A8A] hover:text-white',
+    // Blue
+    gradient: 'linear-gradient(135deg, #FFFFFF 0%, #E5EEFD 100%)',
+    accent: '#2F6FDE',
+    btnFilled: false,
     fallbackImg: GiftImg,
   },
 ];
 
 const PromoCard = ({ title, items, btnText, img, link, badge, index = 0 }) => {
   const theme = CARD_THEMES[index % CARD_THEMES.length];
-  const [imgSrc, setImgSrc] = React.useState(img || theme.fallbackImg);
+  const reduceMotion = useReducedMotion();
+  const [imgSrc, setImgSrc] = React.useState(img && !isLegacyDefaultImg(img) ? img : theme.fallbackImg);
 
   React.useEffect(() => {
-    setImgSrc(img || theme.fallbackImg);
+    setImgSrc(img && !isLegacyDefaultImg(img) ? img : theme.fallbackImg);
   }, [img, theme.fallbackImg]);
 
   return (
     <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-40px' }}
       whileHover={{ y: -4 }}
-      style={{
-        background: theme.gradient,
-        borderColor: theme.borderColor,
-      }}
-      className="rounded-[16px] md:rounded-[26px] p-3.5 md:p-6 flex items-center justify-between overflow-hidden relative group h-[126px] md:h-[210px] border shadow-sm hover:shadow-xl transition-all duration-300"
+      transition={{ duration: 0.45, delay: index * 0.1, ease: 'easeOut' }}
+      style={{ background: theme.gradient }}
+      className="group relative overflow-hidden rounded-[18px] md:rounded-[24px] border border-white shadow-[0_8px_24px_rgba(20,33,61,0.08)] hover:shadow-[0_14px_32px_rgba(20,33,61,0.14)] transition-shadow duration-300 h-[160px] md:h-[290px]"
     >
-      <div className="z-10 flex flex-col justify-between h-full max-w-[58%] md:max-w-[54%]">
-        <div className="flex-1">
+      {/* Text */}
+      <div className="relative z-10 flex h-full flex-col justify-between p-3.5 md:p-6 max-w-[62%]">
+        <div>
           {badge && (
             <span
-              style={{
-                backgroundColor: theme.badgeBg,
-                color: theme.badgeText,
-                borderColor: theme.badgeBorder,
-              }}
-              className="inline-block px-2 py-0.5 rounded-md text-[7px] md:text-[9px] font-black uppercase tracking-wider mb-1 border shadow-2xs"
+              className="inline-block mb-1 md:mb-2 text-[7px] md:text-[10px] font-bold uppercase tracking-wider"
+              style={{ color: theme.accent }}
             >
               {badge}
             </span>
           )}
-          <h3 className={`text-[12px] md:text-xl font-black mb-1 md:mb-1.5 leading-tight ${theme.titleColor}`}>
+          <h3
+            className="text-[14px] md:text-[26px] font-extrabold leading-[1.15]"
+            style={{ color: NAVY }}
+          >
             {title}
           </h3>
           {items && (
-            <ul className="space-y-0 md:space-y-1">
+            <ul className="mt-1.5 md:mt-3 space-y-0.5 md:space-y-1.5">
               {items.map((item, i) => (
-                <li key={i} className="text-slate-700 text-[8px] md:text-xs font-bold flex items-center gap-1 leading-tight">
-                  <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: theme.textColor }} /> {item}
+                <li
+                  key={i}
+                  className="flex items-center gap-1 md:gap-2 text-[8px] md:text-[13px] font-semibold text-slate-600 leading-tight"
+                >
+                  <FiCheckCircle className="shrink-0 text-[9px] md:text-[15px]" style={{ color: theme.accent }} />
+                  {item}
                 </li>
               ))}
             </ul>
@@ -107,26 +98,30 @@ const PromoCard = ({ title, items, btnText, img, link, badge, index = 0 }) => {
         </div>
 
         <Link
-          to={link || "#"}
-          className={`mt-auto mb-0.5 w-fit flex items-center gap-1.5 px-2.5 py-1 md:px-5 md:py-2 rounded-lg md:rounded-xl text-[8px] md:text-xs font-black bg-white border shadow-xs hover:shadow-md hover:scale-105 active:scale-95 transition-all whitespace-nowrap ${theme.btnColor}`}
+          to={link || '#'}
+          style={
+            theme.btnFilled
+              ? { backgroundColor: theme.accent, borderColor: theme.accent, color: '#fff' }
+              : { borderColor: theme.accent, color: theme.accent, backgroundColor: '#fff' }
+          }
+          className="w-fit flex items-center gap-1.5 rounded-full border px-3 py-1 md:px-6 md:py-2 text-[8px] md:text-[13px] font-bold whitespace-nowrap shadow-sm hover:shadow-md hover:brightness-95 active:scale-95 transition-all"
         >
-          {btnText} <FiArrowRight className="text-[8px] md:text-xs" />
+          {btnText} <FiArrowRight className="text-[9px] md:text-sm transition-transform duration-300 group-hover:translate-x-1" />
         </Link>
       </div>
 
-      <div className="absolute right-0 top-0 bottom-0 w-[42%] md:w-[46%] h-full flex items-end justify-end pointer-events-none overflow-hidden">
+      {/* Image */}
+      <div className="absolute right-0 bottom-0 top-0 w-[56%] pointer-events-none overflow-hidden" style={{ WebkitMaskImage: 'linear-gradient(to right, transparent 0%, #000 28%)', maskImage: 'linear-gradient(to right, transparent 0%, #000 28%)' }}>
+        {/* Slow, gentle float. The image is oversized (scale 1.05) so its edges never show while it moves */}
         <motion.img
           src={imgSrc}
           alt={title}
+          loading="lazy"
           onError={() => setImgSrc(theme.fallbackImg)}
-          animate={{ y: [0, -8, 0] }}
-          transition={{
-            duration: 3 + (index % 2),
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: index * 0.4
-          }}
-          className="w-full h-full object-cover md:object-contain transition-transform duration-500 origin-bottom-right group-hover:scale-108"
+          style={{ scale: 1.05 }}
+          animate={reduceMotion ? undefined : { y: [0, -7, 0] }}
+          transition={{ duration: 5 + (index % 2) * 0.8, repeat: Infinity, ease: 'easeInOut', delay: index * 0.5 }}
+          className="h-full w-full object-cover object-top"
         />
       </div>
     </motion.div>
@@ -135,60 +130,64 @@ const PromoCard = ({ title, items, btnText, img, link, badge, index = 0 }) => {
 
 const defaultPromos = [
   {
-    badge: "Trade Exclusive",
-    title: "Contractor Benefits",
-    items: ["Special Pricing", "Bulk Deals", "Priority Support"],
-    btnText: "Join Now",
+    title: 'Contractor Club',
+    items: ['Exclusive Prices', 'Bulk Deals', 'Priority Support'],
+    btnText: 'Join Now',
     img: ContractorImg,
-    link: "/contractor-registration"
+    link: '/contractor-registration',
   },
   {
-    badge: "Studio Pro",
-    title: "Interior Designer Zone",
-    items: ["Premium Materials", "For Your Projects"],
-    btnText: "Join Now",
+    title: 'Designer Studio',
+    items: ['Premium Materials', 'For Your Projects'],
+    btnText: 'Join Now',
     img: DesignerImg,
-    link: "/designer-registration"
+    link: '/designer-registration',
   },
   {
-    badge: "Bulk Projects",
-    title: "Builder Benefits",
-    items: ["Reliable Supplies", "At Best Prices"],
-    btnText: "Join Now",
+    title: 'Builder Advantage',
+    items: ['Reliable Supplies', 'At Better Prices'],
+    btnText: 'Join Now',
     img: BuildingImg,
-    link: "/builder-registration"
+    link: '/builder-registration',
   },
   {
-    badge: "Rewards Network",
-    title: "Refer & Earn",
-    items: ["Refer Your Friends", "& Earn Rewards"],
-    btnText: "Know More",
+    title: 'Refer & Earn',
+    items: ['Refer Your Friends', 'Earn Rewards'],
+    btnText: 'Know More',
     img: GiftImg,
-    link: "/referral"
-  }
+    link: '/referral',
+  },
 ];
+
+const defaultHeading = {
+  badge: 'Why Choose Riddha',
+  title: 'Exclusive Benefits',
+  highlight: 'for Our Community',
+  subtitle: 'Grow your business, get better deals and earn more with Riddha',
+};
 
 const PromoGrid = () => {
   const [promos, setPromos] = React.useState([]);
+  const [heading, setHeading] = React.useState(defaultHeading);
   const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
-    const fetchPromos = async () => {
-      try {
-        const res = await api.get('/promo-cards');
-        if (res.data?.success && res.data?.data?.length > 0) {
-          setPromos(res.data.data);
-        } else {
-          setPromos(defaultPromos);
-        }
-      } catch (err) {
-        console.error("Failed to fetch dynamic promos, using fallback");
+    const load = async () => {
+      const [cardsRes, headingRes] = await Promise.allSettled([
+        api.get('/promo-cards'),
+        api.get('/promo-cards/heading'),
+      ]);
+      if (cardsRes.status === 'fulfilled' && cardsRes.value.data?.data?.length > 0) {
+        setPromos(cardsRes.value.data.data);
+      } else {
         setPromos(defaultPromos);
-      } finally {
-        setLoading(false);
       }
+      if (headingRes.status === 'fulfilled' && headingRes.value.data?.data) {
+        setHeading({ ...defaultHeading, ...headingRes.value.data.data });
+      }
+      setLoading(false);
     };
-    fetchPromos();
+    load();
   }, []);
 
   if (loading) {
@@ -197,14 +196,37 @@ const PromoGrid = () => {
 
   return (
     <section
-      className="w-full py-8 md:py-12 border-y my-0"
-      style={{
-        background: 'linear-gradient(180deg, #F3E8FF 0%, #FAF5FF 50%, #ECE0FD 100%)',
-        borderColor: '#D8B4FE',
-      }}
+      className="relative w-full py-8 md:py-12 overflow-hidden"
+      style={{ background: 'linear-gradient(180deg, #EAF8F5 0%, #F5FBFA 55%, #E6F6F2 100%)' }}
     >
-      <div className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-12">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3">
+      <div className="relative max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-12">
+        {/* Heading */}
+        <motion.div
+          className="text-center mb-6 md:mb-9"
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+        >
+          {heading.badge && (
+            <div className="flex items-center justify-center gap-3 mb-3 md:mb-4">
+              <span className="hidden sm:block h-px w-16 md:w-28 bg-[#0F9488]/30" />
+              <span className="rounded-full border border-[#0F9488]/30 bg-white px-4 py-1 text-[11px] md:text-sm font-bold text-[#0F9488] shadow-sm">
+                {heading.badge}
+              </span>
+              <span className="hidden sm:block h-px w-16 md:w-28 bg-[#0F9488]/30" />
+            </div>
+          )}
+          <h2 className="text-xl md:text-4xl font-extrabold tracking-tight" style={{ color: NAVY }}>
+            {heading.title}{' '}
+            {heading.highlight && <span className="text-[#0F9488]">{heading.highlight}</span>}
+          </h2>
+          {heading.subtitle && (
+            <p className="mt-1.5 md:mt-3 text-[11px] md:text-base font-medium text-slate-500">{heading.subtitle}</p>
+          )}
+        </motion.div>
+
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5">
           {promos.map((promo, idx) => (
             <PromoCard key={promo._id || idx} index={idx} {...promo} />
           ))}

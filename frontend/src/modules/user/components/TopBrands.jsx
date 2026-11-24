@@ -48,15 +48,15 @@ const TopBrands = ({ title }) => {
     <section
       className="w-full py-8 md:py-14 border-y my-0"
       style={{
-        background: 'linear-gradient(180deg, #DBEAFE 0%, #E8F2FF 50%, #D3E5FD 100%)',
-        borderColor: '#BAD6FC',
+        background: 'linear-gradient(180deg, #E4F3F8 0%, #EEF8FB 50%, #DCEEF4 100%)',
+        borderColor: '#BFE0EA',
       }}
     >
       <div className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-12">
         {/* Section Header */}
         <div className="flex items-center justify-between mb-4 md:mb-6">
           <div>
-            <span className="inline-block px-3 py-0.5 rounded-full text-[9px] font-black uppercase tracking-[0.22em] bg-[#3B82F6]/10 border border-[#3B82F6]/25 text-[#1D4ED8] mb-1">
+            <span className="inline-block px-3 py-0.5 rounded-full text-[9px] font-black uppercase tracking-[0.22em] bg-[#3A93AB]/10 border border-[#3A93AB]/25 text-[#2A7A92] mb-1">
               Trusted Brands
             </span>
             <h2 className="text-xl md:text-2xl font-black text-gray-900 tracking-tight leading-tight">
@@ -70,7 +70,7 @@ const TopBrands = ({ title }) => {
           <div className="shrink-0 flex items-center gap-2">
             <Link
               to="/brands"
-              className="flex items-center gap-1 text-[11px] md:text-sm font-bold text-[#2563EB] hover:underline bg-white px-3.5 py-1.5 rounded-xl border border-[#BAD6FC] shadow-2xs shrink-0"
+              className="flex items-center gap-1 text-[11px] md:text-sm font-bold text-[#3A93AB] hover:underline bg-white px-3.5 py-1.5 rounded-xl border border-[#BFE0EA] shadow-2xs shrink-0"
             >
               View All <FiChevronRight size={14} />
             </Link>
@@ -82,7 +82,7 @@ const TopBrands = ({ title }) => {
                     if (el) el.scrollBy({ left: -el.clientWidth * 0.6, behavior: 'smooth' });
                   }}
                   aria-label="Previous brands"
-                  className="w-7 h-7 rounded-full border border-[#BAD6FC] bg-white hover:bg-[#2563EB] hover:border-[#2563EB] hover:text-white text-slate-600 flex items-center justify-center transition-all shadow-xs cursor-pointer active:scale-95"
+                  className="w-7 h-7 rounded-full border border-[#BFE0EA] bg-white hover:bg-[#3A93AB] hover:border-[#3A93AB] hover:text-white text-slate-600 flex items-center justify-center transition-all shadow-xs cursor-pointer active:scale-95"
                 >
                   <FiChevronLeft size={14} />
                 </button>
@@ -92,7 +92,7 @@ const TopBrands = ({ title }) => {
                     if (el) el.scrollBy({ left: el.clientWidth * 0.6, behavior: 'smooth' });
                   }}
                   aria-label="Next brands"
-                  className="w-7 h-7 rounded-full border border-[#BAD6FC] bg-white hover:bg-[#2563EB] hover:border-[#2563EB] hover:text-white text-slate-600 flex items-center justify-center transition-all shadow-xs cursor-pointer active:scale-95"
+                  className="w-7 h-7 rounded-full border border-[#BFE0EA] bg-white hover:bg-[#3A93AB] hover:border-[#3A93AB] hover:text-white text-slate-600 flex items-center justify-center transition-all shadow-xs cursor-pointer active:scale-95"
                 >
                   <FiChevronRight size={14} />
                 </button>
@@ -111,9 +111,9 @@ const TopBrands = ({ title }) => {
               key={brand._id}
               data-brand-card
               to={`/brand/${brand.slug || brand.name.toLowerCase().replace(/\s+/g, '-')}`}
-              className="group/brand relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-0 flex flex-col text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(37,99,235,0.12)] hover:border-[#2563EB]/30 shrink-0 snap-start w-36 sm:w-44 md:w-56"
+              className="group/brand relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-0 flex flex-col text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(58,147,171,0.12)] hover:border-[#3A93AB]/30 shrink-0 snap-start w-36 sm:w-44 md:w-56"
             >
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(37,99,235,0.06),transparent_55%)] opacity-0 group-hover/brand:opacity-100 transition-opacity z-10 pointer-events-none" />
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(58,147,171,0.06),transparent_55%)] opacity-0 group-hover/brand:opacity-100 transition-opacity z-10 pointer-events-none" />
 
               <div className="relative aspect-[4/3] w-full overflow-hidden bg-slate-100 border-b border-slate-100">
                 <img
@@ -130,7 +130,7 @@ const TopBrands = ({ title }) => {
                 <p className="text-[11px] md:text-sm font-bold text-slate-950 tracking-tight line-clamp-1">
                   {brand.name}
                 </p>
-                <p className="text-[9px] md:text-[11px] font-medium text-[#2563EB] line-clamp-1">
+                <p className="text-[9px] md:text-[11px] font-medium text-[#3A93AB] line-clamp-1">
                   {brand.offer || 'Premium collection'}
                 </p>
               </div>

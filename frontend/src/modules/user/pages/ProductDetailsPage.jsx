@@ -510,10 +510,28 @@ const ProductDetailsPage = () => {
             {/* Variants */}
             {product.variants?.length > 0 && Object.keys(variantAttributesMap).length > 0 && (
               <div className="mt-6 space-y-4 border-t border-gray-100 pt-5">
-                {Object.keys(variantAttributesMap).map(attrName => (
+                {Object.keys(variantAttributesMap).map((attrName, attrIdx) => (
                   <div key={attrName}>
                     <h4 className="text-[12px] font-bold text-gray-700 mb-2">{formatSpecLabel(attrName)}</h4>
                     <div className="flex flex-wrap gap-2">
+                      {attrIdx === 0 && (() => {
+                        const mainImg = product.images?.[0] || product.image;
+                        const isMain = !currentVariant;
+                        return (
+                          <button
+                            type="button"
+                            onClick={() => { setSelectedVariantOptions({}); setCurrentVariant(null); }}
+                            className={`flex items-center gap-2 text-xs font-semibold rounded-lg border transition-all ${mainImg ? 'p-1.5 pr-3' : 'px-4 py-2'} ${
+                              isMain
+                                ? 'border-[#189D91] bg-[#189D91]/10 text-[#189D91]'
+                                : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                            }`}
+                          >
+                            {mainImg && <img src={mainImg} alt="" className="w-9 h-9 rounded-md object-cover" />}
+                            <span>Default</span>
+                          </button>
+                        );
+                      })()}
                       {Array.from(variantAttributesMap[attrName]).map(val => {
                         const isSelected = selectedVariantOptions[attrName] === val;
                         // Colour options show the variant's photo as a swatch when one exists

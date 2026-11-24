@@ -6,6 +6,9 @@ import api from '../../../shared/utils/api';
 import ProductCard from '../components/ProductCard';
 import BrandScroll from '../components/BrandScroll';
 
+// In-memory cache so revisiting a category renders instantly
+const pageCache = new Map();
+
 const CategoryDetailPage = () => {
   const { slug } = useParams();
   const [searchParams] = useSearchParams();
@@ -18,15 +21,25 @@ const CategoryDetailPage = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const cacheKey = `${slug}|${subFilter || ''}|${subSubFilter || ''}`;
+    let cancelled = false;
+    const cached = pageCache.get(cacheKey);
+    if (cached) {
+      // Show previously loaded data instantly, refresh quietly in background
+      setCategory(cached.category);
+      setProducts(cached.products);
+      setAllCategories(cached.allCategories);
+      setLoading(false);
+    } else {
+      setLoading(true);
+    }
     const fetchData = async () => {
       try {
-        setLoading(true);
-        // Fetch current category by slug
+        // Fire the independent requests together instead of one after another
+        const allCategoriesReq = api.get('/categories');
         const catRes = await api.get(`/categories/slug/${slug}`);
         const currentCategory = catRes.data.data;
-        setCategory(currentCategory);
 
-        // Fetch products for this category (with optional subcategory filter)
         let productUrl = `/products?category=${encodeURIComponent(currentCategory.name)}`;
         if (subFilter) {
           productUrl += `&subcategory=${encodeURIComponent(subFilter)}`;
@@ -34,29 +47,33 @@ const CategoryDetailPage = () => {
         if (subSubFilter) {
           productUrl += `&subsubcategory=${encodeURIComponent(subSubFilter)}`;
         }
-        console.log("[CategoryDetailPage] Fetching products from URL:", productUrl);
-        const productRes = await api.get(productUrl);
-        console.log("[CategoryDetailPage] Received products response:", productRes.data);
+        const [productRes, allRes] = await Promise.all([api.get(productUrl), allCategoriesReq]);
+        if (cancelled) return;
+        pageCache.set(cacheKey, {
+          category: currentCategory,
+          products: productRes.data.data,
+          allCategories: allRes.data.data,
+        });
+        setCategory(currentCategory);
         setProducts(productRes.data.data);
-
-        // Fetch all categories for sidebar
-        const allRes = await api.get('/categories');
         setAllCategories(allRes.data.data);
       } catch (err) {
         console.error('Failed to fetch category data:', err);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
     fetchData();
     window.scrollTo(0, 0);
+    return () => {
+      cancelled = true;
+    };
   }, [slug, subFilter, subSubFilter]);
 
   if (loading) {
     return (
-      <div className="min-h-svh flex flex-col items-center justify-center bg-[#F5F7F8]">
-        <div className="w-16 h-16 border-4 border-warm-sand/20 border-t-warm-sand rounded-full animate-spin mb-6" />
-        <h2 className="text-[11px] font-semibold uppercase tracking-wider text-deep-espresso/40 animate-pulse">Curating Selection</h2>
+      <div className="min-h-svh flex items-center justify-center bg-[#F5F7F8]">
+        <div className="w-12 h-12 border-4 border-warm-sand/20 border-t-warm-sand rounded-full animate-spin" />
       </div>
     );
   }
@@ -241,7 +258,7 @@ const CategoryDetailPage = () => {
         </div>
       </div>
 
-      <div className="border-t border-soft-oatmeal/10 pt-6 pb-12 md:pt-10 md:pb-20 bg-white/30 backdrop-blur-xl">
+      <div className="border-t border-soft-oatmeal/10 pt-2 pb-6 md:pt-4 md:pb-10 bg-white">
         <BrandScroll title="Premium Brands" />
       </div>
     </div>

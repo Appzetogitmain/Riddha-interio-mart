@@ -11,9 +11,13 @@ const {
   updateProfile,
   getExplanation,
   getRecommendations,
-  trackEvent
+  trackEvent,
+  getCuration,
+  setCuration,
+  setProductTabs,
+  getProductTabs
 } = require('../controllers/recommendationController');
-const { protect, tryProtect } = require('../middleware/auth');
+const { protect, tryProtect, authorize } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -28,6 +32,11 @@ router.post('/regenerate', tryProtect, regenerate);
 router.get('/analytics', protect, getAnalytics);
 router.post('/profile-update', protect, updateProfile);
 router.get('/explanation/:productId', tryProtect, getExplanation);
+
+router.get('/curation', protect, authorize('admin'), getCuration);
+router.get('/curation/product/:productId', protect, authorize('admin'), getProductTabs);
+router.put('/curation/product/:productId', protect, authorize('admin'), setProductTabs);
+router.put('/curation/:tab', protect, authorize('admin'), setCuration);
 
 // Backwards Compatibility Endpoints
 router.get('/products', tryProtect, getRecommendations);

@@ -3,6 +3,7 @@ const Product = require('../models/Product');
 const UserProfile = require('../models/UserProfile');
 const RecommendationEvent = require('../models/RecommendationEvent');
 const RecommendationHistory = require('../models/RecommendationHistory');
+const RecommendationPin = require('../models/RecommendationPin');
 const recommendationService = require('../services/recommendationService');
 const {
   getPersonalizedForUser,
@@ -340,4 +341,76 @@ exports.getRecommendations = async (req, res) => {
 
 exports.trackEvent = async (req, res) => {
   return exports.trackInteraction(req, res);
+};
+
+
+// ── Admin curation of recommendation tabs ───────────────────────────────────
+const PIN_TABS = ['personalized', 'trending', 'cross-sell'];
+
+// GET /api/recommendations/curation  (admin) → { personalized: [products], trending: [...], 'cross-sell': [...] }
+exports.getCuration = async (req, res) => {
+  try {
+    const pins = await RecommendationPin.find().sort({ order: 1, createdAt: 1 })
+      .populate('product', 'name price images category countInStock')
+      .lean();
+    const data = { personalized: [], trending: [], 'cross-sell': [] };
+    pins.forEach(p => { if (p.product && data[p.tab]) data[p.tab].push(p.product); });
+    return res.json({ success: true, data });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+// PUT /api/recommendations/curation/:tab  (admin) body: { productIds: [] } — replaces the tab's list in order
+exports.setCuration = async (req, res) => {
+  try {
+    const { tab } = req.params;
+    if (!PIN_TABS.includes(tab)) {
+      return res.status(400).json({ success: false, error: 'Invalid tab' });
+    }
+    const ids = [...new Set((req.body.productIds || []).map(String))]
+      .filter(id => mongoose.Types.ObjectId.isValid(id))
+      .slice(0, 30);
+    await RecommendationPin.deleteMany({ tab });
+    if (ids.length) {
+      await RecommendationPin.insertMany(ids.map((product, order) => ({ tab, product, order })));
+    }
+    return res.json({ success: true, data: { tab, count: ids.length } });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+// PUT /api/recommendations/curation/product/:productId  (admin) body: { tabs: ['personalized', ...] }
+// Sets exactly which tabs this product is pinned to (adds to the end of a tab, removes from the others).
+exports.setProductTabs = async (req, res) => {
+  try {
+    const { productId } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(productId)) {
+      return res.status(400).json({ success: false, error: 'Invalid product id' });
+    }
+    const tabs = (req.body.tabs || []).filter(t => PIN_TABS.includes(t));
+
+    await RecommendationPin.deleteMany({ product: productId, tab: { $nin: tabs } });
+    for (const tab of tabs) {
+      const exists = await RecommendationPin.exists({ tab, product: productId });
+      if (!exists) {
+        const last = await RecommendationPin.findOne({ tab }).sort({ order: -1 }).select('order').lean();
+        await RecommendationPin.create({ tab, product: productId, order: (last?.order ?? -1) + 1 });
+      }
+    }
+    return res.json({ success: true, data: { productId, tabs } });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+// GET /api/recommendations/curation/product/:productId  (admin) → { tabs: [...] }
+exports.getProductTabs = async (req, res) => {
+  try {
+    const pins = await RecommendationPin.find({ product: req.params.productId }).select('tab').lean();
+    return res.json({ success: true, data: { tabs: pins.map(p => p.tab) } });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: error.message });
+  }
 };

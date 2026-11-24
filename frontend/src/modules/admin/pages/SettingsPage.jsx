@@ -54,6 +54,10 @@ const SettingsPage = () => {
       showGSTBreakdown: true,
       invoiceFooterText: "This is a computer-generated invoice."
     },
+    trustBarSubheading: '',
+    trustBarHeading: { title: 'Why Shop With', highlight: 'Riddha' },
+    trustBarCards: [],
+    trustBarHelp: { enabled: true, title: 'Need Help?', liveLabel: 'Live', subtitle: 'Interior experts available', buttonText: 'Contact Us', buttonLink: '/contact' },
     trustBarItems: []
   });
 
@@ -95,6 +99,10 @@ const SettingsPage = () => {
               showGSTBreakdown: true,
               invoiceFooterText: "This is a computer-generated invoice."
             },
+            trustBarSubheading: settingsRes.data.data.trustBarSubheading || '',
+            trustBarHeading: settingsRes.data.data.trustBarHeading || { title: 'Why Shop With', highlight: 'Riddha' },
+            trustBarCards: settingsRes.data.data.trustBarCards || [],
+            trustBarHelp: settingsRes.data.data.trustBarHelp || { enabled: true, title: 'Need Help?', liveLabel: 'Live', subtitle: 'Interior experts available', buttonText: 'Contact Us', buttonLink: '/contact' },
             trustBarItems: settingsRes.data.data.trustBarItems || []
           });
         }
@@ -634,7 +642,7 @@ const SettingsPage = () => {
             )}
 
             {activeTab === "Homepage" && (
-              <div className="space-y-6 max-w-2xl animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <div className="space-y-6 max-w-3xl animate-in fade-in slide-in-from-bottom-2 duration-300">
                 <div className="flex items-center justify-between">
                   <h3 className="text-xl font-display font-bold text-deep-espresso flex items-center gap-3">
                     <FiLayout className="text-warm-sand" /> Trust Bar Stats
@@ -652,6 +660,80 @@ const SettingsPage = () => {
                   </button>
                 </div>
                 
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest pl-1">Section Sub-heading (shown under "Why Shop With Riddha")</label>
+                  <textarea
+                    rows={2}
+                    value={systemSettings.trustBarSubheading || ''}
+                    onChange={(e) => setSystemSettings({ ...systemSettings, trustBarSubheading: e.target.value })}
+                    className="w-full bg-white border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 font-medium"
+                  />
+                </div>
+
+
+                {/* Section heading */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest pl-1">Heading (dark text)</label>
+                    <input type="text" value={systemSettings.trustBarHeading?.title || ''} onChange={(e) => setSystemSettings({ ...systemSettings, trustBarHeading: { ...systemSettings.trustBarHeading, title: e.target.value } })} className="w-full bg-white border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 font-medium" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest pl-1">Heading highlight (teal text)</label>
+                    <input type="text" value={systemSettings.trustBarHeading?.highlight || ''} onChange={(e) => setSystemSettings({ ...systemSettings, trustBarHeading: { ...systemSettings.trustBarHeading, highlight: e.target.value } })} className="w-full bg-white border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 font-medium" />
+                  </div>
+                </div>
+
+                {/* Feature cards */}
+                <div className="flex items-center justify-between pt-4">
+                  <h4 className="text-base font-bold text-deep-espresso">Top Feature Cards</h4>
+                  <button
+                    onClick={() => setSystemSettings({ ...systemSettings, trustBarCards: [...(systemSettings.trustBarCards || []), { iconName: 'LuStar', title: 'New Card', subtitle: 'Description' }] })}
+                    className="flex items-center gap-2 bg-emerald-50 text-emerald-600 px-4 py-2 rounded-xl text-xs font-bold hover:bg-emerald-100 transition-colors"
+                  >
+                    <FiPlus /> Add Card
+                  </button>
+                </div>
+                <div className="space-y-4">
+                  {(systemSettings.trustBarCards || []).map((card, idx) => (
+                    <div key={idx} className="flex flex-col sm:flex-row items-center gap-4 bg-soft-oatmeal/10 border border-soft-oatmeal p-4 rounded-2xl relative">
+                      <div className="w-full sm:w-1/3 space-y-2">
+                        <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest pl-1">Icon</label>
+                        <select value={card.iconName} onChange={(e) => { const n = [...systemSettings.trustBarCards]; n[idx] = { ...n[idx], iconName: e.target.value }; setSystemSettings({ ...systemSettings, trustBarCards: n }); }} className="w-full bg-white border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 font-medium"><option value="LuAward">Award</option><option value="LuUsers">Users</option><option value="LuStar">Star</option><option value="LuTruck">Truck</option><option value="LuRotateCcw">Rotate / Returns</option><option value="LuFileText">File / Invoice</option><option value="LuHeadphones">Headphones / Support</option><option value="LuShield">Shield / Secure</option><option value="LuCheck">Checkmark</option><option value="LuHeart">Heart</option></select>
+                      </div>
+                      <div className="w-full sm:w-1/3 space-y-2">
+                        <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest pl-1">Title</label>
+                        <input type="text" value={card.title} onChange={(e) => { const n = [...systemSettings.trustBarCards]; n[idx] = { ...n[idx], title: e.target.value }; setSystemSettings({ ...systemSettings, trustBarCards: n }); }} className="w-full bg-white border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 font-medium" />
+                      </div>
+                      <div className="w-full sm:w-1/3 space-y-2">
+                        <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest pl-1">Description</label>
+                        <input type="text" value={card.subtitle} onChange={(e) => { const n = [...systemSettings.trustBarCards]; n[idx] = { ...n[idx], subtitle: e.target.value }; setSystemSettings({ ...systemSettings, trustBarCards: n }); }} className="w-full bg-white border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 font-medium" />
+                      </div>
+                      <button onClick={() => setSystemSettings({ ...systemSettings, trustBarCards: systemSettings.trustBarCards.filter((_, i) => i !== idx) })} className="absolute -top-2 -right-2 sm:static sm:mt-6 bg-red-50 text-red-500 p-2 rounded-full hover:bg-red-100 transition-colors shadow-sm">
+                        <FiTrash2 size={16} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Help box */}
+                <div className="pt-4 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-base font-bold text-deep-espresso">Help Box (teal box)</h4>
+                    <label className="flex items-center gap-2 text-xs font-bold text-deep-espresso cursor-pointer">
+                      <input type="checkbox" checked={systemSettings.trustBarHelp?.enabled !== false} onChange={(e) => setSystemSettings({ ...systemSettings, trustBarHelp: { ...systemSettings.trustBarHelp, enabled: e.target.checked } })} className="accent-emerald-600" />
+                      Show on homepage
+                    </label>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2"><label className="text-[10px] font-black text-warm-sand uppercase tracking-widest pl-1">Title</label><input type="text" value={systemSettings.trustBarHelp?.title || ''} onChange={(e) => setSystemSettings({ ...systemSettings, trustBarHelp: { ...systemSettings.trustBarHelp, title: e.target.value } })} className="w-full bg-white border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 font-medium" /></div>
+                    <div className="space-y-2"><label className="text-[10px] font-black text-warm-sand uppercase tracking-widest pl-1">Live label (leave empty to hide the wording)</label><input type="text" value={systemSettings.trustBarHelp?.liveLabel || ''} onChange={(e) => setSystemSettings({ ...systemSettings, trustBarHelp: { ...systemSettings.trustBarHelp, liveLabel: e.target.value } })} className="w-full bg-white border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 font-medium" /></div>
+                    <div className="space-y-2"><label className="text-[10px] font-black text-warm-sand uppercase tracking-widest pl-1">Sub-text</label><input type="text" value={systemSettings.trustBarHelp?.subtitle || ''} onChange={(e) => setSystemSettings({ ...systemSettings, trustBarHelp: { ...systemSettings.trustBarHelp, subtitle: e.target.value } })} className="w-full bg-white border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 font-medium" /></div>
+                    <div className="space-y-2"><label className="text-[10px] font-black text-warm-sand uppercase tracking-widest pl-1">Button text</label><input type="text" value={systemSettings.trustBarHelp?.buttonText || ''} onChange={(e) => setSystemSettings({ ...systemSettings, trustBarHelp: { ...systemSettings.trustBarHelp, buttonText: e.target.value } })} className="w-full bg-white border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 font-medium" /></div>
+                    <div className="space-y-2 sm:col-span-2"><label className="text-[10px] font-black text-warm-sand uppercase tracking-widest pl-1">Button link</label><input type="text" value={systemSettings.trustBarHelp?.buttonLink || ''} onChange={(e) => setSystemSettings({ ...systemSettings, trustBarHelp: { ...systemSettings.trustBarHelp, buttonLink: e.target.value } })} className="w-full bg-white border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 font-medium" placeholder="/contact" /></div>
+                  </div>
+                </div>
+
+                <h4 className="text-base font-bold text-deep-espresso pt-4">Bottom Stats Row</h4>
                 <p className="text-xs text-warm-sand mb-4">Manage the statistics and trust badges displayed just below the hero banners on the homepage.</p>
                 
                 <div className="space-y-4">
@@ -677,6 +759,7 @@ const SettingsPage = () => {
                           <option value="LuHeadphones">Headphones / Support</option>
                           <option value="LuShield">Shield / Secure</option>
                           <option value="LuCheck">Checkmark</option>
+                          <option value="LuHeart">Heart</option>
                         </select>
                       </div>
                       

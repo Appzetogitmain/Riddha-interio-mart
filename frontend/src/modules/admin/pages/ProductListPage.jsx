@@ -14,15 +14,31 @@ const ProductListPage = ({ status }) => {
   const [deleteId, setDeleteId] = useState(null);
   const [commissionModal, setCommissionModal] = useState({ open: false, product: null, commission: 2, b2bCommission: 2 });
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [sectionModal, setSectionModal] = useState({ open: false, product: null, tabs: [], loading: false, saving: false });
   const [approvalFilter, setApprovalFilter] = useState('all');
   const [sellerFilter, setSellerFilter] = useState('all');
   const [stockFilter, setStockFilter] = useState('all');
+  const [categories, setCategories] = useState([]);
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [subcategoryFilter, setSubcategoryFilter] = useState('all');
+  const [subsubcategoryFilter, setSubsubcategoryFilter] = useState('all');
+
+  useEffect(() => {
+    api.get('/categories')
+      .then(({ data }) => setCategories(Array.isArray(data?.data) ? data.data : []))
+      .catch(() => setCategories([]));
+  }, []);
+
+  const selectedCategory = categories.find(c => String(c._id) === categoryFilter);
+  const subcategoryOptions = selectedCategory?.subcategories || [];
+  const selectedSubcategory = subcategoryOptions.find(sc => String(sc._id) === subcategoryFilter);
+  const subsubcategoryOptions = selectedSubcategory?.subsubcategories || [];
 
   const fetchProducts = async () => {
     try {
       setLoading(true);
       // We want all products for admin catalog view, including pending and inactive
-      const { data } = await api.get('/products', { params: { isActive: 'all', isApproved: 'all' } });
+      const { data } = await api.get('/products', { params: { isActive: 'all', isApproved: 'all', limit: 5000 } });
       setProducts(data.data || []);
     } catch (err) {
       console.error('Failed to fetch products:', err);
@@ -47,6 +63,36 @@ const ProductListPage = ({ status }) => {
     }
   };
 
+  const SECTION_OPTIONS = [
+    { id: 'personalized', label: 'Picks For You', hint: 'First in the homepage "Picks For You" tab' },
+    { id: 'trending', label: 'Trending This Week', hint: 'Shown in the "Trending This Week" tab' },
+    { id: 'cross-sell', label: 'Complete the Look', hint: 'Shown in the "Complete the Look" tab' },
+  ];
+
+  const openSectionModal = async (product) => {
+    setSectionModal({ open: true, product, tabs: [], loading: true, saving: false });
+    try {
+      const { data } = await api.get(`/recommendations/curation/product/${product._id}`);
+      setSectionModal(m => ({ ...m, tabs: data?.data?.tabs || [], loading: false }));
+    } catch {
+      setSectionModal(m => ({ ...m, loading: false }));
+    }
+  };
+
+  const toggleSectionTab = (id) =>
+    setSectionModal(m => ({ ...m, tabs: m.tabs.includes(id) ? m.tabs.filter(t => t !== id) : [...m.tabs, id] }));
+
+  const saveSections = async () => {
+    try {
+      setSectionModal(m => ({ ...m, saving: true }));
+      await api.put(`/recommendations/curation/product/${sectionModal.product._id}`, { tabs: sectionModal.tabs });
+      setSectionModal({ open: false, product: null, tabs: [], loading: false, saving: false });
+    } catch (err) {
+      alert('Failed to update sections.');
+      setSectionModal(m => ({ ...m, saving: false }));
+    }
+  };
+
   useEffect(() => {
     fetchProducts();
   }, []);
@@ -68,18 +114,28 @@ const ProductListPage = ({ status }) => {
         (stockFilter === 'in_stock' && (p.countInStock || 0) > 0) ||
         (stockFilter === 'out_of_stock' && (p.countInStock || 0) === 0);
 
-      return matchesSearch && matchesRouteStatus && matchesApproval && matchesSeller && matchesStock;
+      const productCategoryId = String(p.categoryId || p.category?._id || '');
+      const matchesCategory = categoryFilter === 'all' || productCategoryId === categoryFilter;
+      const matchesSubcategory = subcategoryFilter === 'all' || String(p.subcategory || '') === subcategoryFilter;
+      const matchesSubsubcategory = subsubcategoryFilter === 'all' || String(p.subsubcategory || '') === subsubcategoryFilter;
+
+      return matchesSearch && matchesRouteStatus && matchesApproval && matchesSeller && matchesStock &&
+        matchesCategory && matchesSubcategory && matchesSubsubcategory;
     });
-  }, [searchTerm, products, status, approvalFilter, sellerFilter, stockFilter]);
+  }, [searchTerm, products, status, approvalFilter, sellerFilter, stockFilter, categoryFilter, subcategoryFilter, subsubcategoryFilter]);
 
   const hasActiveFilters =
-    approvalFilter !== 'all' || sellerFilter !== 'all' || stockFilter !== 'all' || searchTerm.trim().length > 0;
+    approvalFilter !== 'all' || sellerFilter !== 'all' || stockFilter !== 'all' ||
+    categoryFilter !== 'all' || subcategoryFilter !== 'all' || subsubcategoryFilter !== 'all' || searchTerm.trim().length > 0;
 
   const resetFilters = () => {
     setSearchTerm('');
     setApprovalFilter('all');
     setSellerFilter('all');
     setStockFilter('all');
+    setCategoryFilter('all');
+    setSubcategoryFilter('all');
+    setSubsubcategoryFilter('all');
     setIsFilterOpen(false);
   };
 
@@ -190,6 +246,44 @@ const ProductListPage = ({ status }) => {
                 <option value="all">All Items</option>
                 <option value="in_stock">In Stock</option>
                 <option value="out_of_stock">Out of Stock</option>
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest">Category</label>
+              <select
+                value={categoryFilter}
+                onChange={(e) => { setCategoryFilter(e.target.value); setSubcategoryFilter('all'); setSubsubcategoryFilter('all'); }}
+                className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none cursor-pointer font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <option value="all">All Categories</option>
+                {categories.map(c => <option key={c._id} value={String(c._id)}>{c.name}</option>)}
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest">Subcategory</label>
+              <select
+                value={subcategoryFilter}
+                disabled={categoryFilter === 'all' || subcategoryOptions.length === 0}
+                onChange={(e) => { setSubcategoryFilter(e.target.value); setSubsubcategoryFilter('all'); }}
+                className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none cursor-pointer font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <option value="all">{categoryFilter === 'all' ? 'Select a category first' : 'All Subcategories'}</option>
+                {subcategoryOptions.map(sc => <option key={sc._id} value={String(sc._id)}>{sc.name}</option>)}
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest">Sub-subcategory</label>
+              <select
+                value={subsubcategoryFilter}
+                disabled={subcategoryFilter === 'all' || subsubcategoryOptions.length === 0}
+                onChange={(e) => setSubsubcategoryFilter(e.target.value)}
+                className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none cursor-pointer font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <option value="all">{subcategoryFilter === 'all' ? 'Select a subcategory first' : 'All Sub-subcategories'}</option>
+                {subsubcategoryOptions.map(ss => <option key={ss._id} value={String(ss._id)}>{ss.name}</option>)}
               </select>
             </div>
           </div>
@@ -340,6 +434,12 @@ const ProductListPage = ({ status }) => {
                             </>
                           )}
                           <button
+                            onClick={() => openSectionModal(product)}
+                            className="px-3 py-1.5 bg-teal-50 hover:bg-teal-100 text-teal-700 text-[11px] font-semibold rounded-lg transition-colors whitespace-nowrap"
+                          >
+                            Add to Section
+                          </button>
+                          <button
                             onClick={() => navigate(`/admin/inventory/edit/${product._id}`)}
                             className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
                           >
@@ -447,6 +547,56 @@ const ProductListPage = ({ status }) => {
                   Confirm & Approve
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Add to Homepage Section Modal */}
+      {sectionModal.open && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-5">
+            <div>
+              <h3 className="text-lg font-bold text-slate-800">Add to Homepage Section</h3>
+              <p className="text-sm text-gray-500 mt-1 truncate">{sectionModal.product?.name}</p>
+            </div>
+            <div className="space-y-2">
+              {SECTION_OPTIONS.map(opt => {
+                const checked = sectionModal.tabs.includes(opt.id);
+                return (
+                  <label
+                    key={opt.id}
+                    className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${checked ? 'border-teal-500 bg-teal-50' : 'border-gray-200 hover:border-teal-300'}`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      disabled={sectionModal.loading}
+                      onChange={() => toggleSectionTab(opt.id)}
+                      className="mt-1 accent-teal-600"
+                    />
+                    <span>
+                      <span className="block text-sm font-semibold text-slate-800">{opt.label}</span>
+                      <span className="block text-xs text-gray-500">{opt.hint}</span>
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+            <p className="text-[11px] text-gray-400">The product appears in the selected tabs once it is approved and in stock. Untick a section to remove it.</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setSectionModal({ open: false, product: null, tabs: [], loading: false, saving: false })}
+                className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={saveSections}
+                disabled={sectionModal.loading || sectionModal.saving}
+                className="flex-1 px-4 py-2.5 rounded-xl text-sm font-bold text-white bg-teal-600 hover:bg-teal-700 disabled:opacity-50"
+              >
+                {sectionModal.saving ? 'Saving…' : 'Save'}
+              </button>
             </div>
           </div>
         </div>

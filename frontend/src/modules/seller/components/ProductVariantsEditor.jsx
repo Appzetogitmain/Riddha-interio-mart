@@ -60,6 +60,7 @@ const ProductVariantsEditor = ({ formData, setFormData, categories }) => {
   };
 
   const [uploadingIndex, setUploadingIndex] = useState(null);
+  const [variantImageMsg, setVariantImageMsg] = useState('');
 
   // Categories without variant attributes still get a Colour column, so a seller can always
   // create colour variants (the storefront shows one option per distinct value).
@@ -85,9 +86,24 @@ const ProductVariantsEditor = ({ formData, setFormData, categories }) => {
     .filter(key => !existingAttrNames.includes(key))
     .map(key => ({ name: key, type: 'text', isVariant: false }));
   const generalAttributes = [...generalAttributesBase, ...extraAttrs];
+  const MAX_VARIANT_IMAGES = 10;
+  const getVariantImages = (v) => (v?.images?.length ? v.images : (v?.image ? [v.image] : []));
+
   const handleVariantImageUpload = async (index, fileList) => {
-    const files = Array.from(fileList || []);
+    let files = Array.from(fileList || []);
     if (files.length === 0) return;
+    const current = getVariantImages(formData.variants?.[index]);
+    const room = MAX_VARIANT_IMAGES - current.length;
+    if (room <= 0) {
+      setVariantImageMsg(`Maximum ${MAX_VARIANT_IMAGES} images per variant.`);
+      return;
+    }
+    if (files.length > room) {
+      files = files.slice(0, room);
+      setVariantImageMsg(`Only ${room} more image(s) allowed - extra files were skipped (max ${MAX_VARIANT_IMAGES}).`);
+    } else {
+      setVariantImageMsg('');
+    }
     try {
       setUploadingIndex(index);
       const uploadData = new FormData();
@@ -99,17 +115,36 @@ const ProductVariantsEditor = ({ formData, setFormData, categories }) => {
       if (urls.length) {
         setFormData(prev => {
           const variants = [...(prev.variants || [])];
-          const existing = variants[index].images?.length ? variants[index].images : (variants[index].image ? [variants[index].image] : []);
-          const images = [...existing, ...urls];
+          const images = [...getVariantImages(variants[index]), ...urls].slice(0, MAX_VARIANT_IMAGES);
           variants[index] = { ...variants[index], images, image: images[0] };
           return { ...prev, variants };
         });
       }
     } catch (err) {
       console.error('Variant image upload failed:', err);
+      setVariantImageMsg('Image upload failed. Please try again.');
     } finally {
       setUploadingIndex(null);
     }
+  };
+
+  const removeVariantImage = (index, imgIdx) => {
+    setFormData(prev => {
+      const variants = [...(prev.variants || [])];
+      const images = getVariantImages(variants[index]).filter((_, i) => i !== imgIdx);
+      variants[index] = { ...variants[index], images, image: images[0] || '' };
+      return { ...prev, variants };
+    });
+  };
+
+  const makeVariantImagePrimary = (index, imgIdx) => {
+    setFormData(prev => {
+      const variants = [...(prev.variants || [])];
+      const imgs = getVariantImages(variants[index]);
+      const images = [imgs[imgIdx], ...imgs.filter((_, i) => i !== imgIdx)];
+      variants[index] = { ...variants[index], images, image: images[0] };
+      return { ...prev, variants };
+    });
   };
 
   // ---- AI colour variants: same product, only the colour changes ----
@@ -158,7 +193,7 @@ const ProductVariantsEditor = ({ formData, setFormData, categories }) => {
           const existingIdx = variants.findIndex(v => (v.attributes?.[colourAttrName] || '').toLowerCase() === colour.toLowerCase());
           if (existingIdx >= 0) {
             const old = variants[existingIdx];
-            const images = [image, ...((old.images || (old.image ? [old.image] : [])).filter(i => i !== image))];
+            const images = [image, ...((old.images || (old.image ? [old.image] : [])).filter(i => i !== image))].slice(0, 10);
             variants[existingIdx] = { ...old, images, image };
           } else {
             variants.push({
@@ -362,6 +397,7 @@ const ProductVariantsEditor = ({ formData, setFormData, categories }) => {
             </button>
           </div>
           
+          {variantImageMsg && <p className="text-[11px] text-amber-600 font-semibold">{variantImageMsg}</p>}
           {(!formData.variants || formData.variants.length === 0) ? (
             <div className="text-center py-6 bg-gray-50 border border-dashed border-gray-200 rounded-xl">
               <p className="text-xs text-gray-500 mb-2">No variants created yet.</p>
@@ -448,43 +484,54 @@ const ProductVariantsEditor = ({ formData, setFormData, categories }) => {
                           onChange={(e) => handleVariantChange(index, 'countInStock', e.target.value)}
                         />
                       </td>
-                      <td className="px-2 py-2 min-w-[150px] whitespace-nowrap">
-                        <div className="flex items-center gap-2">
-                          {variant.image && (
-                            <button
-                              type="button"
-                              title="View image"
-                              onClick={() => setPreview({
-                                images: variant.images?.length ? variant.images : [variant.image],
-                                index: 0,
-                              })}
-                              className="relative shrink-0 group"
-                            >
-                              <img src={variant.image} alt="" className="w-12 h-12 rounded-lg object-cover border border-gray-200 group-hover:ring-2 group-hover:ring-[#189D91]" />
-                              <span className="absolute inset-0 rounded-lg bg-black/40 text-white text-[9px] font-bold flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">View</span>
-                              {variant.images?.length > 1 && (
-                                <span className="absolute -top-1 -right-1 bg-[#189D91] text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">{variant.images.length}</span>
+                      <td className="px-2 py-2 min-w-[260px]">
+                        <div className="flex flex-wrap items-center gap-1.5 max-w-[320px]">
+                          {getVariantImages(variant).map((img, imgIdx) => (
+                            <div key={`${img}-${imgIdx}`} className="relative group w-11 h-11">
+                              <img
+                                src={img}
+                                alt=""
+                                onClick={() => setPreview({ images: getVariantImages(variant), index: imgIdx })}
+                                className={`w-11 h-11 rounded-lg object-cover border cursor-pointer ${imgIdx === 0 ? 'border-[#189D91] ring-1 ring-[#189D91]' : 'border-gray-200'}`}
+                              />
+                              <button
+                                type="button"
+                                title="Remove image"
+                                onClick={() => removeVariantImage(index, imgIdx)}
+                                className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-red-500 text-white text-[10px] leading-none flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                ×
+                              </button>
+                              {imgIdx === 0 ? (
+                                <span className="absolute bottom-0 inset-x-0 bg-[#189D91] text-white text-[7px] font-bold text-center rounded-b-lg">MAIN</span>
+                              ) : (
+                                <button
+                                  type="button"
+                                  title="Make main image"
+                                  onClick={() => makeVariantImagePrimary(index, imgIdx)}
+                                  className="absolute bottom-0 inset-x-0 bg-black/60 text-white text-[7px] font-bold text-center rounded-b-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                                >
+                                  SET MAIN
+                                </button>
                               )}
-                            </button>
-                          )}
-                        <label className="flex items-center gap-2 cursor-pointer">
-                          {!variant.image && (
-                            <span className="w-9 h-9 rounded-lg border border-dashed border-gray-300 flex items-center justify-center text-gray-400">
+                            </div>
+                          ))}
+                          {getVariantImages(variant).length < MAX_VARIANT_IMAGES && (
+                            <label className="h-11 px-3 rounded-lg border border-dashed border-[#189D91] bg-[#189D91]/5 flex items-center justify-center gap-1.5 text-[#189D91] text-[11px] font-bold hover:bg-[#189D91]/10 cursor-pointer whitespace-nowrap">
                               <ImagePlus className="w-4 h-4" />
-                            </span>
+                              {uploadingIndex === index ? 'Uploading...' : (getVariantImages(variant).length ? 'Add more' : 'Upload images')}
+                              <input
+                                type="file"
+                                accept="image/*"
+                                multiple
+                                className="hidden"
+                                disabled={uploadingIndex === index}
+                                onChange={(e) => { handleVariantImageUpload(index, e.target.files); e.target.value = ''; }}
+                              />
+                            </label>
                           )}
-                          <span className="text-[10px] font-semibold text-[#189D91]">
-                            {uploadingIndex === index ? 'Uploading...' : variant.image ? 'Change' : 'Upload'}
-                          </span>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            multiple
-                            className="hidden"
-                            onChange={(e) => handleVariantImageUpload(index, e.target.files)}
-                          />
-                        </label>
                         </div>
+                        <p className="text-[9px] text-gray-400 mt-1">{getVariantImages(variant).length}/{MAX_VARIANT_IMAGES} images</p>
                       </td>
                       <td className="px-2 py-2 text-center">
                         <button
@@ -500,7 +547,7 @@ const ProductVariantsEditor = ({ formData, setFormData, categories }) => {
                 </tbody>
               </table>
               <div className="mt-2 text-[10px] text-gray-400 flex items-center gap-1">
-                <Info className="w-3 h-3" /> Note: Ensure combinations are unique. Each variant needs its own price and stock; its image replaces the main image when a customer picks it.
+                <Info className="w-3 h-3" /> Note: Ensure combinations are unique. Each variant needs its own price and stock; up to 10 images per variant, the first (MAIN) replaces the main image when a customer picks it.
               </div>
             </div>
           )}

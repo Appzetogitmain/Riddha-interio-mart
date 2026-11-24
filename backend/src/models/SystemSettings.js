@@ -45,6 +45,38 @@ const SystemSettingsSchema = new mongoose.Schema({
     headerContact: { type: String, default: 'support@riddhamart.com | www.riddhamart.com' },
     footerText: { type: String, default: 'CONFIDENTIAL DOCUMENT' }
   },
+  trustBarSubheading: {
+    type: String,
+    default: 'A seamless shopping experience with trusted quality, great value and customer-first support.'
+  },
+  trustBarHeading: {
+    title: { type: String, default: 'Why Shop With' },
+    highlight: { type: String, default: 'Riddha' }
+  },
+  // The five feature cards at the top of the Trust Bar section
+  trustBarCards: {
+    type: [{
+      iconName: String,
+      title: String,
+      subtitle: String
+    }],
+    default: [
+      { iconName: 'LuStar', title: 'Premium Quality', subtitle: 'Trusted products & brands' },
+      { iconName: 'LuShield', title: 'Secure Shopping', subtitle: 'Your data is safe with us' },
+      { iconName: 'LuHeadphones', title: 'Expert Support', subtitle: "We're here for you" },
+      { iconName: 'LuRotateCcw', title: 'Easy Returns', subtitle: 'Hassle free process' },
+      { iconName: 'LuHeart', title: 'Interior Inspiration', subtitle: 'Ideas for every space' }
+    ]
+  },
+  // The teal help box next to the stats row
+  trustBarHelp: {
+    enabled: { type: Boolean, default: true },
+    title: { type: String, default: 'Need Help?' },
+    liveLabel: { type: String, default: 'Live' },
+    subtitle: { type: String, default: 'Interior experts available' },
+    buttonText: { type: String, default: 'Contact Us' },
+    buttonLink: { type: String, default: '/contact' }
+  },
   trustBarItems: {
     type: [{
       iconName: String,

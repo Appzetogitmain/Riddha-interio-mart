@@ -250,7 +250,13 @@ const ProductSchema = new mongoose.Schema({
       default: 0
     },
     image: String,
-    images: [String]
+    images: {
+      type: [String],
+      validate: {
+        validator: (arr) => !arr || arr.length <= 10,
+        message: 'A variant can have at most 10 images'
+      }
+    }
   }],
   seller: {
     type: mongoose.Schema.ObjectId,

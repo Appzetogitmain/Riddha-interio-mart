@@ -4,7 +4,9 @@ const {
   createPromoCard,
   updatePromoCard,
   deletePromoCard,
-  reorderPromoCards
+  reorderPromoCards,
+  getPromoHeading,
+  updatePromoHeading
 } = require('../controllers/promoCardController');
 const { protect, authorize } = require('../middleware/auth');
 
@@ -13,6 +15,10 @@ const router = express.Router();
 router.route('/')
   .get(getPromoCards)
   .post(protect, authorize('admin'), createPromoCard);
+
+router.route('/heading')
+  .get(getPromoHeading)
+  .put(protect, authorize('admin'), updatePromoHeading);
 
 router.route('/reorder')
   .put(protect, authorize('admin'), reorderPromoCards);

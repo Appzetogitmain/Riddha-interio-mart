@@ -8,16 +8,6 @@ exports.getProducts = async (req, res, next) => {
   try {
     const searchService = require('../services/searchService');
 
-    // Dump all database products to check their categories and subcategories
-    try {
-      const fs = require('fs');
-      const path = require('path');
-      const allProducts = await Product.find({}, 'name category subcategory subsubcategory');
-      fs.writeFileSync(path.join(__dirname, '../../db_dump.json'), JSON.stringify(allProducts, null, 2));
-    } catch (err) {
-      console.error("Failed to dump products:", err);
-    }
-
     // 1. Generate unique cache key based on query parameters and user role
     const cacheService = require('../services/cacheService');
     const userRole = req.user?.role || 'public';

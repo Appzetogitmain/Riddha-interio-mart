@@ -127,7 +127,6 @@ const RecommendationFeed = () => {
         <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-2 mb-6 border-b border-stone-200">
           {[
             { id: 'personalized', label: 'Picks For You', icon: Sparkles },
-            { id: 'style', label: 'Based on Your Style', icon: Compass },
             { id: 'trending', label: 'Trending This Week', icon: Flame },
             { id: 'cross-sell', label: 'Complete the Look', icon: TrendingUp }
           ].map(tab => {
@@ -197,7 +196,7 @@ const RecommendationFeed = () => {
             className="flex gap-6 overflow-x-auto no-scrollbar scroll-smooth snap-x snap-mandatory pb-2"
           >
             {recommendations.map(item => (
-              <div key={item.id || item._id} data-rec-card className="shrink-0 snap-start w-[85%] sm:w-[45%] lg:w-[23%]">
+              <div key={item.id || item._id} data-rec-card className="shrink-0 snap-start w-[85%] sm:w-[45%] lg:w-[23%] flex">
                 <RecommendationCard
                   item={item}
                   onExplain={handleExplain}

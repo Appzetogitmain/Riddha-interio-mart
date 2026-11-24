@@ -26,6 +26,27 @@ const ManagePromoCards = () => {
   
   const fileInputRef = useRef(null);
 
+  const [heading, setHeading] = useState({ badge: '', title: '', highlight: '', subtitle: '' });
+  const [savingHeading, setSavingHeading] = useState(false);
+
+  useEffect(() => {
+    api.get('/promo-cards/heading').then(res => {
+      if (res.data?.data) setHeading(res.data.data);
+    }).catch(() => {});
+  }, []);
+
+  const saveHeading = async () => {
+    try {
+      setSavingHeading(true);
+      await api.put('/promo-cards/heading', heading);
+      toast.success('Section heading updated');
+    } catch (err) {
+      toast.error('Failed to update heading');
+    } finally {
+      setSavingHeading(false);
+    }
+  };
+
   useEffect(() => {
     fetchCards();
   }, []);
@@ -154,6 +175,32 @@ const ManagePromoCards = () => {
           className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-xl font-bold flex items-center gap-2 transition-colors shadow-sm"
         >
           <FiPlus /> Add New Card
+        </button>
+      </div>
+
+      {/* Section heading shown above the cards */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
+        <h2 className="font-black text-slate-800">Section Heading</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-gray-700">Small badge</label>
+            <input value={heading.badge || ''} onChange={e => setHeading({ ...heading, badge: e.target.value })} className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-teal-500" placeholder="Why Choose Riddha" />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-gray-700">Subtitle</label>
+            <input value={heading.subtitle || ''} onChange={e => setHeading({ ...heading, subtitle: e.target.value })} className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-teal-500" />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-gray-700">Title (dark text)</label>
+            <input value={heading.title || ''} onChange={e => setHeading({ ...heading, title: e.target.value })} className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-teal-500" placeholder="Exclusive Benefits" />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-gray-700">Title highlight (teal text)</label>
+            <input value={heading.highlight || ''} onChange={e => setHeading({ ...heading, highlight: e.target.value })} className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-teal-500" placeholder="for Our Community" />
+          </div>
+        </div>
+        <button onClick={saveHeading} disabled={savingHeading} className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-sm font-bold disabled:opacity-50">
+          {savingHeading ? 'Saving…' : 'Save Heading'}
         </button>
       </div>
 

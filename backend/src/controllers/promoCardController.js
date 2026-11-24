@@ -1,4 +1,5 @@
 const PromoCard = require('../models/PromoCard');
+const PromoSection = require('../models/PromoSection');
 
 const defaultPromos = [
   {
@@ -137,6 +138,35 @@ exports.reorderPromoCards = async (req, res) => {
     }
 
     res.json({ success: true, message: 'Reordered successfully' });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+};
+
+// @desc    Get the heading shown above the promo cards
+// @route   GET /api/promo-cards/heading
+exports.getPromoHeading = async (req, res) => {
+  try {
+    const doc = (await PromoSection.findOne()) || (await PromoSection.create({}));
+    res.json({ success: true, data: doc });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Server error fetching heading' });
+  }
+};
+
+// @desc    Update the heading shown above the promo cards
+// @route   PUT /api/promo-cards/heading
+// @access  Private/Admin
+exports.updatePromoHeading = async (req, res) => {
+  try {
+    const { badge, title, highlight, subtitle } = req.body;
+    const doc = (await PromoSection.findOne()) || new PromoSection();
+    if (badge !== undefined) doc.badge = badge;
+    if (title !== undefined) doc.title = title;
+    if (highlight !== undefined) doc.highlight = highlight;
+    if (subtitle !== undefined) doc.subtitle = subtitle;
+    await doc.save();
+    res.json({ success: true, data: doc });
   } catch (error) {
     res.status(400).json({ success: false, error: error.message });
   }

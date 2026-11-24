@@ -173,7 +173,7 @@ const CategoriesPage = () => {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-2 md:py-6"
+      className="max-w-[1760px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 py-2 md:py-6"
     >
       {/* Header */}
       <motion.div
@@ -233,7 +233,7 @@ const CategoriesPage = () => {
         isLoading={filterLoading}
       />
 
-      <div className="flex gap-16 relative">
+      <div className="flex gap-8 lg:gap-10 relative">
         {/* Sidebar - Desktop */}
         <aside className="hidden md:block w-72 flex-shrink-0 sticky top-32 max-h-[calc(100vh-9rem)] overflow-y-auto pr-2">
           <FilterPanel
@@ -259,7 +259,7 @@ const CategoriesPage = () => {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ duration: 0.4 }}
-                  className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3 md:gap-10"
+                  className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-3 md:gap-6"
                 >
                   {sortedProducts.map((product, index) => (
                     <ProductCard key={product._id || product.id} product={product} index={index} variant="list" />

@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Sparkles, Heart, ShoppingBag, Star, Info } from 'lucide-react';
+import { Sparkles, Heart, ShoppingCart, Star, Info } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../../../shared/utils/api';
-import ZoomableImage from './ZoomableImage';
+import { useCart } from '../data/CartContext';
 
 const RecommendationCard = ({ item, onExplain, onTrack }) => {
   const navigate = useNavigate();
+  const { addToCart } = useCart();
   const [isWishlisted, setIsWishlisted] = useState(false);
 
   const productId = item._id || item.id;
@@ -35,17 +36,20 @@ const RecommendationCard = ({ item, onExplain, onTrack }) => {
     api.post('/recommendations/track', { productId, action: 'wishlist', context: 'card' }).catch(() => {});
   };
 
-  const handleAddToCart = (e) => {
+  const handleAddToCart = async (e) => {
     e.stopPropagation();
     e.preventDefault();
-    toast.success(`Added ${name} to Cart!`);
+    const result = await addToCart({ ...item, _id: productId, image, images: item.images || [image] });
+    if (!result?.needsVariant && !result?.capped) {
+      toast.success(`Added ${name} to Cart!`);
+    }
     api.post('/recommendations/track', { productId, action: 'cart', context: 'card' }).catch(() => {});
   };
 
   return (
     <div 
       onClick={handleCardClick}
-      className="group relative bg-white border border-gray-100 rounded-2xl p-3 shadow-xs hover:shadow-xl transition-all duration-300 flex flex-col justify-between hover:-translate-y-1 cursor-pointer"
+      className="group relative bg-white border border-gray-100 rounded-2xl p-3 shadow-xs hover:shadow-xl transition-all duration-300 flex flex-col justify-between h-full w-full hover:-translate-y-1 cursor-pointer"
     >
       {/* AI Recommendation Badge — luxury dark slate with teal hairline border */}
       <div className="absolute top-4 left-4 z-10 flex items-center gap-1.5 px-3 py-1 bg-[#0F172A] text-white text-[11px] font-bold rounded-full shadow-md border border-[#189D91]/40">
@@ -63,10 +67,11 @@ const RecommendationCard = ({ item, onExplain, onTrack }) => {
 
       {/* Product Image */}
       <div className="relative w-full h-48 rounded-xl overflow-hidden bg-gray-50 mb-3">
-        <ZoomableImage
+        <img
           src={image}
           alt={name}
-          className="w-full h-full"
+          loading="lazy"
+          className="w-full h-full object-cover"
         />
         {onExplain && (
           <button
@@ -83,7 +88,7 @@ const RecommendationCard = ({ item, onExplain, onTrack }) => {
       <div className="flex-1 flex flex-col justify-between">
         <div>
           <span className="text-[11px] uppercase tracking-wider text-[#189D91] font-extrabold">{category}</span>
-          <Link to={`/products/${productId}`} className="block font-bold text-gray-900 text-sm hover:text-[#189D91] line-clamp-1 mt-0.5">
+          <Link to={`/products/${productId}`} title={name} onClick={(e) => e.stopPropagation()} className="block font-bold text-gray-900 text-sm leading-5 hover:text-[#189D91] line-clamp-2 min-h-[2.5rem] mt-0.5 break-words">
             {name}
           </Link>
           
@@ -106,10 +111,11 @@ const RecommendationCard = ({ item, onExplain, onTrack }) => {
           </div>
           <button
             onClick={handleAddToCart}
-            className="p-2 bg-[#189D91] hover:bg-[#127F75] text-white rounded-xl shadow-xs hover:shadow-[#189D91]/25 transition-all flex items-center justify-center active:scale-95"
+            className="px-3 py-2 bg-[#189D91] hover:bg-[#127F75] text-white rounded-xl shadow-xs hover:shadow-[#189D91]/25 transition-all flex items-center justify-center gap-1.5 text-[13px] font-bold whitespace-nowrap active:scale-95"
             title="Add to Cart"
           >
-            <ShoppingBag className="w-4 h-4" />
+            <ShoppingCart className="w-4 h-4" />
+            Add to Cart
           </button>
         </div>
       </div>

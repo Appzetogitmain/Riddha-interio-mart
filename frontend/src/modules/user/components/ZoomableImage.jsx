@@ -12,7 +12,8 @@ const ZoomableImage = ({
   alt = 'Product image',
   className = '',
   zoomScale = 2.2,
-  loading = 'lazy'
+  loading = 'lazy',
+  fit = 'cover'
 }) => {
   const [isZoomed, setIsZoomed] = useState(false);
   const [origin, setOrigin] = useState({ x: 50, y: 50 });
@@ -74,7 +75,7 @@ const ZoomableImage = ({
           transform: isZoomed ? `scale(${zoomScale})` : 'scale(1)',
           transition: isZoomed ? 'transform 0.1s ease-out' : 'transform 0.4s ease-out'
         }}
-        className="h-full w-full object-cover pointer-events-none will-change-transform"
+        className={`h-full w-full ${fit === 'contain' ? 'object-contain' : 'object-cover'} pointer-events-none will-change-transform`}
       />
       {open && createPortal(
         <div

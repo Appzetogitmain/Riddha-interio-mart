@@ -78,28 +78,31 @@ const CompleteTheRoomWidget = ({ productId }) => {
           </button>
         </div>
 
-        <div className="space-y-5">
+        <div className="grid gap-4 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
           {categories.map((cat) => (
-            <div key={cat.name}>
-              <h3 className="text-[11px] font-black text-gray-500 uppercase tracking-widest mb-2">{cat.name}</h3>
-              <div className="overflow-x-auto no-scrollbar -mx-1 px-1">
-                <div className="flex gap-3 pb-1">
-                  {cat.items.map((item) => (
-                    <Link
-                      key={item.id}
-                      to={`/products/${item.id}`}
-                      className="w-32 shrink-0 bg-white border border-gray-100 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow"
-                    >
-                      <div className="w-full h-24 bg-gray-50">
-                        {item.image && <img src={item.image} alt={item.name} className="w-full h-full object-cover" />}
-                      </div>
-                      <div className="p-2">
-                        <p className="text-[11px] font-semibold text-gray-800 line-clamp-2 leading-snug">{item.name}</p>
-                        <p className="text-[12px] font-black text-gray-900 mt-1">₹{item.price.toLocaleString('en-IN')}</p>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
+            <div key={cat.name} className="bg-white/70 border border-[#189D91]/10 rounded-2xl p-3 md:p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-[11px] font-black text-gray-600 uppercase tracking-widest">{cat.name}</h3>
+                <span className="text-[10px] font-bold text-[#189D91] bg-[#189D91]/10 rounded-full px-2 py-0.5">
+                  {cat.items.length} {cat.items.length === 1 ? 'item' : 'items'}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                {cat.items.map((item) => (
+                  <Link
+                    key={item.id}
+                    to={`/products/${item.id}`}
+                    className="min-w-0 bg-white border border-gray-100 rounded-xl overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all"
+                  >
+                    <div className="w-full aspect-[4/3] bg-gray-50">
+                      {item.image && <img src={item.image} alt={item.name} className="w-full h-full object-cover" />}
+                    </div>
+                    <div className="p-2.5">
+                      <p className="text-[12px] font-semibold text-gray-800 line-clamp-2 leading-snug">{item.name}</p>
+                      <p className="text-[13px] font-black text-gray-900 mt-1">₹{item.price.toLocaleString('en-IN')}</p>
+                    </div>
+                  </Link>
+                ))}
               </div>
             </div>
           ))}

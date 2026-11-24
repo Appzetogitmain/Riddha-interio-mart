@@ -221,6 +221,7 @@ const menuGroups = [
       { path: "/admin/manage-hero", icon: FiImage, label: "Home Banner" },
       { path: "/admin/manage-promo", icon: FiPercent, label: "Promo Banner" },
       { path: "/admin/manage-promo-cards", icon: FiImage, label: "Promo Cards" },
+      { path: "/admin/manage-recommendations", icon: FiGrid, label: "Picks For You" },
       {
         label: "Section",
         icon: FiGrid,

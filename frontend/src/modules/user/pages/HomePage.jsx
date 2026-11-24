@@ -14,7 +14,6 @@ import { Link } from 'react-router-dom';
 import api from '../../../shared/utils/api';
 import ShopByCategory from '../components/ShopByCategory';
 import { LuChevronRight, LuChevronLeft } from 'react-icons/lu';
-import ZoomableImage from '../components/ZoomableImage';
 
 const SectionGrid = ({ products, loading, containerVariants, autoSlide = false, fadeColor = "from-white/90" }) => {
   const scrollRef = useRef(null);
@@ -140,11 +139,11 @@ const SectionGrid = ({ products, loading, containerVariants, autoSlide = false, 
               >
                 {/* Product Image */}
                 <div className="relative aspect-square overflow-hidden bg-stone-50">
-                  <ZoomableImage
+                  <img
                     src={getProductImage(product)}
                     alt={product?.name || 'Product'}
                     loading="lazy"
-                    className="h-full w-full"
+                    className="h-full w-full object-cover"
                   />
                   {hasDiscount && (
                     <span className="pointer-events-none absolute top-2 left-2 bg-[#0F172A] text-amber-300 border border-amber-400/30 text-[8px] font-black px-2 py-0.5 rounded-md shadow-xs tracking-wider z-10">

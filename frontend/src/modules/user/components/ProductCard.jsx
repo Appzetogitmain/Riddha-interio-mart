@@ -7,7 +7,6 @@ import { useWishlist } from '../data/WishlistContext';
 import { useUser } from '../data/UserContext';
 import OptimizedImage from '../../../shared/components/OptimizedImage';
 import Button from '../../../shared/components/Button';
-import ZoomableImage from './ZoomableImage';
 // Requirement A — per-card B2B quote & sample entry points
 import RequestQuoteButton from './RFQ/RequestQuoteButton';
 import RequestSampleButton from './Samples/RequestSampleButton';
@@ -134,18 +133,19 @@ const ProductCard = ({ product, index = 0, variant = 'grid' }) => {
 
   return (
     <div
-      className={`group bg-white ${isMinimal ? 'rounded-xl' : 'rounded-2xl md:rounded-3xl border border-soft-oatmeal/10'} shadow-sm hover:shadow-2xl transition-all duration-500 overflow-hidden ${isList ? 'flex flex-row md:flex-col' : 'flex flex-col'
+      className={`group bg-white ${isMinimal ? 'rounded-xl' : 'rounded-2xl md:rounded-3xl border border-soft-oatmeal/10'} shadow-sm hover:shadow-2xl transition-all duration-500 overflow-hidden h-full ${isList ? 'flex flex-row md:flex-col' : 'flex flex-col'
         }`}
     >
       <Link
         to={`/products/${productId}`}
-        className={`relative block overflow-hidden shrink-0 bg-white ${isList ? 'w-[40%] md:w-full aspect-square md:aspect-auto md:h-40' : 'aspect-[4/3.2] md:aspect-video md:h-40 w-full'
+        className={`relative block overflow-hidden shrink-0 bg-white ${isList ? 'w-[40%] md:w-full aspect-square md:aspect-auto md:h-64' : 'aspect-[4/3.2] md:aspect-auto md:h-52 w-full'
           }`}
       >
-        <ZoomableImage
+        <img
           src={productImage}
           alt={product.name}
-          className="h-full w-full"
+          loading="lazy"
+          className={`h-full w-full ${isList ? 'object-cover' : 'p-2 md:p-3 object-contain'}`}
         />
 
 
@@ -175,7 +175,7 @@ const ProductCard = ({ product, index = 0, variant = 'grid' }) => {
         {isTrending && !isList && <TrendingBadge />}
       </Link>
 
-      <div className={`flex-1 min-w-0 p-3 md:p-5 flex flex-col justify-between ${isList ? 'space-y-2 md:space-y-4' : 'space-y-1 md:space-y-2'}`}>
+      <div className={`flex-1 min-w-0 p-3 md:p-4 flex flex-col justify-between ${isList ? 'space-y-2 md:space-y-2.5' : 'space-y-1 md:space-y-2'}`}>
         <Link to={`/products/${productId}`} className="space-y-0 md:space-y-1 block hover:opacity-80 transition-opacity">
           <h3 className="text-[13px] md:text-lg font-display font-semibold text-black leading-tight line-clamp-1">
             {product.name}
@@ -190,7 +190,7 @@ const ProductCard = ({ product, index = 0, variant = 'grid' }) => {
           )}
         </Link>
 
-        <div className="flex items-center justify-between gap-2 md:gap-4 min-w-0 pt-1 md:pt-2 mt-auto">
+        <div className="flex items-center justify-between gap-2 md:gap-4 min-w-0 mt-auto">
           <Link to={`/products/${productId}`} className="min-w-0 flex-1 flex flex-col hover:opacity-80 transition-opacity">
             <div className="flex flex-col gap-0.5 min-w-0">
               <span className={`text-[16px] md:text-xl font-black tracking-tight whitespace-nowrap ${isList ? 'text-[#B71C1C]' : 'text-black'}`}>
@@ -216,75 +216,82 @@ const ProductCard = ({ product, index = 0, variant = 'grid' }) => {
               </span>
             )}
             
-            {/* Express Delivery Badge (List View) */}
-            {isList && (
-              <span className="inline-flex items-center gap-1 mt-1.5 text-[9px] md:text-[10px] font-bold text-[#189D91]">
-                <span className="text-[9px]">⚡</span>
-                Fast Delivery
-              </span>
-            )}
-            
             {/* Stock Status Indicator */}
             {!isList && <div className="mt-1"><StockIndicator stock={product.countInStock} /></div>}
           </Link>
 
-          {quantity === 0 ? (
-            <button
-              onClick={(e) => { e.preventDefault(); addToCart(product); }}
-              className="flex items-center gap-1.5 bg-[#189D91] hover:bg-[#14847a] text-white px-4 py-2 rounded-lg text-[11px] font-bold shadow-sm transition-all active:scale-95 whitespace-nowrap flex-shrink-0"
-            >
-              <FiShoppingCart className="w-3 h-3" />
-              Add
-            </button>
-          ) : (
-            <div className="flex items-center gap-0.5 bg-gray-50 rounded-lg border border-gray-200 flex-shrink-0">
-              <button
-                onClick={(e) => { e.preventDefault(); updateQuantity(productId, quantity - 1); }}
-                className="w-7 h-7 flex items-center justify-center text-gray-500 hover:text-[#189D91] transition-colors active:scale-90 outline-none"
-              >
-                <FiMinus className="w-3 h-3" />
-              </button>
-              <span className="min-w-[20px] text-center text-[12px] font-bold text-gray-800">
-                {quantity}
-              </span>
-              <button
-                onClick={(e) => { e.preventDefault(); addToCart(product); }}
-                className="w-7 h-7 flex items-center justify-center text-gray-500 hover:text-[#189D91] transition-colors active:scale-90 outline-none"
-              >
-                <FiPlus className="w-3 h-3" />
-              </button>
-            </div>
-          )}
         </div>
 
         {/* Compact Delivery Estimate UI */}
-        <div className="mt-2 pt-2 border-t border-slate-100 flex items-center gap-1 text-[9px] md:text-[11px] text-slate-500">
-          <span className="text-[#189D91] text-xs">🚚</span>
-          <span>Delivery by: <span className="font-semibold text-slate-700">{getDeliveryEstimate()}</span></span>
+        <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2 flex-wrap text-[9px] md:text-[11px] text-slate-500">
+          <span className="flex items-center gap-1">
+            <span className="text-[#189D91] text-xs">🚚</span>
+            <span>Delivery by: <span className="font-semibold text-slate-700">{getDeliveryEstimate()}</span></span>
+          </span>
+          {isList && (
+            <span className="inline-flex items-center gap-1 font-bold text-[#189D91] whitespace-nowrap">
+              <span>⚡</span>
+              Fast Delivery
+            </span>
+          )}
         </div>
 
-        {/* ── B2B: bulk quote & sample (Requirement A) ── */}
-        <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
-          <RequestQuoteButton
-            products={[{
-              productId,
-              productDescription: product.name,
-              quantity: '',
-              unit: 'pcs'
-            }]}
-            source="product-card"
-            variant="link"
-            size="sm"
-            label="Bulk quote"
-            className="text-[10px] md:text-[11px]"
-          />
-          <RequestSampleButton
-            product={product}
-            variant="ghost"
-            size="sm"
-            label="Sample"
-            className="!px-0 text-[10px] md:text-[11px] underline underline-offset-2"
-          />
+        {/* ── Actions pinned to the bottom of the card ── */}
+        <div className="mt-auto pt-1 flex flex-col gap-2">
+          {/* Sample request (only renders for sampleable products) */}
+          <div className="empty:hidden">
+            <RequestSampleButton
+              product={product}
+              variant="outline"
+              size="sm"
+              label="Sample"
+              className="w-full !rounded-lg !border-[#189D91] !text-[#189D91] hover:!bg-[#189D91]/10 text-[10px] md:text-[12px] !py-2"
+            />
+          </div>
+
+          {/* Bulk quote + Add to Cart side by side */}
+          <div className="grid grid-cols-2 gap-2">
+            <RequestQuoteButton
+              products={[{
+                productId,
+                productDescription: product.name,
+                quantity: '',
+                unit: 'pcs'
+              }]}
+              source="product-card"
+              variant="outline"
+              size="sm"
+              label="Bulk quote"
+              fullWidth
+              className="!rounded-xl !border-[#189D91] !text-[#189D91] hover:!bg-[#189D91]/10 text-[11px] md:text-[13px] !py-2.5 whitespace-nowrap"
+            />
+
+            {quantity === 0 ? (
+              <button
+                onClick={(e) => { e.preventDefault(); addToCart(product); }}
+                className="w-full flex items-center justify-center gap-1.5 bg-[#189D91] hover:bg-[#14847a] text-white py-2.5 rounded-xl text-[11px] md:text-[13px] font-bold shadow-sm transition-all active:scale-[0.98] whitespace-nowrap"
+              >
+                <FiShoppingCart className="w-4 h-4" />
+                Add to Cart
+              </button>
+            ) : (
+              <div className="w-full flex items-center justify-between bg-gray-50 rounded-xl border border-gray-200 px-1">
+                <button
+                  onClick={(e) => { e.preventDefault(); updateQuantity(productId, quantity - 1); }}
+                  className="w-8 h-9 flex items-center justify-center text-gray-600 hover:text-[#189D91] transition-colors active:scale-90 outline-none"
+                >
+                  <FiMinus className="w-4 h-4" />
+                </button>
+                <span className="text-sm font-bold text-gray-800">{quantity}</span>
+                <button
+                  onClick={(e) => { e.preventDefault(); addToCart(product); }}
+                  className="w-8 h-9 flex items-center justify-center text-gray-600 hover:text-[#189D91] transition-colors active:scale-90 outline-none"
+                >
+                  <FiPlus className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

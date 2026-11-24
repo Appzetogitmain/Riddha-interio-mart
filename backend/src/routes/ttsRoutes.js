@@ -1,9 +1,10 @@
 const express = require('express');
-const { generateSpeech } = require('../controllers/ttsController');
+const { generateSpeech, ttsRateLimiter, getTtsConfig } = require('../controllers/ttsController');
 
 const router = express.Router();
 
 // @route POST /api/tts
-router.post('/', generateSpeech);
+router.get('/config', getTtsConfig);
+router.post('/', ttsRateLimiter, generateSpeech);
 
 module.exports = router;

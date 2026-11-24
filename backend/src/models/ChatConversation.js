@@ -41,11 +41,24 @@ const ChatConversationSchema = new mongoose.Schema({
     required: true,
     enum: ['active', 'handover', 'resolved'],
     default: 'active'
+  },
+  // What Tejas has learned about the customer's need (room, category, lighting type, budget...)
+  requirements: {
+    type: mongoose.Schema.Types.Mixed,
+    default: {}
+  },
+  // Admin follow-up tracking
+  followUp: {
+    status: { type: String, enum: ['new', 'contacted', 'converted', 'closed'], default: 'new' },
+    note: { type: String, default: '', maxlength: 1000 },
+    updatedBy: { type: String, default: '' },
+    updatedAt: { type: Date }
   }
 }, { timestamps: true });
 
 ChatConversationSchema.index({ user: 1 });
 ChatConversationSchema.index({ guestSessionId: 1 });
 ChatConversationSchema.index({ createdAt: -1 });
+ChatConversationSchema.index({ roleContext: 1, updatedAt: -1 });
 
 module.exports = mongoose.model('ChatConversation', ChatConversationSchema);

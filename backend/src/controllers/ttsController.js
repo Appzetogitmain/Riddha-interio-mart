@@ -1,4 +1,14 @@
+const rateLimit = require('express-rate-limit');
 const indianTtsService = require('../services/indianTtsService');
+
+// The speech providers are paid APIs and this endpoint is public, so cap how often one visitor can call it.
+exports.ttsRateLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 25,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, fallbackToBrowser: true, error: 'Too many voice requests. Please slow down.' }
+});
 
 /**
  * @desc    Generate Speech Audio (TTS) with authentic Indian English / Hindi accent for Tejas Assistant
@@ -8,6 +18,9 @@ const indianTtsService = require('../services/indianTtsService');
 exports.generateSpeech = async (req, res) => {
   try {
     const { text, lang } = req.body;
+    if (typeof text === 'string' && text.length > 1500) {
+      return res.status(400).json({ success: false, error: 'Text is too long for speech synthesis.' });
+    }
 
     if (!text || typeof text !== 'string' || text.trim().length === 0) {
       return res.status(400).json({
@@ -33,7 +46,10 @@ exports.generateSpeech = async (req, res) => {
       'Content-Type': speechResult.contentType || 'audio/mpeg',
       'Content-Length': speechResult.buffer.length,
       'Cache-Control': 'public, max-age=86400', // Allow caching of synthesized audio
-      'Accept-Ranges': 'bytes'
+      'Accept-Ranges': 'bytes',
+      'X-TTS-Provider': speechResult.provider || '',
+      'X-TTS-Voice': speechResult.voice || '',
+      'Access-Control-Expose-Headers': 'X-TTS-Provider, X-TTS-Voice'
     });
 
     return res.send(speechResult.buffer);
@@ -45,4 +61,17 @@ exports.generateSpeech = async (req, res) => {
       error: 'Backend Indian TTS unavailable, falling back to browser synthesis.'
     });
   }
+};
+
+/**
+ * @desc    Which server-side voices are configured (the browser uses this to pick the most Indian-sounding voice)
+ * @route   GET /api/tts/config
+ * @access  Public
+ */
+exports.getTtsConfig = (req, res) => {
+  res.json({
+    success: true,
+    azure: !!(process.env.AZURE_SPEECH_KEY && process.env.AZURE_SPEECH_REGION), // native Indian neural voice (Prabhat / Madhur)
+    openai: !!process.env.OPENAI_API_KEY // steered English voice (accent is approximate)
+  });
 };

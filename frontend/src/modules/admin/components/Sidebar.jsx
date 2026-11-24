@@ -266,6 +266,7 @@ const menuGroups = [
         ],
       },
       { path: "/admin/manage-advertisements", icon: FiStar, label: "Advertisement Plans" },
+      { path: "/admin/manage-category-banners", icon: FiImage, label: "Category Banner Ads" },
       { path: "/admin/pro-plans", icon: LuCrown, label: "Pro AI Subscription Plans" },
       { path: "/admin/b2c-plans", icon: LuCrown, label: "B2C Subscription Plans" },
       { path: "/admin/manage-bundles", icon: FiZap, label: "Smart Bundles" },
@@ -336,6 +337,8 @@ const menuGroups = [
       },
       { path: "/admin/settings", icon: FiSettings, label: "Settings" },
       { path: "/admin/feedback", icon: FiMessageSquare, label: "Product Reviews" },
+      { path: "/admin/rating-settings", icon: FiStar, label: "Ratings & Bestsellers" },
+      { path: "/admin/tejas-chats", icon: FiMessageSquare, label: "Tejas Chat History" },
       { path: "/admin/support-tickets", icon: FiHelpCircle, label: "Support Tickets" },
       {
         path: "/admin/seller-recommendations",

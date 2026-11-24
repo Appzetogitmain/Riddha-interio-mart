@@ -73,6 +73,7 @@ const menuItems = [
       { path: "/seller/content-generator", label: "AI Copywriting Studio" },
       { path: "/seller/advertisement-plans", label: "Advertisement Plans" },
       { path: "/seller/my-advertisements", label: "My Advertisements" },
+      { path: "/seller/category-banner-ads", label: "Category Banner Ads" },
     ]
   },
   {

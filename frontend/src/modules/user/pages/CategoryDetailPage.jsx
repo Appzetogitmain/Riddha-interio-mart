@@ -5,6 +5,7 @@ import { FiChevronRight, FiGrid, FiArrowRight, FiFilter, FiHome } from 'react-ic
 import api from '../../../shared/utils/api';
 import ProductCard from '../components/ProductCard';
 import BrandScroll from '../components/BrandScroll';
+import SponsoredBanner from '../components/SponsoredBanner';
 
 // In-memory cache so revisiting a category renders instantly
 const pageCache = new Map();
@@ -93,6 +94,9 @@ const CategoryDetailPage = () => {
 
   return (
     <div className="min-h-svh bg-[#F5F7F8]">
+      {/* Paid banner ads for this category (renders nothing when there are none) */}
+      <SponsoredBanner categoryId={category._id} />
+
       {/* Category Hero */}
       <div className="relative h-[160px] md:h-[240px] overflow-hidden">
         <img

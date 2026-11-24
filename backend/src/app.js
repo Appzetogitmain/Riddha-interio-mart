@@ -187,6 +187,8 @@ app.use('/api/b2b-leads', b2bLeadRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/terms', termsRoutes);
 app.use('/api/advertisements', advertisementRoutes);
+app.use('/api/category-banners', require('./routes/categoryBannerRoutes'));
+app.use('/api/display', require('./routes/displayRoutes'));
 app.use('/api/invoices', invoiceRoutes);
 app.use('/api/recommendations', recommendationRoutes);
 app.use('/api/rooms', roomRoutes);

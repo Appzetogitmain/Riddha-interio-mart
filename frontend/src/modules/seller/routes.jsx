@@ -31,6 +31,7 @@ const SellerTerms = React.lazy(() => import('./pages/SellerTerms'));
 const SellerBulkOrders = React.lazy(() => import('./pages/SellerBulkOrders'));
 const AdvertisementPlans = React.lazy(() => import('./pages/AdvertisementPlans'));
 const MyAdvertisements = React.lazy(() => import('./pages/MyAdvertisements'));
+const CategoryBannerAds = React.lazy(() => import('./pages/CategoryBannerAds'));
 const SellerAIContentGeneratorPage = React.lazy(() => import('../user/pages/SellerAIContentGeneratorPage'));
 const OffersListPage = React.lazy(() => import('./pages/OffersListPage'));
 const OfferFormPage = React.lazy(() => import('./pages/OfferFormPage'));
@@ -81,6 +82,7 @@ const SellerRoutes = () => {
         <Route path="/samples" element={<SellerSamples />} />
         <Route path="/advertisement-plans" element={<AdvertisementPlans />} />
         <Route path="/my-advertisements" element={<MyAdvertisements />} />
+        <Route path="/category-banner-ads" element={<CategoryBannerAds />} />
         <Route path="/content-generator" element={<SellerAIContentGeneratorPage />} />
         <Route path="/offers" element={<OffersListPage />} />
         <Route path="/offers/type/:typeSlug" element={<OffersListPage />} />

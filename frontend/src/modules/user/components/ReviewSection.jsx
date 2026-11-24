@@ -108,10 +108,10 @@ const ReviewSection = ({ productId, averageRating = 0, totalReviews = 0 }) => {
               <div className="flex justify-between items-start mb-3">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-[#189D91]/10 rounded-full flex items-center justify-center text-[#189D91] font-black text-sm uppercase">
-                    {review.user?.fullName?.charAt(0) || 'U'}
+                    {(review.user?.fullName || review.reviewerName || 'U').charAt(0)}
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-deep-espresso">{review.user?.fullName || 'User'}</p>
+                    <p className="text-sm font-bold text-deep-espresso">{review.user?.fullName || review.reviewerName || 'Customer'}</p>
                     <div className="flex items-center gap-2 mt-0.5">
                       <StarRating rating={review.rating} size={12} />
                       <span className="text-[10px] text-gray-400 font-medium">

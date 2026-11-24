@@ -4,6 +4,9 @@ import { Sparkles, Heart, ShoppingCart, Star, Info } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../../../shared/utils/api';
 import { useCart } from '../data/CartContext';
+import ProductBadge from './ProductBadge';
+import StarRating from './StarRating';
+import { useProductDisplay } from '../../../shared/hooks/useDisplayConfig';
 
 const RecommendationCard = ({ item, onExplain, onTrack }) => {
   const navigate = useNavigate();
@@ -15,8 +18,7 @@ const RecommendationCard = ({ item, onExplain, onTrack }) => {
   const price = item.price || 0;
   const discountPrice = item.discountPrice;
   const image = item.image || item.images?.[0] || 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=500&auto=format&fit=crop&q=60';
-  const rating = item.averageRating || 4.5;
-  const reviews = item.totalReviews || 12;
+  const display = useProductDisplay(item);
   const reason = item.reason || item.aiExplanation || 'Recommended for your style';
   const category = item.category || 'Interior';
 
@@ -73,6 +75,7 @@ const RecommendationCard = ({ item, onExplain, onTrack }) => {
           loading="lazy"
           className="w-full h-full object-cover"
         />
+        <ProductBadge badge={display.badge} />
         {onExplain && (
           <button
             onClick={(e) => { e.stopPropagation(); onExplain(item); }}
@@ -92,13 +95,7 @@ const RecommendationCard = ({ item, onExplain, onTrack }) => {
             {name}
           </Link>
           
-          <div className="flex items-center gap-1.5 mt-1.5">
-            <div className="flex items-center text-amber-500">
-              <Star className="w-3.5 h-3.5 fill-amber-400" />
-              <span className="text-xs font-bold text-gray-900 ml-1">{rating}</span>
-            </div>
-            <span className="text-xs font-medium text-gray-500">({reviews})</span>
-          </div>
+          {display.showRating && <StarRating rating={display.rating} count={display.reviewCount} size={12} className="mt-1.5" />}
         </div>
 
         {/* Price & Cart */}

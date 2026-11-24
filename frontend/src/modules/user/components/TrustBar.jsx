@@ -146,9 +146,16 @@ const TrustBar = () => {
           </div>
 
           {help.enabled !== false && (
-          <div className="bg-gradient-to-r from-[#189D91] via-[#127F75] to-[#0F172A] rounded-[22px] p-3 px-5 md:py-4 flex items-center justify-between gap-4 shadow-[0_10px_30px_rgba(15,23,42,0.25)] hover:shadow-[0_14px_36px_rgba(15,23,42,0.3)] transition-shadow">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-2xl bg-white/15 backdrop-blur-sm relative">
+          <div
+            className="group/help relative overflow-hidden rounded-[22px] p-3 px-5 md:py-4 flex items-center justify-between gap-4 border border-white/20 shadow-[0_12px_32px_rgba(15,118,110,0.35)] hover:shadow-[0_16px_40px_rgba(15,118,110,0.45)] transition-shadow"
+            style={{ background: 'linear-gradient(120deg, #22C1B0 0%, #189D91 28%, #0E6F78 62%, #12304F 100%)' }}
+          >
+            {/* soft light glows for depth */}
+            <div className="pointer-events-none absolute -top-10 -left-6 w-40 h-40 rounded-full bg-white/20 blur-2xl" />
+            <div className="pointer-events-none absolute -bottom-12 right-10 w-40 h-40 rounded-full bg-cyan-300/20 blur-3xl" />
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/10 to-transparent" />
+            <div className="relative z-10 flex items-center gap-3">
+              <div className="p-2.5 rounded-2xl bg-gradient-to-br from-white/30 to-white/10 border border-white/25 backdrop-blur-sm relative">
                 <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-emerald-400 ring-2 ring-[#127F75] animate-pulse" />
                 <LuHeadphones className="w-5 h-5 text-white" />
               </div>
@@ -162,7 +169,7 @@ const TrustBar = () => {
             </div>
             <Link
               to={help.buttonLink || '/contact'}
-              className="bg-white/10 hover:bg-white text-white hover:text-slate-900 border border-white/40 px-5 py-2.5 rounded-full text-sm font-bold transition-all duration-300 backdrop-blur-sm hover:scale-105 active:scale-95 whitespace-nowrap"
+              className="relative z-10 bg-gradient-to-r from-white to-[#D9F7F2] text-[#0E4F57] border border-white/70 px-5 py-2.5 rounded-full text-sm font-bold shadow-md shadow-black/10 transition-all duration-300 hover:shadow-lg hover:scale-105 active:scale-95 whitespace-nowrap"
             >
               {help.buttonText}
             </Link>

@@ -6,6 +6,8 @@ const Order = require('../models/Order');
 const Category = require('../models/Category');
 const Brand = require('../models/Brand');
 const ChatConversation = require('../models/ChatConversation');
+const { getCustomerPrompt } = require('./tejasPrompt');
+const helpers = require('../utils/tejasHelpers');
 const AiSupportRequest = require('../models/AiSupportRequest');
 
 const Seller = require('../models/Seller');
@@ -135,127 +137,8 @@ AVAILABLE ADMIN TOOLS:
 `;
   }
 
-  // DEFAULT: USER / CUSTOMER MODE
-  return `You are "Tejas", the friendly, intelligent, and highly knowledgeable Indian interior design consultant and store advisor for Riddha Interio Mart.
-You embody an authentic, warm, polite, and energetic Native Indian conversational style and personality.
-
-NATIVE INDIAN TALKING STYLE & PERSONA GUIDELINES:
-1. GREETING:
-   When greeting customers or introducing yourself, always say warmly:
-   "Namaste! 🙏 I am Tejas, your personal Interior & Voice Consultant at Riddha Interio Mart. Kaise hain aap? How can I assist you with your home interior, furniture, or shopping today?"
-2. TALKING STYLE & VOICE:
-   - Speak in natural, polished Indian English blended with warm, courteous Indian expressions where appropriate (e.g. "Namaste ji!", "Bilkul!", "Haan ji, sure!", "Aap bilkul chinta mat kijiye (don't worry at all)!", "Shandaar choice!", "Pakka!", "Zaroor!").
-   - Always be deeply respectful and hospitable, treating every customer with traditional Indian "Atithi Devo Bhava" courtesy.
-   - Address users with warmth ("ji", "aap").
-   - Code-switching: If the user speaks in English, reply in warm, polished Indian English. If the user writes in Hindi or Hinglish (e.g., "bhai sofa dikhao", "kya haal hai", "modular kitchen ka cost kitna hoga", "living room suggestions chahiye", "hiiii"), comfortably match their language with a warm, natural Hinglish / Indian English reply!
-3. INDIAN HOME & INTERIOR KNOWLEDGE:
-   - Deeply familiar with Indian homes: Living hall / Drawing room, Pooja room / Mandir, Modular kitchen (with heavy-duty baffle filter chimneys for tadka & Indian cooking, tandem boxes, spice pullouts), Balcony sit-out, Master bedroom, Guest room.
-   - Vastu Shastra principles: North-East for Mandir/water elements, South-East for Kitchen/fire, South-West for Master Bedroom. Mention Vastu tips gently when relevant!
-   - Indian materials: Teakwood (Sagwan), Sheesham, High-gloss acrylic laminates, Quartz & Granite kitchen tops, Anti-skid vitrified tiles, Italian marble.
-   - Currency & Metrics: Always quote prices in Indian Rupees (₹) with Lakhs or Thousands (e.g., ₹25,000, ₹1.5 Lakhs), dimensions in sq. ft. or feet.
-4. EXPRESSION FIELD:
-   - Set "expression" in your JSON to reflect Tejas's real facial expression:
-     - "happy": For warm greetings, cheerful answers, and general interior advice.
-     - "okay": For acknowledging requests, confirming actions, or connecting to human customer support.
-     - "excited": When order confirmed, Pro upgrade completed, or enthusiastic design choices.
-     - "thinking": When analyzing complex design questions or calculating BOQ/estimates.
-     - "confused": When a query is unclear, missing IDs, or needs customer clarification.
-     - "sad": When apologizing for issues, errors, or out-of-stock items.
-     - "love": When customer expresses gratitude, praise, or warm compliments.
-     - "listening": When paying keen attention to customer requirements.
-You MUST NEVER call yourself "Riddha Design AI" or "AI bot". Always refer to yourself strictly as "Tejas".
-
-ABOUT RIDDHA INTERIO MART:
-- Riddha Interio Mart is a premier one-stop interior mart and marketplace connecting homeowners, architects, interior designers, and builders with top brands and sellers.
-- Major Product Categories include:
-  1. Tiles & Flooring (Vitrified, Ceramic, Marble, Wooden flooring)
-  2. Furniture (Living room sofas, dining tables, beds, wardrobes, study desks)
-  3. Lighting & Fans (Chandelier lights, LED strips, pendant lamps, smart ceiling fans)
-  4. Paints & Wall Treatments (Interior paints, exterior coatings, wallpapers, textures)
-  5. Kitchen & Modular Cabinets (Modular kitchen layouts, sinks, chimneys, cooktops, appliances)
-  6. Bathroom & Sanitaryware (Faucets, showers, vanity mirrors, washbasins, bathtubs)
-  7. Electricals & Smart Home (Switches, wires, smart home automation, distribution boards)
-  8. Architectural Hardware (Door handles, locks, hinges, fittings)
-- Key Innovative Features & Tools (Use exact paths for NAVIGATE action payloads):
-  - Design Persona Quiz: Discover personalized interior style (Path: "/designer-quiz")
-  - AI Room Visualizer: Real-time 3D room styling and preview (Path: "/ai-room-visualizer")
-  - AI Mood Board Generator: Create customized design mood boards (Path: "/ai-mood-board")
-  - AI Cost Estimator & Budget Planner: Calculate estimated renovation expenses room-by-room (Path: "/cost-estimator")
-  - AI BOQ Generator: Bill of quantities generation for projects (Path: "/boq-generator")
-  - AI Quotation Generator: Generate GST compliant interior quotes (Path: "/quotation-generator")
-  - Live GPS Tracking: Real-time tracking of order shipments (Path: "/orders/track")
-  - Product Catalog / Shop: Browse all products (Path: "/shop")
-  - Categories: Explore all interior product categories (Path: "/categories")
-
-ANSWERING GUIDELINES:
-1. Always give specific, helpful, and natural answers! When asked about Riddha Mart, its categories, or features, explain them clearly and invite the user to explore products or tools.
-2. If the user asks about available categories (e.g. "How many categories in?", "What categories do you have?"), use the \`getCategories\` tool or list the primary categories with examples!
-3. When recommending products or answering design questions, suggest suitable materials, colors, and layout ideas, and use \`searchProducts\` to present real items.
-4. Set "expression" to "happy" for general advice and greetings, "celebrating" for orders/upgrades, and "confused" ONLY when a specific query (like an unknown tracking ID) cannot be found.
-
-CRITICAL DATA SEGREGATION & SECURITY RULES (MANDATORY):
-1. You are operating in CUSTOMER STORE FRONT mode.
-2. You MUST NEVER disclose seller internal cost prices, seller revenue stats, other sellers' private information, admin platform profits, admin commission percentages, or delivery partner internal data.
-3. NEVER fabricate fake order IDs or fake prices. Use tools to query them.
-
-Your response MUST ALWAYS be a valid JSON object matching this schema:
-{
-  "message": "Write your detailed, friendly, and natural response here.",
-  "expression": "happy | okay | excited | thinking | confused | sad | love",
-  "products": [
-    {
-      "productId": "string (MongoDB ObjectId)",
-      "name": "string (Product Name)",
-      "price": "number",
-      "imageUrl": "string (URL)",
-      "reason": "Explain in one brief sentence why this product fits their style/budget/query"
-    }
-  ],
-  "orders": [
-    {
-      "orderId": "string (Order ID/number)",
-      "status": "string (Pending/Processing/Packed/Shipped/Delivered/Cancelled)",
-      "totalPrice": "number",
-      "createdAt": "string"
-    }
-  ],
-  "actions": [
-    {
-      "type": "string (UPGRADE_PRO | VIEW_PRODUCT | TRACK_ORDER | VIEW_MY_ORDERS | CONTACT_SUPPORT | LOGIN | NAVIGATE)",
-      "label": "string",
-      "payload": {
-        "productId": "string (optional)",
-        "orderId": "string (optional)",
-        "path": "string (optional)"
-      }
-    }
-  ],
-  "handover": null,
-  "toolCall": {
-    "name": "string (getCategories | searchProducts | getProduct | getMyOrders | getMyOrder | getOrderTracking | createHumanHandover)",
-    "arguments": {
-      "query": "string (optional)",
-      "category": "string (optional)",
-      "minPrice": "number (optional)",
-      "maxPrice": "number (optional)",
-      "inStock": "boolean (optional)",
-      "productId": "string (optional)",
-      "orderId": "string (optional)",
-      "reason": "string (optional)",
-      "summary": "string (optional)"
-    }
-  }
-}
-
-AVAILABLE TOOLS:
-- getCategories(): Returns all product categories available in Riddha Interio Mart with subcategory lists.
-- searchProducts({ query, category, minPrice, maxPrice, inStock }): Searches store catalog products.
-- getProduct({ productId }): Fetches full product details.
-- getMyOrders(): Fetches orders for the logged-in user. (Requires login).
-- getMyOrder({ orderId }): Fetches details for a specific order. (Requires login).
-- getOrderTracking({ orderId }): Fetches tracking timeline for an order. (Requires login).
-- createHumanHandover({ reason, summary }): Escalates chat to human support. ONLY use when user explicitly asks for a human agent.
-`;
+  // DEFAULT: USER / CUSTOMER MODE (short answers first, discovery questions, category-wise picks)
+  return getCustomerPrompt();
 }
 
 function sanitizeImageUrl(url) {
@@ -526,69 +409,66 @@ class AssistantService {
 
       // --- CUSTOMER / USER DASHBOARD TOOLS ---
       case 'searchProducts': {
-        const query = {};
-        query.isApproved = true;
-        query.approvalStatus = { $in: ['approved', 'Approved'] };
-        query.isActive = true;
-        query.isBundle = { $ne: true };
-
-        let foundCat = null;
-        if (args.category) {
-          foundCat = await Category.findOne({ name: { $regex: new RegExp(`^${args.category.trim()}$`, 'i') } });
-          if (!foundCat) {
-            foundCat = await Category.findOne({ name: { $regex: args.category.trim(), $options: 'i' } });
-          }
-          if (foundCat) {
-            query.category = foundCat._id;
-          }
-        }
-
+        const base = {
+          isApproved: true,
+          approvalStatus: { $in: ['approved', 'Approved'] },
+          isActive: true,
+          isBundle: { $ne: true }
+        };
         if (args.minPrice || args.maxPrice) {
-          query.price = {};
-          if (args.minPrice) query.price.$gte = Number(args.minPrice);
-          if (args.maxPrice) query.price.$lte = Number(args.maxPrice);
+          base.price = {};
+          if (args.minPrice) base.price.$gte = Number(args.minPrice);
+          if (args.maxPrice) base.price.$lte = Number(args.maxPrice);
         }
-
         if (args.inStock) {
-          query.$expr = {
-            $gt: [{ $subtract: ['$countInStock', '$reservedStock'] }, 0]
-          };
+          base.$expr = { $gt: [{ $subtract: ['$countInStock', '$reservedStock'] }, 0] };
         }
 
-        const searchKeywords = [];
-        if (args.query && args.query.trim()) {
-          searchKeywords.push(args.query.trim());
-        }
-        if (args.category && !foundCat && args.category.trim()) {
-          searchKeywords.push(args.category.trim());
-        }
-
-        if (searchKeywords.length > 0) {
-          const keywordRegex = searchKeywords.map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
-          query.$or = [
-            { name: { $regex: keywordRegex, $options: 'i' } },
-            { description: { $regex: keywordRegex, $options: 'i' } },
-            { material: { $regex: keywordRegex, $options: 'i' } },
-            { color: { $regex: keywordRegex, $options: 'i' } }
-          ];
+        // Resolve the category: what the model passed, otherwise what the words imply ("light" -> Lighting)
+        const catText = (args.category && String(args.category).trim()) || helpers.inferCategoryHint(args.query) || '';
+        let foundCat = null;
+        if (catText) {
+          const safe = helpers.escapeRegex(catText);
+          foundCat = await Category.findOne({ name: { $regex: new RegExp('^' + safe + '$', 'i') } })
+            || await Category.findOne({ name: { $regex: safe, $options: 'i' } });
         }
 
-        let products = await Product.find(query)
-          .limit(6)
-          .select('name price images countInStock description');
+        const tokens = helpers.tokenize(args.query);
+        const keywordClause = tokens.length
+          ? { $or: tokens.flatMap(t => {
+              const re = new RegExp('\\b' + helpers.escapeRegex(t), 'i');
+              return [{ name: re }, { material: re }, { color: re }, { tags: re }];
+            }) }
+          : null;
+        const select = 'name price images countInStock category';
+        const populate = { path: 'category', select: 'name' };
 
-        if (products.length === 0) {
-          products = await Product.find({ isApproved: true, approvalStatus: { $in: ['approved', 'Approved'] }, isActive: true, isBundle: { $ne: true } })
-            .limit(6)
-            .select('name price images countInStock description');
+        let products = [];
+        if (foundCat) {
+          // Stay inside the category; use words to rank, but never drop the category itself
+          if (keywordClause) {
+            products = await Product.find({ ...base, category: foundCat._id, ...keywordClause }).limit(6).select(select).populate(populate);
+          }
+          // the words may belong to a sibling category (e.g. "marble" asked under "Flooring")
+          if (products.length === 0 && keywordClause) {
+            products = await Product.find({ ...base, ...keywordClause }).limit(6).select(select).populate(populate);
+          }
+          if (products.length === 0) {
+            products = await Product.find({ ...base, category: foundCat._id }).limit(6).select(select).populate(populate);
+          }
+        } else if (keywordClause) {
+          products = await Product.find({ ...base, ...keywordClause }).limit(6).select(select).populate(populate);
         }
 
         return {
           success: true,
+          category: foundCat ? foundCat.name : null,
+          note: products.length === 0 ? 'No matching products in the catalog. Do not show unrelated products.' : undefined,
           products: products.map(p => ({
             productId: p._id,
             name: p.name,
             price: p.price,
+            category: p.category?.name || '',
             imageUrl: sanitizeImageUrl(p.images && p.images[0] ? p.images[0] : ''),
             inStock: p.countInStock > 0
           }))
@@ -939,6 +819,8 @@ class AssistantService {
       if (parsed.toolCall && parsed.toolCall.name) {
         const toolName = parsed.toolCall.name;
         const toolArgs = parsed.toolCall.arguments || {};
+        // The model sometimes searches by category only; add the customer's own words (e.g. "marble") so results match
+        if (toolName === 'searchProducts' && !String(toolArgs.query || '').trim()) toolArgs.query = userMessage;
 
         // Execute tool query
         const toolResult = await this.executeTool(toolName, toolArgs, userId, conversation._id, roleContext, userObj);
@@ -974,35 +856,25 @@ class AssistantService {
       };
     }
 
-    // Auto-search fallback if query is product-related but products array is empty
-    if (finalJsonResponse && (!finalJsonResponse.products || finalJsonResponse.products.length === 0)) {
-      const lowerText = (userMessage + ' ' + (finalJsonResponse.message || '')).toLowerCase();
-      const keywords = ['product', 'products', 'bedroom', 'living', 'room', 'sofa', 'table', 'lamp', 'tile', 'paint', 'decor', 'furniture', 'kitchen', 'bathroom', 'buy', 'show', 'catalog', 'recommend', 'options', 'get'];
-      const isProductQuery = keywords.some(k => lowerText.includes(k));
-
-      if (isProductQuery) {
-        try {
-          const autoRes = await this.executeTool('searchProducts', { query: userMessage }, userId, conversation._id);
-          if (autoRes && autoRes.products && autoRes.products.length > 0) {
-            finalJsonResponse.products = autoRes.products.slice(0, 4).map(p => ({
-              productId: p.productId,
-              name: p.name,
-              price: p.price,
-              imageUrl: p.imageUrl,
-              reason: `Matching store item for your request`
-            }));
-
-            if (!finalJsonResponse.actions || finalJsonResponse.actions.length === 0) {
-              finalJsonResponse.actions = finalJsonResponse.products.slice(0, 2).map(p => ({
-                type: 'VIEW_PRODUCT',
-                label: `View ${p.name}`,
-                payload: { productId: p.productId }
-              }));
-            }
-          }
-        } catch (e) {
-          console.error('[Assistant Service] Auto-product fallback error:', e.message);
+    // Safety net: only when the customer EXPLICITLY asked to see items and the model gave none.
+    // Uses the category implied by their words, and never shows unrelated products.
+    if (roleContext === 'user' && finalJsonResponse && (!finalJsonResponse.products || finalJsonResponse.products.length === 0)
+        && helpers.isExplicitProductRequest(userMessage) && helpers.inferCategoryHint(userMessage)) {
+      try {
+        const autoRes = await this.executeTool('searchProducts', { query: userMessage }, userId, conversation._id);
+        if (autoRes && autoRes.products && autoRes.products.length > 0) {
+          finalJsonResponse.products = autoRes.products.slice(0, 4).map(p => ({
+            productId: p.productId,
+            name: p.name,
+            price: p.price,
+            imageUrl: p.imageUrl,
+            category: p.category,
+            reason: 'Matches what you asked for',
+            benefit: ''
+          }));
         }
+      } catch (e) {
+        console.error('[Assistant Service] Auto-product fallback error:', e.message);
       }
     }
 
@@ -1011,17 +883,26 @@ class AssistantService {
       for (const item of finalJsonResponse.products) {
         if (item.productId) {
           try {
-            const p = await Product.findById(item.productId).select('images price name');
+            const p = await Product.findById(item.productId).select('images price name category').populate('category', 'name');
             if (p) {
               if (!item.imageUrl || item.imageUrl === '[base64-image-hidden]') {
                 item.imageUrl = p.images && p.images[0] ? p.images[0] : '';
               }
               if (!item.price) item.price = p.price;
               if (!item.name) item.name = p.name;
+              if (!item.category && p.category?.name) item.category = p.category.name;
             }
           } catch (_) {}
         }
       }
+    }
+
+    // Clean quick replies and remember what the customer needs (shown to admins for follow-up)
+    finalJsonResponse.quickReplies = helpers.sanitizeQuickReplies(finalJsonResponse.quickReplies);
+    if (roleContext === 'user') {
+      conversation.requirements = helpers.mergeRequirements(conversation.requirements, finalJsonResponse.requirements);
+      conversation.markModified('requirements');
+      finalJsonResponse.requirements = conversation.requirements;
     }
 
     // Save final response message in database history
@@ -1033,7 +914,8 @@ class AssistantService {
         products: finalJsonResponse.products || [],
         orders: finalJsonResponse.orders || [],
         actions: finalJsonResponse.actions || [],
-        handover: finalJsonResponse.handover || null
+        handover: finalJsonResponse.handover || null,
+        quickReplies: finalJsonResponse.quickReplies || []
       }
     });
 

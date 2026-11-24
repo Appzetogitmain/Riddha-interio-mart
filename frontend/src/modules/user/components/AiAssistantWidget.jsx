@@ -190,6 +190,23 @@ const getMsgExpression = (msg) => {
 };
 
 
+// Small visual cue for each store category
+const categoryEmoji = (name = '') => {
+  const n = String(name).toLowerCase();
+  if (/light|lamp/.test(n)) return '💡';
+  if (/furnit|sofa/.test(n)) return '🛋️';
+  if (/floor|tile/.test(n)) return '🧱';
+  if (/marble|granite|stone/.test(n)) return '🪨';
+  if (/paint|wall/.test(n)) return '🎨';
+  if (/kitchen/.test(n)) return '🍳';
+  if (/bath|sanit/.test(n)) return '🚿';
+  if (/electr|switch/.test(n)) return '🔌';
+  if (/hardware|handle|lock/.test(n)) return '🔩';
+  if (/ceiling/.test(n)) return '🏠';
+  if (/outdoor|garden/.test(n)) return '🌿';
+  return '✨';
+};
+
 const AiAssistantWidget = () => {
   const { user: customerUser } = useUser();
   const navigate = useNavigate();
@@ -368,7 +385,8 @@ const AiAssistantWidget = () => {
             products: res.data.products || [],
             orders: res.data.orders || [],
             actions: res.data.actions || [],
-            handover: res.data.handover || null
+            handover: res.data.handover || null,
+            quickReplies: res.data.quickReplies || []
           },
           createdAt: new Date().toISOString()
         };
@@ -504,7 +522,12 @@ const AiAssistantWidget = () => {
     startListening,
     stopListening,
     speak,
-    stopSpeaking
+    stopSpeaking,
+    browserVoices,
+    voiceChoice,
+    setVoiceChoice,
+    voiceInfo,
+    ttsConfig
   } = useVoiceRecognition({
     onTranscriptChange: onTranscriptChangeHandler,
     onFinalTranscript: onFinalTranscriptHandler,
@@ -967,6 +990,27 @@ const AiAssistantWidget = () => {
                     {isTtsEnabled ? <FiVolume2 size={16} /> : <FiVolumeX size={16} />}
                   </button>
 
+                  {/* Voice picker: lets the client choose / check which voice Tejas speaks with */}
+                  <select
+                    value={voiceChoice}
+                    onChange={(e) => { setVoiceChoice(e.target.value); setTimeout(() => speakRef.current?.('Namaste ji! Main Tejas hoon.'), 50); }}
+                    title={voiceInfo ? 'Speaking with: ' + voiceInfo : 'Choose the voice Tejas speaks with'}
+                    className="max-w-[112px] text-[10px] font-bold bg-white/15 text-white border border-white/20 rounded-lg px-1.5 py-1 outline-none cursor-pointer [&>option]:text-slate-800 [&>optgroup]:text-slate-800"
+                  >
+                    <option value="auto">Voice: Auto</option>
+                    {ttsConfig.openai && <option value="server">Server voice</option>}
+                    <optgroup label="Indian voices on this device">
+                      {browserVoices.filter(v => /en-in|hi-in/i.test(v.lang || '')).map(v => (
+                        <option key={v.voiceURI} value={v.voiceURI}>{v.name.replace(/Microsoft |Google /, '')}</option>
+                      ))}
+                    </optgroup>
+                    <optgroup label="Other English voices">
+                      {browserVoices.filter(v => /^en/i.test(v.lang || '') && !/en-in/i.test(v.lang || '')).slice(0, 12).map(v => (
+                        <option key={v.voiceURI} value={v.voiceURI}>{v.name.replace(/Microsoft |Google /, '')}</option>
+                      ))}
+                    </optgroup>
+                  </select>
+
                   {/* Close button */}
                   <button
                     onClick={() => setIsOpen(false)}
@@ -1079,6 +1123,7 @@ const AiAssistantWidget = () => {
                 {messages.map((msg, index) => {
                   const isAssistant = msg.role === 'assistant';
                   const msgExpression = isAssistant ? getMsgExpression(msg) : null;
+                  const isLatestAssistant = isAssistant && index === messages.length - 1;
 
                   return (
                     <div key={index} className={`flex flex-col ${!isAssistant ? 'items-end' : 'items-start'} space-y-1.5 w-full`}>
@@ -1101,10 +1146,10 @@ const AiAssistantWidget = () => {
                             </div>
 
                             {/* Message Text Bubble */}
-                            <div className={`px-4 py-3 rounded-2xl rounded-tl-sm text-xs font-medium leading-relaxed shadow-sm ${
+                            <div className={`px-4 py-3 rounded-2xl rounded-tl-sm text-[13px] font-medium leading-relaxed shadow-sm ${
                               msg.content?.toLowerCase().includes('oh no') || msgExpression === 'sad'
                                 ? 'bg-amber-50/90 text-slate-800 border border-amber-200'
-                                : 'bg-white text-slate-800 border border-gray-100'
+                                : 'bg-gradient-to-br from-white to-teal-50/40 text-slate-800 border border-teal-100/70'
                             }`}>
                               <p className="whitespace-pre-line">{msg.content}</p>
                               
@@ -1141,31 +1186,66 @@ const AiAssistantWidget = () => {
                               </div>
                             )}
 
-                            {/* Products Grid */}
+                            {/* Recommendations, grouped by category */}
                             {msg.metadata?.products?.length > 0 && (
-                              <div className="w-full grid grid-cols-2 gap-2.5 pt-1">
-                                {msg.metadata.products.map((p, idx) => (
-                                  <div key={idx} className="bg-white border border-gray-100 rounded-2xl p-2 flex flex-col shadow-sm">
-                                    <div className="aspect-square w-full rounded-xl bg-gray-50 overflow-hidden relative border border-gray-50 shrink-0">
-                                      {p.imageUrl ? (
-                                        <img src={p.imageUrl} alt={p.name} className="w-full h-full object-cover" />
-                                      ) : (
-                                        <div className="w-full h-full flex items-center justify-center bg-[#189D91]/5 text-[#189D91] text-[9px] font-bold">Riddha Mart</div>
-                                      )}
+                              <div className="w-full pt-1 space-y-3">
+                                {Object.entries(
+                                  msg.metadata.products.reduce((acc, p) => {
+                                    const key = p.category || 'Picks for you';
+                                    (acc[key] = acc[key] || []).push(p);
+                                    return acc;
+                                  }, {})
+                                ).map(([category, items]) => (
+                                  <div key={category} className="space-y-2">
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="text-sm leading-none">{categoryEmoji(category)}</span>
+                                      <span className="text-[10px] font-black uppercase tracking-wider text-[#189D91]">{category}</span>
+                                      <span className="flex-1 h-px bg-gradient-to-r from-[#189D91]/25 to-transparent" />
                                     </div>
-                                    <div className="mt-2 flex-1 flex flex-col justify-between">
-                                      <div>
-                                        <h5 className="font-bold text-[11px] text-slate-800 line-clamp-1 leading-tight">{p.name}</h5>
-                                        <p className="text-[11px] font-black text-slate-900 mt-0.5">₹{Number(p.price).toLocaleString()}</p>
-                                      </div>
-                                      <button
-                                        onClick={() => handleActionClick({ type: 'VIEW_PRODUCT', payload: { productId: p.productId } })}
-                                        className="w-full mt-2 py-1.5 bg-[#189D91]/10 hover:bg-[#189D91] text-[#189D91] hover:text-white rounded-lg text-[9px] font-bold uppercase tracking-wider transition-all leading-none"
-                                      >
-                                        View Item
-                                      </button>
+                                    <div className="grid grid-cols-2 gap-2.5">
+                                      {items.map((p, idx) => (
+                                        <div key={idx} className="group bg-white border border-gray-100 rounded-2xl overflow-hidden flex flex-col shadow-sm hover:shadow-md hover:border-[#189D91]/30 transition-all">
+                                          <div className="aspect-[4/3] w-full bg-gray-50 overflow-hidden relative">
+                                            {p.imageUrl ? (
+                                              <img src={p.imageUrl} alt={p.name} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                                            ) : (
+                                              <div className="w-full h-full flex items-center justify-center bg-[#189D91]/5 text-2xl">{categoryEmoji(category)}</div>
+                                            )}
+                                            <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-md bg-white/90 backdrop-blur text-[8px] font-black uppercase tracking-wide text-slate-700 shadow-sm">{category}</span>
+                                          </div>
+                                          <div className="p-2.5 flex-1 flex flex-col gap-1.5">
+                                            <h5 className="font-bold text-[11px] text-slate-800 line-clamp-2 leading-snug min-h-[2rem]">{p.name}</h5>
+                                            <p className="text-[13px] font-black text-slate-900 leading-none">₹{Number(p.price).toLocaleString('en-IN')}</p>
+                                            {p.reason && <p className="text-[10px] text-slate-500 leading-snug line-clamp-2">{p.reason}</p>}
+                                            {p.benefit && (
+                                              <p className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-lg px-2 py-1 leading-snug line-clamp-3">✨ {p.benefit}</p>
+                                            )}
+                                            <button
+                                              onClick={() => handleActionClick({ type: 'VIEW_PRODUCT', payload: { productId: p.productId } })}
+                                              className="mt-auto w-full py-1.5 bg-[#189D91] hover:bg-[#14847a] text-white rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all leading-none flex items-center justify-center gap-1"
+                                            >
+                                              View item <FiArrowUpRight size={11} />
+                                            </button>
+                                          </div>
+                                        </div>
+                                      ))}
                                     </div>
                                   </div>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Tap-to-answer suggestions (only on the newest reply) */}
+                            {isLatestAssistant && msg.metadata?.quickReplies?.length > 0 && !isLoading && (
+                              <div className="flex flex-wrap gap-1.5 pt-1">
+                                {msg.metadata.quickReplies.map((q, qIdx) => (
+                                  <button
+                                    key={qIdx}
+                                    onClick={() => handleSendMessage(q)}
+                                    className="px-3 py-1.5 rounded-full bg-white border border-[#189D91]/40 text-[#189D91] hover:bg-[#189D91] hover:text-white text-[11px] font-bold shadow-sm transition-all active:scale-95"
+                                  >
+                                    {q}
+                                  </button>
                                 ))}
                               </div>
                             )}

@@ -18,6 +18,17 @@ const {
   smartSearch
 } = require('../controllers/productController');
 const { protect, authorize, tryProtect } = require('../middleware/auth');
+const { downloadTemplate, exportProducts, importProducts } = require('../controllers/productCsvController');
+
+const csvMulter = require('multer');
+const csvUpload = csvMulter({
+  storage: csvMulter.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024, files: 1 },
+  fileFilter: (req, file, cb) => {
+    const ok = /\.csv$/i.test(file.originalname);
+    cb(ok ? null : new Error('Only .csv files are allowed'), ok);
+  }
+});
 const { check } = require('express-validator');
 const { validate } = require('../middleware/validationMiddleware');
 
@@ -28,6 +39,11 @@ const router = express.Router();
 
 // Re-route into other resource routers
 router.use('/:productId/reviews', reviewRouter);
+
+// CSV bulk upload / export (admin only). Must stay above any '/:id' route.
+router.get('/bulk/template', protect, authorize('admin'), downloadTemplate);
+router.get('/bulk/export', protect, authorize('admin'), exportProducts);
+router.post('/bulk/import', protect, authorize('admin'), csvUpload.single('file'), importProducts);
 
 router.get('/check-sku/:sku', protect, authorize('seller', 'admin'), checkProductSku);
 

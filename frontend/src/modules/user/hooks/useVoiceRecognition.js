@@ -17,6 +17,23 @@ export const useVoiceRecognition = ({
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isTtsEnabled, setIsTtsEnabled] = useState(true);
   const [activeIndianVoice, setActiveIndianVoice] = useState(null);
+  const [browserVoices, setBrowserVoices] = useState([]);
+  const [ttsConfig, setTtsConfig] = useState({ azure: false, openai: false });
+  const [voiceInfo, setVoiceInfo] = useState('');
+  const [voiceChoice, setVoiceChoiceState] = useState(() => {
+    try { return localStorage.getItem('tejas_voice_choice') || 'auto'; } catch { return 'auto'; }
+  });
+  const setVoiceChoice = useCallback((value) => {
+    setVoiceChoiceState(value);
+    try { localStorage.setItem('tejas_voice_choice', value); } catch { /* storage unavailable */ }
+  }, []);
+  const voiceChoiceRef = useRef('auto');
+  const ttsConfigRef = useRef({ azure: false, openai: false });
+  useEffect(() => { voiceChoiceRef.current = voiceChoice; }, [voiceChoice]);
+  useEffect(() => { ttsConfigRef.current = ttsConfig; }, [ttsConfig]);
+  useEffect(() => {
+    api.get('/tts/config').then(r => setTtsConfig({ azure: !!r.data?.azure, openai: !!r.data?.openai })).catch(() => {});
+  }, []);
 
   const recognitionRef = useRef(null);
   const isListeningRef = useRef(false);
@@ -46,9 +63,25 @@ export const useVoiceRecognition = ({
   useEffect(() => {
     if (typeof window === 'undefined' || !window.speechSynthesis) return;
 
+    // Tejas is a male voice: prefer male Indian voices (Prabhat, Ravi, Madhur, Rishi, Hemant...) before anything else
+    const MALE_HINTS = ['prabhat', 'ravi', 'madhur', 'rishi', 'hemant', 'kabir', 'arjun', 'aarav'];
+    const FEMALE_HINTS = ['neerja', 'heera', 'swara', 'veena', 'kalpana', 'aditi', 'lekha', 'priya'];
+
     const findIndianVoice = () => {
       const voices = window.speechSynthesis.getVoices() || [];
       if (!voices.length) return null;
+
+      const isIndianVoice = (v) => {
+        const name = (v.name || '').toLowerCase();
+        const lang = (v.lang || '').toLowerCase();
+        return lang.startsWith('en-in') || lang.includes('hi-in') || name.includes('india');
+      };
+      const isMale = (v) => MALE_HINTS.some(h => (v.name || '').toLowerCase().includes(h));
+      const isFemale = (v) => FEMALE_HINTS.some(h => (v.name || '').toLowerCase().includes(h));
+      const maleIndian = voices.find(v => isIndianVoice(v) && isMale(v) && /natural|online|neural/i.test(v.name || ''))
+        || voices.find(v => isIndianVoice(v) && isMale(v))
+        || voices.find(v => isIndianVoice(v) && !isFemale(v));
+      if (maleIndian) return maleIndian;
 
       // 1. High-Fidelity Online Neural Indian voices (e.g. Microsoft Neerja/Prabhat Online Natural, Google English India, Apple Rishi)
       const neuralIndianVoice = voices.find(v => {
@@ -97,6 +130,7 @@ export const useVoiceRecognition = ({
     };
 
     const updateVoices = () => {
+      setBrowserVoices((window.speechSynthesis.getVoices() || []).filter(v => /^(en|hi)/i.test(v.lang || '')));
       const detected = findIndianVoice();
       if (detected) {
         indianVoiceRef.current = detected;
@@ -349,7 +383,7 @@ export const useVoiceRecognition = ({
   /**
    * Enhanced Browser Synthesis Fallback (Prioritizes genuine Indian voices & excludes robotic SAPI Desktop voices)
    */
-  const playBrowserSynthesis = useCallback((rawText) => {
+  const playBrowserSynthesis = useCallback((rawText, voiceOverride = null) => {
     if (typeof window === 'undefined' || !window.speechSynthesis) return;
 
     try {
@@ -377,7 +411,7 @@ export const useVoiceRecognition = ({
       const voices = window.speechSynthesis.getVoices() || [];
 
       // 1. Search for genuine Indian English & Hindi voices (prioritizing Neural / Online voices)
-      const indianVoice = indianVoiceRef.current || activeIndianVoice || voices.find(v => {
+      const indianVoice = voiceOverride || indianVoiceRef.current || activeIndianVoice || voices.find(v => {
         const name = (v.name || '').toLowerCase();
         const lang = (v.lang || '').toLowerCase();
         const isIndian = lang.includes('en-in') || lang.includes('hi-in') || name.includes('india') || name.includes('indian');
@@ -420,6 +454,7 @@ export const useVoiceRecognition = ({
         }
       }
 
+      if (utterance.voice) { utterance.lang = utterance.voice.lang || utterance.lang; setVoiceInfo(utterance.voice.name + ' (your browser)'); }
       utterance.onstart = () => setIsSpeaking(true);
       utterance.onend = () => setIsSpeaking(false);
       utterance.onerror = (e) => {
@@ -462,45 +497,53 @@ export const useVoiceRecognition = ({
       // Keep a concise slice (max 380 chars) for responsive, natural interactive spoken audio
       const textToSpeak = cleanText.slice(0, 380);
 
-      // ── Tier 1: Authentic Native Indian Neural Voice via Backend TTS (/assistant/tts) ──
-      try {
-        const res = await api.post('/assistant/tts', {
-          text: textToSpeak,
-          lang: 'en-IN'
-        }, {
-          responseType: 'blob',
-          timeout: 6500
-        });
+      const voices = (typeof window !== 'undefined' && window.speechSynthesis) ? (window.speechSynthesis.getVoices() || []) : [];
+      const MALE = ['prabhat', 'ravi', 'madhur', 'rishi', 'hemant', 'kabir', 'arjun', 'aarav'];
+      const nativeMaleIndian = voices.find(v => /en-in|hi-in/i.test(v.lang || '') && MALE.some(h => (v.name || '').toLowerCase().includes(h)) && /natural|online|neural/i.test(v.name || ''))
+        || voices.find(v => /en-in|hi-in/i.test(v.lang || '') && MALE.some(h => (v.name || '').toLowerCase().includes(h)));
 
-        // Ensure we got valid audio bytes (not a JSON error blob)
-        if (res.data && res.data.size > 250) {
-          const audioUrl = URL.createObjectURL(res.data);
-          const audio = new Audio(audioUrl);
-          currentAudioRef.current = audio;
+      const choice = voiceChoiceRef.current;
+      const cfg = ttsConfigRef.current;
 
-          audio.onplay = () => setIsSpeaking(true);
-          audio.onended = () => {
-            setIsSpeaking(false);
-            URL.revokeObjectURL(audioUrl);
-            currentAudioRef.current = null;
-          };
-          audio.onerror = () => {
-            setIsSpeaking(false);
-            URL.revokeObjectURL(audioUrl);
-            currentAudioRef.current = null;
-            playBrowserSynthesis(textToSpeak);
-          };
+      // Which voice sources to try, best first.
+      //  auto: Azure native Indian voice (if configured) -> a native male Indian voice in this browser -> server English voice -> any browser voice
+      let order;
+      if (choice === 'server') order = ['server', 'browser'];
+      else if (choice !== 'auto') order = ['browser-chosen', 'server'];
+      else if (cfg.azure) order = ['server', 'browser-native', 'browser'];
+      else if (nativeMaleIndian) order = ['browser-native', 'server', 'browser'];
+      else order = ['server', 'browser'];
 
-          await audio.play();
+      for (const source of order) {
+        if (source === 'browser-chosen') {
+          const chosen = voices.find(v => v.voiceURI === choice || v.name === choice);
+          if (chosen) { playBrowserSynthesis(textToSpeak, chosen); return; }
+        } else if (source === 'browser-native') {
+          if (nativeMaleIndian) { playBrowserSynthesis(textToSpeak, nativeMaleIndian); return; }
+        } else if (source === 'browser') {
+          playBrowserSynthesis(textToSpeak);
           return;
+        } else if (source === 'server') {
+          try {
+            const res = await api.post('/assistant/tts', { text: textToSpeak, lang: 'en-IN' }, { responseType: 'blob', timeout: 9000 });
+            if (res.data && res.data.size > 250) {
+              const provider = res.headers?.['x-tts-provider'] || 'server';
+              const voice = res.headers?.['x-tts-voice'] || '';
+              setVoiceInfo(provider === 'azure' ? 'Native Indian voice: ' + voice : 'Server voice: ' + voice + ' (accent is approximate)');
+              const audioUrl = URL.createObjectURL(res.data);
+              const audio = new Audio(audioUrl);
+              currentAudioRef.current = audio;
+              audio.onplay = () => setIsSpeaking(true);
+              audio.onended = () => { setIsSpeaking(false); URL.revokeObjectURL(audioUrl); currentAudioRef.current = null; };
+              audio.onerror = () => { setIsSpeaking(false); URL.revokeObjectURL(audioUrl); currentAudioRef.current = null; playBrowserSynthesis(textToSpeak); };
+              await audio.play();
+              return;
+            }
+          } catch (serverErr) {
+            // fall through to the next source
+          }
         }
-      } catch (neuralErr) {
-        // Silently fall back to natural browser synthesis with Indian voice
       }
-
-      // ── Tier 2: Enhanced Browser Synthesis Fallback (Indian English en-IN) ──
-      playBrowserSynthesis(textToSpeak);
-
     } catch (e) {
       console.warn('[Tejas Voice] Speak error:', e.message);
       setIsSpeaking(false);
@@ -572,6 +615,11 @@ export const useVoiceRecognition = ({
     stopListening,
     speak,
     stopSpeaking,
-    parseVoiceCommand
+    parseVoiceCommand,
+    browserVoices,
+    voiceChoice,
+    setVoiceChoice,
+    voiceInfo,
+    ttsConfig
   };
 };

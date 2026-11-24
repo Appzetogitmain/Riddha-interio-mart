@@ -7,6 +7,7 @@ import {
   FiUser,
   FiChevronDown,
   FiChevronRight,
+  FiChevronLeft,
   FiHome,
   FiGrid,
   FiShoppingBag,
@@ -138,6 +139,28 @@ const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const dropdownTimeoutRef = useRef(null);
   const categoriesBarRef = useRef(null);
+  const catScrollRef = useRef(null);
+  const [catArrows, setCatArrows] = useState({ left: false, right: false });
+
+  const updateCatArrows = () => {
+    const el = catScrollRef.current;
+    if (!el) return;
+    setCatArrows({
+      left: el.scrollLeft > 4,
+      right: el.scrollLeft + el.clientWidth < el.scrollWidth - 4,
+    });
+  };
+  useEffect(() => {
+    updateCatArrows();
+    window.addEventListener('resize', updateCatArrows);
+    return () => window.removeEventListener('resize', updateCatArrows);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [categories]);
+
+  const scrollCategories = (dir) => {
+    const el = catScrollRef.current;
+    if (el) el.scrollBy({ left: dir * Math.max(200, el.clientWidth * 0.7), behavior: 'smooth' });
+  };
   const { cartCount } = useCart();
   const { wishlistItems } = useWishlist();
   const wishlistCount = wishlistItems?.length || 0;
@@ -733,8 +756,36 @@ const Navbar = () => {
               </div>
             </div>
 
-            {/* Dynamic Parent Categories next to All Categories */}
-            <div className="flex items-center gap-6 lg:gap-8 overflow-x-auto custom-scrollbar pb-1 scroll-smooth ml-6">
+            {/* Dynamic Parent Categories next to All Categories (with left / right arrows when they overflow) */}
+            <div className="relative min-w-0 flex-1 ml-6">
+              {catArrows.left && (
+                <button
+                  type="button"
+                  aria-label="Scroll categories left"
+                  onClick={() => scrollCategories(-1)}
+                  className="absolute left-0 top-1/2 -translate-y-1/2 z-10 h-full pl-0 pr-6 flex items-center bg-gradient-to-r from-white via-white/95 to-transparent"
+                >
+                  <span className="w-7 h-7 rounded-full bg-white border border-gray-200 shadow-md flex items-center justify-center text-gray-700 hover:bg-[#28a399] hover:text-white hover:border-[#28a399] transition-colors">
+                    <FiChevronLeft size={16} />
+                  </span>
+                </button>
+              )}
+              {catArrows.right && (
+                <button
+                  type="button"
+                  aria-label="Scroll categories right"
+                  onClick={() => scrollCategories(1)}
+                  className="absolute right-0 top-1/2 -translate-y-1/2 z-10 h-full pr-0 pl-6 flex items-center justify-end bg-gradient-to-l from-white via-white/95 to-transparent"
+                >
+                  <span className="w-7 h-7 rounded-full bg-white border border-gray-200 shadow-md flex items-center justify-center text-gray-700 hover:bg-[#28a399] hover:text-white hover:border-[#28a399] transition-colors">
+                    <FiChevronRight size={16} />
+                  </span>
+                </button>
+              )}
+            <div
+              ref={catScrollRef}
+              onScroll={updateCatArrows}
+              className="flex items-center gap-6 lg:gap-8 overflow-x-auto custom-scrollbar pb-1 scroll-smooth">
               {categories.map((cat, i) => {
                 const slug = getCategorySlug(cat.name);
                 const linkTo = `/category/${slug}`;
@@ -759,6 +810,7 @@ const Navbar = () => {
                   </div>
                 );
               })}
+            </div>
             </div>
           </div>
         </div>

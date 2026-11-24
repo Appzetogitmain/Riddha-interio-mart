@@ -7,6 +7,7 @@ import DeliveryOptionsForm from '../../seller/components/DeliveryOptionsForm';
 import PaymentOptionsForm from '../../seller/components/PaymentOptionsForm';
 import ProductVariantsEditor from '../../seller/components/ProductVariantsEditor';
 import DimensionsInput from '../../../shared/components/DimensionsInput';
+import DisplayOverridesPanel from '../components/DisplayOverridesPanel';
 import api from '../../../shared/utils/api';
 
 const EditInventoryPage = () => {
@@ -88,13 +89,19 @@ const EditInventoryPage = () => {
         const [prodRes, catRes, brandRes, sellerRes] = await Promise.all([
           api.get(`/products/${id}`),
           api.get('/categories'),
-          api.get('/brands'),
+          api.get('/brands/admin').catch(() => api.get('/brands')),
           api.get('/admin/sellers').catch(() => ({ data: { data: [] } }))
         ]);
         
         const product = prodRes.data.data;
         setCategories(catRes.data.data || []);
-        setBrands(brandRes.data.data || []);
+        const loadedBrands = brandRes.data.data || [];
+        const ownBrand = product.brand && typeof product.brand === 'object' ? product.brand : null;
+        setBrands(
+          ownBrand && ownBrand._id && !loadedBrands.some(b => String(b._id) === String(ownBrand._id))
+            ? [...loadedBrands, { _id: ownBrand._id, name: ownBrand.name }]
+            : loadedBrands
+        );
         const loadedSellers = sellerRes.data?.data || [];
         setSellers(loadedSellers);
 
@@ -485,37 +492,17 @@ const EditInventoryPage = () => {
                     <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest flex items-center gap-2">
                        <LuGrid2X2 size={12} /> Category
                     </label>
-                    <div className="relative group">
-                       <input 
-                         type="text"
-                         placeholder={formData.category || "Search or select category..."}
-                         value={catSearch}
-                         onChange={(e) => {
-                            setCatSearch(e.target.value);
-                            setIsCatOpen(true);
-                         }}
-                         onFocus={() => setIsCatOpen(true)}
-                         className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-warm-sand transition-all"
-                       />
-                       {isCatOpen && (
-                         <div className="absolute left-0 right-0 top-full mt-2 bg-white border border-soft-oatmeal rounded-2xl shadow-2xl z-[50] overflow-hidden max-h-64 overflow-y-auto">
-                            {filteredCategories.map(cat => (
-                              <button
-                                key={cat._id}
-                                type="button"
-                                onClick={() => {
-                                  setFormData({...formData, category: cat.name, subcategory: '', subsubcategory: ''});
-                                  setCatSearch('');
-                                  setIsCatOpen(false);
-                                }}
-                                className="w-full text-left px-5 py-3.5 text-sm font-medium hover:bg-soft-oatmeal/30"
-                              >
-                                {cat.name}
-                              </button>
-                            ))}
-                         </div>
-                       )}
-                    </div>
+                    <select
+                      value={formData.category}
+                      onChange={(e) => setFormData({ ...formData, category: e.target.value, subcategory: '', subsubcategory: '' })}
+                      className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none"
+                    >
+                      <option value="">Select Category</option>
+                      {formData.category && !categories.some(c => c.name === formData.category) && (
+                        <option value={formData.category}>{formData.category}</option>
+                      )}
+                      {categories.map(cat => <option key={cat._id} value={cat.name}>{cat.name}</option>)}
+                    </select>
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest flex items-center gap-2">
@@ -531,6 +518,33 @@ const EditInventoryPage = () => {
                     </select>
                   </div>
                 </div>
+
+                {/* Subcategory / Sub-subcategory */}
+                {(() => {
+                  const catObj = categories.find(c => c.name === formData.category);
+                  const subs = catObj?.subcategories || [];
+                  const subObj = subs.find(sc => sc.name === formData.subcategory);
+                  const subsubs = subObj?.subsubcategories || [];
+                  const selectCls = 'w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none';
+                  return (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest">Subcategory</label>
+                        <select value={formData.subcategory} onChange={(e) => setFormData({ ...formData, subcategory: e.target.value, subsubcategory: '' })} className={selectCls}>
+                          <option value="">{subs.length ? 'Select subcategory' : 'None available'}</option>
+                          {subs.map(sc => <option key={sc._id || sc.name} value={sc.name}>{sc.name}</option>)}
+                        </select>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest">Sub-subcategory</label>
+                        <select value={formData.subsubcategory} onChange={(e) => setFormData({ ...formData, subsubcategory: e.target.value })} className={selectCls}>
+                          <option value="">{subsubs.length ? 'Select sub-subcategory' : 'None available'}</option>
+                          {subsubs.map(ss => <option key={ss._id || ss.name} value={ss.name}>{ss.name}</option>)}
+                        </select>
+                      </div>
+                    </div>
+                  );
+                })()}
 
                   <div className="grid grid-cols-2 gap-6">
                     <div className="space-y-2">
@@ -653,32 +667,9 @@ const EditInventoryPage = () => {
                   <p className="text-[9px] text-warm-sand/70 font-medium">Customers wanting more than this must submit a Bulk Order Request.</p>
                 </div>
 
-                {/* Subcategory / Sub-subcategory */}
-                {(() => {
-                  const catObj = categories.find(c => c.name === formData.category);
-                  const subs = catObj?.subcategories || [];
-                  const subObj = subs.find(sc => sc.name === formData.subcategory);
-                  const subsubs = subObj?.subsubcategories || [];
-                  const selectCls = 'w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none';
-                  return (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest">Subcategory</label>
-                        <select value={formData.subcategory} onChange={(e) => setFormData({ ...formData, subcategory: e.target.value, subsubcategory: '' })} className={selectCls}>
-                          <option value="">{subs.length ? 'Select subcategory' : 'None available'}</option>
-                          {subs.map(sc => <option key={sc._id || sc.name} value={sc.name}>{sc.name}</option>)}
-                        </select>
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest">Sub-subcategory</label>
-                        <select value={formData.subsubcategory} onChange={(e) => setFormData({ ...formData, subsubcategory: e.target.value })} className={selectCls}>
-                          <option value="">{subsubs.length ? 'Select sub-subcategory' : 'None available'}</option>
-                          {subsubs.map(ss => <option key={ss._id || ss.name} value={ss.name}>{ss.name}</option>)}
-                        </select>
-                      </div>
-                    </div>
-                  );
-                })()}
+
+                {/* Super-admin only: rating / review count / Bestseller badge display overrides */}
+                <DisplayOverridesPanel productId={id} />
 
                 {/* More product details: everything else on the product is editable here */}
                 {(() => {

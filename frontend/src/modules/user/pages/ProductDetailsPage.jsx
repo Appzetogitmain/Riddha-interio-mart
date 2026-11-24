@@ -9,6 +9,9 @@ import {
   FiChevronRight, FiHeart, FiZap, FiShare2, FiCopy, FiX, FiCreditCard
 } from 'react-icons/fi';
 import { FaStar, FaWhatsapp, FaFacebook, FaTwitter } from 'react-icons/fa';
+import StarRating from '../components/StarRating';
+import { useDisplayConfig } from '../../../shared/hooks/useDisplayConfig';
+import { resolveProductDisplay } from '../../../shared/utils/productDisplay';
 import toast from 'react-hot-toast';
 import ReviewSection from '../components/ReviewSection';
 import RecommendationCarousel from '../components/RecommendationCarousel';
@@ -61,6 +64,7 @@ const BundleSuggestionsRow = ({ productId }) => {
 
 const ProductDetailsPage = () => {
   const { id } = useParams();
+  const displayConfig = useDisplayConfig();
   const navigate = useNavigate();
   const { addToCart, updateQuantity, getItemQuantity } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
@@ -405,6 +409,8 @@ const ProductDetailsPage = () => {
                       src={allMedia[activeMediaIndex] || product.images?.[0]}
                       alt={product.name}
                       zoomScale={2.5}
+                      gallery={allMedia.filter(m => typeof m === 'string')}
+                      onNavigate={(url) => { const i = allMedia.indexOf(url); if (i >= 0) setActiveMediaIndex(i); }}
                       className="h-full w-full"
                     />
                   )}
@@ -471,18 +477,24 @@ const ProductDetailsPage = () => {
               {product.name}
             </h1>
 
-            {/* Rating row */}
-            <div className="flex items-center gap-3 mt-2">
-              <div className="flex items-center gap-0.5">
-                {[1,2,3,4,5].map(s => (
-                  <FaStar key={s} size={12} className={s <= Math.round(product.averageRating || 4) ? 'text-amber-400' : 'text-gray-200'} />
-                ))}
-              </div>
-              <span className="text-[12px] font-semibold text-gray-400">({product.totalReviews || 120} reviews)</span>
-              <span className="text-[10px] font-black bg-pink-600 text-white px-2 py-0.5 uppercase tracking-wide">
-                Bestseller
-              </span>
-            </div>
+            {/* Rating row: real rating (or admin override), badge only when this is a bestseller */}
+            {(() => {
+              const d = resolveProductDisplay(product, displayConfig);
+              if (!d.showRating && !d.badge) return null;
+              return (
+                <div className="flex flex-wrap items-center gap-3 mt-2">
+                  {d.showRating && <StarRating rating={d.rating} count={d.reviewCount} size={13} />}
+                  {d.badge && (
+                    <span
+                      style={{ backgroundColor: d.badge.bgColor, color: d.badge.textColor }}
+                      className="text-[10px] font-black px-2 py-0.5 uppercase tracking-wide rounded"
+                    >
+                      {d.badge.text}
+                    </span>
+                  )}
+                </div>
+              );
+            })()}
 
             {/* Price */}
             <div className="flex items-baseline gap-2.5 mt-3">

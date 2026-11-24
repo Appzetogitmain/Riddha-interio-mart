@@ -1,9 +1,10 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageWrapper from '../components/PageWrapper';
-import { LuSearch, LuPlus, LuTrash2, LuPen, LuFilter, LuBox, LuPackage, LuTag, LuX } from 'react-icons/lu';
+import { LuDownload, LuUpload, LuSearch, LuPlus, LuTrash2, LuPen, LuFilter, LuBox, LuPackage, LuTag, LuX } from 'react-icons/lu';
 import api from '../../../shared/utils/api';
 import { toast } from 'react-hot-toast';
+import ProductCsvModal, { downloadProductCsv } from '../components/ProductCsvModal';
 
 const ProductListPage = ({ status }) => {
   const navigate = useNavigate();
@@ -14,6 +15,7 @@ const ProductListPage = ({ status }) => {
   const [deleteId, setDeleteId] = useState(null);
   const [commissionModal, setCommissionModal] = useState({ open: false, product: null, commission: 2, b2bCommission: 2 });
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [csvOpen, setCsvOpen] = useState(false);
   const [sectionModal, setSectionModal] = useState({ open: false, product: null, tabs: [], loading: false, saving: false });
   const [approvalFilter, setApprovalFilter] = useState('all');
   const [sellerFilter, setSellerFilter] = useState('all');
@@ -164,6 +166,21 @@ const ProductListPage = ({ status }) => {
               {status === 'pending' ? 'Review and approve seller product submissions.' : 'All products in your inventory.'}
             </p>
           </div>
+          <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={() => downloadProductCsv('export')}
+            className="flex items-center justify-center gap-2 border border-soft-oatmeal text-deep-espresso px-4 py-3 rounded-2xl font-bold hover:bg-soft-oatmeal/20 transition-all text-xs"
+          >
+            <LuDownload size={16} />
+            Export CSV
+          </button>
+          <button
+            onClick={() => setCsvOpen(true)}
+            className="flex items-center justify-center gap-2 border border-teal-300 bg-teal-50 text-teal-700 px-4 py-3 rounded-2xl font-bold hover:bg-teal-100 transition-all text-xs"
+          >
+            <LuUpload size={16} />
+            Bulk Upload CSV
+          </button>
           <button 
             onClick={() => navigate('/admin/inventory/add')}
             className="flex items-center justify-center gap-2 bg-brand-purple text-white px-6 py-3.5 rounded-2xl font-bold hover:bg-deep-espresso transition-all shadow-md shadow-red-900/20 active:scale-95 text-sm"
@@ -171,6 +188,7 @@ const ProductListPage = ({ status }) => {
             <LuPlus size={18} />
             Add New Product
           </button>
+          </div>
         </div>
 
         {/* Toolbar */}
@@ -551,6 +569,8 @@ const ProductListPage = ({ status }) => {
           </div>
         </div>
       )}
+      {csvOpen && <ProductCsvModal onClose={() => setCsvOpen(false)} onDone={fetchProducts} />}
+
       {/* Add to Homepage Section Modal */}
       {sectionModal.open && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">

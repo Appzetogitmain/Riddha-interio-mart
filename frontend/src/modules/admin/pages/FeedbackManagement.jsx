@@ -17,6 +17,51 @@ const FeedbackManagement = () => {
   const [expandedId, setExpandedId] = useState(null);
   const [lightboxImg, setLightboxImg] = useState(null);
 
+  // "Add review" dialog
+  const EMPTY_FORM = { productId: '', productName: '', reviewerName: '', rating: 5, title: '', review: '', reviewDate: '', isApproved: true };
+  const [addOpen, setAddOpen] = useState(false);
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [productQuery, setProductQuery] = useState('');
+  const [productResults, setProductResults] = useState([]);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!addOpen || productQuery.trim().length < 2) { setProductResults([]); return undefined; }
+    const t = setTimeout(async () => {
+      try {
+        const { data } = await api.get('/products', { params: { search: productQuery.trim(), limit: 8 } });
+        setProductResults(data.data || []);
+      } catch { setProductResults([]); }
+    }, 300);
+    return () => clearTimeout(t);
+  }, [productQuery, addOpen]);
+
+  const openAdd = () => { setForm(EMPTY_FORM); setProductQuery(''); setProductResults([]); setAddOpen(true); };
+
+  const submitReview = async (e) => {
+    e.preventDefault();
+    if (!form.productId) return toast.error('Choose a product');
+    try {
+      setSaving(true);
+      await api.post('/reviews/admin/create', {
+        productId: form.productId,
+        reviewerName: form.reviewerName,
+        rating: form.rating,
+        title: form.title,
+        review: form.review,
+        reviewDate: form.reviewDate || undefined,
+        isApproved: form.isApproved,
+      });
+      toast.success('Review added. Product rating updated.');
+      setAddOpen(false);
+      fetchReviews();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to add review');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const fetchReviews = async () => {
     try {
       setLoading(true);
@@ -68,7 +113,8 @@ const FeedbackManagement = () => {
     const dataToExport = reviews.map(r => ({
       'Review ID': r._id,
       'Product': r.product?.name || 'Unknown',
-      'User': r.user?.fullName || 'Guest',
+      'User': r.user?.fullName || r.reviewerName || 'Guest',
+      'Added By': r.source === 'admin' ? 'Admin' : 'Customer',
       'Rating': r.rating,
       'Title': r.title || '',
       'Comment': r.review || '',
@@ -88,7 +134,7 @@ const FeedbackManagement = () => {
     const matchesSearch =
       (r.product?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (r.review || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (r.user?.fullName || '').toLowerCase().includes(searchTerm.toLowerCase());
+      (r.user?.fullName || r.reviewerName || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesRating = filterRating === 'all' || r.rating.toString() === filterRating;
     const matchesStatus = filterStatus === 'all' ||
       (filterStatus === 'approved' ? r.isApproved : !r.isApproved);
@@ -123,6 +169,9 @@ const FeedbackManagement = () => {
         <div className="flex items-center gap-2">
           <button onClick={fetchReviews} className="p-2 bg-white border border-gray-200 text-gray-500 hover:text-teal-600 rounded-xl transition-all shadow-sm">
             <FiRefreshCw size={15} className={loading ? 'animate-spin' : ''} />
+          </button>
+          <button onClick={openAdd} className="flex items-center gap-2 bg-teal-600 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-teal-700 transition-all shadow-sm active:scale-95">
+            + Add Review
           </button>
           <button onClick={exportToExcel} className="flex items-center gap-2 bg-gray-900 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-teal-600 transition-all shadow-sm active:scale-95">
             <FiDownload size={13} /> Export
@@ -239,7 +288,7 @@ const FeedbackManagement = () => {
                             {review.product?.name || 'Unknown Product'}
                           </p>
                           <p className="text-[10px] text-gray-400 font-medium truncate max-w-[140px]">
-                            {review.user?.fullName || 'Guest'}
+                            {review.user?.fullName || review.reviewerName || 'Guest'}{review.source === 'admin' && <span className="ml-2 px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-600 text-[8px] font-black uppercase tracking-wider">Added by admin</span>}
                           </p>
                         </div>
                       </div>
@@ -411,6 +460,78 @@ const FeedbackManagement = () => {
           </motion.div>
         )}
       </AnimatePresence>
+      {addOpen && (
+        <div className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <form onSubmit={submitReview} className="bg-white rounded-2xl w-full max-w-lg p-6 space-y-4 max-h-[92vh] overflow-y-auto">
+            <h3 className="text-lg font-bold text-gray-900">Add a review</h3>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-gray-700">Product</label>
+              {form.productId ? (
+                <div className="flex items-center justify-between px-3 py-2 bg-teal-50 border border-teal-200 rounded-xl text-sm">
+                  <span className="font-semibold text-teal-800 truncate">{form.productName}</span>
+                  <button type="button" onClick={() => setForm({ ...form, productId: '', productName: '' })} className="text-xs font-bold text-teal-700">Change</button>
+                </div>
+              ) : (
+                <div className="relative">
+                  <input value={productQuery} onChange={e => setProductQuery(e.target.value)} placeholder="Search product by name…" className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-teal-500" />
+                  {productResults.length > 0 && (
+                    <div className="absolute z-10 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-56 overflow-y-auto">
+                      {productResults.map(p => (
+                        <button type="button" key={p._id} onClick={() => { setForm({ ...form, productId: p._id, productName: p.name }); setProductResults([]); }} className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-gray-50">
+                          <img src={p.images?.[0]} alt="" className="w-9 h-9 rounded object-cover bg-gray-100" />
+                          <span className="text-sm truncate">{p.name}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-gray-700">Reviewer name</label>
+                <input required minLength={2} maxLength={60} value={form.reviewerName} onChange={e => setForm({ ...form, reviewerName: e.target.value })} placeholder="e.g. Meera Sharma" className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-teal-500" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-gray-700">Review date (optional)</label>
+                <input type="date" max={new Date().toISOString().slice(0, 10)} value={form.reviewDate} onChange={e => setForm({ ...form, reviewDate: e.target.value })} className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-teal-500" />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-gray-700">Rating</label>
+              <div className="flex gap-1">
+                {[1, 2, 3, 4, 5].map(n => (
+                  <button type="button" key={n} onClick={() => setForm({ ...form, rating: n })} aria-label={n + ' star'}>
+                    <FiStar size={26} className={n <= form.rating ? 'fill-amber-400 text-amber-400' : 'text-gray-300'} />
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-gray-700">Title (optional)</label>
+              <input maxLength={100} value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-teal-500" />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-gray-700">Review</label>
+              <textarea required rows={4} maxLength={2000} value={form.review} onChange={e => setForm({ ...form, review: e.target.value })} className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-teal-500" />
+            </div>
+
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" className="accent-teal-600" checked={form.isApproved} onChange={e => setForm({ ...form, isApproved: e.target.checked })} />
+              Publish now (counts toward the product rating)
+            </label>
+
+            <div className="flex justify-end gap-3 pt-1">
+              <button type="button" onClick={() => setAddOpen(false)} className="px-5 py-2.5 rounded-xl text-sm font-semibold bg-gray-100 text-gray-600">Cancel</button>
+              <button disabled={saving} className="px-5 py-2.5 rounded-xl text-sm font-bold bg-teal-600 hover:bg-teal-700 text-white disabled:opacity-50">{saving ? 'Saving…' : 'Add review'}</button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 };

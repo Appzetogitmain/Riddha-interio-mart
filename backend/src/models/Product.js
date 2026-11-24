@@ -371,6 +371,24 @@ const ProductSchema = new mongoose.Schema({
 ProductSchema.index({ seller: 1, countInStock: 1 });
 ProductSchema.index({ seller: 1, createdAt: -1 });
 ProductSchema.index({ name: 'text', description: 'text' });
+// Super-admin display overrides. These NEVER replace the real averageRating / totalReviews.
+ProductSchema.add({
+  displayOverrides: {
+    bestseller: { type: String, enum: ['auto', 'on', 'off'], default: 'auto' },
+    rating: { enabled: { type: Boolean, default: false }, value: { type: Number, min: 0, max: 5 } },
+    reviewCount: { enabled: { type: Boolean, default: false }, value: { type: Number, min: 0 } },
+    hideRating: { type: Boolean, default: false },
+    badge: {
+      enabled: { type: Boolean, default: true },
+      useCustom: { type: Boolean, default: false },
+      text: { type: String, maxlength: 20 },
+      bgColor: { type: String },
+      textColor: { type: String },
+      position: { type: String, enum: ['top-left', 'top-right', 'bottom-left', 'bottom-right'] }
+    }
+  }
+});
+
 ProductSchema.index({ category: 1, isApproved: 1, isActive: 1 });
 ProductSchema.index({ subcategory: 1, isApproved: 1, isActive: 1 });
 ProductSchema.index({ brand: 1, isApproved: 1, isActive: 1 });

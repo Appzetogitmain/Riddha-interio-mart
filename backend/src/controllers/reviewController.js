@@ -2,12 +2,18 @@ const Review = require('../models/Review');
 const Product = require('../models/Product');
 const Order = require('../models/Order');
 const paginate = require('../utils/paginate');
+const mongoose = require('mongoose');
+const displayService = require('../services/displayService');
 
 // @desc    Get reviews for a product
 // @route   GET /api/products/:productId/reviews
 // @access  Public
 exports.getReviews = async (req, res) => {
   try {
+    const { ratingSettings } = await displayService.getSettings();
+    if (!ratingSettings.ratingsEnabled) {
+      return res.status(200).json({ success: true, count: 0, totalResults: 0, totalPages: 0, page: 1, limit: 0, data: [] });
+    }
     const query = { product: req.params.productId, isApproved: true };
 
     const populateOptions = { path: 'user', select: 'fullName avatar' };
@@ -58,16 +64,15 @@ exports.createReview = async (req, res) => {
     const productId = req.params.productId;
     const userId = req.user.id;
 
+    const { ratingSettings } = await displayService.getSettings();
+    if (!ratingSettings.ratingsEnabled || !ratingSettings.reviewsEnabled) {
+      return res.status(403).json({ success: false, message: 'Reviews are currently turned off.' });
+    }
+
     // Check if product exists
     const product = await Product.findById(productId);
     if (!product) {
       return res.status(404).json({ success: false, message: 'Product not found' });
-    }
-
-    // Check if user already submitted a review for this product
-    const alreadyReviewed = await Review.findOne({ user: userId, product: productId });
-    if (alreadyReviewed) {
-      return res.status(400).json({ success: false, message: 'You have already reviewed this product' });
     }
 
     // Enforce 60-second review cooldown to prevent automated reviews / spam
@@ -83,9 +88,9 @@ exports.createReview = async (req, res) => {
       }
     }
 
-    // Check for verified purchase (Strict Delivered-order-only requirement within last 180 days)
+    // Only customers who received this product can review it (delivered order within the last 180 days)
     const minDeliveryDate = new Date(Date.now() - 180 * 24 * 60 * 60 * 1000);
-    const purchased = await Order.findOne({
+    const orderFilter = {
       user: userId,
       status: 'Delivered',
       'orderItems.product': productId,
@@ -93,34 +98,48 @@ exports.createReview = async (req, res) => {
         { deliveredAt: { $gte: minDeliveryDate } },
         { deliveredAt: null, updatedAt: { $gte: minDeliveryDate } }
       ]
-    }).select('_id');
-
-    /* 
-    TEMPORARILY DISABLED FOR TESTING
-    if (!purchased) {
+    };
+    if (req.body.orderId) orderFilter._id = req.body.orderId;
+    const orders = await Order.find(orderFilter).sort({ createdAt: -1 }).select('_id');
+    if (!orders.length) {
       return res.status(403).json({
         success: false,
-        message: 'Only customers with verified, delivered purchases of this product within the last 180 days can submit a review.'
+        message: 'Only customers with a delivered order of this product (within the last 180 days) can submit a review.'
       });
     }
-    */
 
+    // One review per product per order: pick the newest delivered order that has no review yet
+    const reviewedOrders = await Review.find({ user: userId, product: productId, order: { $in: orders.map(o => o._id) } }).select('order');
+    const reviewedIds = new Set(reviewedOrders.map(r => String(r.order)));
+    const freeOrder = orders.find(o => !reviewedIds.has(String(o._id)));
+    if (!freeOrder) {
+      return res.status(400).json({ success: false, message: 'You have already reviewed this product for this order' });
+    }
+
+    // Only these fields can be set by a customer (never isApproved, counts, etc.)
+    const { rating, title, review: text, images } = req.body;
     const reviewData = {
-      ...req.body,
+      rating, title, review: text,
+      images: Array.isArray(images) ? images.slice(0, 5) : [],
       product: productId,
       user: userId,
-      verifiedPurchase: true
+      order: freeOrder._id,
+      source: 'customer',
+      verifiedPurchase: true,
+      // 'manual' (default): the review stays hidden and uncounted until an admin approves it
+      isApproved: ratingSettings.reviewApproval === 'auto'
     };
 
     const review = await Review.create(reviewData);
 
     res.status(201).json({
       success: true,
-      data: review
+      data: review,
+      message: review.isApproved ? 'Thanks for your review!' : 'Thanks! Your review will appear once it is approved.'
     });
   } catch (error) {
     if (error.code === 11000) {
-      return res.status(400).json({ success: false, message: 'You have already reviewed this product' });
+      return res.status(400).json({ success: false, message: 'You have already reviewed this product for this order' });
     }
     res.status(500).json({ success: false, message: error.message });
   }
@@ -138,7 +157,7 @@ exports.updateReview = async (req, res) => {
     }
 
     // Make sure review belongs to user
-    if (review.user.toString() !== req.user.id && req.user.role !== 'admin') {
+    if (req.user.role !== 'admin' && (!review.user || review.user.toString() !== req.user.id)) {
       return res.status(401).json({ success: false, message: 'Not authorized to update review' });
     }
 
@@ -146,6 +165,13 @@ exports.updateReview = async (req, res) => {
     review.title = req.body.title || review.title;
     review.review = req.body.review || review.review;
     if (req.body.images) review.images = req.body.images;
+    if (req.user.role !== 'admin') {
+      const { ratingSettings } = await displayService.getSettings();
+      if (ratingSettings.reviewApproval === 'manual') review.isApproved = false;
+    }
+    if (req.user.role === 'admin' && review.source === 'admin') {
+      if (req.body.reviewerName) review.reviewerName = String(req.body.reviewerName).trim().slice(0, 60);
+    }
 
     await review.save();
 
@@ -170,7 +196,7 @@ exports.deleteReview = async (req, res) => {
     }
 
     // Make sure review belongs to user or user is admin
-    if (review.user.toString() !== req.user.id && req.user.role !== 'admin') {
+    if (req.user.role !== 'admin' && (!review.user || review.user.toString() !== req.user.id)) {
       return res.status(401).json({ success: false, message: 'Not authorized to delete review' });
     }
 
@@ -375,3 +401,53 @@ exports.getAdminReviews = async (req, res) => {
   }
 };
 
+
+// @desc    Admin adds a review on a product (shown under a display name; counts toward the rating when approved)
+// @route   POST /api/reviews/admin/create
+// @access  Private/Admin
+exports.adminCreateReview = async (req, res) => {
+  try {
+    const { productId, reviewerName, rating, title, review, images, reviewDate } = req.body;
+    const isApproved = req.body.isApproved !== false;
+
+    if (!mongoose.Types.ObjectId.isValid(productId)) {
+      return res.status(400).json({ success: false, message: 'Choose a product' });
+    }
+    const product = await Product.findById(productId).select('_id');
+    if (!product) return res.status(404).json({ success: false, message: 'Product not found' });
+
+    const name = String(reviewerName || '').trim();
+    if (name.length < 2) return res.status(400).json({ success: false, message: 'Enter the reviewer name (at least 2 characters)' });
+    const stars = Number(rating);
+    if (!Number.isInteger(stars) || stars < 1 || stars > 5) {
+      return res.status(400).json({ success: false, message: 'Rating must be a whole number from 1 to 5' });
+    }
+    const text = String(review || '').trim();
+    if (!text) return res.status(400).json({ success: false, message: 'Review text is required' });
+    if (text.length > 2000) return res.status(400).json({ success: false, message: 'Review text is too long (max 2000 characters)' });
+
+    const data = {
+      product: productId,
+      source: 'admin',
+      reviewerName: name.slice(0, 60),
+      rating: stars,
+      title: String(title || '').trim().slice(0, 100),
+      review: text,
+      images: Array.isArray(images) ? images.filter(u => /^https:\/\//i.test(u)).slice(0, 5) : [],
+      verifiedPurchase: false,
+      isApproved
+    };
+    if (reviewDate) {
+      const d = new Date(reviewDate);
+      if (Number.isNaN(d.getTime()) || d.getTime() > Date.now() + 60000) {
+        return res.status(400).json({ success: false, message: 'Review date cannot be in the future' });
+      }
+      data.createdAt = d;
+    }
+
+    const created = await Review.create(data);
+    res.status(201).json({ success: true, data: created });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};

@@ -9,6 +9,9 @@ import OptimizedImage from '../../../shared/components/OptimizedImage';
 import Button from '../../../shared/components/Button';
 // Requirement A — per-card B2B quote & sample entry points
 import RequestQuoteButton from './RFQ/RequestQuoteButton';
+import ProductBadge from './ProductBadge';
+import StarRating from './StarRating';
+import { useProductDisplay } from '../../../shared/hooks/useDisplayConfig';
 import RequestSampleButton from './Samples/RequestSampleButton';
 
 /* ─── Reusable Sub-Components (Enhancement Overlays) ─── */
@@ -76,6 +79,7 @@ const ProductCard = ({ product, index = 0, variant = 'grid' }) => {
   const quantity = getItemQuantity(productId);
   const isList = variant === 'list';
   const isMinimal = variant === 'minimal';
+  const display = useProductDisplay(product);
 
   const originalPrice = Number(product.price || 0);
 
@@ -171,6 +175,9 @@ const ProductCard = ({ product, index = 0, variant = 'grid' }) => {
         {/* Wishlist Button (top-right) */}
         <WishlistButton product={product} />
 
+        {/* Bestseller badge (text / colours / position come from admin settings) */}
+        <ProductBadge badge={display.badge} />
+
         {/* Trending Badge (top-right, left of heart) — only in grid view; list view uses the red discount circle */}
         {isTrending && !isList && <TrendingBadge />}
       </Link>
@@ -183,6 +190,7 @@ const ProductCard = ({ product, index = 0, variant = 'grid' }) => {
           <h4 className="text-[9px] md:text-xs font-medium text-gray-400">
             {product.category}
           </h4>
+          {display.showRating && <StarRating rating={display.rating} count={display.reviewCount} size={11} className="mt-0.5" />}
           {isList && product.description && (
             <p className="text-[10px] md:text-[13px] text-gray-500 line-clamp-2 leading-snug mt-1">
               {product.description}

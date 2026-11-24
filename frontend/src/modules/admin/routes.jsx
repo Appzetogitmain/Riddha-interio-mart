@@ -18,6 +18,9 @@ const ManageFavouriteCategories = React.lazy(() => import('./pages/ManageFavouri
 const ManageCategoryGrid = React.lazy(() => import('./pages/ManageCategoryGrid'));
 const ManageBrands = React.lazy(() => import('./pages/ManageBrands'));
 const ManageAdvertisementPlans = React.lazy(() => import('./pages/ManageAdvertisementPlans'));
+const ManageCategoryBanners = React.lazy(() => import('./pages/ManageCategoryBanners'));
+const RatingBestsellerSettings = React.lazy(() => import('./pages/RatingBestsellerSettings'));
+const TejasChatHistory = React.lazy(() => import('./pages/TejasChatHistory'));
 const ManageProPlans = React.lazy(() => import('./pages/ManageProPlans'));
 const ManageB2CPlans = React.lazy(() => import('./pages/ManageB2CPlans'));
 const OffersListPage = React.lazy(() => import('./pages/OffersListPage'));
@@ -166,6 +169,9 @@ const AdminRoutes = () => {
             <Route path="/manage-brands/add" element={<AddBrandPage />} />
             <Route path="/manage-bundles" element={<BundleManagementPage />} />
             <Route path="/manage-advertisements" element={<ManageAdvertisementPlans />} />
+            <Route path="/manage-category-banners" element={<ManageCategoryBanners />} />
+            <Route path="/rating-settings" element={<RatingBestsellerSettings />} />
+            <Route path="/tejas-chats" element={<TejasChatHistory />} />
             <Route path="/offers" element={<OffersListPage />} />
             <Route path="/offers/type/:typeSlug" element={<OffersListPage />} />
             <Route path="/offers/add" element={<OfferFormPage />} />

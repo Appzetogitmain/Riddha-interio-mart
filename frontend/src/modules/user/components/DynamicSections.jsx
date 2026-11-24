@@ -4,6 +4,9 @@ import { motion as Motion } from 'framer-motion';
 import { LuChevronRight, LuLoader } from 'react-icons/lu';
 import api from '../../../shared/utils/api';
 import Banner from './Banner';
+import ProductBadge from './ProductBadge';
+import StarRating from './StarRating';
+import { useProductDisplay } from '../../../shared/hooks/useDisplayConfig';
 
 const DEFAULT_PRODUCT_IMAGE =
   'https://images.unsplash.com/photo-1513519245088-0e12902e35ca?w=800&q=80';
@@ -38,6 +41,7 @@ const getSectionBanners = (section) => {
 
 const ProductTile = ({ product }) => {
   const productId = getId(product);
+  const display = useProductDisplay(product);
   const rawPrice = Number(product?.price) || 0;
   const rawDiscount = Number(product?.discountPrice) || 0;
   const hasDiscount = rawDiscount > 0 && rawDiscount < rawPrice && rawDiscount >= rawPrice * 0.5;
@@ -62,6 +66,7 @@ const ProductTile = ({ product }) => {
             SALE
           </span>
         )}
+        <ProductBadge badge={display.badge} />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10" />
       </div>
 
@@ -74,6 +79,7 @@ const ProductTile = ({ product }) => {
           <p className="line-clamp-1 text-[8px] md:text-[9px] font-bold text-[#189D91] uppercase tracking-wider mt-0.5">
             {product?.category}
           </p>
+          {display.showRating && <StarRating rating={display.rating} count={display.reviewCount} size={10} className="mt-1" />}
           <div className="flex items-center gap-1.5 mt-1.5">
             <span className="text-[12px] md:text-sm font-black text-slate-950">
               {toMoney(displayPrice)}

@@ -1,6 +1,13 @@
-const https = require('https');
-const http = require('http');
-const { URL } = require('url');
+/**
+ * Tejas voice: a MALE Indian-English speaker.
+ *
+ * Providers (official APIs only), tried in this order:
+ *   1. Azure AI Speech neural voice  en-IN-PrabhatNeural (male, native Indian) / hi-IN-MadhurNeural for Devanagari
+ *      -> needs AZURE_SPEECH_KEY + AZURE_SPEECH_REGION   (best, truly native Indian voice)
+ *   2. OpenAI gpt-4o-mini-tts, steered with instructions to speak as an Indian man  -> uses OPENAI_API_KEY
+ * If neither is configured / reachable the controller tells the browser to use its own en-IN male voice.
+ */
+const openaiService = require('./openaiService');
 
 /**
  * In-memory LRU-style cache for audio buffers of frequently used phrases
@@ -102,76 +109,58 @@ function splitIntoChunks(text, maxLen = 175) {
   return chunks;
 }
 
-/**
- * Performs HTTP/HTTPS request with automatic redirect following
- */
-function fetchBufferWithRedirect(urlStr, options = {}, maxRedirects = 3) {
-  return new Promise((resolve, reject) => {
-    if (maxRedirects <= 0) {
-      return reject(new Error('Too many redirects while fetching TTS audio'));
-    }
+/** Azure AI Speech REST (official). Returns an MP3 buffer. */
+async function synthesizeWithAzure(text, isHindiScript) {
+  const key = process.env.AZURE_SPEECH_KEY;
+  const region = process.env.AZURE_SPEECH_REGION;
+  if (!key || !region) return null;
 
-    const parsed = new URL(urlStr);
-    const client = parsed.protocol === 'http:' ? http : https;
+  const voice = isHindiScript
+    ? (process.env.AZURE_TTS_VOICE_HI || 'hi-IN-MadhurNeural')
+    : (process.env.AZURE_TTS_VOICE_EN || 'en-IN-PrabhatNeural');
+  const lang = isHindiScript ? 'hi-IN' : 'en-IN';
+  const escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const ssml = `<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="${lang}"><voice name="${voice}"><prosody rate="-4%">${escaped}</prosody></voice></speak>`;
 
-    const req = client.get(
-      urlStr,
-      {
-        ...options,
-        timeout: options.timeout || 7000
-      },
-      (res) => {
-        // Handle HTTP 3xx Redirects
-        if (
-          res.statusCode >= 300 &&
-          res.statusCode < 400 &&
-          res.headers.location
-        ) {
-          const nextUrl = new URL(res.headers.location, urlStr).toString();
-          return resolve(fetchBufferWithRedirect(nextUrl, options, maxRedirects - 1));
-        }
-
-        if (res.statusCode !== 200) {
-          return reject(
-            new Error(`TTS server responded with status code ${res.statusCode}`)
-          );
-        }
-
-        const dataChunks = [];
-        res.on('data', (c) => dataChunks.push(c));
-        res.on('end', () => resolve(Buffer.concat(dataChunks)));
-      }
-    );
-
-    req.on('timeout', () => {
-      req.destroy();
-      reject(new Error('TTS audio request timed out'));
-    });
-
-    req.on('error', (err) => reject(err));
+  const res = await fetch(`https://${region}.tts.speech.microsoft.com/cognitiveservices/v1`, {
+    method: 'POST',
+    headers: {
+      'Ocp-Apim-Subscription-Key': key,
+      'Content-Type': 'application/ssml+xml',
+      'X-Microsoft-OutputFormat': 'audio-24khz-48kbitrate-mono-mp3',
+      'User-Agent': 'riddha-tejas'
+    },
+    body: ssml,
+    signal: AbortSignal.timeout(9000)
   });
+  if (!res.ok) throw new Error(`Azure TTS responded ${res.status}`);
+  return { buffer: Buffer.from(await res.arrayBuffer()), provider: 'azure', voice };
+}
+
+const OPENAI_INSTRUCTIONS =
+  'Voice: a warm, friendly, courteous young Indian man from India, like a polite interior-design consultant. ' +
+  'Accent: natural Indian English (not American, not British); use Indian intonation and rhythm. ' +
+  'Pronounce Hindi and Hinglish words the Indian way: ji, aap, namaste, bilkul, zaroor, Vaastu, Riddha, sagwan. ' +
+  'Pace: calm and clear, slightly unhurried. Tone: helpful, respectful and positive.';
+
+/** OpenAI text-to-speech steered toward a male Indian accent. */
+async function synthesizeWithOpenAI(text) {
+  if (!process.env.OPENAI_API_KEY) return null;
+  const client = openaiService.getClient();
+  const voice = process.env.TTS_OPENAI_VOICE || 'ash'; // male voice
+  const response = await client.audio.speech.create({
+    model: process.env.TTS_OPENAI_MODEL || 'gpt-4o-mini-tts',
+    voice,
+    input: text,
+    instructions: OPENAI_INSTRUCTIONS,
+    response_format: 'mp3'
+  });
+  return { buffer: Buffer.from(await response.arrayBuffer()), provider: 'openai', voice };
 }
 
 /**
- * Downloads a single text chunk using Google's native Indian English (en-IN) / Hindi (hi) neural TTS
- */
-async function fetchIndianTtsChunk(textChunk, lang = 'en-IN') {
-  const encodedText = encodeURIComponent(textChunk);
-  const targetUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${lang}&client=tw-ob&q=${encodedText}`;
-
-  const headers = {
-    'User-Agent':
-      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-    Referer: 'https://translate.google.com/',
-    Accept: 'audio/mpeg, audio/*;q=0.9, */*;q=0.8'
-  };
-
-  return await fetchBufferWithRedirect(targetUrl, { headers, timeout: 6000 });
-}
-
-/**
- * Generates natural Indian voice audio buffer for the given text.
- * Returns { buffer, contentType: 'audio/mpeg' }
+ * Generates the male Indian voice audio for the given text.
+ * Returns { buffer, contentType, provider, voice } or throws when no provider is available.
  */
 async function generateIndianSpeech(rawText, options = {}) {
   const cleanText = prepareIndianSpeechText(rawText);
@@ -179,67 +168,38 @@ async function generateIndianSpeech(rawText, options = {}) {
     throw new Error('No readable text content provided for speech synthesis');
   }
 
-  // Detect script: if Devanagari Hindi script is present, use 'hi', otherwise 'en-IN' (Indian English)
   const isHindiScript = /[\u0900-\u097F]/.test(cleanText);
-  const lang = options.lang || (isHindiScript ? 'hi' : 'en-IN');
+  const capped = cleanText.slice(0, 600);
 
-  // Keep max ~350-400 characters for responsive conversational spoken reply
-  const cappedText = cleanText.slice(0, 420);
-
-  // Check in-memory cache
-  const cacheKey = `${lang}:${cappedText}`;
+  const cacheKey = `${isHindiScript ? 'hi' : 'en'}:${capped}`;
   if (ttsCache.has(cacheKey)) {
-    return {
-      buffer: ttsCache.get(cacheKey),
-      contentType: 'audio/mpeg'
-    };
+    return { ...ttsCache.get(cacheKey), contentType: 'audio/mpeg' };
   }
 
-  // Split into chunks of max 175 characters
-  const chunks = splitIntoChunks(cappedText, 175);
-  if (chunks.length === 0) {
-    throw new Error('Failed to generate speech chunks');
-  }
+  const providers = [
+    () => synthesizeWithAzure(capped, isHindiScript),
+    () => synthesizeWithOpenAI(capped)
+  ];
 
-  // Fetch up to first 3 chunks (covers ~400 chars)
-  const audioBuffers = [];
-  for (const chunk of chunks.slice(0, 3)) {
-    if (!chunk.trim()) continue;
+  let lastError = null;
+  for (const run of providers) {
     try {
-      const buf = await fetchIndianTtsChunk(chunk, lang);
-      if (buf && buf.length > 0) {
-        audioBuffers.push(buf);
+      const result = await run();
+      if (result && result.buffer && result.buffer.length > 250) {
+        if (ttsCache.size >= MAX_CACHE_ENTRIES) ttsCache.delete(ttsCache.keys().next().value);
+        ttsCache.set(cacheKey, result);
+        return { ...result, contentType: 'audio/mpeg' };
       }
     } catch (err) {
-      console.warn(`[IndianTTS] Error fetching chunk "${chunk.slice(0, 30)}...":`, err.message);
-      // If we already have at least one valid chunk, we can proceed with partial audio
-      if (audioBuffers.length === 0) {
-        throw err;
-      }
-      break;
+      lastError = err;
+      console.warn('[Tejas TTS] provider failed:', err.message);
     }
   }
-
-  if (audioBuffers.length === 0) {
-    throw new Error('No audio buffers returned from Indian TTS service');
-  }
-
-  const finalBuffer = Buffer.concat(audioBuffers);
-
-  // Maintain cache size
-  if (ttsCache.size >= MAX_CACHE_ENTRIES) {
-    const oldestKey = ttsCache.keys().next().value;
-    ttsCache.delete(oldestKey);
-  }
-  ttsCache.set(cacheKey, finalBuffer);
-
-  return {
-    buffer: finalBuffer,
-    contentType: 'audio/mpeg'
-  };
+  throw lastError || new Error('No text-to-speech provider is configured');
 }
 
 module.exports = {
   generateIndianSpeech,
-  prepareIndianSpeechText
+  prepareIndianSpeechText,
+  splitIntoChunks
 };

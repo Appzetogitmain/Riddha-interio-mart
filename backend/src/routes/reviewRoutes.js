@@ -10,7 +10,8 @@ const {
   respondToReview,
   getAdminReviews,
   getSellerReviews,
-  getMyReviews
+  getMyReviews,
+  adminCreateReview
 } = require('../controllers/reviewController');
 
 const { protect, authorize } = require('../middleware/auth');
@@ -32,6 +33,7 @@ router.route('/')
   ], createReview);
 
 router.get('/admin', protect, authorize('admin'), getAdminReviews);
+router.post('/admin/create', protect, authorize('admin'), adminCreateReview);
 router.get('/seller', protect, authorize('seller', 'admin'), getSellerReviews);
 router.get('/me', protect, getMyReviews);
 

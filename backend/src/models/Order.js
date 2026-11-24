@@ -356,6 +356,7 @@ OrderSchema.post('save', function() {
     const cacheService = require('../services/cacheService');
     cacheService.del('analytics:admin:dashboard');
     cacheService.delPattern('analytics:seller:*');
+    cacheService.delPattern('bestsellers:*');
   } catch (e) {}
 });
 
@@ -364,6 +365,7 @@ OrderSchema.post('findOneAndUpdate', function() {
     const cacheService = require('../services/cacheService');
     cacheService.del('analytics:admin:dashboard');
     cacheService.delPattern('analytics:seller:*');
+    cacheService.delPattern('bestsellers:*');
   } catch (e) {}
 });
 
@@ -372,6 +374,7 @@ OrderSchema.post('updateMany', function() {
     const cacheService = require('../services/cacheService');
     cacheService.del('analytics:admin:dashboard');
     cacheService.delPattern('analytics:seller:*');
+    cacheService.delPattern('bestsellers:*');
   } catch (e) {}
 });
 

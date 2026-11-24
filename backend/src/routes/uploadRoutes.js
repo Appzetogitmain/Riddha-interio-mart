@@ -1,7 +1,7 @@
 const express = require('express');
 const fs = require('fs');
 const { removeBackground } = require('@imgly/background-removal-node');
-const { protect } = require('../middleware/auth');
+const { protect, authorize } = require('../middleware/auth');
 const { 
   uploadRateLimiter, 
   uploadParser, 
@@ -81,6 +81,50 @@ router.post('/bulk', protect, uploadRateLimiter, uploadParser.fields([
   } finally {
     // Absolutely guarantee the local temporary files are securely unlinked
     cleanupLocalFiles(localFiles);
+  }
+});
+
+// @desc    Upload category-banner artwork (image or video). Enforces the banner ratio on the server
+// @route   POST /api/upload/banner-media
+// @access  Private (seller / admin)
+router.post('/banner-media', protect, authorize('seller', 'admin'), uploadRateLimiter, uploadParser.single('media'), validateUploadedFiles, async (req, res) => {
+  const spec = require('../utils/bannerSpec');
+  const file = req.file;
+  if (!file) return res.status(400).json({ success: false, error: 'Please choose an image or video' });
+  const ext = require('path').extname(file.originalname).toLowerCase();
+  const isVideo = ['.mp4', '.mov'].includes(ext);
+  const isImage = ['.jpg', '.jpeg', '.png', '.webp'].includes(ext);
+  let uploaded = null;
+  try {
+    if (!isVideo && !isImage) {
+      return res.status(400).json({ success: false, error: 'Use a JPG, PNG or WEBP image, or an MP4/MOV video' });
+    }
+    uploaded = await cloudinary.uploader.upload(file.path, isVideo
+      ? { folder: 'riddha_mart/banners', resource_type: 'video' }
+      : { folder: 'riddha_mart/banners', image_metadata: false, transformation: [{ width: 2400, crop: 'limit', quality: 'auto', fetch_format: 'auto' }] });
+
+    const { width, height } = uploaded;
+    const ratio = width / height;
+    const off = Math.abs(ratio - spec.RATIO) / spec.RATIO;
+    let problem = null;
+    if (off > spec.RATIO_TOLERANCE) {
+      problem = `Wrong shape (${width} x ${height}). Banners must be ${spec.RECOMMENDED} (16:5) so nothing is cut off.`;
+    } else if (width < spec.MIN_WIDTH) {
+      problem = `Too small (${width}px wide). Minimum width is ${spec.MIN_WIDTH}px; recommended ${spec.RECOMMENDED}.`;
+    } else if (isVideo && uploaded.duration && uploaded.duration > spec.MAX_VIDEO_SECONDS) {
+      problem = `Video is too long (${Math.round(uploaded.duration)}s). Maximum is ${spec.MAX_VIDEO_SECONDS} seconds.`;
+    }
+    if (problem) {
+      await cloudinary.uploader.destroy(uploaded.public_id, { resource_type: isVideo ? 'video' : 'image' }).catch(() => {});
+      return res.status(400).json({ success: false, error: problem });
+    }
+
+    res.json({ success: true, data: { url: uploaded.secure_url, type: isVideo ? 'video' : 'image', width, height } });
+  } catch (error) {
+    console.error('[Banner Upload] failed:', error.message);
+    res.status(500).json({ success: false, error: 'Banner upload failed. Please try again.' });
+  } finally {
+    cleanupLocalFiles([file]);
   }
 });
 

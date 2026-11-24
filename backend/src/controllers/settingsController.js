@@ -20,6 +20,9 @@ exports.getSettings = async (req, res, next) => {
 // @access  Private/Admin
 exports.updateSettings = async (req, res, next) => {
   try {
+    // Rating / bestseller settings have their own super-admin-only endpoint (/api/display/settings)
+    delete req.body.ratingSettings;
+    delete req.body.bestsellerSettings;
     let settings = await SystemSettings.findOne();
     if (!settings) {
       settings = await SystemSettings.create(req.body);

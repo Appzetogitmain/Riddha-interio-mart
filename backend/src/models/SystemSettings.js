@@ -45,6 +45,24 @@ const SystemSettingsSchema = new mongoose.Schema({
     headerContact: { type: String, default: 'support@riddhamart.com | www.riddhamart.com' },
     footerText: { type: String, default: 'CONFIDENTIAL DOCUMENT' }
   },
+  ratingSettings: {
+    ratingsEnabled: { type: Boolean, default: true },
+    reviewsEnabled: { type: Boolean, default: true },
+    autoRatingEnabled: { type: Boolean, default: true },
+    reviewApproval: { type: String, enum: ['manual', 'auto'], default: 'manual' }
+  },
+  bestsellerSettings: {
+    autoEnabled: { type: Boolean, default: true },
+    periodDays: { type: Number, enum: [7, 30, 90], default: 30 },
+    minSales: { type: Number, min: 0, default: 5 },
+    maxProducts: { type: Number, min: 1, max: 100, default: 20 },
+    badge: {
+      text: { type: String, default: 'BESTSELLER', maxlength: 20 },
+      bgColor: { type: String, default: '#E11D48' },
+      textColor: { type: String, default: '#FFFFFF' },
+      position: { type: String, enum: ['top-left', 'top-right', 'bottom-left', 'bottom-right'], default: 'bottom-left' }
+    }
+  },
   trustBarSubheading: {
     type: String,
     default: 'A seamless shopping experience with trusted quality, great value and customer-first support.'

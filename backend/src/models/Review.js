@@ -6,16 +6,35 @@ const ReviewSchema = new mongoose.Schema({
     ref: 'Product',
     required: true
   },
+  // Real customer. Reviews added by an admin have no user (see source / reviewerName)
   user: {
     type: mongoose.Schema.ObjectId,
     ref: 'User',
-    required: true
+    required: function () { return this.source !== 'admin'; }
+  },
+  // The order this review is for (one review per product per order)
+  order: {
+    type: mongoose.Schema.ObjectId,
+    ref: 'Order',
+    default: null
+  },
+  source: {
+    type: String,
+    enum: ['customer', 'admin'],
+    default: 'customer'
+  },
+  // Display name for admin-added reviews
+  reviewerName: {
+    type: String,
+    trim: true,
+    maxlength: 60
   },
   rating: {
     type: Number,
     min: 1,
     max: 5,
-    required: [true, 'Please add a rating between 1 and 5']
+    required: [true, 'Please add a rating between 1 and 5'],
+    validate: { validator: Number.isInteger, message: 'Rating must be a whole number from 1 to 5' }
   },
   title: {
     type: String,
@@ -73,15 +92,20 @@ const ReviewSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Prevent user from submitting more than one review per product
-ReviewSchema.index({ product: 1, user: 1 }, { unique: true });
+// One review per customer per product per order (admin-added reviews have no user and are exempt)
+ReviewSchema.index(
+  { product: 1, user: 1, order: 1 },
+  { unique: true, partialFilterExpression: { user: { $exists: true } } }
+);
 ReviewSchema.index({ product: 1, createdAt: -1 });
 
 // Static method to get average rating and save
 ReviewSchema.statics.getAverageRating = async function(productId) {
+  // aggregate() does not cast ids, so make sure we always match on an ObjectId
+  const pid = new mongoose.Types.ObjectId(String(productId));
   const obj = await this.aggregate([
     {
-      $match: { product: productId, isApproved: true }
+      $match: { product: pid, isApproved: true }
     },
     {
       $group: {
@@ -93,7 +117,7 @@ ReviewSchema.statics.getAverageRating = async function(productId) {
   ]);
 
   try {
-    await this.model('Product').findByIdAndUpdate(productId, {
+    await this.model('Product').findByIdAndUpdate(pid, {
       averageRating: obj[0] ? Math.round(obj[0].averageRating * 10) / 10 : 0,
       totalReviews: obj[0] ? obj[0].totalReviews : 0
     });
@@ -117,6 +141,13 @@ ReviewSchema.post('remove', async function() {
   await this.constructor.getAverageRating(this.product);
 });
 
+// Edits / approvals done through findOneAndUpdate also refresh the rating
+ReviewSchema.post('findOneAndUpdate', async function(doc) {
+  if (doc) {
+    await doc.constructor.getAverageRating(doc.product);
+  }
+});
+
 // Also handle findOneAndDelete etc if needed
 ReviewSchema.post('findOneAndDelete', async function(doc) {
   if (doc) {
@@ -124,4 +155,12 @@ ReviewSchema.post('findOneAndDelete', async function(doc) {
   }
 });
 
-module.exports = mongoose.model('Review', ReviewSchema);
+const Review = mongoose.model('Review', ReviewSchema);
+
+// The old rule allowed only ONE review per product per customer. Drop that index once so the
+// per-order rule above can take over (no-op if it is already gone).
+mongoose.connection.once('open', () => {
+  Review.collection.dropIndex('product_1_user_1').catch(() => {});
+});
+
+module.exports = Review;

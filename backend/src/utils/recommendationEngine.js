@@ -296,8 +296,18 @@ async function getAlgorithmicForUser(userId, limit = 10, type = 'all') {
     const fresh = looks.filter(r => !exclude.has(String(r.id)));
     const matched = fresh.length ? fresh : looks;
     if (matched.length) return diversify(matched, limit);
-    // No browsing history yet (new visitor): show a varied top-rated mix instead of an empty tab
-    return diversify(picksRecs.map(r => ({ ...r, type: 'cross-sell', reason: 'Popular pairing for your home' })), limit);
+    // No browsing history yet (new visitor): show add-on style items (lighting, rugs, decor, panels...)
+    // first and keep out the products already leading "Picks For You" so the tabs don't repeat.
+    const addOnWords = [...new Set(COMPLEMENT_GROUPS.flatMap(g => g.complements))];
+    const isAddOn = (p) => {
+      const hay = `${p.name || ''} ${p.category?.name || ''}`.toLowerCase();
+      return addOnWords.some(w => hay.includes(w));
+    };
+    const ranked = [...products]
+      .sort((a, b) => (isAddOn(b) - isAddOn(a)) || (new Date(b.createdAt) - new Date(a.createdAt)))
+      .map(p => toRec(p, isAddOn(p) ? 0.8 : 0.6, 'Popular pairing for your home', 'cross-sell'));
+    const notInPicks = ranked.filter(r => !exclude.has(String(r.id)));
+    return diversify(notInPicks.length >= Math.min(limit, 4) ? notInPicks : ranked, limit);
   }
 
   return picksRecs.slice(0, limit);
@@ -351,14 +361,24 @@ async function getTrendingProducts(limit = 10, style = null, priceRange = null) 
     query.price = { $gte: 150000 };
   }
 
-  const products = await Product.find(query)
+  const candidates = await Product.find(query)
     .select(CARD_FIELDS)
     .populate('category', 'name')
     .sort({ totalReviews: -1, averageRating: -1, createdAt: -1 })
-    .limit(limit)
+    .limit(150)
     .lean();
 
-  return products.map(p => formatRecommendation(p, 'Trending popular pick this week', 0.88, 'trending'));
+  // Real shopper activity drives the ranking; reviews/rating only break ties.
+  const affinity = await ProductAffinity.find({ productId: { $in: candidates.map(c => c._id) } })
+    .select('productId viewCount purchaseCount wishlistCount')
+    .lean();
+  const activity = new Map(affinity.map(a => [String(a.productId), (a.purchaseCount || 0) * 5 + (a.wishlistCount || 0) * 3 + (a.viewCount || 0)]));
+  const trendScore = (p) => (activity.get(String(p._id)) || 0) + Math.min(p.totalReviews || 0, 50) * 0.2 + (p.averageRating || 0) * 0.1;
+
+  return candidates
+    .sort((a, b) => trendScore(b) - trendScore(a))
+    .slice(0, limit)
+    .map(p => formatRecommendation(p, 'Trending popular pick this week', 0.88, 'trending'));
 }
 
 /**

@@ -53,6 +53,21 @@ const CatalogSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
+  variants: [{
+    sku: String,
+    price: Number,
+    discountPrice: Number,
+    countInStock: { type: Number, default: 0 },
+    attributes: { type: Map, of: String },
+    image: String,
+    images: {
+      type: [String],
+      validate: {
+        validator: (arr) => !arr || arr.length <= 10,
+        message: 'A variant can have at most 10 images'
+      }
+    }
+  }],
   isActive: {
     type: Boolean,
     default: true

@@ -327,8 +327,7 @@ const generateColourVariantImages = async (originalImage, colours, { name } = {}
     console.warn('[ColourVariants] Structure analysis failed, continuing with generic lock:', err.message);
   }
 
-  const results = [];
-  for (const colour of colours) {
+  return Promise.all(colours.map(async (colour) => {
     const prompt =
       `Use the provided reference photo as the exact product. Recolour ONLY the main upholstery/body of the product to ${colour}. ` +
       `Everything else stays pixel-faithful to the reference: ${structuralSpec || 'same product type, same number of seats/units, same proportions'}. ` +
@@ -341,9 +340,8 @@ const generateColourVariantImages = async (originalImage, colours, { name } = {}
     } catch (err) {
       console.error(`[ColourVariants] ${colour} failed:`, err.message);
     }
-    results.push({ colour, image });
-  }
-  return results;
+    return { colour, image };
+  }));
 };
 
 // =============================================================================
@@ -572,19 +570,25 @@ YOUR TASK — Return the following:
         console.log(`[ImageGen] Generating ${prompts.length} AI fallback image(s) for: "${name}"`);
       }
 
-      for (let i = 0; i < prompts.length; i++) {
-        // With an original photo we edit THAT photo (image-to-image), so the product cannot drift.
-        // There is deliberately no text-to-image fallback here: a missing angle is better than a wrong product.
-        if (referenceImage) {
+      // With an original photo we edit THAT photo (image-to-image), so the product cannot drift.
+      // There is deliberately no text-to-image fallback here: a missing angle is better than a wrong product.
+      // The edits are independent, so run them in parallel instead of one after another.
+      if (referenceImage && prompts.length > 0) {
+        const results = await Promise.all(prompts.map(async (p, i) => {
           try {
-            const refUrl = await generateFromReference(prompts[i], referenceImage);
-            if (refUrl) images.push(refUrl);
-            else console.error(`[ImageGen] Reference-based image ${i} returned no data.`);
+            const refUrl = await generateFromReference(p, referenceImage);
+            if (!refUrl) console.error(`[ImageGen] Reference-based image ${i} returned no data.`);
+            return refUrl || null;
           } catch (err) {
             console.error(`[ImageGen] Reference-based image ${i} failed:`, err.message);
+            return null;
           }
-          continue;
-        }
+        }));
+        results.forEach(u => { if (u) images.push(u); });
+      }
+
+      for (let i = 0; i < prompts.length; i++) {
+        if (referenceImage) break;
 
         const cacheKey = baseCacheKey ? `${baseCacheKey}::${i}` : '';
         if (cacheKey && imageCache.has(cacheKey)) {
@@ -839,7 +843,7 @@ const generateSellerAiImages = async (originalImage, count = 3, customPrompt = '
   const reference = await resolveImageBuffer(originalImage);
   if (!reference) throw new Error('Could not read the uploaded product photo.');
 
-  const targetCount = Math.min(Math.max(parseInt(count, 10) || 3, 1), 3);
+  const targetCount = Math.min(Math.max(parseInt(count, 10) || 3, 1), 10);
   const { prompts, structuralSpec } = await generateTenPerspectivePromptsFromImage(originalImage, {
     customPrompt,
     targetCount: 10,
@@ -852,16 +856,24 @@ const generateSellerAiImages = async (originalImage, count = 3, customPrompt = '
     picks.push(prompts[Math.floor((i * prompts.length) / targetCount)]);
   }
 
+  // Generate in parallel batches (4 at a time) to be fast without hammering rate limits.
   const results = [];
   let lastError = null;
-  for (let i = 0; i < picks.length; i++) {
-    try {
-      const url = await generateFromReference(buildIdentityLockedPrompt(picks[i], structuralSpec), reference);
-      if (url) results.push({ url, perspective: `AI View ${i + 1}` });
-    } catch (err) {
-      lastError = err;
-      console.error(`[SellerAiImages] View ${i + 1} failed:`, err.message);
-    }
+  const CONCURRENCY = 4;
+  for (let start = 0; start < picks.length; start += CONCURRENCY) {
+    const batch = picks.slice(start, start + CONCURRENCY);
+    const settled = await Promise.all(batch.map(async (p, j) => {
+      const i = start + j;
+      try {
+        const url = await generateFromReference(buildIdentityLockedPrompt(p, structuralSpec), reference);
+        return url ? { url, perspective: `AI View ${i + 1}` } : null;
+      } catch (err) {
+        lastError = err;
+        console.error(`[SellerAiImages] View ${i + 1} failed:`, err.message);
+        return null;
+      }
+    }));
+    settled.forEach(r => { if (r) results.push(r); });
   }
   if (results.length === 0) {
     throw new Error(lastError?.message || 'AI image generation returned no images.');

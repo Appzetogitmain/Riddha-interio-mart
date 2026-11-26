@@ -34,7 +34,7 @@ const SellerAIImageGenerator = ({ sourceImage, remainingSlots = 0, onGenerated }
           imageCount: effectiveCount,
           customInstructions: instructions.trim(),
         },
-        { timeout: 240000 },
+        { timeout: 600000 },
       );
       const generated = (res.data?.data?.images || [])
         .map((g) => g.url)
@@ -90,7 +90,7 @@ const SellerAIImageGenerator = ({ sourceImage, remainingSlots = 0, onGenerated }
         <div className="flex items-center justify-between text-[10px] font-bold text-slate-600">
           <span>Number of images</span>
           <div className="flex gap-1 bg-white p-0.5 rounded-lg border border-slate-200">
-            {[1, 2, 3].map((n) => (
+            {[1, 2, 3, 5, 7, 10].map((n) => (
               <button
                 key={n}
                 type="button"

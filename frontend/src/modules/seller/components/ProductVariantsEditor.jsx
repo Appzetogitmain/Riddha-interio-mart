@@ -128,6 +128,75 @@ const ProductVariantsEditor = ({ formData, setFormData, categories }) => {
     }
   };
 
+  // ---- AI: generate extra images for ONE variant from that variant's own first image ----
+  const [aiVariantIdx, setAiVariantIdx] = useState(null);
+  const [aiVariantCount, setAiVariantCount] = useState({});
+
+  const handleGenerateVariantImages = async (index) => {
+    const variant = formData.variants?.[index];
+    const current = getVariantImages(variant);
+    const source = variant?.aiSource || current[0];
+    const room = MAX_VARIANT_IMAGES - current.length;
+    if (!source) {
+      setVariantImageMsg('Upload a source photo for this variant first, then generate related images.');
+      return;
+    }
+    if (room <= 0) {
+      setVariantImageMsg(`Maximum ${MAX_VARIANT_IMAGES} images per variant.`);
+      return;
+    }
+    const wanted = Math.min(aiVariantCount[index] || room, room);
+    try {
+      setAiVariantIdx(index);
+      setVariantImageMsg('');
+      const { data } = await api.post('/products/ai-generate-images', {
+        image: source,
+        imageCount: wanted,
+      }, { timeout: 600000 });
+      const urls = (data?.data?.images || []).map(g => g.url).filter(Boolean);
+      if (!urls.length) throw new Error('No images returned');
+      setFormData(prev => {
+        const variants = [...(prev.variants || [])];
+        const images = [...getVariantImages(variants[index]), ...urls].slice(0, MAX_VARIANT_IMAGES);
+        variants[index] = { ...variants[index], images, image: images[0] };
+        return { ...prev, variants };
+      });
+      setVariantImageMsg(`${urls.length} AI image(s) added to this variant.`);
+    } catch (err) {
+      setVariantImageMsg(err.response?.data?.error || 'AI image generation failed. Please try again.');
+    } finally {
+      setAiVariantIdx(null);
+    }
+  };
+
+  // Upload one photo that the AI will use as the source for this variant's related images.
+  // It is also added to the variant's gallery.
+  const handleVariantSourceUpload = async (index, file) => {
+    if (!file) return;
+    try {
+      setUploadingIndex(index);
+      setVariantImageMsg('');
+      const uploadData = new FormData();
+      uploadData.append('images', file);
+      const { data } = await api.post('/upload/bulk', uploadData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      const url = (data.images || [])[0];
+      if (!url) throw new Error('no url');
+      setFormData(prev => {
+        const variants = [...(prev.variants || [])];
+        const existing = getVariantImages(variants[index]);
+        const images = [url, ...existing.filter(i => i !== url)].slice(0, MAX_VARIANT_IMAGES);
+        variants[index] = { ...variants[index], aiSource: url, images, image: images[0] };
+        return { ...prev, variants };
+      });
+    } catch (err) {
+      setVariantImageMsg('Source photo upload failed. Please try again.');
+    } finally {
+      setUploadingIndex(null);
+    }
+  };
+
   const removeVariantImage = (index, imgIdx) => {
     setFormData(prev => {
       const variants = [...(prev.variants || [])];
@@ -532,6 +601,45 @@ const ProductVariantsEditor = ({ formData, setFormData, categories }) => {
                           )}
                         </div>
                         <p className="text-[9px] text-gray-400 mt-1">{getVariantImages(variant).length}/{MAX_VARIANT_IMAGES} images</p>
+                        {getVariantImages(variant).length < MAX_VARIANT_IMAGES && (
+                          <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                            <label className="flex items-center gap-1 px-2 py-1 border border-[#189D91] text-[#189D91] text-[10px] font-bold rounded-md cursor-pointer hover:bg-[#189D91]/10 whitespace-nowrap">
+                              {variant.aiSource ? (
+                                <img src={variant.aiSource} alt="" className="w-4 h-4 rounded object-cover" />
+                              ) : (
+                                <ImagePlus className="w-3 h-3" />
+                              )}
+                              {variant.aiSource ? 'Change source' : 'Upload source'}
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                disabled={uploadingIndex === index}
+                                onChange={(e) => { handleVariantSourceUpload(index, e.target.files?.[0]); e.target.value = ''; }}
+                              />
+                            </label>
+                            <select
+                              value={aiVariantCount[index] || ''}
+                              onChange={(e) => setAiVariantCount(prev => ({ ...prev, [index]: Number(e.target.value) || 0 }))}
+                              className="text-[10px] bg-white border border-gray-200 rounded-md px-1 py-1 outline-none"
+                              disabled={aiVariantIdx === index}
+                            >
+                              <option value="">Fill to 10</option>
+                              {[1, 2, 3, 5, 7].filter(n => n <= MAX_VARIANT_IMAGES - getVariantImages(variant).length).map(n => (
+                                <option key={n} value={n}>{n} image{n > 1 ? 's' : ''}</option>
+                              ))}
+                            </select>
+                            <button
+                              type="button"
+                              onClick={() => handleGenerateVariantImages(index)}
+                              disabled={aiVariantIdx === index}
+                              className="flex items-center gap-1 px-2 py-1 bg-[#189D91] text-white text-[10px] font-bold rounded-md hover:bg-[#15887e] disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                            >
+                              <Sparkles className="w-3 h-3" />
+                              {aiVariantIdx === index ? 'Generating...' : 'AI generate'}
+                            </button>
+                          </div>
+                        )}
                       </td>
                       <td className="px-2 py-2 text-center">
                         <button

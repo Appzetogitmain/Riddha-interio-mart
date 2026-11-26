@@ -510,7 +510,21 @@ const AddProductPage = () => {
         countInStock: Number(formData.stock),
         images: allImages,
         videoUrl: finalVideoUrl,
-        gstRate: formData.gstRate !== '' ? Number(formData.gstRate) : undefined
+        gstRate: formData.gstRate !== '' ? Number(formData.gstRate) : undefined,
+        variants: (formData.variants || [])
+          .filter(v => Object.values(v.attributes || {}).some(Boolean))
+          .map(v => {
+            const imgs = (v.images && v.images.length ? v.images : (v.image ? [v.image] : [])).slice(0, 10);
+            return {
+              sku: v.sku,
+              price: Number(v.price) || Number(formData.price),
+              discountPrice: v.discountPrice ? Number(v.discountPrice) : undefined,
+              countInStock: Number(v.countInStock) || 0,
+              image: imgs[0] || undefined,
+              images: imgs,
+              attributes: v.attributes
+            };
+          })
       };
 
       if (!payload.subcategory) delete payload.subcategory;

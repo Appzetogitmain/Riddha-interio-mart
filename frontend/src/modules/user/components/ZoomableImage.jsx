@@ -30,18 +30,22 @@ const ZoomableImage = ({
   const currentSrc = images[index] || src;
 
   const go = useCallback((dir) => {
-    setIndex((i) => {
-      const next = (i + dir + images.length) % images.length;
-      if (onNavigate) onNavigate(images[next]);
-      return next;
-    });
+    setIndex((i) => (i + dir + images.length) % images.length);
     setLevel(1);
-  }, [images, onNavigate]);
+  }, [images]);
+
+  // The parent re-keys this component when its active image changes, which would unmount the
+  // open viewer. So only tell the parent which image we ended on once the viewer is closed.
+  const closeViewer = useCallback(() => {
+    setOpen(false);
+    const last = images[index];
+    if (onNavigate && last && last !== src) onNavigate(last);
+  }, [images, index, onNavigate, src]);
 
   useEffect(() => {
     if (!open) return;
     const onKey = (e) => {
-      if (e.key === 'Escape') setOpen(false);
+      if (e.key === 'Escape') closeViewer();
       else if (hasMany && e.key === 'ArrowLeft') go(-1);
       else if (hasMany && e.key === 'ArrowRight') go(1);
     };
@@ -49,7 +53,7 @@ const ZoomableImage = ({
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     return () => { document.removeEventListener('keydown', onKey); document.body.style.overflow = prev; };
-  }, [open, hasMany, go]);
+  }, [open, hasMany, go, closeViewer]);
 
   const openViewer = () => {
     const start = images.indexOf(src);
@@ -113,12 +117,12 @@ const ZoomableImage = ({
             <button type="button" aria-label="Zoom out" onClick={() => setLevel(l => clamp(l - 0.5))} className="w-10 h-10 rounded-full bg-white/15 hover:bg-white/30 text-xl font-bold">−</button>
             <span className="text-xs w-12 text-center">{Math.round(level * 100)}%</span>
             <button type="button" aria-label="Zoom in" onClick={() => setLevel(l => clamp(l + 0.5))} className="w-10 h-10 rounded-full bg-white/15 hover:bg-white/30 text-xl font-bold">+</button>
-            <button type="button" aria-label="Close" onClick={() => setOpen(false)} className="w-10 h-10 rounded-full bg-white/15 hover:bg-white/30 text-xl">✕</button>
+            <button type="button" aria-label="Close" onClick={closeViewer} className="w-10 h-10 rounded-full bg-white/15 hover:bg-white/30 text-xl">✕</button>
           </div>
           <div
             className="relative flex-1 overflow-auto"
             style={{ touchAction: 'pan-x pan-y pinch-zoom' }}
-            onClick={() => setOpen(false)}
+            onClick={closeViewer}
             onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX; }}
             onTouchEnd={(e) => {
               if (!hasMany || level > 1 || touchStartX.current == null) return;

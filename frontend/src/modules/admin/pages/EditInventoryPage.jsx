@@ -214,7 +214,7 @@ const EditInventoryPage = () => {
     }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e, publishAfterSave = false) => {
     e.preventDefault();
     try {
       setSaving(true);
@@ -296,6 +296,10 @@ const EditInventoryPage = () => {
       };
 
       await api.put(`/products/${id}`, payload);
+      if (publishAfterSave) {
+        // Publish only after the reviewed edits are saved; prices are not changed by publishing
+        await api.patch(`/products/${id}/publish`);
+      }
       navigate('/admin/inventory');
     } catch (err) {
       console.error('Failed to update product:', err);
@@ -861,6 +865,7 @@ const EditInventoryPage = () => {
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest">Approval status</label>
                     <select value={formData.approvalStatus} onChange={(e) => setFormData({...formData, approvalStatus: e.target.value})} className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none">
+                      <option value="draft">Draft (not visible to customers)</option>
                       <option value="pending">Pending</option>
                       <option value="approved">Approved</option>
                       <option value="rejected">Rejected</option>
@@ -879,7 +884,17 @@ const EditInventoryPage = () => {
                   <textarea rows={6} required value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none resize-none [field-sizing:content] min-h-[160px]" />
                 </div>
 
-                <div className="flex justify-end pt-6 [&>button]:w-full sm:[&>button]:w-auto">
+                <div className="flex flex-col sm:flex-row justify-end gap-3 pt-6 [&>button]:w-full sm:[&>button]:w-auto">
+                  {formData.approvalStatus === 'draft' && (
+                    <button
+                      type="button"
+                      disabled={saving}
+                      onClick={(e) => handleSubmit(e, true)}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white px-10 py-4 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all disabled:opacity-50 shadow-xl shadow-emerald-900/10 uppercase tracking-widest text-xs"
+                    >
+                      {saving ? 'PUBLISHING...' : 'SAVE & PUBLISH'}
+                    </button>
+                  )}
                   <button disabled={saving} type="submit" className="bg-deep-espresso hover:bg-black text-white px-10 py-4 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all disabled:opacity-50 shadow-xl shadow-black/10 uppercase tracking-widest text-xs">
                     {saving ? 'UPDATING...' : 'SAVE CHANGES'}
                   </button>

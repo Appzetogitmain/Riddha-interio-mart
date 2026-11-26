@@ -25,7 +25,7 @@ export const downloadProductCsv = async (kind) => {
   }
 };
 
-const ProductCsvModal = ({ onClose, onDone }) => {
+const ProductCsvModal = ({ onClose, onDone, onReviewDrafts }) => {
   const inputRef = useRef(null);
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
@@ -100,16 +100,22 @@ const ProductCsvModal = ({ onClose, onDone }) => {
 
           <div className="text-[11px] text-gray-500 leading-relaxed space-y-1">
             <p><b>Required:</b> name, description, price, category, countInStock. Category, subcategory and sub-subcategory names must already exist (spelling is not case-sensitive).</p>
-            <p><b>SKU:</b> a SKU that already exists updates that product (only the columns you fill in); a new SKU creates a product. Uploaded products are approved automatically.</p>
+            <p><b>SKU:</b> a SKU that already exists updates that product (only the columns you fill in); a new SKU creates a product. <b>New products are saved as Drafts</b> and stay hidden from customers until you review and publish them from the product list. Existing products updated by SKU keep their current status.</p>
             <p><b>Images:</b> full links separated by <code>;</code>. <b>Tags:</b> separated by <code>;</code>. Up to 2000 rows per file.</p>
           </div>
 
           {/* Result */}
+          {result && result.created > 0 && onReviewDrafts && (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 flex items-center justify-between gap-3">
+              <p className="text-xs text-amber-800"><b>{result.created} new product(s) were saved as drafts.</b> They are not visible to customers yet.</p>
+              <button onClick={onReviewDrafts} className="shrink-0 px-3 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold">Review drafts</button>
+            </div>
+          )}
           {result && (
             <div className="rounded-xl border border-gray-200 overflow-hidden">
               <div className="grid grid-cols-4 text-center text-xs font-bold">
                 <div className="p-3 bg-gray-50">Rows<br /><span className="text-lg">{result.total}</span></div>
-                <div className="p-3 bg-emerald-50 text-emerald-700">Created<br /><span className="text-lg">{result.created}</span></div>
+                <div className="p-3 bg-emerald-50 text-emerald-700">Created (draft)<br /><span className="text-lg">{result.created}</span></div>
                 <div className="p-3 bg-blue-50 text-blue-700">Updated<br /><span className="text-lg">{result.updated}</span></div>
                 <div className="p-3 bg-red-50 text-red-700">Failed<br /><span className="text-lg">{result.failed}</span></div>
               </div>

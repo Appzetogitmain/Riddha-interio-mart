@@ -727,6 +727,95 @@ exports.createProduct = async (req, res, next) => {
   }
 };
 
+// Shared by single + bulk publish. Only DRAFT products are published, and only when the minimum
+// listing data is present. Prices are left exactly as the admin reviewed them (no commission
+// recalculation, unlike the approve flow for seller submissions).
+const publishDraftProducts = async (ids) => {
+  const mongoose = require('mongoose');
+  const validIds = [...new Set((ids || []).map(String))].filter(id => mongoose.Types.ObjectId.isValid(id));
+  const products = await Product.find({ _id: { $in: validIds } })
+    .select('name description price category brand approvalStatus countInStock')
+    .lean();
+
+  const found = new Set(products.map(p => String(p._id)));
+  const published = [];
+  const skipped = validIds.filter(id => !found.has(id)).map(id => ({ id, name: '', reason: 'Product not found' }));
+
+  for (const p of products) {
+    const problems = [];
+    if (p.approvalStatus !== 'draft') problems.push('not a draft');
+    if (!p.name) problems.push('name is missing');
+    if (!p.description) problems.push('description is missing');
+    if (!(Number(p.price) > 0)) problems.push('price must be greater than 0');
+    if (!p.category) problems.push('category is missing');
+    if (!p.brand) problems.push('brand is missing');
+    if (problems.length) skipped.push({ id: String(p._id), name: p.name || '', reason: problems.join(', ') });
+    else published.push(p);
+  }
+
+  if (published.length) {
+    await Product.updateMany(
+      { _id: { $in: published.map(p => p._id) } },
+      { $set: { approvalStatus: 'approved', isApproved: true } }
+    );
+    const cacheService = require('../services/cacheService');
+    cacheService.delPattern('products:list:*');
+    cacheService.delPattern('search:*');
+    published.forEach(p => cacheService.del(`products:single:${p._id}`));
+  }
+  return { published, skipped };
+};
+
+const logPublish = async (req, count, target) => {
+  try {
+    const { logSystemActivity } = require('../utils/activityLogger');
+    await logSystemActivity({
+      action: 'Published Draft Products',
+      target,
+      user: req.user ? req.user.fullName : 'Admin',
+      role: req.user && req.user.role === 'admin' ? 'Super Admin' : 'System',
+      ipAddress: req.ip
+    });
+  } catch (e) {
+    console.error('Failed to log publish action:', e.message);
+  }
+};
+
+// @desc    Admin: publish many draft products at once
+// @route   POST /api/products/bulk/publish   body: { ids: [...] }
+exports.bulkPublishProducts = async (req, res, next) => {
+  try {
+    const ids = Array.isArray(req.body.ids) ? req.body.ids : [];
+    if (ids.length === 0) {
+      return res.status(400).json({ success: false, error: 'Select at least one draft product to publish.' });
+    }
+    if (ids.length > 2000) {
+      return res.status(400).json({ success: false, error: 'You can publish at most 2000 products at a time.' });
+    }
+    const { published, skipped } = await publishDraftProducts(ids);
+    if (published.length) await logPublish(req, published.length, `${published.length} product(s)`);
+    res.json({ success: true, data: { published: published.length, publishedIds: published.map(p => String(p._id)), skipped } });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Admin: publish a single draft product
+// @route   PATCH /api/products/:id/publish
+exports.publishProduct = async (req, res, next) => {
+  try {
+    const { published, skipped } = await publishDraftProducts([req.params.id]);
+    if (published.length === 0) {
+      const reason = skipped[0]?.reason || 'Product not found';
+      return res.status(400).json({ success: false, error: `Cannot publish: ${reason}.` });
+    }
+    await logPublish(req, 1, published[0].name);
+    res.json({ success: true, data: { id: String(published[0]._id) } });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // @desc    Admin: Approve or Reject product
 exports.updateApprovalStatus = async (req, res, next) => {
   try {

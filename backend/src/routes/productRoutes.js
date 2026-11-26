@@ -7,6 +7,8 @@ const {
   deleteProduct,
   updateProduct,
   updateApprovalStatus,
+  bulkPublishProducts,
+  publishProduct,
   updateBulkStock,
   getSearchSuggestions,
   checkProductSku,
@@ -44,6 +46,7 @@ router.use('/:productId/reviews', reviewRouter);
 router.get('/bulk/template', protect, authorize('admin'), downloadTemplate);
 router.get('/bulk/export', protect, authorize('admin'), exportProducts);
 router.post('/bulk/import', protect, authorize('admin'), csvUpload.single('file'), importProducts);
+router.post('/bulk/publish', protect, authorize('admin'), bulkPublishProducts);
 
 router.get('/check-sku/:sku', protect, authorize('seller', 'admin'), checkProductSku);
 
@@ -86,6 +89,7 @@ router.patch('/bulk-stock', protect, authorize('seller', 'admin'), [
 router.get('/my-products', protect, authorize('seller', 'admin'), getSellerProducts);
 
 router.put('/:id/approval', protect, authorize('admin'), updateApprovalStatus);
+router.patch('/:id/publish', protect, authorize('admin'), publishProduct);
 
 router.route('/:id')
   .get(tryProtect, getProduct)

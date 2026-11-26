@@ -275,7 +275,7 @@ const ProductSchema = new mongoose.Schema({
   },
   approvalStatus: {
     type: String,
-    enum: ['pending', 'approved', 'rejected'],
+    enum: ['draft', 'pending', 'approved', 'rejected'],
     default: 'pending'
   },
   isApproved: {

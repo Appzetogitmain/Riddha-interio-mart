@@ -248,15 +248,24 @@ exports.importProducts = async (req, res, next) => {
         // Category chain
         if (r.category) {
           const cat = catByName.get(r.category.toLowerCase());
-          if (!cat) throw new Error(`Category "${r.category}" not found`);
+          if (!cat) {
+            const names = categories.map(c => c.name).slice(0, 25).join(', ');
+            throw new Error(`Category "${r.category}" not found. Available: ${names}`);
+          }
           data.category = cat._id;
           if (r.subcategory) {
             const sub = (cat.subcategories || []).find(s => s.name.trim().toLowerCase() === r.subcategory.toLowerCase());
-            if (!sub) throw new Error(`Subcategory "${r.subcategory}" not found in "${cat.name}"`);
+            if (!sub) {
+              const names = (cat.subcategories || []).map(s => s.name).join(', ') || 'none';
+              throw new Error(`Subcategory "${r.subcategory}" not found in "${cat.name}". Available: ${names}`);
+            }
             data.subcategory = sub._id;
             if (r.subsubcategory) {
               const ss = (sub.subsubcategories || []).find(s => s.name.trim().toLowerCase() === r.subsubcategory.toLowerCase());
-              if (!ss) throw new Error(`Sub-subcategory "${r.subsubcategory}" not found in "${sub.name}"`);
+              if (!ss) {
+                const names = (sub.subsubcategories || []).map(s => s.name).join(', ') || 'none';
+                throw new Error(`Sub-subcategory "${r.subsubcategory}" not found in "${sub.name}". Available: ${names}`);
+              }
               data.subsubcategory = ss._id;
             }
           } else if (r.subsubcategory) {
@@ -282,8 +291,10 @@ exports.importProducts = async (req, res, next) => {
             seller: req.user.id,
             sellerType: 'Admin',
             source: 'new',
-            isApproved: true,
-            approvalStatus: 'approved'
+            // Imported rows are saved as drafts: hidden from customers until an admin reviews
+            // them and publishes (individually or in bulk) from the inventory list.
+            isApproved: false,
+            approvalStatus: 'draft'
           });
           created++;
         }

@@ -16,6 +16,9 @@ const ProductListPage = ({ status }) => {
   const [commissionModal, setCommissionModal] = useState({ open: false, product: null, commission: 2, b2bCommission: 2 });
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [csvOpen, setCsvOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState(() => new Set());
+  const [publishing, setPublishing] = useState(false);
+  const [publishConfirm, setPublishConfirm] = useState(null); // { ids: [...] }
   const [sectionModal, setSectionModal] = useState({ open: false, product: null, tabs: [], loading: false, saving: false });
   const [approvalFilter, setApprovalFilter] = useState('all');
   const [sellerFilter, setSellerFilter] = useState('all');
@@ -49,6 +52,34 @@ const ProductListPage = ({ status }) => {
       setLoading(false);
     }
   };
+
+  // Publish reviewed drafts (one or many). Prices are not touched; only the status changes.
+  const publishDrafts = async (ids) => {
+    if (!ids.length) return;
+    setPublishing(true);
+    try {
+      const { data } = await api.post('/products/bulk/publish', { ids });
+      const { published = 0, skipped = [] } = data.data || {};
+      if (published > 0) toast.success(`${published} product${published === 1 ? '' : 's'} published.`);
+      if (skipped.length > 0) {
+        const detail = skipped.slice(0, 3).map(sk => `${sk.name || sk.id}: ${sk.reason}`).join('\n');
+        toast.error(`${skipped.length} could not be published.\n${detail}${skipped.length > 3 ? '\n…' : ''}`, { duration: 8000 });
+      }
+      setSelectedIds(new Set());
+      await fetchProducts();
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Failed to publish.');
+    } finally {
+      setPublishing(false);
+      setPublishConfirm(null);
+    }
+  };
+
+  const toggleSelected = (id) => setSelectedIds(prev => {
+    const next = new Set(prev);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    return next;
+  });
 
   const handleApprove = async (id, status, commission = 0, b2bCommission = 0) => {
     try {
@@ -125,6 +156,24 @@ const ProductListPage = ({ status }) => {
         matchesCategory && matchesSubcategory && matchesSubsubcategory;
     });
   }, [searchTerm, products, status, approvalFilter, sellerFilter, stockFilter, categoryFilter, subcategoryFilter, subsubcategoryFilter]);
+
+  const draftCount = useMemo(() => products.filter(p => p.approvalStatus === 'draft').length, [products]);
+  const visibleDraftIds = useMemo(
+    () => filteredProducts.filter(p => p.approvalStatus === 'draft').map(p => p._id),
+    [filteredProducts]
+  );
+  const allVisibleDraftsSelected = visibleDraftIds.length > 0 && visibleDraftIds.every(id => selectedIds.has(id));
+  const toggleAllVisibleDrafts = () => setSelectedIds(prev => {
+    const next = new Set(prev);
+    if (allVisibleDraftsSelected) visibleDraftIds.forEach(id => next.delete(id));
+    else visibleDraftIds.forEach(id => next.add(id));
+    return next;
+  });
+  // Only drafts that still exist can stay selected (e.g. after a refresh / publish)
+  const selectedDraftIds = useMemo(
+    () => products.filter(p => p.approvalStatus === 'draft' && selectedIds.has(p._id)).map(p => p._id),
+    [products, selectedIds]
+  );
 
   const hasActiveFilters =
     approvalFilter !== 'all' || sellerFilter !== 'all' || stockFilter !== 'all' ||
@@ -225,6 +274,38 @@ const ProductListPage = ({ status }) => {
           )}
         </div>
 
+        {/* Drafts: imported / unpublished products awaiting review */}
+        {(draftCount > 0 || approvalFilter === 'draft') && (
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              onClick={() => setApprovalFilter(approvalFilter === 'draft' ? 'all' : 'draft')}
+              className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold border transition-all ${
+                approvalFilter === 'draft' ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+              }`}
+            >
+              Drafts
+              <span className={`px-1.5 py-0.5 rounded-md text-[10px] ${approvalFilter === 'draft' ? 'bg-white/20' : 'bg-slate-100'}`}>{draftCount}</span>
+            </button>
+            {draftCount > 0 && <p className="text-xs text-gray-500">Drafts are hidden from customers until published.</p>}
+          </div>
+        )}
+
+        {selectedDraftIds.length > 0 && (
+          <div className="sticky top-2 z-20 flex flex-wrap items-center justify-between gap-3 bg-slate-900 text-white rounded-2xl px-4 py-3 shadow-lg">
+            <p className="text-sm font-semibold">{selectedDraftIds.length} draft{selectedDraftIds.length === 1 ? '' : 's'} selected</p>
+            <div className="flex items-center gap-2">
+              <button onClick={() => setSelectedIds(new Set())} className="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-bold">Clear</button>
+              <button
+                onClick={() => setPublishConfirm({ ids: selectedDraftIds })}
+                disabled={publishing}
+                className="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 disabled:opacity-60 text-xs font-bold"
+              >
+                Publish selected ({selectedDraftIds.length})
+              </button>
+            </div>
+          </div>
+        )}
+
         {isFilterOpen && (
           <div className="bg-white p-6 rounded-2xl border border-soft-oatmeal shadow-md grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-2">
@@ -235,6 +316,7 @@ const ProductListPage = ({ status }) => {
                 className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none cursor-pointer font-medium"
               >
                 <option value="all">All Statuses</option>
+                <option value="draft">Draft</option>
                 <option value="pending">Pending</option>
                 <option value="approved">Approved</option>
                 <option value="rejected">Rejected</option>
@@ -325,6 +407,18 @@ const ProductListPage = ({ status }) => {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-gray-100 bg-gray-50/70">
+                    <th className="pl-4 pr-0 py-3 w-8">
+                      {visibleDraftIds.length > 0 && (
+                        <input
+                          type="checkbox"
+                          aria-label="Select all drafts"
+                          title="Select all drafts on this list"
+                          checked={allVisibleDraftsSelected}
+                          onChange={toggleAllVisibleDrafts}
+                          className="w-4 h-4 rounded border-gray-300 text-emerald-600 cursor-pointer"
+                        />
+                      )}
+                    </th>
                     <th className="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Product</th>
                     <th className="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">SKU / Brand</th>
                     <th className="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Category</th>
@@ -338,6 +432,18 @@ const ProductListPage = ({ status }) => {
                 <tbody className="divide-y divide-gray-50">
                   {filteredProducts.map((product) => (
                     <tr key={product._id} className="hover:bg-gray-50/60 transition-colors group">
+
+                      <td className="pl-4 pr-0 py-3 w-8">
+                        {product.approvalStatus === 'draft' && (
+                          <input
+                            type="checkbox"
+                            aria-label={`Select ${product.name}`}
+                            checked={selectedIds.has(product._id)}
+                            onChange={() => toggleSelected(product._id)}
+                            className="w-4 h-4 rounded border-gray-300 text-emerald-600 cursor-pointer"
+                          />
+                        )}
+                      </td>
 
                       {/* Product & Seller */}
                       <td className="px-4 py-3">
@@ -378,9 +484,11 @@ const ProductListPage = ({ status }) => {
                             ? 'bg-emerald-50 text-emerald-700'
                             : product.approvalStatus === 'rejected'
                             ? 'bg-red-50 text-red-600'
+                            : product.approvalStatus === 'draft'
+                            ? 'bg-slate-100 text-slate-600'
                             : 'bg-amber-50 text-amber-600'
                         }`}>
-                          {product.approvalStatus === 'approved' ? 'Approved' : product.approvalStatus === 'rejected' ? 'Rejected' : 'Pending'}
+                          {product.approvalStatus === 'approved' ? 'Approved' : product.approvalStatus === 'rejected' ? 'Rejected' : product.approvalStatus === 'draft' ? 'Draft' : 'Pending'}
                         </span>
                       </td>
 
@@ -435,6 +543,15 @@ const ProductListPage = ({ status }) => {
                       {/* Actions */}
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-end gap-1.5">
+                          {product.approvalStatus === 'draft' && (
+                            <button
+                              onClick={() => setPublishConfirm({ ids: [product._id], name: product.name })}
+                              disabled={publishing}
+                              className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white text-[11px] font-semibold rounded-lg transition-colors"
+                            >
+                              Publish
+                            </button>
+                          )}
                           {product.approvalStatus === 'pending' && (
                             <>
                               <button
@@ -569,7 +686,33 @@ const ProductListPage = ({ status }) => {
           </div>
         </div>
       )}
-      {csvOpen && <ProductCsvModal onClose={() => setCsvOpen(false)} onDone={fetchProducts} />}
+      {csvOpen && (
+        <ProductCsvModal
+          onClose={() => setCsvOpen(false)}
+          onDone={fetchProducts}
+          onReviewDrafts={() => { setCsvOpen(false); setApprovalFilter('draft'); setSearchTerm(''); }}
+        />
+      )}
+
+      {/* Publish confirmation (single + bulk) */}
+      {publishConfirm && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={() => !publishing && setPublishConfirm(null)}>
+          <div className="bg-white rounded-2xl w-full max-w-sm p-6 space-y-4 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-base font-bold text-slate-800">
+              {publishConfirm.ids.length === 1 ? 'Publish this product?' : `Publish ${publishConfirm.ids.length} products?`}
+            </h3>
+            <p className="text-sm text-gray-500">
+              {publishConfirm.ids.length === 1 && publishConfirm.name ? `"${publishConfirm.name}" will` : 'They will'} become visible to customers right away. Prices stay exactly as you set them.
+            </p>
+            <div className="flex justify-end gap-2">
+              <button onClick={() => setPublishConfirm(null)} disabled={publishing} className="px-4 py-2 rounded-xl text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200">Cancel</button>
+              <button onClick={() => publishDrafts(publishConfirm.ids)} disabled={publishing} className="px-4 py-2 rounded-xl text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60">
+                {publishing ? 'Publishing…' : 'Publish'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Add to Homepage Section Modal */}
       {sectionModal.open && (

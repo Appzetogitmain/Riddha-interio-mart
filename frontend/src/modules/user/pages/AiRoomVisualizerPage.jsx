@@ -8,6 +8,7 @@ import { LuSparkles, LuSofa, LuBed, LuUtensils, LuBath, LuCoffee, LuLaptop, LuPa
 import { useNavigate } from 'react-router-dom';
 import api from '../../../shared/utils/api';
 import { toast } from 'react-hot-toast';
+import ProductImage from '../../../shared/components/ProductImage';
 
 const roomTypes = [
   { id: 'Living Room', label: 'Living Room', icon: LuSofa },
@@ -537,8 +538,8 @@ const AiRoomVisualizerPage = () => {
                         className="bg-white border border-slate-100 hover:border-[#189D91]/30 rounded-2xl p-2.5 shadow-sm hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between"
                       >
                         <div className="w-full h-28 bg-slate-50 rounded-xl overflow-hidden mb-2">
-                          <img
-                            src={prod.images?.[0] || 'https://images.unsplash.com/photo-1513519245088-0e12902e35ca?w=300&q=80'}
+                          <ProductImage
+                            src={prod.images?.[0]}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                             alt={prod.name}
                           />

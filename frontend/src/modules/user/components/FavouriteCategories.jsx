@@ -2,14 +2,13 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AnimatePresence, motion as Motion } from 'framer-motion';
 import api from '../../../shared/utils/api';
+import ProductImage from '../../../shared/components/ProductImage';
 
-const DEFAULT_PRODUCT_IMAGE =
-  'https://images.unsplash.com/photo-1545239351-1141bd82e8a6?w=800&q=80';
 
 const getId = (item) => item?._id || item?.id || item;
 
 const getProductImage = (product) =>
-  product?.images?.[0] || product?.image || product?.thumbnail || DEFAULT_PRODUCT_IMAGE;
+  product?.images?.[0] || product?.image || product?.thumbnail || '';
 
 const FavouriteSectionCard = ({ section }) => {
   const blocks = useMemo(
@@ -105,7 +104,7 @@ const FavouriteSectionCard = ({ section }) => {
                   >
                     <Link to={`/products/${getId(product)}`} className="block h-full">
                       <div className="relative aspect-square overflow-hidden bg-stone-50">
-                        <img
+                        <ProductImage
                           src={getProductImage(product)}
                           alt={product?.name || 'Product'}
                           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-108"

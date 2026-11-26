@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FiArrowLeft, FiGrid, FiShoppingBag, FiCompass, FiInfo, FiHeart, FiMaximize } from 'react-icons/fi';
 import api from '../../../shared/utils/api';
+import ProductImage from '../../../shared/components/ProductImage';
 
 const QuizResultsPage = () => {
   const location = useLocation();
@@ -54,7 +55,7 @@ const QuizResultsPage = () => {
   const getProductImage = (p) =>
     p?.image ||
     p?.images?.[0] ||
-    'https://images.unsplash.com/photo-1513519245088-0e12902e35ca?w=800&q=80';
+    '';
 
   if (loading) {
     return (
@@ -355,7 +356,7 @@ const QuizResultsPage = () => {
 
                         {/* Product Image */}
                         <div className="w-full md:w-44 h-44 bg-slate-50 rounded-2xl overflow-hidden flex-none border border-slate-100 relative">
-                          <img
+                          <ProductImage
                             src={getProductImage(product)}
                             alt={product.name}
                             className="w-full h-full object-cover"

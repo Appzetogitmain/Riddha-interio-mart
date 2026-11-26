@@ -4,6 +4,7 @@ import { FiShoppingCart, FiHeart } from 'react-icons/fi';
 import { motion } from 'framer-motion';
 import { useCart } from '../../models/CartContext';
 import Button from '../../../../views/shared/Button';
+import ProductImage from '../../../../shared/components/ProductImage';
 
 const ProductCard = ({ product, index = 0, variant = 'grid' }) => {
   const { addToCart, getItemQuantity, updateQuantity } = useCart();
@@ -26,7 +27,7 @@ const ProductCard = ({ product, index = 0, variant = 'grid' }) => {
           isList ? 'w-[40%] md:w-full h-full md:h-80 border-r md:border-r-0' : (isMinimal ? 'aspect-square w-full' : 'h-30 md:h-80 w-full')
         } ${!isMinimal ? 'border-soft-oatmeal/10' : ''}`}
       >
-        <img
+        <ProductImage
           src={product.image}
           alt={product.name}
           className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"

@@ -13,6 +13,10 @@ const AUTO_SLIDE_INTERVAL = 4000;
 const ShopByCategory = () => {
   const [categories, setCategories] = useState([]);
   const scrollRef = useRef(null);
+  // Auto-slide pauses while the user hovers / focuses / touches the section
+  const pausedRef = useRef(false);
+  const pause = useCallback(() => { pausedRef.current = true; }, []);
+  const resume = useCallback(() => { pausedRef.current = false; }, []);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -47,12 +51,21 @@ const ShopByCategory = () => {
   // Auto-slide
   useEffect(() => {
     if (categories.length <= 4) return;
-    const timer = setInterval(() => scrollBySlide(1), AUTO_SLIDE_INTERVAL);
+    const timer = setInterval(() => {
+      if (!pausedRef.current) scrollBySlide(1);
+    }, AUTO_SLIDE_INTERVAL);
     return () => clearInterval(timer);
   }, [categories.length, scrollBySlide]);
 
   return (
     <section
+      onMouseEnter={pause}
+      onMouseLeave={resume}
+      onFocus={pause}
+      onBlur={resume}
+      onTouchStart={pause}
+      onTouchEnd={resume}
+      onTouchCancel={resume}
       className="py-8 md:py-12 border-y overflow-hidden my-0"
       style={{
         background: 'linear-gradient(180deg, #DCF5F0 0%, #E6F9F5 50%, #D5F2EC 100%)',

@@ -91,24 +91,40 @@ exports.exportProducts = async (req, res, next) => {
 
 const CANONICAL = new Map(COLUMNS.map(c => [c.toLowerCase(), c]));
 
-// Excel in some regions saves CSV with ';' — detect it from the header line.
-const sniffDelimiter = (buffer) => {
-  const head = buffer.toString('utf8', 0, Math.min(buffer.length, 4096));
-  const firstLine = head.split(/\r?\n/)[0] || '';
-  const commas = (firstLine.match(/,/g) || []).length;
-  const semis = (firstLine.match(/;/g) || []).length;
-  return semis > commas ? ';' : ',';
+// Excel can save "CSV" as UTF-8, UTF-16 ("Unicode Text") or tab/semicolon separated depending on
+// region and the Save-As option chosen. Normalise all of them to a UTF-8 buffer first.
+const normaliseBuffer = (buffer) => {
+  if (buffer.length >= 2 && buffer[0] === 0xff && buffer[1] === 0xfe) {
+    return Buffer.from(buffer.slice(2).toString('utf16le'), 'utf8');
+  }
+  if (buffer.length >= 2 && buffer[0] === 0xfe && buffer[1] === 0xff) {
+    const swapped = Buffer.from(buffer.slice(2));
+    swapped.swap16();
+    return Buffer.from(swapped.toString('utf16le'), 'utf8');
+  }
+  return buffer;
 };
 
-const parseCsvBuffer = (buffer) =>
+// Pick the delimiter (comma, semicolon or tab) that is most common in the header line.
+const sniffDelimiter = (buffer) => {
+  const head = buffer.toString('utf8', 0, Math.min(buffer.length, 4096));
+  const firstLine = (head.split(String.fromCharCode(10))[0] || '').replace(String.fromCharCode(13), '');
+  const TAB = String.fromCharCode(9);
+  const counts = { ',': 0, ';': 0, [TAB]: 0 };
+  for (const ch of firstLine) if (ch in counts) counts[ch]++;
+  return Object.keys(counts).sort((a, b) => counts[b] - counts[a])[0] || ',';
+};
+
+const parseCsvBuffer = (rawBuffer) =>
   new Promise((resolve, reject) => {
+    const buffer = normaliseBuffer(rawBuffer);
     const rows = [];
     Readable.from([buffer])
       .pipe(csv({
         separator: sniffDelimiter(buffer),
         // Match template columns regardless of capitals / stray spaces ("Price", " SKU ")
         mapHeaders: ({ header }) => {
-          const h = header.replace(/^﻿/, '').trim();
+          const h = header.replace(/^﻿/, '').replace(/^["']+|["']+$/g, '').trim();
           return CANONICAL.get(h.toLowerCase()) || h;
         },
         mapValues: ({ value }) => (typeof value === 'string' ? value.trim() : value),
@@ -153,7 +169,7 @@ exports.importProducts = async (req, res, next) => {
     const headers = Object.keys(rows[0]);
     const missingCols = ['name', 'description', 'price', 'category', 'countInStock'].filter(c => !headers.includes(c));
     if (missingCols.length) {
-      return res.status(400).json({ success: false, error: `Missing column(s): ${missingCols.join(', ')}. Please use the downloaded template.` });
+      return res.status(400).json({ success: false, error: `Missing column(s): ${missingCols.join(', ')}. Found: ${headers.slice(0, 12).join(', ') || 'none'}. Please use the downloaded template and save as "CSV UTF-8 (Comma delimited)".` });
     }
 
     const [categories, brands] = await Promise.all([Category.find().lean(), Brand.find().lean()]);

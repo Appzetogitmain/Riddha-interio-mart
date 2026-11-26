@@ -7,9 +7,7 @@ import Banner from './Banner';
 import ProductBadge from './ProductBadge';
 import StarRating from './StarRating';
 import { useProductDisplay } from '../../../shared/hooks/useDisplayConfig';
-
-const DEFAULT_PRODUCT_IMAGE =
-  'https://images.unsplash.com/photo-1513519245088-0e12902e35ca?w=800&q=80';
+import ProductImage from '../../../shared/components/ProductImage';
 
 const getId = (item) => item?._id || item?.id || item;
 
@@ -23,7 +21,7 @@ const getProductImage = (product) =>
   product?.image ||
   product?.images?.[0] ||
   product?.thumbnail ||
-  DEFAULT_PRODUCT_IMAGE;
+  '';
 
 const getSectionItems = (items) => (Array.isArray(items) ? items.filter(Boolean) : []);
 
@@ -55,7 +53,7 @@ const ProductTile = ({ product }) => {
     >
       {/* Product Image */}
       <div className="relative aspect-square overflow-hidden bg-stone-50">
-        <img
+        <ProductImage
           src={getProductImage(product)}
           alt={product?.name || 'Product'}
           loading="lazy"

@@ -233,6 +233,11 @@ const AiAssistantWidget = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname, customerUser]);
 
+  // The voice picker is a QA/admin aid, not a customer feature: show it only inside the admin
+  // portal, or when someone opens the site with ?voices=1 to check/choose a voice.
+  const showVoicePicker =
+    location.pathname.startsWith('/admin') || new URLSearchParams(location.search).has('voices');
+
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
@@ -952,7 +957,7 @@ const AiAssistantWidget = () => {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 30, scale: 0.95 }}
               transition={{ type: 'spring', damping: 25, stiffness: 350 }}
-              className={`absolute bottom-[86px] right-0 w-[350px] sm:w-[400px] h-[520px] ${roleContext === 'user' ? 'max-h-[calc(100dvh-254px)] sm:max-h-[calc(100dvh-220px)] md:max-h-[calc(100dvh-200px)]' : 'max-h-[calc(100dvh-120px)]'} bg-white rounded-3xl shadow-2xl border border-gray-100 flex flex-col overflow-hidden`}
+              className={`absolute bottom-[86px] right-0 w-[350px] sm:w-[400px] max-w-[calc(100vw-1.5rem)] h-[520px] ${roleContext === 'user' ? 'max-h-[calc(100dvh-254px)] sm:max-h-[calc(100dvh-220px)] md:max-h-[calc(100dvh-200px)]' : 'max-h-[calc(100dvh-120px)]'} bg-white rounded-3xl shadow-2xl border border-gray-100 flex flex-col overflow-hidden`}
             >
               {/* Header with Avatar & Audio Controls */}
               <div className="bg-gradient-to-r from-[#0E544D] via-[#189D91] to-[#127F75] text-white px-4 py-3.5 flex items-center justify-between border-b border-white/10 shadow-md">
@@ -990,7 +995,8 @@ const AiAssistantWidget = () => {
                     {isTtsEnabled ? <FiVolume2 size={16} /> : <FiVolumeX size={16} />}
                   </button>
 
-                  {/* Voice picker: lets the client choose / check which voice Tejas speaks with */}
+                  {/* Voice picker (QA/admin aid): hidden for normal customers, see showVoicePicker */}
+                  {showVoicePicker && (
                   <select
                     value={voiceChoice}
                     onChange={(e) => { setVoiceChoice(e.target.value); setTimeout(() => speakRef.current?.('Namaste ji! Main Tejas hoon.'), 50); }}
@@ -1010,6 +1016,7 @@ const AiAssistantWidget = () => {
                       ))}
                     </optgroup>
                   </select>
+                  )}
 
                   {/* Close button */}
                   <button
@@ -1022,7 +1029,7 @@ const AiAssistantWidget = () => {
               </div>
 
               {/* Messages Area */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50/50 no-scrollbar">
+              <div className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden break-words p-4 space-y-4 bg-gray-50/50 no-scrollbar">
                 
                 {/* Unauthenticated / Guest Welcome & Login Card */}
                 {messages.length === 0 && !user && (
@@ -1378,14 +1385,14 @@ const AiAssistantWidget = () => {
                 <div ref={messagesEndRef} />
               </div>
 
-              {/* Quick Actions Carousel */}
+              {/* Quick Actions (wrap onto extra rows instead of scrolling sideways, so nothing is cut off) */}
               {!handoverState && (
-                <div className="px-3 pt-2 pb-1 border-t border-gray-100 flex gap-1.5 overflow-x-auto no-scrollbar whitespace-nowrap bg-white shrink-0">
+                <div className="px-3 pt-2 pb-1 border-t border-gray-100 flex flex-wrap gap-1.5 max-h-[84px] overflow-y-auto no-scrollbar bg-white shrink-0">
                   {getQuickActions().map((act, i) => (
                     <button
                       key={i}
                       onClick={() => handleQuickAction(act)}
-                      className={`px-3 py-1.5 rounded-full text-[10px] font-bold flex items-center gap-1.5 transition-all shadow-sm ${
+                      className={`px-3 py-1.5 rounded-full text-[10px] font-bold flex items-center gap-1.5 whitespace-nowrap transition-all shadow-sm ${
                         act.type === 'UPGRADE_PRO'
                           ? 'bg-amber-100 text-amber-900 border border-amber-300 font-black'
                           : 'bg-gray-50 hover:bg-[#189D91]/10 text-slate-700 hover:text-[#189D91] border border-gray-100'

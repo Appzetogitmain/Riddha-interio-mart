@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import PageWrapper from '../components/PageWrapper';
 import { LuImage, LuBriefcase, LuTags, LuInfo, LuArrowLeft, LuPackage, LuCheck, LuClock, LuUpload, LuGrid2X2, LuVideo, LuX, LuUser, LuStore, LuPhone, LuMail, LuMapPin, LuShieldCheck } from 'react-icons/lu';
 import { FiPackage, FiTrash2, FiPlus } from 'react-icons/fi';
+import SellerAIImageGenerator from '../../seller/components/SellerAIImageGenerator';
 import DeliveryOptionsForm from '../../seller/components/DeliveryOptionsForm';
 import PaymentOptionsForm from '../../seller/components/PaymentOptionsForm';
 import ProductVariantsEditor from '../../seller/components/ProductVariantsEditor';
@@ -16,6 +17,7 @@ const EditInventoryPage = () => {
   const fileInputRef = useRef(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [errorModal, setErrorModal] = useState(null); // { title, message }
   const [videoFile, setVideoFile] = useState(null);
   const [categories, setCategories] = useState([]);
   const [brands, setBrands] = useState([]);
@@ -182,7 +184,7 @@ const EditInventoryPage = () => {
         });
       } catch (err) {
         console.error('Failed to fetch data:', err);
-        alert('Could not load product data.');
+        setErrorModal({ title: 'Could not load product', message: 'Could not load product data. Please refresh and try again.' });
       } finally {
         setLoading(false);
       }
@@ -228,11 +230,37 @@ const EditInventoryPage = () => {
         finalVideoUrl = uploadRes.url;
       }
 
+      // New images are held as base64 data URLs in the form. Upload them first and send only
+      // URLs, otherwise the PUT body gets huge and the server rejects it (413).
+      const uploadDataUrls = async (list) => {
+        const items = list || [];
+        const pending = items.map((src, i) => ({ src, i })).filter(x => typeof x.src === 'string' && x.src.startsWith('data:'));
+        if (pending.length === 0) return items;
+        const fd = new FormData();
+        for (const { src, i } of pending) {
+          const blob = await (await fetch(src)).blob();
+          fd.append('images', new File([blob], `image-${i}.${(blob.type.split('/')[1] || 'jpg').replace('jpeg', 'jpg')}`, { type: blob.type }));
+        }
+        const { data: up } = await api.post('/upload/bulk', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+        const urls = up.images || [];
+        if (urls.length !== pending.length) throw new Error('Image upload failed. Please try again.');
+        const out = [...items];
+        pending.forEach(({ i }, k) => { out[i] = urls[k]; });
+        return out;
+      };
+      const uploadedImages = await uploadDataUrls(formData.images);
+      const uploadedVariants = [];
+      for (const v of (formData.variants || [])) {
+        const imgs = v.images && v.images.length ? v.images : (v.image ? [v.image] : []);
+        uploadedVariants.push({ ...v, images: await uploadDataUrls(imgs) });
+      }
+
       const toNum = (v) => (v === '' || v === null || v === undefined ? undefined : Number(v));
       const toList = (text) => String(text || '').split(',').map(t => t.trim()).filter(Boolean);
       const { seoKeywordsText, tagsText, ...rest } = formData;
       const payload = {
         ...rest,
+        images: uploadedImages,
         isApproved: formData.approvalStatus === 'approved',
         seoKeywords: toList(seoKeywordsText),
         tags: toList(tagsText),
@@ -252,7 +280,7 @@ const EditInventoryPage = () => {
         videoUrl: finalVideoUrl,
         seller: formData.seller || undefined,
         sellerType: formData.sellerType || 'Seller',
-        variants: (formData.variants || [])
+        variants: uploadedVariants
           .filter(v => Object.values(v.attributes || {}).some(Boolean))
           .map(v => ({
             ...(v._id ? { _id: v._id } : {}),
@@ -271,7 +299,15 @@ const EditInventoryPage = () => {
       navigate('/admin/inventory');
     } catch (err) {
       console.error('Failed to update product:', err);
-      alert(err.response?.data?.error || 'Error updating product.');
+      const status = err.response?.status;
+      const serverMsg = typeof err.response?.data?.error === 'string' ? err.response.data.error : '';
+      setErrorModal({
+        title: 'Could not update product',
+        message: serverMsg
+          || (status === 413 ? 'The upload is too large. Try fewer or smaller images.' : '')
+          || err.message
+          || 'Error updating product.',
+      });
     } finally {
       setSaving(false);
     }
@@ -332,6 +368,14 @@ const EditInventoryPage = () => {
                 <input 
                   type="file" multiple hidden ref={fileInputRef} 
                   onChange={handleFileChange} accept="image/*"
+                />
+
+                <SellerAIImageGenerator
+                  sourceImage={formData.images.find((img) => typeof img === 'string' && img)}
+                  remainingSlots={10 - formData.images.length}
+                  onGenerated={(urls) =>
+                    setFormData(prev => ({ ...prev, images: [...prev.images, ...urls].slice(0, 10) }))
+                  }
                 />
 
                 <div className="space-y-4 pt-4 border-t border-soft-oatmeal/30">
@@ -810,7 +854,7 @@ const EditInventoryPage = () => {
 
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest">Short description <span className="normal-case font-medium">({(formData.shortDescription || '').length}/300)</span></label>
-                  <textarea rows={2} maxLength={300} value={formData.shortDescription} onChange={(e) => setFormData({...formData, shortDescription: e.target.value})} className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none resize-none" />
+                  <textarea rows={3} maxLength={300} value={formData.shortDescription} onChange={(e) => setFormData({...formData, shortDescription: e.target.value})} className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none resize-none [field-sizing:content] min-h-[88px]" />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -832,11 +876,11 @@ const EditInventoryPage = () => {
 
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest">Description</label>
-                  <textarea rows={4} required value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none resize-none" />
+                  <textarea rows={6} required value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none resize-none [field-sizing:content] min-h-[160px]" />
                 </div>
 
-                <div className="flex justify-end pt-6">
-                  <button disabled={saving} type="submit" className="bg-deep-espresso hover:bg-black text-white px-10 py-4 rounded-2xl font-bold flex items-center gap-2 transition-all disabled:opacity-50 shadow-xl shadow-black/10 uppercase tracking-widest text-xs">
+                <div className="flex justify-end pt-6 [&>button]:w-full sm:[&>button]:w-auto">
+                  <button disabled={saving} type="submit" className="bg-deep-espresso hover:bg-black text-white px-10 py-4 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all disabled:opacity-50 shadow-xl shadow-black/10 uppercase tracking-widest text-xs">
                     {saving ? 'UPDATING...' : 'SAVE CHANGES'}
                   </button>
                 </div>
@@ -846,6 +890,22 @@ const EditInventoryPage = () => {
           </div>
         </form>
       </div>
+      {errorModal && (
+        <div className="fixed inset-0 z-[100000] bg-black/50 flex items-center justify-center p-4" onClick={() => setErrorModal(null)}>
+          <div role="alertdialog" aria-modal="true" className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-start gap-3">
+              <div className="w-9 h-9 shrink-0 rounded-full bg-red-50 text-red-600 flex items-center justify-center"><LuInfo size={18} /></div>
+              <div className="min-w-0">
+                <h3 className="text-base font-bold text-deep-espresso">{errorModal.title}</h3>
+                <p className="text-sm text-gray-600 mt-1 break-words">{errorModal.message}</p>
+              </div>
+            </div>
+            <div className="flex justify-end">
+              <button type="button" autoFocus onClick={() => setErrorModal(null)} className="px-5 py-2 rounded-xl bg-deep-espresso text-white text-xs font-bold uppercase tracking-widest hover:bg-black">OK</button>
+            </div>
+          </div>
+        </div>
+      )}
     </PageWrapper>
   );
 };

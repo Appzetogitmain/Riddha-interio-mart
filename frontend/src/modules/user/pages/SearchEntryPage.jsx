@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiArrowLeft, FiMic, FiTrendingUp, FiClock, FiSearch, FiX, FiPackage, FiChevronRight, FiCamera, FiUploadCloud, FiImage } from 'react-icons/fi';
 import api from '../../../shared/utils/api';
+import ProductImage from '../../../shared/components/ProductImage';
 
 const SearchEntryPage = () => {
   const [query, setQuery] = useState('');
@@ -441,8 +442,8 @@ const SearchEntryPage = () => {
                       >
                         <div>
                           <div className="w-full h-36 md:h-44 bg-gray-50 rounded-xl overflow-hidden mb-3 relative">
-                            <img
-                              src={product.images?.[0] || 'https://images.unsplash.com/photo-1513519245088-0e12902e35ca?w=400&q=80'}
+                            <ProductImage
+                              src={product.images?.[0]}
                               alt={product.name}
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                             />
@@ -512,8 +513,8 @@ const SearchEntryPage = () => {
                     >
                       <div className="flex items-center gap-4">
                         <div className="w-12 h-12 md:w-14 md:h-14 bg-gray-50 rounded-xl overflow-hidden border border-gray-100 shrink-0">
-                          <img 
-                            src={product.images?.[0] || 'https://images.unsplash.com/photo-1513519245088-0e12902e35ca?w=200&q=80'} 
+                          <ProductImage 
+                            src={product.images?.[0]} 
                             alt="" 
                             className="w-full h-full object-cover transition-transform group-hover:scale-110"
                           />

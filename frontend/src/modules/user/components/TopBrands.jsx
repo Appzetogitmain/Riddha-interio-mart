@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import api from '../../../shared/utils/api';
+import ProductImage from '../../../shared/components/ProductImage';
 
 const TopBrands = ({ title }) => {
   const [brands, setBrands] = useState([]);
@@ -116,7 +117,7 @@ const TopBrands = ({ title }) => {
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(58,147,171,0.06),transparent_55%)] opacity-0 group-hover/brand:opacity-100 transition-opacity z-10 pointer-events-none" />
 
               <div className="relative aspect-[4/3] w-full overflow-hidden bg-slate-100 border-b border-slate-100">
-                <img
+                <ProductImage
                   src={brand.logo}
                   alt={brand.name}
                   className="h-full w-full object-cover transition-transform duration-500 group-hover/brand:scale-108"

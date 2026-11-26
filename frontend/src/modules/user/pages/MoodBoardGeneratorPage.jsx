@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../../../shared/utils/api';
 import { toast } from 'react-hot-toast';
 import { useCart } from '../data/CartContext';
+import ProductImage from '../../../shared/components/ProductImage';
 
 // Step 1: Style options with visual cards
 const styleCards = [
@@ -516,7 +517,7 @@ const MoodBoardGeneratorPage = () => {
                       className="bg-white border border-slate-100 rounded-2xl p-2 shadow-sm hover:shadow-md transition-all cursor-pointer flex flex-col justify-between"
                     >
                       <div className="w-full h-24 bg-slate-50 rounded-xl overflow-hidden mb-1.5">
-                        <img src={prod.images?.[0] || 'https://images.unsplash.com/photo-1513519245088-0e12902e35ca?w=300&q=80'} className="w-full h-full object-cover" alt={prod.name} />
+                        <ProductImage src={prod.images?.[0]} className="w-full h-full object-cover" alt={prod.name} />
                       </div>
                       <h4 className="text-[10px] font-bold text-slate-800 line-clamp-1">{prod.name}</h4>
                       <p className="text-[11px] font-black text-orange-500 mt-0.5">₹{Number(prod.price).toLocaleString()}</p>

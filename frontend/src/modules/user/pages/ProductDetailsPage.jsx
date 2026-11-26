@@ -28,6 +28,7 @@ import RequestQuoteButton from '../components/RFQ/RequestQuoteButton';
 import RequestSampleButton from '../components/Samples/RequestSampleButton';
 import ZoomableImage from '../components/ZoomableImage';
 import { formatSpecLabel, formatSpecValue } from '../../../shared/utils/textFormat';
+import ProductImage from '../../../shared/components/ProductImage';
 
 // Smart bundles that include this product — a thin fetch-and-render row, kept local
 // since it's only used here on the product detail page.
@@ -404,6 +405,8 @@ const ProductDetailsPage = () => {
                       className="w-full h-full"
                       allowFullScreen
                     />
+                  ) : !(allMedia[activeMediaIndex] || product.images?.[0]) ? (
+                    <ProductImage src="" alt={product.name} className="h-full w-full" />
                   ) : (
                     <ZoomableImage
                       src={allMedia[activeMediaIndex] || product.images?.[0]}

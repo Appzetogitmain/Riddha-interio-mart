@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FiSearch } from 'react-icons/fi';
 import api from '../../../shared/utils/api';
+import ProductImage from '../../../shared/components/ProductImage';
 
 const BrandsPage = () => {
   const [brands, setBrands] = useState([]);
@@ -71,7 +72,7 @@ const BrandsPage = () => {
                   className="group block bg-white rounded-xl border border-slate-200/70 overflow-hidden hover:-translate-y-1 hover:shadow-lg hover:border-[#189D91]/20 transition-all duration-300"
                 >
                   <div className="h-24 bg-slate-50 flex items-center justify-center overflow-hidden border-b border-slate-100">
-                    <img
+                    <ProductImage
                       src={brand.logo}
                       alt={brand.name}
                       className="h-full w-full object-cover mix-blend-multiply group-hover:scale-105 transition-transform duration-500"

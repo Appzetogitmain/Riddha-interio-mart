@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FiX, FiStar, FiCamera, FiSend, FiLoader, FiTrash2 } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import api from '../../../shared/utils/api';
+import ProductImage from '../../../shared/components/ProductImage';
 
 const ReviewFeedbackModal = ({ isOpen, onClose, orderId, product, initialData = null, onStatusChange }) => {
   const [rating, setRating] = useState(initialData?.rating || 0);
@@ -103,7 +104,7 @@ const ReviewFeedbackModal = ({ isOpen, onClose, orderId, product, initialData = 
               {/* Product Mini Info */}
               {product && (
                 <div className="flex items-center gap-4 bg-gray-50 p-4 rounded-2xl border border-gray-100">
-                  <img src={product.image} className="w-12 h-12 rounded-lg object-cover shadow-sm" alt={product.name} />
+                  <div className="w-12 h-12 rounded-lg overflow-hidden shadow-sm shrink-0"><ProductImage src={product.image} className="w-full h-full object-cover" alt={product.name} /></div>
                   <p className="text-xs font-black text-gray-800 uppercase tracking-tight truncate">{product.name}</p>
                 </div>
               )}

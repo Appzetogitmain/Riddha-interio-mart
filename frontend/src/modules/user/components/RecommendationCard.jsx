@@ -7,6 +7,7 @@ import { useCart } from '../data/CartContext';
 import ProductBadge from './ProductBadge';
 import StarRating from './StarRating';
 import { useProductDisplay } from '../../../shared/hooks/useDisplayConfig';
+import ProductImage from '../../../shared/components/ProductImage';
 
 const RecommendationCard = ({ item, onExplain, onTrack }) => {
   const navigate = useNavigate();
@@ -17,7 +18,7 @@ const RecommendationCard = ({ item, onExplain, onTrack }) => {
   const name = item.name || 'Featured Product';
   const price = item.price || 0;
   const discountPrice = item.discountPrice;
-  const image = item.image || item.images?.[0] || 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=500&auto=format&fit=crop&q=60';
+  const image = item.image || item.images?.[0] || '';
   const display = useProductDisplay(item);
   const reason = item.reason || item.aiExplanation || 'Recommended for your style';
   const category = item.category || 'Interior';
@@ -41,7 +42,7 @@ const RecommendationCard = ({ item, onExplain, onTrack }) => {
   const handleAddToCart = async (e) => {
     e.stopPropagation();
     e.preventDefault();
-    const result = await addToCart({ ...item, _id: productId, image, images: item.images || [image] });
+    const result = await addToCart({ ...item, _id: productId, image, images: item.images || (image ? [image] : []) });
     if (!result?.needsVariant && !result?.capped) {
       toast.success(`Added ${name} to Cart!`);
     }
@@ -69,7 +70,7 @@ const RecommendationCard = ({ item, onExplain, onTrack }) => {
 
       {/* Product Image */}
       <div className="relative w-full h-48 rounded-xl overflow-hidden bg-gray-50 mb-3">
-        <img
+        <ProductImage
           src={image}
           alt={name}
           loading="lazy"

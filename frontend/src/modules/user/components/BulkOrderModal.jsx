@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FiX, FiPackage, FiPhone, FiUser, FiMessageSquare, FiSend, FiChevronRight, FiPlus, FiTrash2, FiSearch, FiCheckCircle, FiMail } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../../../shared/utils/api';
+import ProductImage from '../../../shared/components/ProductImage';
 
 // prefillItem (optional): { id, name, qty, price, image, category, maxQty } — seeds
 // the order with a single item (e.g. a customer hit a product's per-order quantity
@@ -344,7 +345,7 @@ const BulkOrderModal = ({ isOpen, onClose, prefillItem }) => {
                                     <div key={prod._id} className="flex items-center justify-between p-2.5 bg-gray-50 rounded-xl hover:bg-white border border-transparent hover:border-gray-150 transition-all">
                                       <div className="flex items-center gap-3">
                                         <div className="w-8 h-8 rounded-lg bg-white overflow-hidden shadow-sm border border-gray-200">
-                                          <img src={prod.images?.[0]} className="w-full h-full object-cover" alt={prod.name} />
+                                          <ProductImage src={prod.images?.[0]} className="w-full h-full object-cover" alt={prod.name} />
                                         </div>
                                         <span className="text-[11px] font-semibold text-gray-700 truncate max-w-[200px]">{prod.name}</span>
                                       </div>

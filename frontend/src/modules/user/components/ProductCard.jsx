@@ -13,6 +13,7 @@ import ProductBadge from './ProductBadge';
 import StarRating from './StarRating';
 import { useProductDisplay } from '../../../shared/hooks/useDisplayConfig';
 import RequestSampleButton from './Samples/RequestSampleButton';
+import ProductImage from '../../../shared/components/ProductImage';
 
 /* ─── Reusable Sub-Components (Enhancement Overlays) ─── */
 
@@ -101,10 +102,7 @@ const ProductCard = ({ product, index = 0, variant = 'grid' }) => {
   const displayPriceString = displayPrice != null ? Number(displayPrice).toLocaleString() : '0';
   const originalPriceString = originalPrice != null ? Number(originalPrice).toLocaleString() : '0';
   const rawImage = product.image || (product.images && product.images.length > 0 ? product.images[0] : '');
-  // Handle local file paths that won't work in browser
-  const productImage = (rawImage && (rawImage.startsWith('C:') || rawImage.startsWith('/')))
-    ? `https://images.unsplash.com/photo-1513519245088-0e12902e35ca?w=800&q=80` // Placeholder for interior
-    : (rawImage || 'https://images.unsplash.com/photo-1513519245088-0e12902e35ca?w=800&q=80');
+  const productImage = rawImage;
 
   const discountPercent = originalPrice > displayPrice
     ? Math.round((1 - displayPrice / originalPrice) * 100)
@@ -137,15 +135,15 @@ const ProductCard = ({ product, index = 0, variant = 'grid' }) => {
 
   return (
     <div
-      className={`group bg-white ${isMinimal ? 'rounded-xl' : 'rounded-2xl md:rounded-3xl border border-soft-oatmeal/10'} shadow-sm hover:shadow-2xl transition-all duration-500 overflow-hidden h-full ${isList ? 'flex flex-row md:flex-col' : 'flex flex-col'
+      className={`group bg-white ${isMinimal ? 'rounded-xl' : 'rounded-2xl md:rounded-3xl border border-soft-oatmeal/10'} shadow-sm hover:shadow-2xl transition-all duration-500 overflow-hidden h-full ${isList ? 'flex flex-col' : 'flex flex-col'
         }`}
     >
       <Link
         to={`/products/${productId}`}
-        className={`relative block overflow-hidden shrink-0 bg-white ${isList ? 'w-[40%] md:w-full aspect-square md:aspect-auto md:h-64' : 'aspect-[4/3.2] md:aspect-auto md:h-52 w-full'
+        className={`relative block overflow-hidden shrink-0 bg-white ${isList ? 'w-full aspect-[4/3] md:aspect-auto md:h-64' : 'aspect-[4/3.2] md:aspect-auto md:h-52 w-full'
           }`}
       >
-        <img
+        <ProductImage
           src={productImage}
           alt={product.name}
           loading="lazy"

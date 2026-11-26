@@ -2,6 +2,7 @@ import React from 'react';
 import { FiTrash2, FiPlus, FiMinus } from 'react-icons/fi';
 import { motion } from 'framer-motion';
 import { useCart } from '../data/CartContext';
+import ProductImage from '../../../shared/components/ProductImage';
 
 const CartItem = ({ item }) => {
   const { updateQuantity, removeFromCart } = useCart();
@@ -16,12 +17,9 @@ const CartItem = ({ item }) => {
     >
       {/* Product Image */}
       <div className="h-32 w-32 flex-shrink-0 overflow-hidden rounded-3xl border border-soft-oatmeal/20 shadow-inner bg-soft-oatmeal/10">
-        <motion.img 
-          initial={{ scale: 1.2, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.5 }}
-          src={item.image} 
-          alt={item.name} 
+        <ProductImage
+          src={item.image}
+          alt={item.name}
           className="h-full w-full object-cover"
         />
       </div>

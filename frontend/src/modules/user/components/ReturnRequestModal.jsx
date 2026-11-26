@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FiX, FiUploadCloud, FiAlertCircle } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import api from '../../../shared/utils/api';
+import ProductImage from '../../../shared/components/ProductImage';
 
 const ReturnRequestModal = ({ isOpen, onClose, order, orderItem, onSuccess }) => {
   const [reason, setReason] = useState('');
@@ -102,7 +103,7 @@ const ReturnRequestModal = ({ isOpen, onClose, order, orderItem, onSuccess }) =>
           <div className="p-4 md:p-6 overflow-y-auto max-h-[70vh]">
             {/* Item Info */}
             <div className="flex gap-4 p-4 bg-gray-50 rounded-xl mb-6 border border-gray-100">
-              <img src={orderItem.image} alt={orderItem.name} className="w-16 h-16 object-cover rounded-lg" />
+              <div className="w-16 h-16 rounded-lg overflow-hidden shrink-0"><ProductImage src={orderItem.image} alt={orderItem.name} className="w-full h-full object-cover" /></div>
               <div>
                 <p className="font-bold text-gray-900 line-clamp-1">{orderItem.name}</p>
                 <p className="text-xs text-gray-500 mt-1">Qty: {orderItem.quantity}</p>

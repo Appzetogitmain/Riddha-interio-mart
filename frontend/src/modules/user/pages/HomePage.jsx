@@ -9,6 +9,7 @@ import TrustBar from '../components/TrustBar';
 import ExpressDeliveryBanner from '../components/ExpressDeliveryBanner';
 import DynamicSections from '../components/DynamicSections';
 import ProductCard from '../components/ProductCard';
+import ProductImage from '../../../shared/components/ProductImage';
 import Button from '../../../shared/components/Button';
 import { Link } from 'react-router-dom';
 import api from '../../../shared/utils/api';
@@ -22,7 +23,7 @@ const SectionGrid = ({ products, loading, containerVariants, autoSlide = false, 
     p?.image ||
     p?.images?.[0] ||
     p?.thumbnail ||
-    'https://images.unsplash.com/photo-1513519245088-0e12902e35ca?w=800&q=80';
+    '';
 
   const toMoney = (value) => {
     const number = Number(value);
@@ -139,7 +140,7 @@ const SectionGrid = ({ products, loading, containerVariants, autoSlide = false, 
               >
                 {/* Product Image */}
                 <div className="relative aspect-square overflow-hidden bg-stone-50">
-                  <img
+                  <ProductImage
                     src={getProductImage(product)}
                     alt={product?.name || 'Product'}
                     loading="lazy"

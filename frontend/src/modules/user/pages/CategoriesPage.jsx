@@ -245,7 +245,7 @@ const CategoriesPage = () => {
         </aside>
 
         {/* Product Grid */}
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           {loading ? (
             <div className="flex items-center justify-center py-32">
               <div className="h-12 w-12 border-4 border-warm-sand/20 border-t-warm-sand rounded-full animate-spin"></div>
@@ -259,7 +259,7 @@ const CategoriesPage = () => {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ duration: 0.4 }}
-                  className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-3 md:gap-6"
+                  className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-3 md:gap-6 [&>*]:min-w-0"
                 >
                   {sortedProducts.map((product, index) => (
                     <ProductCard key={product._id || product.id} product={product} index={index} variant="list" />

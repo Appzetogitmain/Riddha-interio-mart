@@ -10,6 +10,7 @@ import { LuSparkles, LuBrain, LuNavigation, LuBoxes, LuCheckCheck } from 'react-
 import { trackingService } from '../services/trackingService';
 import api from '../../../shared/utils/api';
 import toast from 'react-hot-toast';
+import ProductImage from '../../../shared/components/ProductImage';
 
 const STATUS_PIPELINE = [
   { id: 'placed', label: 'Order Placed', desc: 'Order confirmed & payment verified' },
@@ -582,11 +583,9 @@ const OrderTrackingPage = () => {
                 <div className="space-y-3">
                   {(order?.orderItems || []).map((item, idx) => (
                     <div key={idx} className="p-4 bg-slate-50 rounded-2xl border border-slate-200 flex items-center space-x-4 text-xs">
-                      <img
-                        src={item.image || 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=300&q=80'}
-                        alt={item.name}
-                        className="w-16 h-16 rounded-xl object-cover border border-slate-200 shrink-0"
-                      />
+                      <div className="w-16 h-16 rounded-xl overflow-hidden border border-slate-200 shrink-0">
+                        <ProductImage src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                      </div>
                       <div className="flex-1">
                         <h4 className="font-bold text-slate-900 text-sm">{item.name}</h4>
                         <p className="text-slate-500">Qty: {item.quantity} | Price: Rs. {(item.price || 0).toLocaleString()}</p>

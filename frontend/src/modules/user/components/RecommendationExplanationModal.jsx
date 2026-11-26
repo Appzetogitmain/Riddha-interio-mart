@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { X, Sparkles, CheckCircle2, ShieldCheck } from 'lucide-react';
 import api from '../../../shared/utils/api';
+import ProductImage from '../../../shared/components/ProductImage';
 
 const RecommendationExplanationModal = ({ isOpen, onClose, item }) => {
   const [loading, setLoading] = useState(false);
@@ -58,11 +59,13 @@ const RecommendationExplanationModal = ({ isOpen, onClose, item }) => {
 
         {/* Product Preview Header */}
         <div className="flex items-center gap-4 p-3 bg-gray-50 border border-gray-200 rounded-2xl mb-5">
-          <img
-            src={item.image || item.images?.[0]}
-            alt={name}
-            className="w-16 h-16 object-cover rounded-xl border border-gray-300"
-          />
+          <div className="w-16 h-16 shrink-0 rounded-xl overflow-hidden border border-gray-300">
+            <ProductImage
+              src={item.image || item.images?.[0]}
+              alt={name}
+              className="w-full h-full object-cover"
+            />
+          </div>
           <div>
             <h4 className="text-sm font-extrabold text-gray-900 line-clamp-1">{name}</h4>
             <p className="text-xs font-extrabold text-emerald-800 mt-0.5">

@@ -10,6 +10,7 @@ import SmartGuide from '../components/SmartGuide';
 // Requirement A — capture bulk buyers who will not check out at list price
 import RequestQuoteButton from '../components/RFQ/RequestQuoteButton';
 import BulkOrderModal from '../components/BulkOrderModal';
+import ProductImage from '../../../shared/components/ProductImage';
 
 const CartPage = () => {
   const { cart, updateQuantity, removeFromCart, pricingBreakdown } = useCart();
@@ -133,7 +134,7 @@ const CartPage = () => {
                     </div>
 
                     <div className="w-24 h-24 bg-gray-50 rounded-lg overflow-hidden flex-shrink-0 border border-gray-100">
-                      <img src={item.images?.[0] || item.image} alt={item.name} className="w-full h-full object-cover" />
+                      <ProductImage src={item.images?.[0] || item.image} alt={item.name} className="w-full h-full object-cover" />
                     </div>
                     <div className="flex-1 flex flex-col justify-between pr-6">
                       <div className="flex justify-between items-start">
@@ -191,7 +192,7 @@ const CartPage = () => {
               <div className="space-y-5 mb-6 border-b border-gray-100 pb-6">
                 {cart.map((item) => (
                   <div key={`${item._id || item.id}-${item.variantId || ''}`} className="flex gap-4 items-center">
-                    <img src={item.images?.[0] || item.image} alt={item.name} className="w-[60px] h-[60px] rounded-lg object-cover bg-gray-50 border border-gray-100" />
+                    <div className="w-[60px] h-[60px] rounded-lg overflow-hidden bg-gray-50 border border-gray-100 shrink-0"><ProductImage src={item.images?.[0] || item.image} alt={item.name} className="w-full h-full object-cover" /></div>
                     <div className="flex-1">
                       <div className="flex justify-between items-start">
                         <h4 className="text-[15px] font-bold text-gray-800 line-clamp-1">{item.name}</h4>
@@ -313,7 +314,7 @@ const CartPage = () => {
                       <FiX size={18} />
                     </button>
                     <div className="w-[100px] h-[100px] rounded-2xl overflow-hidden flex-shrink-0 bg-gray-50 border border-gray-100">
-                      <img src={item.images?.[0] || item.image} alt={item.name} className="w-full h-full object-cover" />
+                      <ProductImage src={item.images?.[0] || item.image} alt={item.name} className="w-full h-full object-cover" />
                     </div>
                     <div className="flex-1 pt-1 pr-6">
                       <h3 className="text-[15px] font-bold text-gray-900 leading-tight mb-1">{item.name}</h3>

@@ -315,7 +315,7 @@ const ProductListPage = ({ status }) => {
                 onChange={(e) => setApprovalFilter(e.target.value)}
                 className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none cursor-pointer font-medium"
               >
-                <option value="all">All Statuses</option>
+                <option value="all">All Status</option>
                 <option value="draft">Draft</option>
                 <option value="pending">Pending</option>
                 <option value="approved">Approved</option>

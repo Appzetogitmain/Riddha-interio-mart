@@ -183,12 +183,16 @@ const describeAiError = (err) => {
   if (err.aiCategory) return err;
   const status = err.status || err.response?.status;
   const code = err.code || err.error?.code;
-  const raw = err.error?.message || err.message || 'Unknown error';
+  // Drop URLs (and the "check your plan ... at <url>" tail) from provider messages
+  const raw = String(err.error?.message || err.message || 'Unknown error')
+    .replace(/\s*(?:For more information[^.]*?|,?\s*read the docs)?\s*(?:at|on|see)?\s*\(?https?:\/\/\S+/gi, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
   let category = 'UNKNOWN';
   let message = raw;
   if (code === 'insufficient_quota' || /quota|billing|credit/i.test(raw)) {
     category = 'BILLING';
-    message = `OpenAI quota/billing exhausted - add credits or check your plan at platform.openai.com/billing. (${raw})`;
+    message = `OpenAI quota/billing exhausted - add credits or check your OpenAI plan and billing details. (${raw})`;
   } else if (status === 401 || code === 'invalid_api_key') {
     category = 'AUTH';
     message = `OpenAI API key is invalid, missing or revoked - check OPENAI_API_KEY on the server. (${raw})`;

@@ -259,7 +259,7 @@ const UnifiedRegistryPage = () => {
               onChange={(e) => setStatusFilter(e.target.value)}
               className="px-3 py-2 bg-slate-50 border border-soft-oatmeal rounded-lg text-xs font-bold text-slate-700 cursor-pointer focus:outline-none focus:ring-1 focus:ring-warm-sand/30"
             >
-              <option value="all">All Statuses</option>
+              <option value="all">All Status</option>
               <option value="active">Active / Verified</option>
               <option value="pending">Pending Approval</option>
               <option value="suspended">Suspended / Blocked</option>

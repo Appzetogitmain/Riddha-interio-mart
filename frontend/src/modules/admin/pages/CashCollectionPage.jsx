@@ -110,7 +110,7 @@ const CashCollectionPage = () => {
               onChange={(e) => setFilterStatus(e.target.value)}
               className="w-full md:w-auto border border-soft-oatmeal text-deep-espresso px-4 py-3 rounded-xl font-bold text-xs uppercase tracking-widest bg-white cursor-pointer focus:outline-none hover:bg-soft-oatmeal/20 transition-all"
             >
-              <option value="All">All Statuses</option>
+              <option value="All">All Status</option>
               <option value="In Hand">In Hand</option>
               <option value="Deposited">Deposited</option>
             </select>

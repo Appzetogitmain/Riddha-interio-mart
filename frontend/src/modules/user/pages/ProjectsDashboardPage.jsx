@@ -238,7 +238,7 @@ const ProjectsDashboardPage = () => {
                 onChange={(e) => setStatusFilter(e.target.value)}
                 className="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-medium focus:outline-none"
               >
-                <option value="all">All Statuses</option>
+                <option value="all">All Status</option>
                 <option value="on-track">On Track</option>
                 <option value="at-risk">At Risk</option>
                 <option value="on-hold">On Hold</option>

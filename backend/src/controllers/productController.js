@@ -1493,7 +1493,18 @@ exports.generateSellerAiImagesHandler = async (req, res) => {
     res.status(200).json({ success: true, data: { images } });
   } catch (error) {
     console.error('Seller AI Images Error:', error);
-    res.status(500).json({ success: false, error: 'AI image generation failed: ' + error.message });
+    // Admins see the real reason (billing/quota/key problems); sellers get a safe generic message
+    // for account-level failures so provider details are not exposed.
+    const accountLevel = ['BILLING', 'AUTH', 'MODEL'].includes(error.aiCategory);
+    const isAdmin = req.user?.role === 'admin';
+    const message = accountLevel && !isAdmin
+      ? 'AI image service is temporarily unavailable. Please try again later.'
+      : error.message;
+    res.status(500).json({
+      success: false,
+      error: 'AI image generation failed: ' + message,
+      ...(isAdmin && error.aiCategory ? { aiCategory: error.aiCategory } : {}),
+    });
   }
 };
 

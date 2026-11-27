@@ -27,6 +27,19 @@ class OpenAIErrorHandler {
       };
     }
 
+    // Out of credits / billing: a 429 that retrying can never fix
+    if (error.code === 'insufficient_quota' || error.error?.code === 'insufficient_quota') {
+      errorLog.category = 'BILLING';
+      errorLog.userMessage = 'AI service quota exhausted.';
+      logger.error('OpenAI Quota Exhausted:', errorLog);
+      return {
+        success: false,
+        category: 'BILLING',
+        message: errorLog.userMessage,
+        retryable: false,
+      };
+    }
+
     // Rate limit errors
     if (error.status === 429 || error.code === 'rate_limit_exceeded') {
       errorLog.category = 'RATE_LIMIT';

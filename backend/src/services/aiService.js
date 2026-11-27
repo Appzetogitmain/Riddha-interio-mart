@@ -176,9 +176,41 @@ OUTPUT FORMAT (STRICT JSON):
  * For furniture: front view, side view, back view, close-up details, lifestyle views, etc.
  * For other categories: intelligently identifies product type and generates relevant angles and usages.
  */
+// Turns an OpenAI/provider error into a clear, actionable message (esp. billing/quota/key issues).
+// `error.aiCategory` is set so controllers can decide who gets to see the details.
+const describeAiError = (err) => {
+  if (!err) return new Error('Unknown AI error');
+  if (err.aiCategory) return err;
+  const status = err.status || err.response?.status;
+  const code = err.code || err.error?.code;
+  const raw = err.error?.message || err.message || 'Unknown error';
+  let category = 'UNKNOWN';
+  let message = raw;
+  if (code === 'insufficient_quota' || /quota|billing|credit/i.test(raw)) {
+    category = 'BILLING';
+    message = `OpenAI quota/billing exhausted - add credits or check your plan at platform.openai.com/billing. (${raw})`;
+  } else if (status === 401 || code === 'invalid_api_key') {
+    category = 'AUTH';
+    message = `OpenAI API key is invalid, missing or revoked - check OPENAI_API_KEY on the server. (${raw})`;
+  } else if (status === 429 || code === 'rate_limit_exceeded') {
+    category = 'RATE_LIMIT';
+    message = `OpenAI rate limit hit - try again shortly or raise your usage tier. (${raw})`;
+  } else if (status === 404 || code === 'model_not_found') {
+    category = 'MODEL';
+    message = `OpenAI model not found or not accessible for this key. (${raw})`;
+  } else if (status >= 500) {
+    category = 'PROVIDER_DOWN';
+    message = `OpenAI service is temporarily unavailable. (${raw})`;
+  }
+  const out = new Error(message);
+  out.aiCategory = category;
+  out.status = status;
+  return out;
+};
+
 const generateTenPerspectivePromptsFromImage = async (
   originalImage,
-  { name, category, subcategory, material, color, customPrompt, targetCount = 10 }
+  { name, category, subcategory, material, color, customPrompt, targetCount = 10, throwOnError = false }
 ) => {
   const catText = `${category || ''} ${subcategory || ''} ${name || ''}`.toLowerCase();
   const isFurniture = catText.includes('furniture') || catText.includes('chair') || catText.includes('sofa') || catText.includes('table') || catText.includes('bed') || catText.includes('desk') || catText.includes('cabinet') || catText.includes('wardrobe') || catText.includes('stool');
@@ -248,13 +280,14 @@ Return STRICT JSON:
     );
 
     const rawText = response.text;
-    if (!rawText) return [];
+    if (!rawText) return { prompts: [], structuralSpec: '' };
     const parsed = JSON.parse(rawText.replace(/\`\`\`json/g, '').replace(/\`\`\`/g, '').trim());
     const structuralSpec = typeof parsed.structuralSpec === 'string' ? parsed.structuralSpec.trim() : '';
     const prompts = Array.isArray(parsed.prompts) ? parsed.prompts : [];
     return { prompts, structuralSpec };
   } catch (err) {
     console.error('[ImageGen] Failed to generate perspective prompts from original image:', err);
+    if (throwOnError) throw describeAiError(err);
     return { prompts: [], structuralSpec: '' };
   }
 };
@@ -847,6 +880,7 @@ const generateSellerAiImages = async (originalImage, count = 3, customPrompt = '
   const { prompts, structuralSpec } = await generateTenPerspectivePromptsFromImage(originalImage, {
     customPrompt,
     targetCount: 10,
+    throwOnError: true,
   });
   if (!prompts || prompts.length === 0) throw new Error('Could not analyse the uploaded photo.');
 
@@ -876,7 +910,7 @@ const generateSellerAiImages = async (originalImage, count = 3, customPrompt = '
     settled.forEach(r => { if (r) results.push(r); });
   }
   if (results.length === 0) {
-    throw new Error(lastError?.message || 'AI image generation returned no images.');
+    throw lastError ? describeAiError(lastError) : new Error('AI image generation returned no images.');
   }
   return results;
 };

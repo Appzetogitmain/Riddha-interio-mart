@@ -522,7 +522,7 @@ const Profile = () => {
         
         {/* Enterprise Top Banner / Identity Header */}
         <div className="bg-gradient-to-r from-[#0d2824] via-[#09413b] to-[#125950] text-white border-b border-teal-900/40 px-4 py-6 md:px-8 shadow-md">
-          <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             
             {/* Business & User Identity */}
             <div className="flex items-center gap-4">
@@ -592,7 +592,7 @@ const Profile = () => {
         </div>
 
         {/* ── Dashboard Main Layout: Left Sidebar + Right Selected Panel ── */}
-        <div className="max-w-7xl mx-auto px-4 md:px-8 mt-6">
+        <div className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 mt-6">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
             {/* ═══════════════════════════════════════
@@ -2062,7 +2062,7 @@ const Profile = () => {
 
         {/* B2C Pro Top Banner */}
         <div className="bg-gradient-to-r from-orange-600 via-amber-500 to-yellow-500 text-white border-b border-orange-700/30 px-4 py-6 md:px-8 shadow-md">
-          <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
 
             <div className="flex items-center gap-4">
               <div className="relative shrink-0">
@@ -2123,7 +2123,7 @@ const Profile = () => {
         </div>
 
         {/* Dashboard Main Layout */}
-        <div className="max-w-7xl mx-auto px-4 md:px-8 mt-6">
+        <div className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 mt-6">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
             {/* LEFT SIDEBAR */}

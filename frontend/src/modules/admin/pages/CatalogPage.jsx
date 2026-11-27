@@ -5,6 +5,8 @@ import { LuSearch, LuPlus, LuTrash2, LuPen, LuFilter, LuBox, LuCheck, LuX } from
 import { FiTrash2, FiEdit3, FiInfo } from 'react-icons/fi';
 import api from '../../../shared/utils/api';
 import { toast } from 'react-hot-toast';
+import CatalogFilterBar from '../../../shared/components/CatalogFilterBar';
+import { EMPTY_FILTERS, matchesCatalogFilters, getBrandName, getStockStatus } from '../../../shared/utils/catalogFilters';
 
 const CatalogPage = () => {
   const navigate = useNavigate();
@@ -16,10 +18,9 @@ const CatalogPage = () => {
   const [errorMessage, setErrorMessage] = useState('');
 
   // Active filters state
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState('');
-  const [selectedTarget, setSelectedTarget] = useState('');
+  const [filters, setFilters] = useState({ ...EMPTY_FILTERS });
   const [uniqueCategories, setUniqueCategories] = useState([]);
+  const uniqueBrands = useMemo(() => [...new Set(products.map(getBrandName).filter(Boolean))].sort(), [products]);
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -65,20 +66,12 @@ const CatalogPage = () => {
   // Reset pagination to first page when search or filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, selectedCategory, selectedTarget]);
+  }, [searchTerm, filters]);
 
   // Apply filters & search term
   const filteredProducts = useMemo(() => {
-    return products.filter(p => {
-      const matchesSearch = !searchTerm || (
-        p.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-        p.sku?.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      const matchesCategory = !selectedCategory || p.category === selectedCategory;
-      const matchesTarget = !selectedTarget || p.targetCustomer === selectedTarget;
-      return matchesSearch && matchesCategory && matchesTarget;
-    });
-  }, [searchTerm, products, selectedCategory, selectedTarget]);
+    return products.filter(p => matchesCatalogFilters(p, searchTerm, filters));
+  }, [searchTerm, products, filters]);
 
   // Paginate products
   const paginatedProducts = useMemo(() => {
@@ -104,8 +97,7 @@ const CatalogPage = () => {
   };
 
   const handleResetFilters = () => {
-    setSelectedCategory('');
-    setSelectedTarget('');
+    setFilters({ ...EMPTY_FILTERS });
     setSearchTerm('');
   };
 
@@ -129,7 +121,7 @@ const CatalogPage = () => {
 
   return (
     <PageWrapper>
-      <div className="max-w-7xl mx-auto space-y-6">
+      <div className="w-full space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
@@ -159,15 +151,7 @@ const CatalogPage = () => {
               />
             </div>
             
-            <button 
-              onClick={() => setIsFilterOpen(!isFilterOpen)}
-              className={"flex items-center justify-center gap-2 border px-6 py-3 md:py-0 rounded-xl font-bold text-xs uppercase tracking-widest transition-all " + (isFilterOpen || selectedCategory || selectedTarget ? "border-[#240046] bg-purple-50 text-[#240046]" : "border-soft-oatmeal text-deep-espresso hover:bg-soft-oatmeal/20")}
-            >
-              <LuFilter size={16} />
-              Filters {(selectedCategory || selectedTarget) ? '(Active)' : ''}
-            </button>
-
-            {(selectedCategory || selectedTarget || searchTerm) && (
+            {searchTerm && (
               <button 
                 onClick={handleResetFilters}
                 className="flex items-center justify-center gap-2 border border-red-200 text-red-700 bg-red-50 hover:bg-red-100 px-5 py-3 md:py-0 rounded-xl font-bold text-xs uppercase tracking-widest transition-all"
@@ -178,38 +162,7 @@ const CatalogPage = () => {
             )}
           </div>
 
-          {/* Collapsible Interactive Filter drawer */}
-          {isFilterOpen && (
-            <div className="bg-white p-6 rounded-2xl border border-soft-oatmeal shadow-md animate-in slide-in-from-top-2 duration-200 grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest">Filter by Category</label>
-                <select
-                  value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none cursor-pointer font-medium"
-                >
-                  <option value="">All Categories</option>
-                  {uniqueCategories.map(cat => (
-                    <option key={cat} value={cat}>{cat}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest">Filter by Target Customer</label>
-                <select
-                  value={selectedTarget}
-                  onChange={(e) => setSelectedTarget(e.target.value)}
-                  className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none cursor-pointer font-medium"
-                >
-                  <option value="">All Customer Types</option>
-                  <option value="individual">Individual Customers</option>
-                  <option value="enterpriser">Enterprisers Only</option>
-                  <option value="both">Both (Public)</option>
-                </select>
-              </div>
-            </div>
-          )}
+          <CatalogFilterBar filters={filters} onApply={setFilters} categories={uniqueCategories} brands={uniqueBrands} />
         </div>
 
         {/* Catalog List / Table */}
@@ -225,7 +178,10 @@ const CatalogPage = () => {
                     <th className="px-6 py-4 text-[10px] font-black text-warm-sand uppercase tracking-widest">Product Name</th>
                     <th className="px-6 py-4 text-[10px] font-black text-warm-sand uppercase tracking-widest">Code (SKU)</th>
                     <th className="px-6 py-4 text-[10px] font-black text-warm-sand uppercase tracking-widest">Category</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-warm-sand uppercase tracking-widest">Brand Partner</th>
                     <th className="px-6 py-4 text-[10px] font-black text-warm-sand uppercase tracking-widest">Audience</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-warm-sand uppercase tracking-widest">Price (₹)</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-warm-sand uppercase tracking-widest">Stock</th>
                     <th className="px-6 py-4 text-[10px] font-black text-warm-sand uppercase tracking-widest text-right">Actions</th>
                   </tr>
                 </thead>
@@ -249,9 +205,16 @@ const CatalogPage = () => {
                           {product.category}
                         </span>
                       </td>
+                      <td className="px-6 py-4 text-sm text-deep-espresso">{getBrandName(product) || '—'}</td>
                       <td className="px-6 py-4">
                         <span className="text-[9px] font-bold text-warm-sand uppercase tracking-widest">
                           {product.targetCustomer || 'both'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 font-bold text-deep-espresso">₹{Number(product.price || 0).toLocaleString('en-IN')}</td>
+                      <td className="px-6 py-4">
+                        <span className={"text-[10px] font-bold px-2.5 py-1 rounded-full " + ({in:'bg-emerald-50 text-emerald-700',low:'bg-amber-50 text-amber-700',out:'bg-red-50 text-red-700'}[getStockStatus(product)])}>
+                          {{in:'In Stock',low:'Low Stock',out:'Out of Stock'}[getStockStatus(product)]} ({Number(product.stock) || 0})
                         </span>
                       </td>
                       <td className="px-6 py-4 text-right">

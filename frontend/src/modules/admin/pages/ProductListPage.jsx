@@ -1,9 +1,11 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageWrapper from '../components/PageWrapper';
-import { LuDownload, LuUpload, LuSearch, LuPlus, LuTrash2, LuPen, LuFilter, LuBox, LuPackage, LuTag, LuX } from 'react-icons/lu';
+import { LuDownload, LuUpload, LuSearch, LuPlus, LuTrash2, LuPen, LuBox, LuPackage, LuTag } from 'react-icons/lu';
 import api from '../../../shared/utils/api';
 import { toast } from 'react-hot-toast';
+import ProductFilterBar from '../../../shared/components/ProductFilterBar';
+import { EMPTY_PRODUCT_FILTERS, matchesProductFilters } from '../../../shared/utils/productListFilters';
 import ProductCsvModal, { downloadProductCsv } from '../components/ProductCsvModal';
 
 const ProductListPage = ({ status }) => {
@@ -14,30 +16,22 @@ const ProductListPage = ({ status }) => {
   const [error, setError] = useState('');
   const [deleteId, setDeleteId] = useState(null);
   const [commissionModal, setCommissionModal] = useState({ open: false, product: null, commission: 2, b2bCommission: 2 });
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [csvOpen, setCsvOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState(() => new Set());
   const [publishing, setPublishing] = useState(false);
   const [publishConfirm, setPublishConfirm] = useState(null); // { ids: [...] }
   const [sectionModal, setSectionModal] = useState({ open: false, product: null, tabs: [], loading: false, saving: false });
-  const [approvalFilter, setApprovalFilter] = useState('all');
-  const [sellerFilter, setSellerFilter] = useState('all');
-  const [stockFilter, setStockFilter] = useState('all');
+  const [filters, setFilters] = useState({ ...EMPTY_PRODUCT_FILTERS });
+  const approvalFilter = filters.status || 'all';
+  const setApprovalFilter = (v) => setFilters(f => ({ ...f, status: v === 'all' ? '' : v }));
   const [categories, setCategories] = useState([]);
-  const [categoryFilter, setCategoryFilter] = useState('all');
-  const [subcategoryFilter, setSubcategoryFilter] = useState('all');
-  const [subsubcategoryFilter, setSubsubcategoryFilter] = useState('all');
+  const brandOptions = useMemo(() => [...new Set(products.map(p => p.brand?.name).filter(Boolean))].sort(), [products]);
 
   useEffect(() => {
     api.get('/categories')
       .then(({ data }) => setCategories(Array.isArray(data?.data) ? data.data : []))
       .catch(() => setCategories([]));
   }, []);
-
-  const selectedCategory = categories.find(c => String(c._id) === categoryFilter);
-  const subcategoryOptions = selectedCategory?.subcategories || [];
-  const selectedSubcategory = subcategoryOptions.find(sc => String(sc._id) === subcategoryFilter);
-  const subsubcategoryOptions = selectedSubcategory?.subsubcategories || [];
 
   const fetchProducts = async () => {
     try {
@@ -131,31 +125,11 @@ const ProductListPage = ({ status }) => {
   }, []);
 
   const filteredProducts = useMemo(() => {
-    return products.filter(p => {
-      const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-        (p.sku && p.sku.toLowerCase().includes(searchTerm.toLowerCase()));
-
-      const matchesRouteStatus = status === 'pending' ? p.approvalStatus === 'pending' : true;
-      const matchesApproval = approvalFilter === 'all' || p.approvalStatus === approvalFilter;
-      const isAdminSupply = p.sellerType === 'Admin';
-      const matchesSeller =
-        sellerFilter === 'all' ||
-        (sellerFilter === 'admin' && isAdminSupply) ||
-        (sellerFilter === 'marketplace' && !isAdminSupply);
-      const matchesStock =
-        stockFilter === 'all' ||
-        (stockFilter === 'in_stock' && (p.countInStock || 0) > 0) ||
-        (stockFilter === 'out_of_stock' && (p.countInStock || 0) === 0);
-
-      const productCategoryId = String(p.categoryId || p.category?._id || '');
-      const matchesCategory = categoryFilter === 'all' || productCategoryId === categoryFilter;
-      const matchesSubcategory = subcategoryFilter === 'all' || String(p.subcategory || '') === subcategoryFilter;
-      const matchesSubsubcategory = subsubcategoryFilter === 'all' || String(p.subsubcategory || '') === subsubcategoryFilter;
-
-      return matchesSearch && matchesRouteStatus && matchesApproval && matchesSeller && matchesStock &&
-        matchesCategory && matchesSubcategory && matchesSubsubcategory;
-    });
-  }, [searchTerm, products, status, approvalFilter, sellerFilter, stockFilter, categoryFilter, subcategoryFilter, subsubcategoryFilter]);
+    return products.filter(p =>
+      (status === 'pending' ? p.approvalStatus === 'pending' : true) &&
+      matchesProductFilters(p, searchTerm, filters)
+    );
+  }, [searchTerm, products, status, filters]);
 
   const draftCount = useMemo(() => products.filter(p => p.approvalStatus === 'draft').length, [products]);
   const visibleDraftIds = useMemo(
@@ -175,21 +149,6 @@ const ProductListPage = ({ status }) => {
     [products, selectedIds]
   );
 
-  const hasActiveFilters =
-    approvalFilter !== 'all' || sellerFilter !== 'all' || stockFilter !== 'all' ||
-    categoryFilter !== 'all' || subcategoryFilter !== 'all' || subsubcategoryFilter !== 'all' || searchTerm.trim().length > 0;
-
-  const resetFilters = () => {
-    setSearchTerm('');
-    setApprovalFilter('all');
-    setSellerFilter('all');
-    setStockFilter('all');
-    setCategoryFilter('all');
-    setSubcategoryFilter('all');
-    setSubsubcategoryFilter('all');
-    setIsFilterOpen(false);
-  };
-
   const handleDelete = async (id) => {
     try {
       await api.delete(`/products/${id}`);
@@ -204,7 +163,7 @@ const ProductListPage = ({ status }) => {
 
   return (
     <PageWrapper>
-      <div className="max-w-7xl mx-auto space-y-6">
+      <div className="w-full space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
@@ -252,26 +211,6 @@ const ProductListPage = ({ status }) => {
               className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl pl-11 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-warm-sand/20 transition-all text-sm"
             />
           </div>
-          <button
-            onClick={() => setIsFilterOpen(v => !v)}
-            className={`flex items-center justify-center gap-2 px-6 py-3 md:py-0 rounded-xl font-bold text-xs uppercase tracking-widest transition-all border ${
-              isFilterOpen || hasActiveFilters
-                ? 'border-[#240046] bg-purple-50 text-[#240046]'
-                : 'border-soft-oatmeal text-deep-espresso hover:bg-soft-oatmeal/20'
-            }`}
-          >
-            <LuFilter size={16} />
-            Filters {hasActiveFilters ? '(Active)' : ''}
-          </button>
-          {hasActiveFilters && (
-            <button
-              onClick={resetFilters}
-              className="flex items-center justify-center gap-2 border border-red-200 text-red-700 bg-red-50 hover:bg-red-100 px-5 py-3 md:py-0 rounded-xl font-bold text-xs uppercase tracking-widest transition-all"
-            >
-              <LuX size={16} />
-              Reset
-            </button>
-          )}
         </div>
 
         {/* Drafts: imported / unpublished products awaiting review */}
@@ -306,88 +245,7 @@ const ProductListPage = ({ status }) => {
           </div>
         )}
 
-        {isFilterOpen && (
-          <div className="bg-white p-6 rounded-2xl border border-soft-oatmeal shadow-md grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="space-y-2">
-              <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest">Approval Status</label>
-              <select
-                value={approvalFilter}
-                onChange={(e) => setApprovalFilter(e.target.value)}
-                className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none cursor-pointer font-medium"
-              >
-                <option value="all">All Status</option>
-                <option value="draft">Draft</option>
-                <option value="pending">Pending</option>
-                <option value="approved">Approved</option>
-                <option value="rejected">Rejected</option>
-              </select>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest">Seller Source</label>
-              <select
-                value={sellerFilter}
-                onChange={(e) => setSellerFilter(e.target.value)}
-                className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none cursor-pointer font-medium"
-              >
-                <option value="all">All Sellers</option>
-                <option value="admin">Admin Stock</option>
-                <option value="marketplace">Marketplace Sellers</option>
-              </select>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest">Stock Status</label>
-              <select
-                value={stockFilter}
-                onChange={(e) => setStockFilter(e.target.value)}
-                className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none cursor-pointer font-medium"
-              >
-                <option value="all">All Items</option>
-                <option value="in_stock">In Stock</option>
-                <option value="out_of_stock">Out of Stock</option>
-              </select>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest">Category</label>
-              <select
-                value={categoryFilter}
-                onChange={(e) => { setCategoryFilter(e.target.value); setSubcategoryFilter('all'); setSubsubcategoryFilter('all'); }}
-                className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none cursor-pointer font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <option value="all">All Categories</option>
-                {categories.map(c => <option key={c._id} value={String(c._id)}>{c.name}</option>)}
-              </select>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest">Subcategory</label>
-              <select
-                value={subcategoryFilter}
-                disabled={categoryFilter === 'all' || subcategoryOptions.length === 0}
-                onChange={(e) => { setSubcategoryFilter(e.target.value); setSubsubcategoryFilter('all'); }}
-                className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none cursor-pointer font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <option value="all">{categoryFilter === 'all' ? 'Select a category first' : 'All Subcategories'}</option>
-                {subcategoryOptions.map(sc => <option key={sc._id} value={String(sc._id)}>{sc.name}</option>)}
-              </select>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest">Sub-subcategory</label>
-              <select
-                value={subsubcategoryFilter}
-                disabled={subcategoryFilter === 'all' || subsubcategoryOptions.length === 0}
-                onChange={(e) => setSubsubcategoryFilter(e.target.value)}
-                className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none cursor-pointer font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <option value="all">{subcategoryFilter === 'all' ? 'Select a subcategory first' : 'All Sub-subcategories'}</option>
-                {subsubcategoryOptions.map(ss => <option key={ss._id} value={String(ss._id)}>{ss.name}</option>)}
-              </select>
-            </div>
-          </div>
-        )}
+        <ProductFilterBar filters={filters} onApply={setFilters} categories={categories} brands={brandOptions} />
 
         {/* Product List Table */}
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden min-h-[400px]">

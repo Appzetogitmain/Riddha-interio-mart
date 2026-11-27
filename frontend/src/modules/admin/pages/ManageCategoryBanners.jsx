@@ -57,7 +57,7 @@ const ManageCategoryBanners = () => {
 
   return (
     <PageWrapper>
-      <div className="max-w-6xl mx-auto space-y-6">
+      <div className="w-full space-y-6">
         <div>
           <h1 className="text-xl font-bold text-gray-900">Category Banner Ads</h1>
           <p className="text-sm text-gray-500 mt-0.5">Sellers buy a plan, choose categories and upload a banner. Approve it here to make it live on those category pages.</p>

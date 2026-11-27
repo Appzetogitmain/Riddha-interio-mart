@@ -168,7 +168,7 @@ const SearchProductsPage = () => {
       </div>
 
       {/* Main Content */}
-      <main className="max-w-6xl mx-auto px-4 py-4">
+      <main className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 py-4">
         <SearchRefinement
           query={query}
           interpretation={interpretation}

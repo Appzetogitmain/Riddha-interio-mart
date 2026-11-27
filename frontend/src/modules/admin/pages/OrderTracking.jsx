@@ -109,7 +109,7 @@ const OrderTracking = () => {
 
   return (
     <PageWrapper>
-      <div className="max-w-7xl mx-auto space-y-6 pb-12">
+      <div className="w-full space-y-6 pb-12">
         {/* Header Block */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-5 rounded-xl border border-slate-200/80 shadow-sm">
           <div className="space-y-1">

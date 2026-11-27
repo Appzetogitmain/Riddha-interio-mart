@@ -126,7 +126,7 @@ const CheckoutPage = () => {
       </div>
 
       {/* Desktop stepper */}
-      <div className="hidden md:flex items-center gap-6 max-w-6xl mx-auto px-6 mb-6 mt-2">
+      <div className="hidden md:flex items-center gap-6 max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 mb-6 mt-2">
         {steps.map((s, i) => (
           <React.Fragment key={s.n}>
             <div className={`flex items-center gap-2 ${s.n === 1 ? '' : 'opacity-40'}`}>
@@ -141,13 +141,13 @@ const CheckoutPage = () => {
       </div>
 
       {isLoading ? (
-        <div className="max-w-6xl mx-auto px-4 md:px-6 space-y-3 mt-3">
+        <div className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 space-y-3 mt-3">
           {[80, 56, 120, 80].map((h, i) => (
             <div key={i} className={`h-${h === 80 ? '20' : h === 56 ? '14' : h === 120 ? '28' : '20'} bg-white animate-pulse border border-gray-100`} style={{height: h}} />
           ))}
         </div>
       ) : (
-        <div className="max-w-6xl mx-auto md:px-6 md:grid md:grid-cols-12 md:gap-6">
+        <div className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 md:grid md:grid-cols-12 md:gap-6">
 
           {/* ── Left column ── */}
           <div className="md:col-span-7 space-y-2 md:space-y-4">

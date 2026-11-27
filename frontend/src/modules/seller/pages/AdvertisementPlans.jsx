@@ -125,7 +125,7 @@ const AdvertisementPlans = () => {
 
   return (
     <PageWrapper>
-      <div className="p-4 md:p-8 max-w-7xl mx-auto">
+      <div className="p-4 md:p-8 w-full">
         <div className="text-center max-w-2xl mx-auto mb-12">
           <h1 className="text-3xl font-bold text-gray-900 mb-4">Boost Your Sales</h1>
           <p className="text-gray-600">

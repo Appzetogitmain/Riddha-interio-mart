@@ -101,7 +101,7 @@ const CategoryBannerAds = () => {
 
   return (
     <PageWrapper>
-      <div className="p-4 md:p-8 max-w-6xl mx-auto space-y-10">
+      <div className="p-4 md:p-8 w-full space-y-10">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Category Banner Ads</h1>
           <p className="text-gray-600 mt-2 max-w-2xl">Put your brand at the top of the category pages your customers browse. Pick a plan, choose the categories, upload your banner and we review and publish it.</p>

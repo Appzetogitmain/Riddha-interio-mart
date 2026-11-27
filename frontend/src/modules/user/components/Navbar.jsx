@@ -311,7 +311,7 @@ const Navbar = () => {
         ? 'bg-white shadow-md border-gray-200'
         : 'bg-gradient-to-r from-[#189D91]/10 via-white to-[#EC008C]/10 border-gray-200 md:border-gray-100'
         }`}>
-        <div className="max-w-[1700px] mx-auto px-4 lg:px-6">
+        <div className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
           {/* Main Desktop Header Row */}
           <div className="hidden md:flex items-center justify-between py-2.5 gap-2 lg:gap-4">
             <div className="flex items-center gap-3 lg:gap-5 shrink-0">
@@ -521,7 +521,7 @@ const Navbar = () => {
       {/* Pro Active Strip — Displayed when user has an active Pro subscription */}
       {isProActive && (
         <div className="hidden md:block bg-white border-b border-gray-100 relative z-40">
-          <div className="max-w-[1700px] mx-auto px-6 lg:px-8">
+          <div className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
             <div className="flex items-center gap-x-7 lg:gap-x-10 py-2.5 overflow-x-auto no-scrollbar scroll-smooth">
               
               {/* IF B2C PRO ACTIVE: Show B2C Unlocked Features Strip */}
@@ -581,7 +581,7 @@ const Navbar = () => {
 
       {/* Desktop Secondary Categories Nav with Mega Menu */}
       <div ref={categoriesBarRef} className="hidden md:block bg-white border-b border-gray-200 relative z-40">
-        <div className="max-w-[1700px] mx-auto px-6 lg:px-8 flex items-center h-12">
+        <div className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 flex items-center h-12">
           <div className="flex items-center gap-4 w-full">
             {/* All Categories Button */}
             <div className="relative group/cat shrink-0">

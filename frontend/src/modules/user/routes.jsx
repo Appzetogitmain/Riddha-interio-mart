@@ -1,5 +1,6 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
+import { useNavTrailTracker } from './utils/navTrail';
 const HomePage = React.lazy(() => import('./pages/HomePage'));;
 const ProductListingPage = React.lazy(() => import('./pages/ProductListingPage'));;
 const ProductDetailsPage = React.lazy(() => import('./pages/ProductDetailsPage'));;
@@ -82,6 +83,7 @@ const SamplesPage = React.lazy(() => import('./pages/SamplesPage'));
 import ProGateGuard from './components/ProGateGuard';
 
 const UserRoutes = () => {
+  useNavTrailTracker();
   return (
     <Routes>
       <Route path="/client-brief" element={<ProGateGuard title="AI Project Brief Generator" description="Generate professional interior design client briefs with AI."><ClientBriefPage /></ProGateGuard>} />

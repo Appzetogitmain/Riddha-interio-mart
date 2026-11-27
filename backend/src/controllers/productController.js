@@ -964,8 +964,19 @@ exports.getProduct = async (req, res, next) => {
 // @desc    Get all products for the logged in seller
 exports.getSellerProducts = async (req, res, next) => {
   try {
-    const products = await Product.find({ seller: req.user.id }).sort({ createdAt: -1 });
-    res.status(200).json({ success: true, count: products.length, data: products });
+    const products = await Product.find({ seller: req.user.id })
+      .populate('category', 'name')
+      .populate('brand', 'name')
+      .sort({ createdAt: -1 });
+    const data = products.map(p => {
+      const pObj = p.toObject();
+      if (pObj.category && typeof pObj.category === 'object') {
+        pObj.categoryId = pObj.category._id;
+        pObj.category = pObj.category.name;
+      }
+      return pObj;
+    });
+    res.status(200).json({ success: true, count: data.length, data });
   } catch (error) {
     next(error);
   }

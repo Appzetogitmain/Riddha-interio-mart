@@ -151,7 +151,7 @@ const BrandPage = () => {
       </section>
 
       {/* Shop By Category - Horizontal Scroll */}
-      <section className="max-w-7xl mx-auto py-10 md:py-14 lg:py-16">
+      <section className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 py-10 md:py-14 lg:py-16">
         <div className="px-4 md:px-10 lg:px-12 flex items-center justify-between mb-6 md:mb-8">
           <h2 className="text-xl md:text-3xl lg:text-4xl font-display font-bold text-gray-900 tracking-tight">Shop By Category</h2>
           <Link to="/categories" className="text-xs md:text-sm font-bold text-[#189D91] flex items-center gap-1 hover:underline uppercase tracking-widest">
@@ -186,7 +186,7 @@ const BrandPage = () => {
       </section>
 
       {/* Brand Products Section */}
-      <section className="max-w-7xl mx-auto py-10 md:py-14 lg:py-16 bg-soft-oatmeal/5">
+      <section className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 py-10 md:py-14 lg:py-16 bg-soft-oatmeal/5">
         <div className="px-4 md:px-10 lg:px-12 flex items-center justify-between mb-6 md:mb-8">
           <div className="space-y-1">
             <h2 className="text-xl md:text-3xl lg:text-4xl font-display font-bold text-gray-900 tracking-tight">
@@ -216,7 +216,7 @@ const BrandPage = () => {
       </section>
 
       {/* Brand Highlight Promo */}
-      <section className="max-w-7xl mx-auto px-4 md:px-10 lg:px-12 py-8 md:py-10">
+      <section className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 py-8 md:py-10">
          <div className="rounded-[32px] md:rounded-[36px] bg-[#F2F2F2] p-6 md:p-10 lg:p-12 flex flex-col md:flex-row items-center gap-6 md:gap-10 border border-gray-100">
             <div className="flex-1 space-y-4 md:space-y-6 text-center md:text-left">
                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#189D91]">Official Brand</span>

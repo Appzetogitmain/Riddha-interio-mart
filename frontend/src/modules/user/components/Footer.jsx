@@ -40,7 +40,7 @@ const Footer = () => {
       <div className="absolute top-0 right-0 w-96 h-96 bg-[#189D91]/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-80 h-80 bg-amber-400/5 rounded-full blur-3xl pointer-events-none" />
 
-      <div className="max-w-[1700px] mx-auto px-6 md:px-12 relative z-10">
+      <div className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 relative z-10">
         <motion.div
           variants={containerVariants}
           initial="hidden"

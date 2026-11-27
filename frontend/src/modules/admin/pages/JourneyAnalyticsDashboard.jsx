@@ -83,7 +83,7 @@ const JourneyAnalyticsDashboard = () => {
 
   return (
     <PageWrapper>
-      <div className="max-w-7xl mx-auto space-y-4 py-2">
+      <div className="w-full space-y-4 py-2">
         {/* Filters */}
         <div className="bg-white p-4 rounded-3xl border border-soft-oatmeal/40 shadow-sm flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2">

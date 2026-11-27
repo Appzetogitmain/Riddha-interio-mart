@@ -29,7 +29,7 @@ const Shop = () => {
       transition={{ duration: 0.5 }}
       className="py-16 md:py-24"
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
+      <div className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}

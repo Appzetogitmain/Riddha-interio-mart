@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
+import { getPreviousPages, setTrailLabel } from '../utils/navTrail';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '../data/CartContext';
 import {
@@ -67,6 +68,7 @@ const ProductDetailsPage = () => {
   const { id } = useParams();
   const displayConfig = useDisplayConfig();
   const navigate = useNavigate();
+  const location = useLocation();
   const { addToCart, updateQuantity, getItemQuantity } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
   const { user } = useUser();
@@ -102,6 +104,7 @@ const ProductDetailsPage = () => {
     if (!product) return undefined;
     const prevTitle = document.title;
     document.title = product.metaTitle || product.name || prevTitle;
+    setTrailLabel(location.pathname + location.search, product.name);
     let tag = document.querySelector('meta[name="description"]');
     const created = !tag;
     if (!tag) { tag = document.createElement('meta'); tag.setAttribute('name', 'description'); document.head.appendChild(tag); }
@@ -338,19 +341,26 @@ const ProductDetailsPage = () => {
   const hasDiscount = currentVariant ? !!currentVariant.discountPrice : (isB2bEligible ? true : product?._hasDiscount);
   const displaySku = currentVariant ? currentVariant.sku : product?.sku;
 
+  // Last two pages the user visited before this product (dynamic breadcrumb)
+  const breadcrumbPages = getPreviousPages(location.pathname + location.search, 2);
+  if (breadcrumbPages.length === 0) breadcrumbPages.push({ path: '/', label: 'Home' });
+
   return (
-    <div className="max-w-[1200px] mx-auto px-0 md:px-4 lg:px-6 pb-28 md:pb-10">
+    <div className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 pb-28 md:pb-10">
 
       {/* Breadcrumb */}
       <nav className="hidden md:flex items-center gap-1.5 text-[11px] text-gray-400 font-medium py-4">
-        <Link to="/" className="hover:text-gray-700 transition-colors">Home</Link>
-        <FiChevronRight size={12} />
-        <Link to="/products" className="hover:text-gray-700 transition-colors">Products</Link>
-        <FiChevronRight size={12} />
+        {breadcrumbPages.map((pg) => (
+          <React.Fragment key={pg.path}>
+            <Link to={pg.path} className="hover:text-gray-700 transition-colors truncate max-w-[160px]">{pg.label}</Link>
+            <FiChevronRight size={12} className="shrink-0" />
+          </React.Fragment>
+        ))}
         <span className="text-gray-700 font-semibold truncate max-w-[220px]">{product.name}</span>
       </nav>
 
-      <div className="bg-white p-0 md:p-6">
+      <div>
+      <div className="bg-white p-0">
 
         {/* ── Top section: Gallery + Info ── */}
         <div className="flex flex-col lg:flex-row gap-0 lg:gap-10">
@@ -655,53 +665,6 @@ const ProductDetailsPage = () => {
               )}
             </div>
 
-            {/* Desktop action buttons */}
-            <div className="hidden lg:flex gap-2 mt-5 max-w-md">
-              {isOutOfStock ? (
-                <button
-                  disabled
-                  className="w-full h-11 bg-gray-200 text-gray-400 font-bold text-[11px] uppercase tracking-wider cursor-not-allowed flex items-center justify-center gap-2"
-                >
-                  Out of Stock
-                </button>
-              ) : (
-                <>
-                  {currentQuantity === 0 ? (
-                    <button
-                      onClick={handleAddToCart}
-                      className="flex-1 h-11 bg-[#189D91] hover:bg-[#14847a] text-white font-bold text-[11px] uppercase tracking-wider transition-colors flex items-center justify-center gap-2"
-                    >
-                      <FiShoppingCart size={14} /> Add to Cart
-                    </button>
-                  ) : (
-                    <div className="flex-1 h-11 flex items-center border-2 border-[#189D91] bg-white">
-                      <button
-                        onClick={() => updateQuantity(product._id || product.id, Math.max(0, currentQuantity - 1), currentVariantId)}
-                        className="w-11 h-full flex items-center justify-center text-[#189D91] hover:bg-[#189D91]/5 transition-colors"
-                      >
-                        <FiMinus size={14} />
-                      </button>
-                      <div className="flex-1 h-full flex items-center justify-center font-black text-[#189D91] text-sm border-x border-[#189D91]/20">
-                        {currentQuantity} in cart
-                      </div>
-                      <button
-                        onClick={handleIncrementQuantity}
-                        className="w-11 h-full flex items-center justify-center text-[#189D91] hover:bg-[#189D91]/5 transition-colors"
-                      >
-                        <FiPlus size={14} />
-                      </button>
-                    </div>
-                  )}
-                  <button
-                    onClick={handleBuyNow}
-                    className="flex-1 h-11 bg-gray-900 hover:bg-black text-white font-bold text-[11px] uppercase tracking-wider transition-colors flex items-center justify-center gap-2"
-                  >
-                    <FiZap size={13} /> Buy Now
-                  </button>
-                </>
-              )}
-            </div>
-
             {/* ── B2B: quote & sample (Requirement A) ── */}
             <div className="flex flex-wrap gap-2 mt-3 max-w-md">
               <RequestQuoteButton
@@ -887,6 +850,56 @@ const ProductDetailsPage = () => {
         </AccordionSection>
       </div>
 
+      {/* Desktop sticky action bar: pinned to viewport bottom, rests at end of the details */}
+      <div className="hidden md:block sticky bottom-0 z-30 bg-white border-t border-gray-100 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] py-3">
+        <div className="lg:w-[56%] lg:ml-auto flex gap-3 px-5 md:px-0">
+              {isOutOfStock ? (
+                <button
+                  disabled
+                  className="w-full h-12 bg-gray-200 text-gray-400 font-bold text-[11px] uppercase tracking-wider cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  Out of Stock
+                </button>
+              ) : (
+                <>
+                  {currentQuantity === 0 ? (
+                    <button
+                      onClick={handleAddToCart}
+                      className="flex-1 h-12 bg-[#189D91] hover:bg-[#14847a] text-white font-bold text-[11px] uppercase tracking-wider transition-colors flex items-center justify-center gap-2"
+                    >
+                      <FiShoppingCart size={14} /> Add to Cart
+                    </button>
+                  ) : (
+                    <div className="flex-1 h-12 flex items-center border-2 border-[#189D91] bg-white">
+                      <button
+                        onClick={() => updateQuantity(product._id || product.id, Math.max(0, currentQuantity - 1), currentVariantId)}
+                        className="w-11 h-full flex items-center justify-center text-[#189D91] hover:bg-[#189D91]/5 transition-colors"
+                      >
+                        <FiMinus size={14} />
+                      </button>
+                      <div className="flex-1 h-full flex items-center justify-center font-black text-[#189D91] text-sm border-x border-[#189D91]/20">
+                        {currentQuantity} in cart
+                      </div>
+                      <button
+                        onClick={handleIncrementQuantity}
+                        className="w-11 h-full flex items-center justify-center text-[#189D91] hover:bg-[#189D91]/5 transition-colors"
+                      >
+                        <FiPlus size={14} />
+                      </button>
+                    </div>
+                  )}
+                  <button
+                    onClick={handleBuyNow}
+                    className="flex-1 h-12 bg-gray-900 hover:bg-black text-white font-bold text-[11px] uppercase tracking-wider transition-colors flex items-center justify-center gap-2"
+                  >
+                    <FiZap size={13} /> Buy Now
+                  </button>
+                </>
+              )}
+        </div>
+      </div>
+      </div>
+
       {/* ── AI-based recommendations ── */}
       <ProductRecommendations productId={product._id || product.id} />
       <RecommendationCarousel productId={product._id || product.id} type="similar" title="Similar Products" limit={6} />
@@ -898,12 +911,13 @@ const ProductDetailsPage = () => {
       {/* ── Smart Bundles ── */}
       <BundleSuggestionsRow productId={product._id || product.id} />
 
-      {/* ── Mobile fixed action bar ── */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-white px-4 py-3 pb-5 flex gap-3 border-t border-gray-100 shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
+      {/* ── Fixed action bar (all screens) ── */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-gray-100 shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
+      <div className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 py-3 pb-5 md:pb-3 flex gap-3 md:justify-start">
         {isOutOfStock ? (
           <button
             disabled
-            className="w-full h-12 bg-gray-200 text-gray-400 font-bold text-[13px] uppercase tracking-wider cursor-not-allowed flex items-center justify-center gap-2"
+            className="w-full md:w-64 h-12 bg-gray-200 text-gray-400 font-bold text-[13px] uppercase tracking-wider cursor-not-allowed flex items-center justify-center gap-2"
           >
             Out of Stock
           </button>
@@ -911,19 +925,20 @@ const ProductDetailsPage = () => {
           <>
             <button
               onClick={handleAddToCart}
-              className="flex-1 h-12 bg-[#189D91] hover:bg-[#14847a] text-white font-bold text-[13px] uppercase tracking-wider transition-colors flex items-center justify-center gap-2"
+              className="flex-1 md:flex-none md:w-64 h-12 bg-[#189D91] hover:bg-[#14847a] text-white font-bold text-[13px] uppercase tracking-wider transition-colors flex items-center justify-center gap-2"
             >
               <FiShoppingCart size={15} />
               {currentQuantity > 0 ? `In Cart (${currentQuantity})` : 'Add to Cart'}
             </button>
             <button
               onClick={handleBuyNow}
-              className="flex-1 h-12 bg-gray-900 hover:bg-black text-white font-bold text-[13px] uppercase tracking-wider transition-colors flex items-center justify-center gap-2"
+              className="flex-1 md:flex-none md:w-64 h-12 bg-gray-900 hover:bg-black text-white font-bold text-[13px] uppercase tracking-wider transition-colors flex items-center justify-center gap-2"
             >
               <FiZap size={14} /> Buy Now
             </button>
           </>
         )}
+      </div>
       </div>
 
       {/* Share Modal */}

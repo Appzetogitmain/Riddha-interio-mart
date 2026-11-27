@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import PageWrapper from '../components/PageWrapper';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
@@ -21,10 +21,13 @@ import {
 import api from '../../../shared/utils/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-hot-toast';
+import ProductFilterBar from '../../../shared/components/ProductFilterBar';
+import { EMPTY_PRODUCT_FILTERS, matchesProductFilters } from '../../../shared/utils/productListFilters';
 
 const MyProducts = () => {
   const navigate = useNavigate();
-  const [filter, setFilter] = useState('All');
+  const [filters, setFilters] = useState({ ...EMPTY_PRODUCT_FILTERS });
+  const [categories, setCategories] = useState([]);
   const [view, setView] = useState('list'); // Defaulting to list for enterprise feel
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
@@ -39,7 +42,7 @@ const MyProducts = () => {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [filter, searchTerm]);
+  }, [filters, searchTerm]);
 
   const fetchProducts = async () => {
     try {
@@ -55,14 +58,16 @@ const MyProducts = () => {
 
   useEffect(() => {
     fetchProducts();
+    api.get('/categories')
+      .then(({ data }) => setCategories(Array.isArray(data?.data) ? data.data : []))
+      .catch(() => setCategories([]));
   }, []);
 
-  const filteredProducts = products.filter(p => {
-    const productStatus = (p.approvalStatus || p.status || (p.isActive ? 'approved' : 'pending')).toLowerCase();
-    const matchesFilter = filter === 'All' || productStatus === filter.toLowerCase();
-    const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) || (p.sku && p.sku.toLowerCase().includes(searchTerm.toLowerCase()));
-    return matchesFilter && matchesSearch;
-  });
+  const brandOptions = useMemo(() => [...new Set(products.map(p => p.brand?.name).filter(Boolean))].sort(), [products]);
+
+  const filteredProducts = products.filter(p =>
+    matchesProductFilters(p, searchTerm, filters, x => Number(x.sellerPrice || x.price) || 0)
+  );
 
   const totalItems = filteredProducts.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
@@ -138,7 +143,7 @@ const MyProducts = () => {
 
   return (
     <PageWrapper>
-      <div className="max-w-7xl mx-auto space-y-6">
+      <div className="w-full space-y-6">
         
         {/* Header & Primary Actions */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -172,23 +177,6 @@ const MyProducts = () => {
               />
             </div>
             
-            <div className="relative">
-               <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors">
-                 <Filter size={16} className="text-slate-400" />
-                 {filter}
-                 <ChevronDown size={14} className="text-slate-400" />
-               </button>
-               <select 
-                 className="absolute inset-0 opacity-0 cursor-pointer"
-                 value={filter}
-                 onChange={(e) => setFilter(e.target.value)}
-               >
-                 <option value="All">All Status</option>
-                 <option value="approved">Approved</option>
-                 <option value="pending">Pending</option>
-                 <option value="rejected">Rejected</option>
-               </select>
-            </div>
           </div>
 
           <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-xl w-full md:w-auto">
@@ -209,6 +197,8 @@ const MyProducts = () => {
           </div>
         </div>
 
+        <ProductFilterBar filters={filters} onApply={setFilters} categories={categories} brands={brandOptions} accent="#ea580c" />
+
         {/* Products Display */}
         {loading ? (
           <div className="py-20 text-center space-y-4">
@@ -225,7 +215,7 @@ const MyProducts = () => {
                 <p className="text-sm text-slate-500 mt-1 max-w-xs mx-auto">Try adjusting your filters or search terms to find what you're looking for.</p>
              </div>
              <button 
-               onClick={() => setSearchTerm('')}
+               onClick={() => { setSearchTerm(''); setFilters({ ...EMPTY_PRODUCT_FILTERS }); }}
                className="text-seller-primary font-bold text-sm hover:underline"
              >
                Clear all filters

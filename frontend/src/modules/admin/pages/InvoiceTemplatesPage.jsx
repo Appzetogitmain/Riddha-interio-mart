@@ -184,7 +184,7 @@ const InvoiceTemplatesPage = () => {
 
   return (
     <PageWrapper>
-      <div className="max-w-6xl mx-auto space-y-6">
+      <div className="w-full space-y-6">
         <Link
           to="/admin/settings"
           className="flex items-center gap-1.5 text-warm-sand hover:text-deep-espresso transition-colors font-bold text-xs uppercase tracking-widest w-fit"

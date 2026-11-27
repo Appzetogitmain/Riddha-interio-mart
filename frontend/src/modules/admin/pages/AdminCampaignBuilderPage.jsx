@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   FiSend, FiBarChart2, FiUsers, FiLayers, FiCheckCircle,
-  FiZap, FiPieChart, FiTrendingUp, FiPlus, FiSparkles, FiRefreshCw
+  FiZap, FiPieChart, FiTrendingUp, FiPlus, FiRefreshCw
 } from 'react-icons/fi';
 import { LuSparkles, LuBrain } from 'react-icons/lu';
 import { notificationCenterService } from '../../user/services/notificationCenterService';
@@ -60,7 +60,7 @@ const AdminCampaignBuilderPage = () => {
   };
 
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto text-slate-800">
+    <div className="p-6 space-y-6 w-full text-slate-800">
 
       {/* Header Banner */}
       <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-amber-950 rounded-3xl p-6 sm:p-8 text-white shadow-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6 border border-slate-700/50">

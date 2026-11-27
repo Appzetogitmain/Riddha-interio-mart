@@ -68,7 +68,7 @@ const TejasChatHistory = () => {
 
   return (
     <PageWrapper>
-      <div className="max-w-7xl mx-auto space-y-4">
+      <div className="w-full space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-xl font-bold text-gray-900">Tejas Chat History</h1>

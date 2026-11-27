@@ -331,7 +331,7 @@ const ManageCategories = () => {
 
   return (
     <PageWrapper>
-      <div className="max-w-7xl mx-auto space-y-4">
+      <div className="w-full space-y-4">
         {/* Top Control Bar */}
         <div className="bg-white p-3 rounded-2xl border border-soft-oatmeal/30 shadow-sm flex flex-wrap items-center gap-4">
           <button

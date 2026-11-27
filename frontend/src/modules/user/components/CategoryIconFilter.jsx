@@ -1,5 +1,5 @@
-import React from 'react';
-import { LuLayoutGrid, LuChevronDown } from 'react-icons/lu';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
+import { LuLayoutGrid, LuChevronDown, LuChevronLeft, LuChevronRight } from 'react-icons/lu';
 import { getCategoryIconAndColor, toTitleCase } from '../utils/categoryIcon';
 
 // Horizontal row of category icon tiles used as the primary category filter
@@ -10,6 +10,32 @@ const CategoryIconFilter = ({ categories = [], selectedCategory, selectedSubcate
   const activeCategory = categories.find((c) => c._id === selectedCategory);
   const subcategories = activeCategory?.subcategories || [];
 
+  const scrollRef = useRef(null);
+  const [canLeft, setCanLeft] = useState(false);
+  const [canRight, setCanRight] = useState(false);
+
+  const updateArrows = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setCanLeft(el.scrollLeft > 4);
+    setCanRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
+  }, []);
+
+  useEffect(() => {
+    updateArrows();
+    const el = scrollRef.current;
+    if (!el) return;
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(updateArrows) : null;
+    ro?.observe(el);
+    window.addEventListener('resize', updateArrows);
+    return () => { ro?.disconnect(); window.removeEventListener('resize', updateArrows); };
+  }, [categories, isLoading, updateArrows]);
+
+  const scrollByDir = (dir) => {
+    const el = scrollRef.current;
+    if (el) el.scrollBy({ left: dir * Math.max(240, el.clientWidth * 0.7), behavior: 'smooth' });
+  };
+
   const handleSelectCategory = (categoryId) => {
     // Clicking the already-selected category clears it (acts as a toggle).
     onChange(categoryId === selectedCategory ? undefined : categoryId, undefined);
@@ -19,7 +45,20 @@ const CategoryIconFilter = ({ categories = [], selectedCategory, selectedSubcate
 
   return (
     <div className="mb-6 space-y-3">
-      <div className="flex items-center gap-2 md:gap-3 overflow-x-auto no-scrollbar pb-1">
+      <div className="relative">
+      {canLeft && (
+        <button type="button" aria-label="Scroll categories left" onClick={() => scrollByDir(-1)}
+          className="hidden md:flex absolute left-0 top-8 -translate-y-1/2 z-10 h-9 w-9 items-center justify-center rounded-full bg-white border border-soft-oatmeal shadow-md hover:bg-gray-50">
+          <LuChevronLeft className="w-5 h-5 text-gray-700" />
+        </button>
+      )}
+      {canRight && (
+        <button type="button" aria-label="Scroll categories right" onClick={() => scrollByDir(1)}
+          className="hidden md:flex absolute right-0 top-8 -translate-y-1/2 z-10 h-9 w-9 items-center justify-center rounded-full bg-white border border-soft-oatmeal shadow-md hover:bg-gray-50">
+          <LuChevronRight className="w-5 h-5 text-gray-700" />
+        </button>
+      )}
+      <div ref={scrollRef} onScroll={updateArrows} className="flex items-center gap-2 md:gap-3 overflow-x-auto no-scrollbar pb-1 scroll-smooth">
         <button
           type="button"
           onClick={() => handleSelectCategory(undefined)}
@@ -67,6 +106,7 @@ const CategoryIconFilter = ({ categories = [], selectedCategory, selectedSubcate
             </button>
           );
         })}
+      </div>
       </div>
 
       {selectedCategory && subcategories.length > 0 && (

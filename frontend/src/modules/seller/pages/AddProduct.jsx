@@ -770,7 +770,7 @@ const AddProduct = () => {
 
   return (
     <PageWrapper>
-      <div className="max-w-6xl mx-auto space-y-10 pb-20">
+      <div className="w-full space-y-10 pb-20">
         <AnimatePresence mode="wait">
           {!selection ? (
             <motion.div

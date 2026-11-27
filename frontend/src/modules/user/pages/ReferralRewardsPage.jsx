@@ -82,7 +82,7 @@ const ReferralRewardsPage = () => {
       animate={{ opacity: 1, y: 0 }}
       className="min-h-screen bg-gray-50/30 pb-32 px-4 md:px-12 pt-4 md:pt-10"
     >
-      <div className="max-w-7xl mx-auto space-y-12">
+      <div className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 space-y-12">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-4">

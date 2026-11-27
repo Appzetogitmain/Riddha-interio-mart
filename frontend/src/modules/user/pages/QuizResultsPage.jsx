@@ -102,7 +102,7 @@ const QuizResultsPage = () => {
     <div className="min-h-screen w-full bg-slate-50 font-sans pb-16">
       {/* Top Banner Background */}
       <div className="bg-gradient-to-r from-[#189D91] via-[#127F75] to-slate-900 text-white pt-12 pb-24 px-4 md:px-8">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+        <div className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div>
             <button
               onClick={() => navigate('/')}
@@ -127,7 +127,7 @@ const QuizResultsPage = () => {
       </div>
 
       {/* Main Container */}
-      <div className="max-w-6xl mx-auto px-4 -mt-16">
+      <div className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 -mt-16">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
           {/* LEFT 2 COLUMNS: Profile & Recommendations */}

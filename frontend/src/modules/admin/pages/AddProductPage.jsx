@@ -554,7 +554,7 @@ const AddProductPage = () => {
 
   return (
     <PageWrapper>
-      <div className="max-w-7xl mx-auto space-y-8">
+      <div className="w-full space-y-8">
         <button 
           onClick={() => navigate('/admin/catalog')}
           className="flex items-center gap-2 text-warm-sand font-bold hover:text-deep-espresso transition-colors group text-xs md:text-sm"

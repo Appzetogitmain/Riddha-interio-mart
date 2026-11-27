@@ -19,6 +19,8 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../../../shared/utils/api';
+import CatalogFilterBar from '../../../shared/components/CatalogFilterBar';
+import { EMPTY_FILTERS, matchesCatalogFilters, getBrandName } from '../../../shared/utils/catalogFilters';
 
 const BrowseCatalog = () => {
   const navigate = useNavigate();
@@ -27,6 +29,9 @@ const BrowseCatalog = () => {
   const [catalogProducts, setCatalogProducts] = useState([]);
   const [inventory, setInventory] = useState([]);
   const [viewMode, setViewMode] = useState('list');
+  const [filters, setFilters] = useState({ ...EMPTY_FILTERS });
+  const categories = useMemo(() => [...new Set(catalogProducts.map(p => p.category).filter(Boolean))].sort(), [catalogProducts]);
+  const brands = useMemo(() => [...new Set(catalogProducts.map(getBrandName).filter(Boolean))].sort(), [catalogProducts]);
 
   useEffect(() => {
     fetchCatalog();
@@ -55,11 +60,8 @@ const BrowseCatalog = () => {
   };
 
   const filteredProducts = useMemo(() => {
-    return catalogProducts.filter(p =>
-      p.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.sku?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [searchTerm, catalogProducts]);
+    return catalogProducts.filter(p => matchesCatalogFilters(p, searchTerm, filters));
+  }, [searchTerm, catalogProducts, filters]);
 
   const isProductInInventory = (sku) => {
     return inventory.some(p => p.sku === sku);
@@ -67,7 +69,7 @@ const BrowseCatalog = () => {
 
   return (
     <PageWrapper>
-      <div className="max-w-7xl mx-auto space-y-8 pb-10">
+      <div className="w-full space-y-8 pb-10">
         
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -112,6 +114,8 @@ const BrowseCatalog = () => {
              </button>
           </div>
         </div>
+
+        <CatalogFilterBar filters={filters} onApply={setFilters} categories={categories} brands={brands} accent="#4f46e5" />
 
         {/* Catalog Content */}
         {loading ? (

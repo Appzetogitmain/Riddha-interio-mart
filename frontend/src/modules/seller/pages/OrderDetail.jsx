@@ -341,7 +341,7 @@ const OrderDetail = () => {
 
   return (
     <PageWrapper>
-      <div className="max-w-6xl mx-auto pb-10 space-y-4">
+      <div className="w-full pb-10 space-y-4">
 
         {/* Top bar */}
         <div className="flex items-center justify-between flex-wrap gap-3">

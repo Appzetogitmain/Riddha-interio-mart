@@ -193,7 +193,7 @@ const ProjectDetailPage = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto space-y-6">
+      <div className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 space-y-6">
 
         {/* Back Navigation Bar */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">

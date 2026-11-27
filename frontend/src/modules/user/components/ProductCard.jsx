@@ -256,7 +256,7 @@ const ProductCard = ({ product, index = 0, variant = 'grid' }) => {
           </div>
 
           {/* Bulk quote + Add to Cart side by side */}
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <RequestQuoteButton
               products={[{
                 productId,
@@ -275,9 +275,9 @@ const ProductCard = ({ product, index = 0, variant = 'grid' }) => {
             {quantity === 0 ? (
               <button
                 onClick={(e) => { e.preventDefault(); addToCart(product); }}
-                className="w-full flex items-center justify-center gap-1.5 bg-[#189D91] hover:bg-[#14847a] text-white py-2.5 rounded-xl text-[11px] md:text-[13px] font-bold shadow-sm transition-all active:scale-[0.98] whitespace-nowrap"
+                className="w-full flex items-center justify-center gap-1.5 bg-[#189D91] hover:bg-[#14847a] text-white px-3 py-2.5 rounded-xl text-[11px] md:text-[13px] font-bold shadow-sm transition-all active:scale-[0.98] whitespace-nowrap"
               >
-                <FiShoppingCart className="w-4 h-4" />
+                <FiShoppingCart className="w-3.5 h-3.5 md:w-4 md:h-4 shrink-0" />
                 Add to Cart
               </button>
             ) : (

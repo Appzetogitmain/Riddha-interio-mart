@@ -90,7 +90,7 @@ const CartPage = () => {
   return (
     <div className="bg-white md:bg-[#FAFAFA] min-h-screen pb-32">
       {/* ======================= DESKTOP VIEW (Match Screenshot) ======================= */}
-      <div className="hidden md:block max-w-6xl mx-auto px-6 py-8">
+      <div className="hidden md:block max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 py-8">
         {/* Breadcrumbs */}
         <div className="text-[13px] text-gray-500 font-medium mb-8">
           <Link to="/" className="hover:text-[#189D91] hover:underline transition-colors cursor-pointer">Home</Link> <span className="mx-2">&gt;</span> Cart <span className="mx-2">&gt;</span> <span className="text-gray-900">Checkout</span>

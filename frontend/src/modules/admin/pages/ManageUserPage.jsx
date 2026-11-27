@@ -157,7 +157,7 @@ const ManageUserPage = ({ type }) => {
   return (
     <PageWrapper>
       {/* 🖥️ DESKTOP VIEW (Large screens) */}
-      <div className="hidden lg:block max-w-7xl mx-auto space-y-6">
+      <div className="hidden lg:block w-full space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
             <h1 className="text-2xl md:text-3xl lg:text-4xl font-display font-bold text-deep-espresso capitalize">

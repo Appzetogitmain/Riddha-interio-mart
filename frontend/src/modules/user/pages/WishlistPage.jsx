@@ -36,7 +36,7 @@ const WishlistPage = () => {
   }
 
   return (
-    <div className="max-w-[1440px] mx-auto px-4 lg:px-8 py-8 md:py-12">
+    <div className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 py-8 md:py-12">
       <div className="flex items-center gap-4 mb-8">
         <div className="w-12 h-12 bg-[#E91E8B]/10 rounded-2xl flex items-center justify-center text-[#E91E8B]">
           <FiHeart size={24} className="fill-[#E91E8B]" />

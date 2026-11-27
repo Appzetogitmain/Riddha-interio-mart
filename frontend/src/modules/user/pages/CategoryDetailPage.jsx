@@ -199,7 +199,7 @@ const CategoryDetailPage = () => {
         />
         <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
         <div className="absolute inset-0 flex items-center">
-         <div className="w-full max-w-[1700px] mx-auto px-6 lg:px-8">
+         <div className="w-full max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
@@ -222,7 +222,7 @@ const CategoryDetailPage = () => {
         </div>
       </div>
 
-      <div className="max-w-[1700px] mx-auto px-4 md:px-6 lg:px-8 py-4 md:py-6">
+      <div className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 py-4 md:py-6">
         <div className="relative flex flex-col lg:flex-row gap-5 lg:gap-8">
 
           {/* Main Content Area */}

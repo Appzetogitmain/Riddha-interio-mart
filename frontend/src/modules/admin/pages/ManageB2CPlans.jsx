@@ -166,7 +166,7 @@ const ManageB2CPlans = () => {
 
   return (
     <PageWrapper>
-      <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
+      <div className="p-4 md:p-8 w-full space-y-6">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
           <div>

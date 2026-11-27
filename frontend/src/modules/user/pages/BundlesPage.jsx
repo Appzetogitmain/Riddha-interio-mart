@@ -24,7 +24,7 @@ const BundlesPage = () => {
   }, []);
 
   return (
-    <div className="max-w-[1200px] mx-auto px-4 md:px-6 pb-16 pt-4">
+    <div className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 pb-16 pt-4">
       <div className="flex items-center gap-3 mb-6">
         <div className="w-10 h-10 rounded-xl bg-[#189D91]/10 text-[#189D91] flex items-center justify-center">
           <FiZap size={20} />

@@ -105,7 +105,7 @@ const ContractorRegistration = () => {
           <div className="absolute bottom-0 right-0 w-96 h-96 bg-[#189D91] rounded-full translate-x-1/3 translate-y-1/3 blur-3xl" />
         </div>
 
-        <div className="max-w-7xl mx-auto px-6 relative z-10 text-center">
+        <div className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 relative z-10 text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -125,7 +125,7 @@ const ContractorRegistration = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-12 md:py-20">
+      <div className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 py-12 md:py-20">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20">
           {/* Benefits Column */}
           <div className="lg:col-span-5 space-y-12">

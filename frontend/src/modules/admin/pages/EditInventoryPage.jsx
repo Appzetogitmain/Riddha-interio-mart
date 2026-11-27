@@ -328,7 +328,7 @@ const EditInventoryPage = () => {
 
   return (
     <PageWrapper>
-      <div className="w-full max-w-[1500px] mx-auto space-y-4 pb-10">
+      <div className="w-full w-full space-y-4 pb-10">
         <div className="flex items-center justify-between">
           <button 
             onClick={() => navigate('/admin/inventory')}

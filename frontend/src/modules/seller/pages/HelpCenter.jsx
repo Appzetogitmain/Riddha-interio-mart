@@ -332,7 +332,7 @@ const HelpCenter = () => {
 
   return (
     <PageWrapper>
-      <div className="max-w-6xl mx-auto space-y-10 pb-20">
+      <div className="w-full space-y-10 pb-20">
         
         {/* Hero Section */}
         <div className="relative bg-white rounded-[2.5rem] p-8 md:p-16 overflow-hidden text-center border border-slate-100 shadow-xl shadow-slate-200/40">

@@ -298,7 +298,7 @@ const OrderListPage = ({ specificStatus }) => {
 
   return (
     <PageWrapper>
-      <div className="max-w-7xl mx-auto space-y-6">
+      <div className="w-full space-y-6">
         <div className="flex border-b border-soft-oatmeal overflow-x-auto bg-white p-2 rounded-t-2xl shadow-sm">
           {[
             { id: 'all', label: 'All Orders' },

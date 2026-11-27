@@ -25,7 +25,7 @@ const BrandsPage = () => {
     <div className="min-h-screen bg-[#FAFAFA] pb-16">
       {/* Header */}
       <div className="bg-white border-b border-gray-100 px-4 md:px-12 py-8">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
           <p className="text-[10px] uppercase tracking-[0.25em] font-black text-[#189D91] mb-1">Curated Brands</p>
           <h1 className="text-2xl md:text-3xl font-display font-bold text-slate-900">All Brands</h1>
           <p className="text-sm text-gray-400 font-medium mt-1">
@@ -34,7 +34,7 @@ const BrandsPage = () => {
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 md:px-12 pt-6">
+      <div className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 pt-6">
         {/* Search */}
         <div className="relative max-w-sm mb-6">
           <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={15} />

@@ -145,7 +145,7 @@ const AssignDeliveryBoy = () => {
 
   return (
     <PageWrapper>
-      <div className="max-w-7xl mx-auto space-y-8">
+      <div className="w-full space-y-8">
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-2">
           <div>

@@ -364,7 +364,7 @@ const BundleManagementPage = () => {
 
   return (
     <PageWrapper>
-      <div className="max-w-7xl mx-auto space-y-4 py-2">
+      <div className="w-full space-y-4 py-2">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
             { label: 'Bundles', value: bundles.length, icon: FiZap, color: 'text-blue-500', bg: 'bg-blue-50' },

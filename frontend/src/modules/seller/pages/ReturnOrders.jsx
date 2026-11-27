@@ -78,7 +78,7 @@ const ReturnOrders = () => {
 
   return (
     <PageWrapper>
-      <div className="p-4 md:p-8 max-w-7xl mx-auto font-sans">
+      <div className="p-4 md:p-8 w-full font-sans">
         <div className="flex justify-between items-end mb-8">
           <div>
             <h1 className="text-2xl md:text-3xl font-black text-gray-900 font-display">Manage Returns</h1>

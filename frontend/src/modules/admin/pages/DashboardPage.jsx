@@ -254,7 +254,7 @@ const DashboardPage = () => {
       {isDesktop ? (
       <>
       {/* 🖥️ WEB VIEW ONLY (Large screens) */}
-      <div className="max-w-7xl mx-auto space-y-8 pb-16">
+      <div className="w-full space-y-8 pb-16">
         
         {/* Premium Admin Hero Section */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 bg-white p-6 md:p-8 rounded-2xl border border-slate-200/80 shadow-sm relative overflow-hidden">

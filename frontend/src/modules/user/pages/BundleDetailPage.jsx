@@ -62,7 +62,7 @@ const BundleDetailPage = () => {
   };
 
   return (
-    <div className="max-w-[1000px] mx-auto px-4 md:px-6 pb-16 pt-4">
+    <div className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 pb-16 pt-4">
       <Link to="/bundles" className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-gray-500 hover:text-[#189D91] mb-4">
         <FiArrowLeft size={14} /> All Bundles
       </Link>

@@ -281,7 +281,7 @@ const HomePage = () => {
             borderColor: '#AEE4DA',
           }}
         >
-          <div className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-12">
+          <div className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
             <div className="flex justify-between items-end mb-4">
               <div>
                 <span className="inline-block px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-[0.2em] bg-[#189D91]/15 text-[#0F766E] border border-[#189D91]/30 mb-1">
@@ -321,7 +321,7 @@ const HomePage = () => {
           borderColor: '#FDCBA0',
         }}
       >
-        <div className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-12">
+        <div className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
 
           {/* Section Header */}
           <div className="flex items-center justify-between mb-4 md:mb-6">

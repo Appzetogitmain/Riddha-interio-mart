@@ -93,7 +93,7 @@ const ManageRecommendations = () => {
   const activeTab = TABS.find(t => t.id === tab);
 
   return (
-    <div className="p-6 max-w-6xl mx-auto space-y-6">
+    <div className="p-6 w-full space-y-6">
       <div>
         <h1 className="text-2xl font-black text-slate-800">Homepage Recommendation Tabs</h1>
         <p className="text-sm text-gray-500 mt-1">Pin products to a tab. Pinned products always show first, in the order below; the automatic logic fills the remaining slots.</p>

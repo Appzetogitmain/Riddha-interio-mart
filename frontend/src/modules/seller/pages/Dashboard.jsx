@@ -109,7 +109,7 @@ const Dashboard = () => {
 
   return (
     <PageWrapper>
-      <div className="max-w-7xl mx-auto space-y-6 pb-10">
+      <div className="w-full space-y-6 pb-10">
         
         {/* Mobile Quick Command Center (Visible only on mobile) */}
         <div className="lg:hidden space-y-4">

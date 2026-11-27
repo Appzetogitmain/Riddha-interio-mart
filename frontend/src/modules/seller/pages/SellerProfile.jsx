@@ -240,7 +240,7 @@ const SellerProfile = () => {
 
   return (
     <PageWrapper>
-      <div className="max-w-6xl mx-auto space-y-8 pb-20 px-4 md:px-0">
+      <div className="w-full space-y-8 pb-20 px-4 md:px-0">
         
         {/* Profile Header Card */}
         <motion.div 

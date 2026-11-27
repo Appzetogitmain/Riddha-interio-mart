@@ -53,7 +53,7 @@ const AdminLayoutContent = () => {
       <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
       <div className="flex-1 flex flex-col h-full overflow-hidden w-full relative">
-        <header className="sticky top-0 z-30 h-16 md:h-18 bg-white/80 backdrop-blur-md border-b border-slate-200/80 px-6 flex items-center justify-between transition-all duration-300">
+        <header className="sticky top-0 z-30 h-16 md:h-18 bg-white/80 backdrop-blur-md border-b border-slate-200/80 px-6 md:px-8 flex items-center justify-between transition-all duration-300">
           <div className="flex items-center gap-3">
             <button
               onClick={(e) => {

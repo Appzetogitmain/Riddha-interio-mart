@@ -119,7 +119,7 @@ const ProfessionalDashboard = () => {
       {/* Background Broadcast Notification Popup */}
       <BroadcastNotificationModal user={user} onAcceptSuccess={() => { fetchRequests(); setActiveTab('active'); }} />
 
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
         {/* Header Title & Professional Profile Badge */}
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">

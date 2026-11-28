@@ -4,7 +4,7 @@ import PageWrapper from '../components/PageWrapper';
 import { motion } from 'framer-motion';
 import {
   FiPlus, FiX, FiCheck, FiImage, FiLayers,
-  FiSave, FiInfo, FiChevronLeft
+  FiSave, FiInfo, FiChevronLeft, FiTrash2
 } from 'react-icons/fi';
 
 import api from '../../../shared/utils/api';

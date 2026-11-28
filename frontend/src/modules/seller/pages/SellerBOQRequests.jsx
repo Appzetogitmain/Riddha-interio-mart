@@ -66,7 +66,7 @@ const SellerBOQRequests = () => {
 
   return (
     <PageWrapper>
-      <div className="p-4 md:p-6 lg:p-8 space-y-6">
+      <div className="w-full space-y-6">
         <header className="flex flex-col gap-2">
           <h1 className="font-display text-2xl font-black text-slate-900">Custom Sourcing Requests</h1>
           <p className="text-sm font-semibold text-slate-500">

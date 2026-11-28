@@ -6,6 +6,7 @@ import api from '../../../shared/utils/api';
 import TableSkeleton from '../../../shared/components/skeletons/TableSkeleton';
 import PageWrapper from '../components/PageWrapper';
 import ReturnInspectionModal from '../components/ReturnInspectionModal';
+import Pagination, { usePagination } from '../../../shared/components/Pagination';
 
 const ReturnOrders = () => {
   const [returns, setReturns] = useState([]);
@@ -76,9 +77,10 @@ const ReturnOrders = () => {
     }
   };
 
+  const { pageItems: pagedReturns, paginationProps: pagerReturns } = usePagination(returns, 10);
   return (
     <PageWrapper>
-      <div className="p-4 md:p-8 w-full font-sans">
+      <div className="w-full font-sans">
         <div className="flex justify-between items-end mb-8">
           <div>
             <h1 className="text-2xl md:text-3xl font-black text-gray-900 font-display">Manage Returns</h1>
@@ -104,7 +106,7 @@ const ReturnOrders = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
-                  {returns.map((ret) => {
+                  {pagedReturns.map((ret) => {
                     const orderId = ret.order?._id ? String(ret.order._id) : (typeof ret.order === 'string' ? ret.order : '');
                     return (
                     <tr key={ret._id} className="hover:bg-gray-50/50 transition-colors">
@@ -196,6 +198,7 @@ const ReturnOrders = () => {
               </table>
             )}
           </div>
+          <Pagination {...pagerReturns} />
         </div>
       </div>
 

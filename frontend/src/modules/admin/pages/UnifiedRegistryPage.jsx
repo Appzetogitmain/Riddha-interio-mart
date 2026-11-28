@@ -25,6 +25,7 @@ import {
 import { FiMoreVertical } from "react-icons/fi";
 import api from "../../../shared/utils/api";
 import { toast } from "react-hot-toast";
+import Pagination from '../../../shared/components/Pagination';
 
 const getDocumentUrl = (path) => {
   if (!path) return "";
@@ -515,30 +516,7 @@ const UnifiedRegistryPage = () => {
           )}
         </div>
 
-        {/* Pagination Bar */}
-        {!loading && items.length > 0 && (
-          <div className="flex items-center justify-between bg-white px-4 py-2.5 rounded-xl border border-soft-oatmeal shadow-sm">
-            <p className="text-[11px] font-bold text-deep-espresso/60">
-              Showing {(page - 1) * 20 + 1}–{Math.min(page * 20, totalResults)} of {totalResults} {TABS.find(t => t.id === activeTab)?.label}
-            </p>
-            <div className="flex items-center gap-1.5">
-              <button
-                onClick={() => fetchDirectory(Math.max(1, page - 1))}
-                disabled={page === 1}
-                className="px-3 py-1.5 rounded-lg border border-soft-oatmeal text-[11px] font-bold text-deep-espresso disabled:opacity-40 disabled:cursor-not-allowed hover:bg-soft-oatmeal/20 transition-colors"
-              >
-                Previous
-              </button>
-              <button
-                onClick={() => fetchDirectory(Math.min(totalPages, page + 1))}
-                disabled={page === totalPages}
-                className="px-3 py-1.5 rounded-lg border border-soft-oatmeal text-[11px] font-bold text-deep-espresso disabled:opacity-40 disabled:cursor-not-allowed hover:bg-soft-oatmeal/20 transition-colors"
-              >
-                Next
-              </button>
-            </div>
-          </div>
-        )}
+        <Pagination page={page} pageSize={20} total={totalResults} onPageChange={fetchDirectory} className="bg-white rounded-xl border border-soft-oatmeal shadow-sm" />
 
         {/* 360° INSPECTOR SLIDE-OVER DRAWER */}
         {selectedItem && (() => {

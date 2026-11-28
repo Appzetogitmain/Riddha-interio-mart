@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import api from '../../../shared/utils/api';
 import TableSkeleton from '../../../shared/components/skeletons/TableSkeleton';
 import PageWrapper from '../components/PageWrapper';
+import Pagination, { usePagination } from '../../../shared/components/Pagination';
 
 const ReturnOrdersPage = () => {
   const [returns, setReturns] = useState([]);
@@ -57,6 +58,7 @@ const ReturnOrdersPage = () => {
     }
   };
 
+  const { pageItems: pagedReturns, paginationProps: pagerReturns } = usePagination(returns, 10);
   return (
     <PageWrapper>
       <div className="p-4 md:p-8 w-full font-sans">
@@ -85,7 +87,7 @@ const ReturnOrdersPage = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
-                  {returns.map((ret) => (
+                  {pagedReturns.map((ret) => (
                     <tr key={ret._id} className="hover:bg-gray-50/50 transition-colors">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
@@ -163,6 +165,7 @@ const ReturnOrdersPage = () => {
               </table>
             )}
           </div>
+          <Pagination {...pagerReturns} />
         </div>
       </div>
 

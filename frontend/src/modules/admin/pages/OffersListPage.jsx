@@ -4,6 +4,7 @@ import { Plus, Edit, Trash2, Eye, CheckCircle, Clock, XCircle } from 'lucide-rea
 import api from '../../../shared/utils/api';
 import { toast } from 'react-hot-toast';
 import { OFFER_TYPES, slugToLabel } from '../../../shared/constants/offerTypes';
+import Pagination, { usePagination } from '../../../shared/components/Pagination';
 
 const OffersListPage = () => {
   const navigate = useNavigate();
@@ -119,6 +120,7 @@ const OffersListPage = () => {
       new Date(offer.startDate) <= now && new Date(offer.endDate) >= now;
   };
 
+  const { pageItems: pagedOffers, paginationProps: pagerOffers } = usePagination(offers, 10);
   return (
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
@@ -128,7 +130,7 @@ const OffersListPage = () => {
         </div>
         <button
           onClick={() => navigate('/admin/offers/add')}
-          className="flex items-center gap-2 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition"
+          className="flex items-center gap-2 px-6 py-2 bg-red-800 hover:bg-deep-espresso text-white font-semibold rounded-lg transition"
         >
           <Plus size={20} /> Create Offer
         </button>
@@ -187,6 +189,7 @@ const OffersListPage = () => {
             <p className="text-sm">No offers found</p>
           </div>
         ) : (
+          <>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-slate-50 border-b border-slate-200">
@@ -201,7 +204,7 @@ const OffersListPage = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
-                {offers.map(offer => (
+                {pagedOffers.map(offer => (
                   <tr key={offer._id} className="hover:bg-slate-50 transition">
                     <td className="px-6 py-4">
                       <div>
@@ -306,6 +309,8 @@ const OffersListPage = () => {
               </tbody>
             </table>
           </div>
+          <Pagination {...pagerOffers} />
+          </>
         )}
       </div>
     </div>

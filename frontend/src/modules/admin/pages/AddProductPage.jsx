@@ -554,20 +554,18 @@ const AddProductPage = () => {
 
   return (
     <PageWrapper>
-      <div className="w-full space-y-8">
-        <button 
-          onClick={() => navigate('/admin/catalog')}
-          className="flex items-center gap-2 text-warm-sand font-bold hover:text-deep-espresso transition-colors group text-xs md:text-sm"
-        >
-          <FiArrowLeft className="group-hover:-translate-x-1 transition-transform" />
-          Back to Catalog
-        </button>
+      <div className="w-full space-y-6 pb-12">
+        <div className="flex items-center justify-between">
+          <button 
+            onClick={() => navigate('/admin/catalog')}
+            className="flex items-center gap-2 text-warm-sand hover:text-deep-espresso transition-colors font-bold text-xs uppercase tracking-widest"
+          >
+            <FiArrowLeft size={18} /> Back to Catalog
+          </button>
+          <h1 className="text-2xl font-display font-bold text-deep-espresso">Add New Product</h1>
+        </div>
 
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="space-y-1">
-            <h1 className="text-2xl md:text-3xl lg:text-4xl font-display font-bold text-deep-espresso">Add New Product</h1>
-            <p className="text-warm-sand text-sm md:text-base font-medium">Populate your catalog with premium items.</p>
-          </div>
+        <div className="flex flex-wrap items-center justify-end gap-4">
           <div className="flex items-center gap-4">
             {statusMessage && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded-xl text-xs font-bold">
@@ -585,11 +583,12 @@ const AddProductPage = () => {
 
         <BulkUploadModal isOpen={isBulkModalOpen} onClose={() => setIsBulkModalOpen(false)} />
 
-        <form onSubmit={handleSubmit} noValidate className="space-y-6 md:space-y-8 pb-12">
-          {/* Main Form Card */}
-          <div className="bg-white rounded-3xl md:rounded-[32px] border border-soft-oatmeal shadow-xl grid grid-cols-1 xl:grid-cols-2 relative">
-             {/* Left: Image Preview Area */}
-             <div className="p-6 md:p-8 bg-soft-oatmeal/10 border-b xl:border-r xl:border-b-0 border-soft-oatmeal min-w-0 space-y-6">
+        <form onSubmit={handleSubmit} noValidate className="space-y-6">
+          <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+             {/* Left (col 4): Product Media card, then AI Content Optimizer below it */}
+             <div className="xl:col-span-4 min-w-0 space-y-6">
+             <div className="bg-white rounded-3xl p-6 border border-soft-oatmeal shadow-sm h-fit min-w-0 space-y-6">
+                <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest block text-center">Product Media</label>
                 <div className="mb-2">
                   <AIPhotoStudio onApply={handleAIPhotoStudioApply} theme="admin" />
                 </div>
@@ -786,8 +785,10 @@ const AddProductPage = () => {
                    />
               </div>
 
-              {/* Right: Detailed Fields */}
-              <div className="xl:col-span-2 p-6 md:p-10 lg:p-12 space-y-8">
+              </div>
+
+              {/* Right (col 8): Detailed Fields */}
+              <div className="xl:col-span-8 min-w-0 bg-white rounded-3xl p-6 md:p-8 border border-soft-oatmeal shadow-sm space-y-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                    <div className="space-y-2">
                       <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest flex items-center gap-2">

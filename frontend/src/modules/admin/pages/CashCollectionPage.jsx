@@ -8,6 +8,7 @@ import {
 import { FiCheckCircle, FiAlertCircle } from "react-icons/fi";
 import api from "../../../shared/utils/api";
 import { toast } from "react-hot-toast";
+import Pagination, { usePagination } from '../../../shared/components/Pagination';
 
 const CashCollectionPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -76,6 +77,7 @@ const CashCollectionPage = () => {
     ), { duration: 6000 });
   };
 
+  const { pageItems: pagedFilteredCollections, paginationProps: pagerFilteredCollections } = usePagination(filteredCollections, 10);
   return (
     <PageWrapper>
       <div className="w-full space-y-6">
@@ -150,7 +152,7 @@ const CashCollectionPage = () => {
                     </tr>
                   ))
                 ) : filteredCollections.length > 0 ? (
-                  filteredCollections.map((c) => (
+                  pagedFilteredCollections.map((c) => (
                     <tr
                       key={c._id}
                       className="hover:bg-soft-oatmeal/5 transition-colors group"
@@ -221,6 +223,7 @@ const CashCollectionPage = () => {
               </tbody>
             </table>
           </div>
+          <Pagination {...pagerFilteredCollections} />
         </div>
       </div>
     </PageWrapper>

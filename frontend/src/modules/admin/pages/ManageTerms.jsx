@@ -98,7 +98,7 @@ const ManageTerms = () => {
 
   return (
     <PageWrapper>
-      <div className="max-w-4xl mx-auto space-y-8">
+      <div className="w-full space-y-8">
         <div className="space-y-1">
           <h1 className="text-2xl md:text-3xl lg:text-4xl font-display font-bold text-deep-espresso">
             Terms & Conditions & Privacy Policy Management

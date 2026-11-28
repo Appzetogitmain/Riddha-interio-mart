@@ -285,7 +285,7 @@ const OfferFormPage = () => {
           <button
             type="submit"
             disabled={submitting}
-            className="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white font-semibold rounded-lg transition flex items-center justify-center gap-2"
+            className="flex-1 px-6 py-3 bg-seller-primary hover:bg-seller-dark disabled:bg-slate-300 text-white font-semibold rounded-lg transition flex items-center justify-center gap-2"
           >
             {submitting && <Loader className="animate-spin" size={18} />}
             {isEdit ? 'Update Offer' : 'Create Offer'}

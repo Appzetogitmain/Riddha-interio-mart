@@ -288,6 +288,7 @@ const menuGroups = [
         ],
       },
       { path: "/admin/terms", icon: FiClipboard, label: "Manage T&C" },
+      { path: "/admin/rfq-instructions", icon: FiClipboard, label: "Bulk Quote Instructions" },
     ],
   },
   {

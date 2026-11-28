@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import { connectSocket } from '../../../shared/utils/socket';
 import PageWrapper from '../components/PageWrapper';
 import api from '../../../shared/utils/api';
@@ -22,6 +22,7 @@ import {
   Clock
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Pagination, { usePagination } from '../../../shared/components/Pagination';
 
 const initialTransactions = [
   { id: 1, type: 'Order Settlement', amount: 15499, status: 'Completed', date: '2024-04-14', isPositive: true },
@@ -162,6 +163,8 @@ const Wallet = () => {
     }
   };
 
+  const txnsNewestFirst = useMemo(() => walletData.transactions.slice().reverse(), [walletData.transactions]);
+  const { pageItems: pagedTxns, paginationProps: pagerTxns } = usePagination(txnsNewestFirst, 10);
   return (
     <PageWrapper>
       <div className="w-full space-y-8 pb-10">
@@ -320,7 +323,7 @@ const Wallet = () => {
                   <tr>
                     <td colSpan="6" className="px-8 py-10 text-center text-slate-500 text-sm">No transactions found.</td>
                   </tr>
-                ) : walletData.transactions.slice().reverse().map((transaction) => {
+                ) : pagedTxns.map((transaction) => {
                   const isPositive = ['sale_credit', 'refund_credit', 'manual_adjustment'].includes(transaction.type) && transaction.amount > 0;
                   const unlocksAt = transaction.orderData?.unlocksAt ? new Date(transaction.orderData.unlocksAt) : null;
                   const daysLeft = unlocksAt ? Math.max(0, Math.ceil((unlocksAt.getTime() - Date.now()) / (24 * 60 * 60 * 1000))) : null;
@@ -395,6 +398,7 @@ const Wallet = () => {
               </tbody>
             </table>
           </div>
+          <Pagination {...pagerTxns} />
         </div>
 
         {/* Withdrawal Modal */}

@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import api from '../../../shared/utils/api';
 import { motion, AnimatePresence } from 'framer-motion';
+import Pagination, { usePagination } from '../../../shared/components/Pagination';
 
 const Customers = () => {
   const [customers, setCustomers] = useState([]);
@@ -93,6 +94,7 @@ const Customers = () => {
       return 0;
     });
 
+  const { pageItems: pagedFilteredCustomers, paginationProps: pagerFilteredCustomers } = usePagination(filteredCustomers, 10);
   if (loading) {
     return (
       <PageWrapper>
@@ -277,7 +279,7 @@ const Customers = () => {
                     </tr>
                  </thead>
                  <tbody className="divide-y divide-slate-50">
-                    {filteredCustomers.map((customer, idx) => (
+                    {pagedFilteredCustomers.map((customer, idx) => (
                        <motion.tr 
                          initial={{ opacity: 0, y: 10 }}
                          animate={{ opacity: 1, y: 0 }}
@@ -343,6 +345,7 @@ const Customers = () => {
                  </tbody>
               </table>
            </div>
+           <Pagination {...pagerFilteredCustomers} />
            {filteredCustomers.length === 0 && (
              <div className="py-20 text-center space-y-3">
                 <div className="w-16 h-16 bg-slate-50 rounded-3xl flex items-center justify-center mx-auto text-slate-200">

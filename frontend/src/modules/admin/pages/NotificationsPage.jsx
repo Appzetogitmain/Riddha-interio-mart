@@ -41,7 +41,7 @@ const NotificationsPage = () => {
 
   return (
     <PageWrapper>
-      <div className="max-w-4xl mx-auto space-y-8 pb-20">
+      <div className="w-full space-y-8 pb-20">
         
         {/* Header Section */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 px-4 md:px-0">

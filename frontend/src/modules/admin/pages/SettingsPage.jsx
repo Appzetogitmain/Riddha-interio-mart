@@ -230,7 +230,7 @@ const SettingsPage = () => {
 
   return (
     <PageWrapper>
-      <div className="max-w-4xl mx-auto space-y-8">
+      <div className="w-full space-y-8">
         <div className="space-y-1">
           <h1 className="text-2xl md:text-3xl lg:text-4xl font-display font-bold text-deep-espresso">
             System Settings
@@ -270,7 +270,7 @@ const SettingsPage = () => {
             )}
 
             {activeTab === "Profile" && (
-              <div className="space-y-6 max-w-xl animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <div className="space-y-6 w-full animate-in fade-in slide-in-from-bottom-2 duration-300">
                 <h3 className="text-xl font-display font-bold text-deep-espresso flex items-center gap-3">
                   <FiUser className="text-warm-sand" /> Personal Details
                 </h3>
@@ -312,7 +312,7 @@ const SettingsPage = () => {
             )}
 
             {activeTab === "Security" && (
-              <div className="space-y-6 max-w-xl animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <div className="space-y-6 w-full animate-in fade-in slide-in-from-bottom-2 duration-300">
                 <h3 className="text-xl font-display font-bold text-deep-espresso flex items-center gap-3">
                   <FiShield className="text-warm-sand" /> Authentication
                 </h3>
@@ -418,7 +418,7 @@ const SettingsPage = () => {
             )}
 
             {activeTab === "System" && (
-              <div className="space-y-6 max-w-xl animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <div className="space-y-6 w-full animate-in fade-in slide-in-from-bottom-2 duration-300">
                 <h3 className="text-xl font-display font-bold text-deep-espresso flex items-center gap-3">
                   <FiSave className="text-warm-sand" /> System Configuration
                 </h3>
@@ -557,7 +557,7 @@ const SettingsPage = () => {
             )}
 
             {activeTab === "Invoice" && (
-              <div className="space-y-6 max-w-xl animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <div className="space-y-6 w-full animate-in fade-in slide-in-from-bottom-2 duration-300">
                 <div className="flex items-center justify-between flex-wrap gap-3">
                   <h3 className="text-xl font-display font-bold text-deep-espresso flex items-center gap-3">
                     <FiSave className="text-warm-sand" /> Invoice Formatting
@@ -642,7 +642,7 @@ const SettingsPage = () => {
             )}
 
             {activeTab === "Homepage" && (
-              <div className="space-y-6 max-w-3xl animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <div className="space-y-6 w-full animate-in fade-in slide-in-from-bottom-2 duration-300">
                 <div className="flex items-center justify-between">
                   <h3 className="text-xl font-display font-bold text-deep-espresso flex items-center gap-3">
                     <FiLayout className="text-warm-sand" /> Trust Bar Stats

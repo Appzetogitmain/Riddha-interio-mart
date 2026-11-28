@@ -15,6 +15,7 @@ import {
   LuFileText
 } from 'react-icons/lu';
 import { FiDownload, FiCheckCircle, FiXCircle, FiHelpCircle } from 'react-icons/fi';
+import Pagination, { usePagination } from '../../../shared/components/Pagination';
 
 const STATUS_TABS = ['all', 'Open', 'In Progress', 'Resolved', 'Closed'];
 
@@ -174,6 +175,7 @@ const SupportTicketsPage = () => {
     toast.success('Tickets log exported successfully.');
   };
 
+  const { pageItems: pagedTickets, paginationProps: pagerTickets } = usePagination(tickets, 10);
   return (
     <PageWrapper>
       <div className="w-full space-y-6 pb-20">
@@ -287,7 +289,7 @@ const SupportTicketsPage = () => {
                       <p className="text-sm font-bold text-warm-sand">No support inquiries found.</p>
                     </td>
                   </tr>
-                ) : tickets.map(t => {
+                ) : pagedTickets.map(t => {
                   const statusCfg = statusConfig[t.status] || statusConfig.Open;
                   const priorityCfg = priorityConfig[t.priority] || priorityConfig.Low;
                   return (
@@ -341,6 +343,7 @@ const SupportTicketsPage = () => {
               </tbody>
             </table>
           </div>
+          <Pagination {...pagerTickets} />
         </div>
 
         {/* Support Chat / Ticket Details Drawer */}

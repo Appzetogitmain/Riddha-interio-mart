@@ -189,7 +189,9 @@ exports.createRFQ = async (req, res, next) => {
       budgetRange = {},
       attachments = [],
       contractorAccountId = null,
-      aiParsed = {}
+      aiParsed = {},
+      category = null,
+      categoryName = ''
     } = req.body;
 
     const { errors, lineItems } = normalizeLineItems(rawLineItems);
@@ -227,6 +229,8 @@ exports.createRFQ = async (req, res, next) => {
         ? contractorAccountId
         : null,
       projectId: projectId && mongoose.Types.ObjectId.isValid(projectId) ? projectId : null,
+      category: category && mongoose.Types.ObjectId.isValid(category) ? category : null,
+      categoryName: String(categoryName || '').trim().slice(0, 80),
       lineItems,
       deliveryLocation: {
         address: String(deliveryLocation.address || '').trim(),

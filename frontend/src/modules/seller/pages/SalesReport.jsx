@@ -142,7 +142,7 @@ const SalesReport = () => {
 
   return (
     <PageWrapper>
-      <div className="max-w-4xl mx-auto pb-20 space-y-6">
+      <div className="w-full pb-20 space-y-6">
         
         {/* Professional White Analytics Header */}
         <div className="bg-white p-6 pb-12 rounded-b-[2.5rem] -mx-4 md:-mx-0 md:rounded-[2.5rem] md:mt-4 border border-slate-100 shadow-2xl shadow-slate-200/40 relative overflow-hidden group">

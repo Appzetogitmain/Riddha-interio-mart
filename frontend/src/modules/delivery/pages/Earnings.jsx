@@ -21,6 +21,7 @@ import {
 } from 'recharts';
 import { toast } from 'react-hot-toast';
 import api from '../../../shared/utils/api';
+import Pagination, { usePagination } from '../../../shared/components/Pagination';
 
 const Earnings = () => {
   const navigate = useNavigate();
@@ -104,6 +105,7 @@ const Earnings = () => {
     toast.success('Report exported successfully');
   };
 
+  const { pageItems: pagedLedger, paginationProps: pagerLedger } = usePagination(ledger, 10);
   return (
     <PageWrapper>
       <div className="max-w-[1600px] mx-auto space-y-4 pb-8">
@@ -252,7 +254,7 @@ const Earnings = () => {
                  </thead>
                  <tbody className="divide-y divide-slate-100">
                     {ledger.length > 0 ? (
-                      ledger.map((item, idx) => {
+                      pagedLedger.map((item, idx) => {
                         const shortId = item.referenceId ? item.referenceId.toString().slice(-8).toUpperCase() : 'N/A';
                         let cleanDesc = item.description || '';
                         if (cleanDesc.includes('Delivery fee earning for Order')) {
@@ -291,6 +293,7 @@ const Earnings = () => {
                  </tbody>
               </table>
            </div>
+           <Pagination {...pagerLedger} />
         </div>
       </div>
     </PageWrapper>

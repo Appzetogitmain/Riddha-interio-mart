@@ -698,7 +698,7 @@ exports.assignBOQItemToSellers = async (req, res, next) => {
 // 20. Seller: Get BOQ Requests routed to them
 exports.getSellerBOQRequests = async (req, res, next) => {
   try {
-    const sellerId = req.user.role === 'seller' ? req.user.sellerProfile : null;
+    const sellerId = req.user.role === 'seller' ? (req.user.sellerProfile || req.user._id) : null;
     if (!sellerId) return res.status(403).json({ success: false, message: 'Only sellers can access this' });
 
     const boqs = await BOQ.find({ 'items.routedTo.sellerId': sellerId })
@@ -733,7 +733,7 @@ exports.respondToBOQAssignment = async (req, res, next) => {
     const { boqId, itemId } = req.params;
     const { unitPrice, availableQuantity, deliveryEstimate, status } = req.body;
     
-    const sellerId = req.user.role === 'seller' ? req.user.sellerProfile : null;
+    const sellerId = req.user.role === 'seller' ? (req.user.sellerProfile || req.user._id) : null;
     if (!sellerId) return res.status(403).json({ success: false, message: 'Only sellers can perform this action' });
 
     const boq = await BOQ.findById(boqId);

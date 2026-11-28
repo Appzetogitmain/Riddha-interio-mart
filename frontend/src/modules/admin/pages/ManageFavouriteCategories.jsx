@@ -317,7 +317,7 @@ const ManageFavouriteCategories = () => {
 
   return (
     <PageWrapper>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8 space-y-6 md:space-y-8">
+      <div className="w-full px-4 sm:px-6 lg:px-8 py-6 md:py-8 space-y-6 md:space-y-8">
         <div className="rounded-[2rem] border border-soft-oatmeal bg-gradient-to-r from-white via-soft-oatmeal/20 to-white p-6 md:p-8 shadow-sm">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div className="space-y-3">

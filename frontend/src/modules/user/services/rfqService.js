@@ -54,6 +54,12 @@ export const rfqService = {
     return res.data;
   },
 
+  /** Admin-managed instruction copy for a category (falls back to the default entry; null if none). */
+  getInstruction: async (categoryId) => {
+    const res = await api.get('/rfq/instructions/resolve', { params: categoryId ? { category: categoryId } : {} });
+    return res.data?.data || null;
+  },
+
   createRFQ: async (payload) => {
     const res = await api.post('/rfq', payload);
     return res.data;

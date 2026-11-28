@@ -345,3 +345,9 @@
   display: flex;
   flex-direction: column;
 }
+/* Background page does not scroll while a modal is open (toggled by useModalScrollLock) */
+html.scroll-locked,
+html.scroll-locked body {
+  overflow: hidden !important;
+  scrollbar-gutter: stable;
+}

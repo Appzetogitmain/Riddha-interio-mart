@@ -12,6 +12,7 @@ import {
 } from "react-icons/lu";
 import api from "../../../shared/utils/api";
 import { useNavigate } from "react-router-dom";
+import Pagination, { usePagination } from '../../../shared/components/Pagination';
 
 const UserPaymentsPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -72,6 +73,7 @@ const UserPaymentsPage = () => {
 
   const activePaidCount = orders.filter(o => o.isPaid && !isOrderRefunded(o)).length;
 
+  const { pageItems: pagedFilteredOrders, paginationProps: pagerFilteredOrders } = usePagination(filteredOrders, 10);
   return (
     <PageWrapper>
       <div className="w-full space-y-6">
@@ -209,7 +211,7 @@ const UserPaymentsPage = () => {
                       </tr>
                    ))
                 ) : filteredOrders.length > 0 ? (
-                  filteredOrders.map((o) => (
+                  pagedFilteredOrders.map((o) => (
                     <tr
                       key={o._id}
                       className="hover:bg-soft-oatmeal/5 transition-colors group"
@@ -275,6 +277,7 @@ const UserPaymentsPage = () => {
               </tbody>
             </table>
           </div>
+          <Pagination {...pagerFilteredOrders} />
         </div>
       </div>
     </PageWrapper>

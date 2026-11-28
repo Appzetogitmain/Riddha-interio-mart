@@ -7,6 +7,7 @@ import api from '../../../shared/utils/api';
 import { toast } from 'react-hot-toast';
 import CatalogFilterBar from '../../../shared/components/CatalogFilterBar';
 import { EMPTY_FILTERS, matchesCatalogFilters, getBrandName, getStockStatus } from '../../../shared/utils/catalogFilters';
+import Pagination from '../../../shared/components/Pagination';
 
 const CatalogPage = () => {
   const navigate = useNavigate();
@@ -196,12 +197,12 @@ const CatalogPage = () => {
                         <p className="text-[9px] text-[#240046] font-bold uppercase tracking-wider mt-0.5">Master Catalog</p>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="text-[10px] font-black text-deep-espresso/60 bg-soft-oatmeal/30 px-2 py-1 rounded border border-soft-oatmeal font-mono">
+                        <span className="inline-block whitespace-nowrap text-[10px] font-black text-deep-espresso/60 bg-soft-oatmeal/30 px-2 py-1 rounded border border-soft-oatmeal font-mono">
                           {product.sku}
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="text-[10px] font-bold text-[#240046] uppercase tracking-widest bg-purple-50 px-2.5 py-1 rounded-full border border-purple-100">
+                        <span className="inline-block whitespace-nowrap text-[10px] font-bold text-[#240046] uppercase tracking-widest bg-purple-50 px-2.5 py-1 rounded-full border border-purple-100">
                           {product.category}
                         </span>
                       </td>
@@ -213,7 +214,7 @@ const CatalogPage = () => {
                       </td>
                       <td className="px-6 py-4 font-bold text-deep-espresso">₹{Number(product.price || 0).toLocaleString('en-IN')}</td>
                       <td className="px-6 py-4">
-                        <span className={"text-[10px] font-bold px-2.5 py-1 rounded-full " + ({in:'bg-emerald-50 text-emerald-700',low:'bg-amber-50 text-amber-700',out:'bg-red-50 text-red-700'}[getStockStatus(product)])}>
+                        <span className={"inline-block whitespace-nowrap text-[10px] font-bold px-2.5 py-1 rounded-full " + ({in:'bg-emerald-50 text-emerald-700',low:'bg-amber-50 text-amber-700',out:'bg-red-50 text-red-700'}[getStockStatus(product)])}>
                           {{in:'In Stock',low:'Low Stock',out:'Out of Stock'}[getStockStatus(product)]} ({Number(product.stock) || 0})
                         </span>
                       </td>
@@ -303,29 +304,7 @@ const CatalogPage = () => {
             </div>
           )}
           
-          {/* Footer/Active Interactive Pagination */}
-          <div className="p-4 bg-white rounded-2xl border border-soft-oatmeal flex flex-col sm:flex-row items-center justify-between gap-4 text-[10px] font-bold text-warm-sand uppercase tracking-widest shadow-sm">
-            <p>Showing {Math.min(filteredProducts.length, (currentPage - 1) * itemsPerPage + 1)}-{Math.min(filteredProducts.length, currentPage * itemsPerPage)} of {filteredProducts.length} Items</p>
-            <div className="flex gap-2 items-center">
-              <button 
-                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                className="px-4 py-2 border border-soft-oatmeal rounded-xl hover:bg-soft-oatmeal/10 disabled:opacity-30 transition-all" 
-                disabled={currentPage === 1}
-              >
-                Prev
-              </button>
-              
-              <span className="px-3 py-1 font-black text-deep-espresso">Page {currentPage} of {totalPages}</span>
-              
-              <button 
-                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                className="px-4 py-2 border border-soft-oatmeal rounded-xl hover:bg-soft-oatmeal/10 disabled:opacity-30 transition-all" 
-                disabled={currentPage === totalPages}
-              >
-                Next
-              </button>
-            </div>
-          </div>
+          <Pagination page={currentPage} pageSize={itemsPerPage} total={filteredProducts.length} onPageChange={setCurrentPage} className="bg-white rounded-2xl border border-soft-oatmeal shadow-sm" />
         </div>
       </div>
 

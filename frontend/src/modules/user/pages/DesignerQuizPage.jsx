@@ -222,12 +222,12 @@ const DesignerQuizPage = () => {
   // 1. Intro Screen
   if (currentStep === -1) {
     return (
-      <div className="min-h-screen w-full bg-slate-50 flex items-center justify-center font-sans px-4 py-8 md:py-16">
+      <div className="w-full min-h-[calc(100vh-160px)] bg-slate-50 flex items-center justify-center font-sans px-4 sm:px-6 lg:px-8 2xl:px-12 py-6 md:py-10">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="w-full max-w-4xl bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-100 flex flex-col md:flex-row h-auto md:min-h-[550px]"
+          className="w-full bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-100 flex flex-col md:flex-row h-auto md:min-h-[600px]"
         >
           {/* Visual Left Panel */}
           <div className="w-full md:w-1/2 relative bg-slate-800 overflow-hidden h-64 md:h-auto">
@@ -236,17 +236,17 @@ const DesignerQuizPage = () => {
               alt="Luxury Living Space"
               className="w-full h-full object-cover brightness-[0.85]"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-900/10 to-transparent flex flex-col justify-end p-8 text-white">
-              <span className="text-xs uppercase tracking-widest text-[#189D91] font-bold mb-2">Riddha Interio Mart</span>
-              <h2 className="text-2xl md:text-3xl font-display font-bold leading-tight">AI Designer Quiz</h2>
-              <p className="text-sm text-slate-200 mt-2 font-medium">Discover your exact design personality and receive custom suggestions and catalog recommendations in under 3 minutes.</p>
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-900/40 to-transparent flex flex-col justify-end p-8 md:p-12 text-white">
+              <span className="self-start text-[11px] uppercase tracking-widest text-white bg-[#189D91] font-bold mb-3 px-3 py-1 rounded-full">Riddha Interio Mart</span>
+              <h2 className="!text-3xl md:!text-4xl !text-white font-display font-bold !leading-tight">AI Designer Quiz</h2>
+              <p className="text-sm md:text-base text-white/90 mt-3 font-medium max-w-xl">Discover your exact design personality and receive custom suggestions and catalog recommendations in under 3 minutes.</p>
             </div>
           </div>
 
           {/* Form Content Right Panel */}
-          <div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-between">
+          <div className="w-full md:w-1/2 p-8 md:p-12 lg:p-16 flex flex-col justify-between">
             <div className="mb-8">
-              <h1 className="text-3xl font-display font-bold text-slate-800 leading-tight">
+              <h1 className="text-3xl lg:text-4xl font-display font-bold text-slate-900 leading-tight">
                 Unlock Your Custom Design Blueprint
               </h1>
               <p className="text-slate-500 mt-4 leading-relaxed text-sm md:text-base">
@@ -341,9 +341,9 @@ const DesignerQuizPage = () => {
   const selectedValue = answers[currentQuestion.key];
 
   return (
-    <div className="min-h-screen w-full bg-slate-50 flex flex-col items-center justify-between font-sans px-4 py-6 md:py-10">
+    <div className="w-full min-h-[calc(100vh-160px)] bg-slate-50 flex flex-col items-center justify-between font-sans px-4 sm:px-6 lg:px-8 2xl:px-12 py-4 md:py-6">
       {/* Header bar */}
-      <div className="w-full max-w-4xl flex items-center justify-between mb-4 md:mb-6">
+      <div className="w-full flex items-center justify-between mb-4 md:mb-6">
         <button
           onClick={handleBack}
           className="flex items-center gap-1.5 text-xs uppercase tracking-wider font-bold text-slate-500 hover:text-slate-800 transition-colors p-2 bg-white rounded-xl shadow-sm border border-slate-100 cursor-pointer"
@@ -356,7 +356,7 @@ const DesignerQuizPage = () => {
       </div>
 
       {/* Progress Bar */}
-      <div className="w-full max-w-4xl bg-slate-200 h-1.5 rounded-full mb-6 md:mb-10 overflow-hidden shadow-inner">
+      <div className="w-full bg-slate-200 h-1.5 rounded-full mb-4 md:mb-6 overflow-hidden shadow-inner">
         <motion.div
           className="bg-gradient-to-r from-[#189D91] to-[#EC008C] h-full rounded-full"
           initial={{ width: 0 }}
@@ -366,7 +366,7 @@ const DesignerQuizPage = () => {
       </div>
 
       {/* Main Question Display */}
-      <div className="w-full max-w-4xl flex-1 flex flex-col justify-center mb-6 md:mb-10">
+      <div className="w-full flex-1 flex flex-col justify-center mb-4 md:mb-6">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentStep}
@@ -376,18 +376,23 @@ const DesignerQuizPage = () => {
             transition={{ duration: 0.3, ease: 'easeOut' }}
             className="w-full"
           >
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-12 items-start">
             {/* Titles */}
-            <div className="text-center md:text-left mb-6 md:mb-8">
-              <h2 className="text-2xl md:text-3.5xl font-display font-bold text-slate-800 tracking-tight leading-tight">
+            <div className="lg:col-span-4 text-center lg:text-left lg:sticky lg:top-32">
+              <span className="inline-block text-[11px] font-bold uppercase tracking-widest text-white bg-[#189D91] px-3 py-1 rounded-full mb-4">
+                Question {currentStep + 1}
+              </span>
+              <h2 className="!text-2xl md:!text-3xl xl:!text-4xl font-display font-bold !text-slate-900 tracking-tight !leading-tight">
                 {currentQuestion.title}
               </h2>
-              <p className="text-sm md:text-base text-slate-500 mt-2 font-medium">
+              <p className="text-sm md:text-base xl:text-lg text-slate-500 mt-3 font-medium">
                 {currentQuestion.subtitle}
               </p>
             </div>
 
+            <div className="lg:col-span-8 w-full">
             {/* Options grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
               {currentQuestion.options.map((opt) => {
                 const isSelected = selectedValue === opt.value;
                 return (
@@ -396,18 +401,18 @@ const DesignerQuizPage = () => {
                     whileHover={{ scale: 1.015, y: -2 }}
                     whileTap={{ scale: 0.99 }}
                     onClick={() => selectOption(currentQuestion.key, opt.value)}
-                    className={`text-left p-5 md:p-6 rounded-2xl border transition-all flex justify-between items-start cursor-pointer h-full ${
+                    className={`text-left p-4 md:p-5 min-h-[88px] rounded-2xl border-2 transition-all flex justify-between items-start cursor-pointer h-full ${
                       isSelected
-                        ? 'bg-[#189D91]/10 border-[#189D91] shadow-md shadow-[#189D91]/5 text-slate-900'
-                        : 'bg-white border-slate-100 hover:border-slate-300 shadow-sm text-slate-700'
+                        ? 'bg-[#189D91] border-[#189D91] shadow-lg shadow-[#189D91]/25 text-white'
+                        : 'bg-white border-slate-200 hover:border-[#189D91] hover:bg-[#189D91]/5 shadow-sm text-slate-800'
                     }`}
                   >
                     <div className="flex-1 pr-4">
-                      <p className="font-display font-bold text-base md:text-lg leading-snug">{opt.label}</p>
-                      <p className={`text-xs md:text-sm mt-1 leading-relaxed ${isSelected ? 'text-slate-600 font-medium' : 'text-slate-400 font-normal'}`}>{opt.desc}</p>
+                      <p className={`font-display font-bold text-base md:text-lg leading-snug ${isSelected ? 'text-white' : 'text-slate-900'}`}>{opt.label}</p>
+                      <p className={`text-xs md:text-sm mt-1 leading-relaxed ${isSelected ? 'text-white/90 font-medium' : 'text-slate-500 font-normal'}`}>{opt.desc}</p>
                     </div>
                     {isSelected && (
-                      <span className="h-6 w-6 rounded-full bg-[#189D91] text-white flex items-center justify-center shadow-md animate-scale-up">
+                      <span className="h-6 w-6 shrink-0 rounded-full bg-white text-[#189D91] flex items-center justify-center shadow-md">
                         <FiCheck size={14} />
                       </span>
                     )}
@@ -430,12 +435,14 @@ const DesignerQuizPage = () => {
                 />
               </div>
             )}
+            </div>
+          </div>
           </motion.div>
         </AnimatePresence>
       </div>
 
       {/* Footer bar */}
-      <div className="w-full max-w-4xl flex items-center justify-between border-t border-slate-200/60 pt-6">
+      <div className="w-full flex items-center justify-between border-t border-slate-200/60 pt-4 pr-20 md:pr-24">
         <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider">
           Step {currentStep + 1}
         </span>

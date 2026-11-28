@@ -21,6 +21,7 @@ import SellerNotifications from './modules/seller/components/SellerNotifications
 import BroadcastNotificationModal from './modules/user/components/BroadcastNotificationModal';
 import { useUser } from './modules/user/data/UserContext';
 import { useJourneyPageTracking } from './modules/user/data/useJourney';
+import useModalScrollLock from './shared/hooks/useModalScrollLock';
 
 function App() {
   const { user } = useUser();
@@ -31,6 +32,9 @@ function App() {
   // Record every route change against the user's journey (Requirement #17).
   // Fire-and-forget: never blocks or breaks the page being tracked.
   useJourneyPageTracking();
+
+  // Freeze background scroll while any modal is open
+  useModalScrollLock();
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);

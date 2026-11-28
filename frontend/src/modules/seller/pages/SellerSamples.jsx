@@ -94,7 +94,7 @@ const SellerSamples = () => {
 
   return (
     <PageWrapper>
-      <div className="p-4 md:p-6">
+      <div className="w-full">
         <header className="mb-6 flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-seller-light text-seller-primary">
             <Layers size={20} />

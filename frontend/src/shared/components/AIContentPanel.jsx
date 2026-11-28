@@ -63,7 +63,7 @@ const AIContentPanel = ({
     "Optimizing for SEO keywords"
   ];
 
-  const primaryColor = theme === "seller" ? "bg-orange-600 hover:bg-orange-700" : "bg-blue-600 hover:bg-blue-700";
+  const primaryColor = theme === "seller" ? "bg-orange-600 hover:bg-orange-700" : "bg-[#189D91] hover:bg-[#147d74]";
   const textColor = theme === "seller" ? "text-orange-600" : "text-blue-600";
   const ringColor = theme === "seller" ? "focus:ring-orange-500/20" : "focus:ring-blue-500/20";
   const badgeColor = theme === "seller" ? "bg-orange-50 text-orange-700 border-orange-100" : "bg-blue-50 text-blue-700 border-blue-100";

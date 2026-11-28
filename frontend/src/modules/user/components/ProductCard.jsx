@@ -265,6 +265,8 @@ const ProductCard = ({ product, index = 0, variant = 'grid' }) => {
                 unit: 'pcs'
               }]}
               source="product-card"
+              categoryId={product.categoryId || product.category?._id || null}
+              categoryName={typeof product.category === 'string' ? product.category : product.category?.name || ''}
               variant="outline"
               size="sm"
               label="Bulk quote"

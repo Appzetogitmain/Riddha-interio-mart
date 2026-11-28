@@ -66,6 +66,7 @@ const SellerPayoutsPage = React.lazy(() => import('./pages/SellerPayoutsPage'));
 const ManageSellerListPage = React.lazy(() => import('./pages/ManageSellerListPage'));
 const FeedbackManagement = React.lazy(() => import('./pages/FeedbackManagement'));
 const SellerRecommendationManagement = React.lazy(() => import('./pages/SellerRecommendationManagement'));
+const ManageRFQInstructions = React.lazy(() => import('./pages/ManageRFQInstructions'));
 const ManageTerms = React.lazy(() => import('./pages/ManageTerms'));
 const InvoiceTemplatesPage = React.lazy(() => import('./pages/InvoiceTemplatesPage'));
 const SupportTicketsPage = React.lazy(() => import('./pages/SupportTicketsPage'));
@@ -179,6 +180,7 @@ const AdminRoutes = () => {
             <Route path="/manage-grid" element={<ManageCategoryGrid />} />
             <Route path="/manage-grid/add" element={<AddCategoryGridItemPage />} />
             <Route path="/terms" element={<ManageTerms />} />
+            <Route path="/rfq-instructions" element={<ManageRFQInstructions />} />
           </Route>
 
           {/* Referrals */}

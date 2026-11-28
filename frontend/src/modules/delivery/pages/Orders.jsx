@@ -272,7 +272,7 @@ const Orders = () => {
                 onClick={() => setActiveTab('returns')}
                 className={`px-4 sm:px-6 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2 ${
                   activeTab === 'returns' 
-                    ? 'bg-blue-600 text-white shadow-md' 
+                    ? 'bg-[#189D91] text-white shadow-md' 
                     : 'text-slate-500 hover:text-blue-600'
                 }`}
               >

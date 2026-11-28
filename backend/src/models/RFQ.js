@@ -51,6 +51,10 @@ const RFQSchema = new mongoose.Schema({
   contractorAccountId: { type: mongoose.Schema.ObjectId, default: null },
   projectId: { type: mongoose.Schema.ObjectId, ref: 'Project', default: null },
 
+  // Category the customer was requesting a quote for (drives the instruction copy shown to them)
+  category: { type: mongoose.Schema.ObjectId, ref: 'Category', default: null },
+  categoryName: { type: String, default: '' },
+
   lineItems: {
     type: [RFQLineItemSchema],
     validate: [

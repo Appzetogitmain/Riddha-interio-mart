@@ -17,6 +17,7 @@ import {
 import { FiMoreVertical } from 'react-icons/fi';
 import api from '../../../shared/utils/api';
 import { toast } from 'react-hot-toast';
+import Pagination from '../../../shared/components/Pagination';
 
 const ManageUserPage = ({ type }) => {
   const [currentTab, setCurrentTab] = useState(type || 'customer');
@@ -419,29 +420,7 @@ const ManageUserPage = ({ type }) => {
               </table>
             </div>
           )}
-          {!loading && totalResults > 0 && (
-            <div className="flex items-center justify-between px-6 py-4 border-t border-soft-oatmeal">
-              <span className="text-xs font-bold text-warm-sand">
-                Page {page} of {totalPages} &middot; {totalResults} total {currentTab === 'customer' ? 'customers' : 'enterprise users'}
-              </span>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => goToPage(page - 1)}
-                  disabled={page <= 1}
-                  className="px-3 py-1.5 rounded-lg border border-soft-oatmeal text-xs font-bold text-deep-espresso disabled:opacity-40 disabled:cursor-not-allowed hover:bg-soft-oatmeal/20 transition-colors"
-                >
-                  Previous
-                </button>
-                <button
-                  onClick={() => goToPage(page + 1)}
-                  disabled={page >= totalPages}
-                  className="px-3 py-1.5 rounded-lg border border-soft-oatmeal text-xs font-bold text-deep-espresso disabled:opacity-40 disabled:cursor-not-allowed hover:bg-soft-oatmeal/20 transition-colors"
-                >
-                  Next
-                </button>
-              </div>
-            </div>
-          )}
+          <Pagination page={page} pageSize={PAGE_SIZE} total={totalResults} onPageChange={goToPage} />
         </div>
       </div>
 

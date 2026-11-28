@@ -135,7 +135,7 @@ const SellerReviews = () => {
   ];
 
   return (
-    <div className="p-4 md:p-8 space-y-8">
+    <div className="w-full space-y-8">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-gray-900">

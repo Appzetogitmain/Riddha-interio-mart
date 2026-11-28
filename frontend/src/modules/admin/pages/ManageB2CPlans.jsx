@@ -7,6 +7,7 @@ import {
 import api from '../../../shared/utils/api';
 import toast from 'react-hot-toast';
 import PageWrapper from '../components/PageWrapper';
+import Pagination, { usePagination } from '../../../shared/components/Pagination';
 
 const EMPTY_FORM = {
   planId: '',
@@ -164,6 +165,7 @@ const ManageB2CPlans = () => {
     </label>
   );
 
+  const { pageItems: pagedPurchases, paginationProps: pagerPurchases } = usePagination(purchases, 10);
   return (
     <PageWrapper>
       <div className="p-4 md:p-8 w-full space-y-6">
@@ -326,6 +328,7 @@ const ManageB2CPlans = () => {
             ) : purchases.length === 0 ? (
               <div className="text-center py-12 text-gray-400 text-xs font-semibold">No B2C subscription purchases yet.</div>
             ) : (
+              <>
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs">
                   <thead className="bg-gray-50 text-gray-500 font-bold uppercase tracking-wider text-[10px] border-b border-gray-100">
@@ -340,7 +343,7 @@ const ManageB2CPlans = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50 font-medium text-gray-700">
-                    {purchases.map((sub) => {
+                    {pagedPurchases.map((sub) => {
                       const u = sub.user || {};
                       const isExp = new Date(sub.endDate) < new Date();
                       return (
@@ -389,6 +392,8 @@ const ManageB2CPlans = () => {
                   </tbody>
                 </table>
               </div>
+              <Pagination {...pagerPurchases} />
+              </>
             )}
           </div>
         )}

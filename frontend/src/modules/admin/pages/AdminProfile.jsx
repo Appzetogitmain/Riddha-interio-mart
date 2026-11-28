@@ -97,7 +97,7 @@ const AdminProfile = () => {
     <motion.div 
       initial={{ opacity: 0, y: 10 }} 
       animate={{ opacity: 1, y: 0 }} 
-      className="max-w-5xl mx-auto space-y-6"
+      className="w-full space-y-6"
     >
       {/* Header Card */}
       <div className="bg-white rounded-[32px] p-6 md:p-8 shadow-sm border border-soft-oatmeal overflow-hidden relative">

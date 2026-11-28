@@ -20,14 +20,14 @@ const ProductImage = ({ src, alt = '', className = '', placeholderClassName = ''
       <div
         role="img"
         aria-label={alt ? `${alt} - no image available` : 'No image available'}
-        className={`w-full h-full min-h-[64px] flex flex-col items-center justify-center gap-1 bg-gray-100 text-gray-400 select-none ${placeholderClassName}`}
+        className={`w-full h-full min-h-[64px] flex items-center justify-center p-2 bg-gray-50 select-none ${placeholderClassName}`}
       >
-        <svg viewBox="0 0 24 24" className="w-1/4 max-w-[40px] min-w-[18px] aspect-square" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="3" y="3" width="18" height="18" rx="2" />
-          <circle cx="8.5" cy="8.5" r="1.5" />
-          <path d="m21 15-5-5L5 21" />
-        </svg>
-        <span className="text-[10px] font-semibold uppercase tracking-wider">No image</span>
+        <img
+          src="/logo.png"
+          alt=""
+          draggable={false}
+          className="max-w-[70%] max-h-[70%] w-auto h-auto object-contain opacity-80"
+        />
       </div>
     );
   }

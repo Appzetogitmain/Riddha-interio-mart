@@ -7,6 +7,7 @@ import { toast } from 'react-hot-toast';
 import ProductFilterBar from '../../../shared/components/ProductFilterBar';
 import { EMPTY_PRODUCT_FILTERS, matchesProductFilters } from '../../../shared/utils/productListFilters';
 import ProductCsvModal, { downloadProductCsv } from '../components/ProductCsvModal';
+import Pagination, { usePagination } from '../../../shared/components/Pagination';
 
 const ProductListPage = ({ status }) => {
   const navigate = useNavigate();
@@ -161,6 +162,7 @@ const ProductListPage = ({ status }) => {
     }
   };
 
+  const { pageItems: pagedFilteredProducts, paginationProps: pagerFilteredProducts } = usePagination(filteredProducts, 10);
   return (
     <PageWrapper>
       <div className="w-full space-y-6">
@@ -261,6 +263,7 @@ const ProductListPage = ({ status }) => {
               <p className="text-xs text-gray-400">{searchTerm ? 'Try a different search term.' : 'Add your first product to get started.'}</p>
             </div>
           ) : (
+            <>
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
@@ -288,7 +291,7 @@ const ProductListPage = ({ status }) => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
-                  {filteredProducts.map((product) => (
+                  {pagedFilteredProducts.map((product) => (
                     <tr key={product._id} className="hover:bg-gray-50/60 transition-colors group">
 
                       <td className="pl-4 pr-0 py-3 w-8">
@@ -452,6 +455,8 @@ const ProductListPage = ({ status }) => {
                 </tbody>
               </table>
             </div>
+            <Pagination {...pagerFilteredProducts} />
+            </>
           )}
         </div>
       </div>

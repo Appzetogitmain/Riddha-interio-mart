@@ -21,7 +21,7 @@ const typeMetadata = {
   },
   order_update: {
     icon: FiShoppingCart,
-    default: { color: 'bg-blue-50 text-blue-600', bar: 'bg-blue-500', btn: 'bg-blue-600 hover:bg-blue-700' },
+    default: { color: 'bg-blue-50 text-blue-600', bar: 'bg-blue-500', btn: 'bg-[#189D91] hover:bg-[#147d74]' },
   },
   delivery_update: {
     icon: FiTruck,

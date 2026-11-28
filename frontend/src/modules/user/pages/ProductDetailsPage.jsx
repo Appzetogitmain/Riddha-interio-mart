@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
-import { getPreviousPages, setTrailLabel } from '../utils/navTrail';
+import { setTrailLabel } from '../utils/navTrail';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '../data/CartContext';
 import {
@@ -431,18 +431,30 @@ const ProductDetailsPage = () => {
   const hasDiscount = currentVariant ? !!currentVariant.discountPrice : (isB2bEligible ? true : product?._hasDiscount);
   const displaySku = currentVariant ? currentVariant.sku : product?.sku;
 
-  // Last two pages the user visited before this product (dynamic breadcrumb)
-  const breadcrumbPages = getPreviousPages(location.pathname + location.search, 2);
-  if (breadcrumbPages.length === 0) breadcrumbPages.push({ path: '/', label: 'Home' });
+  // Breadcrumb: Home > Category > Sub category > Sub-sub category > Product
+  const slugOf = (n) => String(n || '').toLowerCase().trim().replace(/\s+/g, '-');
+  const catName = typeof product.category === 'string' ? product.category : product.category?.name;
+  const breadcrumbs = [{ path: '/', label: 'Home' }];
+  if (catName) {
+    const base = `/category/${slugOf(catName)}`;
+    breadcrumbs.push({ path: base, label: catName });
+    if (product.subcategoryName) {
+      const subPath = `${base}?sub=${encodeURIComponent(product.subcategoryName)}`;
+      breadcrumbs.push({ path: subPath, label: product.subcategoryName });
+      if (product.subsubcategoryName) {
+        breadcrumbs.push({ path: `${subPath}&subsub=${encodeURIComponent(product.subsubcategoryName)}`, label: product.subsubcategoryName });
+      }
+    }
+  }
 
   return (
     <div className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 pb-28 md:pb-10">
 
       {/* Breadcrumb */}
-      <nav className="hidden md:flex items-center gap-1.5 text-[11px] text-gray-400 font-medium py-4">
-        {breadcrumbPages.map((pg) => (
+      <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-[11px] md:text-xs text-gray-400 font-medium py-3 md:py-4 overflow-x-auto whitespace-nowrap no-scrollbar">
+        {breadcrumbs.map((pg) => (
           <React.Fragment key={pg.path}>
-            <Link to={pg.path} className="hover:text-gray-700 transition-colors truncate max-w-[160px]">{pg.label}</Link>
+            <Link to={pg.path} className="hover:text-[#189D91] transition-colors truncate max-w-[160px]">{pg.label}</Link>
             <FiChevronRight size={12} className="shrink-0" />
           </React.Fragment>
         ))}
@@ -450,7 +462,7 @@ const ProductDetailsPage = () => {
       </nav>
 
       <div>
-      <div className="bg-white p-0">
+      <div className="bg-white py-4 md:py-8 md:px-8 md:rounded-2xl md:border md:border-gray-100">
 
         {/* ── Top section: Gallery + Info ── */}
         <div className="flex flex-col lg:flex-row gap-0 lg:gap-10">
@@ -739,6 +751,8 @@ const ProductDetailsPage = () => {
                   unit: 'pcs'
                 }]}
                 source="product-detail"
+                categoryId={product.categoryId || product.category?._id || null}
+                categoryName={typeof product.category === 'string' ? product.category : product.category?.name || ''}
                 variant="outline"
                 size="sm"
                 label="Request a Quote"
@@ -916,7 +930,7 @@ const ProductDetailsPage = () => {
 
       {/* Desktop sticky action bar: pinned to viewport bottom, rests at end of the details */}
       <div className="hidden md:block sticky bottom-0 z-30 bg-white border-t border-gray-100 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] py-3">
-        <div className="lg:w-[56%] lg:ml-auto flex gap-3 px-5 md:px-0">
+        <div className="lg:w-[56%] lg:ml-auto flex gap-3 px-5 md:pl-0 md:pr-8">
               {isOutOfStock ? (
                 <button
                   disabled

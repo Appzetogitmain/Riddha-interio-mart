@@ -19,6 +19,13 @@ const {
   convertToOrder,
   getAnalytics
 } = require('../controllers/rfqController');
+const {
+  resolveInstruction,
+  listInstructions,
+  createInstruction,
+  updateInstruction,
+  deleteInstruction
+} = require('../controllers/rfqInstructionController');
 
 // Drawings and BOQs: PDF, XLSX, JPG, PNG, DWG — up to 5 files of 25MB each.
 const ALLOWED_EXTENSIONS = ['.pdf', '.xlsx', '.xlsm', '.xls', '.csv', '.txt', '.jpg', '.jpeg', '.png', '.dwg', '.dxf'];
@@ -57,6 +64,13 @@ router.use(protect);
 
 // Static paths first so "analytics" is never read as an :rfqId.
 router.get('/analytics', authorize('admin'), getAnalytics);
+router.get('/instructions/resolve', resolveInstruction);
+router.route('/instructions')
+  .get(authorize('admin'), listInstructions)
+  .post(authorize('admin'), createInstruction);
+router.route('/instructions/:id')
+  .put(authorize('admin'), updateInstruction)
+  .delete(authorize('admin'), deleteInstruction);
 router.post('/parse', handleUploadErrors(upload.single('file')), parseRFQ);
 
 router.route('/')

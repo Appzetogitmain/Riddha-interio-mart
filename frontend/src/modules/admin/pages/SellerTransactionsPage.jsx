@@ -14,6 +14,7 @@ import {
 import { FiDownload } from "react-icons/fi";
 import api from "../../../shared/utils/api";
 import { toast } from "react-hot-toast";
+import Pagination, { usePagination } from '../../../shared/components/Pagination';
 
 const getImageUrl = (path) => {
   if (!path) return '';
@@ -83,6 +84,7 @@ const SellerTransactionsPage = () => {
   const totalPayout = transactions.reduce((sum, t) => sum + (t.amount || 0), 0);
   const totalCommission = transactions.reduce((sum, t) => sum + (t.commission || 0), 0);
 
+  const { pageItems: pagedFilteredTransactions, paginationProps: pagerFilteredTransactions } = usePagination(filteredTransactions, 10);
   return (
     <PageWrapper>
       <div className="w-full space-y-6 pb-32">
@@ -211,7 +213,7 @@ const SellerTransactionsPage = () => {
                     </tr>
                   ))
                 ) : filteredTransactions.length > 0 ? (
-                  filteredTransactions.map((t) => (
+                  pagedFilteredTransactions.map((t) => (
                     <tr
                       key={t._id}
                       className="hover:bg-soft-oatmeal/5 transition-colors group"
@@ -281,6 +283,7 @@ const SellerTransactionsPage = () => {
               </tbody>
             </table>
           </div>
+          <Pagination {...pagerFilteredTransactions} />
         </div>
 
         {/* 👁️ PRODUCT COMMISSION BREAKDOWN MODAL */}

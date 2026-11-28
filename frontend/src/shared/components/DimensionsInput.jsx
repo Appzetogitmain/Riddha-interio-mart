@@ -37,10 +37,10 @@ const DimensionsInput = ({ value, onChange, categoryText = '', className = '', i
 
   return (
     <div className={className}>
-      <div className="grid grid-cols-4 gap-2">
-        {[['length', 'Length'], ['width', 'Width / Depth'], ['height', 'Height']].map(([field, label]) => (
-          <div key={field} className="space-y-1">
-            <span className="block text-[9px] font-bold uppercase tracking-wider text-gray-400">{label}</span>
+      <div className="grid grid-cols-[repeat(3,minmax(0,1fr))_4.5rem] gap-2 items-end">
+        {[['length', 'Length'], ['width', 'Width'], ['height', 'Height']].map(([field, label]) => (
+          <div key={field} className="space-y-1 min-w-0">
+            <span className="block truncate whitespace-nowrap text-[9px] font-bold uppercase tracking-wider text-gray-400" title={field === 'width' ? 'Width / Depth' : label}>{label}</span>
             <input
               type="number"
               min="0"
@@ -48,16 +48,16 @@ const DimensionsInput = ({ value, onChange, categoryText = '', className = '', i
               placeholder="—"
               value={parts[field]}
               onChange={(e) => update(field, e.target.value)}
-              className={base}
+              className={`${base} !px-2 text-center`}
             />
           </div>
         ))}
-        <div className="space-y-1">
-          <span className="block text-[9px] font-bold uppercase tracking-wider text-gray-400">Unit</span>
+        <div className="space-y-1 min-w-0">
+          <span className="block truncate whitespace-nowrap text-[9px] font-bold uppercase tracking-wider text-gray-400">Unit</span>
           <select
             value={UNITS.includes(parts.unit) ? parts.unit : 'cm'}
             onChange={(e) => update('unit', e.target.value)}
-            className={base}
+            className={`${base} !px-1.5`}
           >
             {UNITS.map(u => <option key={u} value={u}>{u}</option>)}
           </select>

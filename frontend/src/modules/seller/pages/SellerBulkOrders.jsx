@@ -8,6 +8,7 @@ import {
 import { toast } from 'react-hot-toast';
 import api from '../../../shared/utils/api';
 import PageWrapper from '../components/PageWrapper';
+import Pagination, { usePagination } from '../../../shared/components/Pagination';
 
 // ── Helpers ───────────────────────────────────────────────────────
 const statusColor = (status) => {
@@ -393,6 +394,7 @@ const SellerBulkOrders = () => {
   const contacted = orders.filter(o => o.status === 'Contacted').length;
   const resolved  = orders.filter(o => o.status === 'Resolved').length;
 
+  const { pageItems: pagedFiltered, paginationProps: pagerFiltered } = usePagination(filtered, 10);
   return (
     <PageWrapper>
       <div className="space-y-6">
@@ -447,6 +449,7 @@ const SellerBulkOrders = () => {
             <p className="text-sm text-slate-400 mt-1">When customers place bulk orders for your products, they'll appear here.</p>
           </div>
         ) : (
+          <>
           <div className="border border-slate-200 rounded-2xl overflow-hidden overflow-x-auto shadow-sm">
             <table className="w-full text-sm text-left border-collapse min-w-[700px]">
               <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200 text-xs uppercase tracking-wider">
@@ -461,7 +464,7 @@ const SellerBulkOrders = () => {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map(order => (
+                {pagedFiltered.map(order => (
                   <tr key={order._id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
                     <td className="px-4 py-3 text-slate-400 text-xs whitespace-nowrap">
                       {new Date(order.createdAt).toLocaleDateString('en-IN')}
@@ -512,6 +515,8 @@ const SellerBulkOrders = () => {
               </tbody>
             </table>
           </div>
+          <Pagination {...pagerFiltered} />
+          </>
         )}
       </div>
 

@@ -19,6 +19,9 @@ import {
 } from "react-icons/lu";
 import { FiCheckCircle, FiXCircle, FiFlag } from "react-icons/fi";
 import { toast } from "react-hot-toast";
+import Pagination from '../../../shared/components/Pagination';
+import OrderFilterBar from '../../../shared/components/OrderFilterBar';
+import { EMPTY_ORDER_FILTERS, matchesOrderFilters } from '../../../shared/utils/orderListFilters';
 
 const initialOrders = [
   {
@@ -102,10 +105,7 @@ const OrderListPage = ({ specificStatus }) => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("all");
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [sellerFilter, setSellerFilter] = useState('all');
-  const [paymentFilter, setPaymentFilter] = useState('all');
-  const [assignmentFilter, setAssignmentFilter] = useState('all');
+  const [filters, setFilters] = useState({ ...EMPTY_ORDER_FILTERS });
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
@@ -117,7 +117,7 @@ const OrderListPage = ({ specificStatus }) => {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, sellerFilter, paymentFilter, assignmentFilter, activeTab, urlStatus, specificStatus]);
+  }, [searchTerm, filters, activeTab, urlStatus, specificStatus]);
 
   const fetchOrders = async () => {
     try {
@@ -233,41 +233,30 @@ const OrderListPage = ({ specificStatus }) => {
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
       .join(" ");
 
+  const hasFixedStatus = Boolean(currentStatus) && !currentStatus.toLowerCase().includes('all');
+
   const filteredOrders = useMemo(() => {
     return orders.filter((order) => {
       const customerName = order.user?.fullName || "Guest";
       const orderId = order._id || "";
       const sellerName = order.seller?.shopName || order.seller?.fullName || "";
-      const orderPayment = (order.paymentMethod || 'Online').toLowerCase();
-      const isAssigned = Boolean(order.deliveryBoy) || (order.deliveryStatus && order.deliveryStatus !== 'None');
+      const displayId = (order.orderId || '').toLowerCase();
+      const q = searchTerm.toLowerCase();
 
       const matchesSearch =
-        customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        orderId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        sellerName.toLowerCase().includes(searchTerm.toLowerCase());
+        customerName.toLowerCase().includes(q) ||
+        orderId.toLowerCase().includes(q) ||
+        displayId.includes(q) ||
+        sellerName.toLowerCase().includes(q);
 
-      const matchesSeller =
-        sellerFilter === 'all' ||
-        (sellerFilter === 'direct' && order.sellerType === 'Admin') ||
-        (sellerFilter === 'marketplace' && order.sellerType !== 'Admin');
-
-      const matchesPayment =
-        paymentFilter === 'all' ||
-        (paymentFilter === 'online' && orderPayment.includes('online')) ||
-        (paymentFilter === 'cod' && orderPayment.includes('cod')) ||
-        (paymentFilter === 'wallet' && orderPayment.includes('wallet'));
-
-      const matchesAssignment =
-        assignmentFilter === 'all' ||
-        (assignmentFilter === 'assigned' && isAssigned) ||
-        (assignmentFilter === 'unassigned' && !isAssigned);
-
-      const matchesTab = 
-        activeTab === 'all' || 
+      const matchesTab =
+        activeTab === 'all' ||
         (activeTab === 'direct' && order.sellerType === 'Admin') ||
         (activeTab === 'marketplace' && order.sellerType !== 'Admin');
 
-      if (!matchesTab || !matchesSeller || !matchesPayment || !matchesAssignment) return false;
+      // Status filter is ignored when the route already fixes the status.
+      const f = hasFixedStatus ? { ...filters, status: '' } : filters;
+      if (!matchesTab || !matchesOrderFilters(order, f)) return false;
 
       // If viewing "All Orders" page or no specific status required
       if (currentStatus?.toLowerCase().includes('all') || !currentStatus) {
@@ -276,7 +265,7 @@ const OrderListPage = ({ specificStatus }) => {
 
       return matchesSearch && order.status?.toLowerCase() === currentStatus?.toLowerCase();
     });
-  }, [searchTerm, currentStatus, activeTab, orders, sellerFilter, paymentFilter, assignmentFilter]);
+  }, [searchTerm, currentStatus, activeTab, orders, filters, hasFixedStatus]);
 
   const paginatedOrders = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
@@ -286,14 +275,11 @@ const OrderListPage = ({ specificStatus }) => {
   const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
 
   const hasActiveFilters =
-    sellerFilter !== 'all' || paymentFilter !== 'all' || assignmentFilter !== 'all' || searchTerm.trim().length > 0;
+    JSON.stringify(filters) !== JSON.stringify(EMPTY_ORDER_FILTERS) || searchTerm.trim().length > 0;
 
   const resetFilters = () => {
     setSearchTerm('');
-    setSellerFilter('all');
-    setPaymentFilter('all');
-    setAssignmentFilter('all');
-    setIsFilterOpen(false);
+    setFilters({ ...EMPTY_ORDER_FILTERS });
   };
 
   return (
@@ -344,17 +330,6 @@ const OrderListPage = ({ specificStatus }) => {
               className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl pl-11 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-warm-sand/20 transition-all text-sm"
             />
           </div>
-          <button
-            onClick={() => setIsFilterOpen(v => !v)}
-            className={`flex items-center justify-center gap-2 px-6 py-3 md:py-0 rounded-xl font-bold text-xs uppercase tracking-widest transition-all border ${
-              isFilterOpen || hasActiveFilters
-                ? 'border-red-800 bg-red-50 text-red-800'
-                : 'border-soft-oatmeal text-deep-espresso hover:bg-soft-oatmeal/20'
-            }`}
-          >
-            <LuFilter size={16} />
-            Filters {hasActiveFilters ? '(Active)' : ''}
-          </button>
           {hasActiveFilters && (
             <button
               onClick={resetFilters}
@@ -373,49 +348,7 @@ const OrderListPage = ({ specificStatus }) => {
           </button>
         </div>
 
-        {isFilterOpen && (
-          <div className="bg-white p-6 rounded-2xl border border-soft-oatmeal shadow-md grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="space-y-2">
-              <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest">Seller Type</label>
-              <select
-                value={sellerFilter}
-                onChange={(e) => setSellerFilter(e.target.value)}
-                className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none cursor-pointer font-medium"
-              >
-                <option value="all">All Sellers</option>
-                <option value="direct">Riddha Mart / Direct</option>
-                <option value="marketplace">Marketplace Sellers</option>
-              </select>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest">Payment Method</label>
-              <select
-                value={paymentFilter}
-                onChange={(e) => setPaymentFilter(e.target.value)}
-                className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none cursor-pointer font-medium"
-              >
-                <option value="all">All Methods</option>
-                <option value="online">Online</option>
-                <option value="cod">Cash on Delivery</option>
-                <option value="wallet">Wallet / Manual</option>
-              </select>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-[10px] font-black text-warm-sand uppercase tracking-widest">Delivery Assignment</label>
-              <select
-                value={assignmentFilter}
-                onChange={(e) => setAssignmentFilter(e.target.value)}
-                className="w-full bg-soft-oatmeal/10 border border-soft-oatmeal rounded-xl px-4 py-3 text-sm focus:outline-none cursor-pointer font-medium"
-              >
-                <option value="all">All Orders</option>
-                <option value="assigned">Assigned</option>
-                <option value="unassigned">Unassigned</option>
-              </select>
-            </div>
-          </div>
-        )}
+        <OrderFilterBar filters={filters} onApply={setFilters} orders={orders} variant="admin" hideStatus={hasFixedStatus} accent="#991b1b" />
 
         <div className="bg-white rounded-2xl border border-soft-oatmeal shadow-md overflow-hidden">
           <div className="overflow-x-auto">
@@ -569,53 +502,7 @@ const OrderListPage = ({ specificStatus }) => {
             </table>
           </div>
 
-          {/* Pagination Controls */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between px-6 py-4 bg-soft-oatmeal/5 border-t border-soft-oatmeal/60 flex-wrap gap-4">
-              <p className="text-xs text-warm-sand font-semibold uppercase tracking-wider">
-                Showing <span className="font-bold text-deep-espresso">{((currentPage - 1) * itemsPerPage) + 1}</span> to{" "}
-                <span className="font-bold text-deep-espresso">
-                  {Math.min(currentPage * itemsPerPage, filteredOrders.length)}
-                </span>{" "}
-                of <span className="font-bold text-deep-espresso">{filteredOrders.length}</span> Orders
-              </p>
-              
-              <div className="flex items-center gap-1.5">
-                <button
-                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                  disabled={currentPage === 1}
-                  className="px-3 py-1.5 rounded-lg border border-soft-oatmeal text-xs font-bold text-deep-espresso hover:bg-soft-oatmeal/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all uppercase tracking-wider"
-                >
-                  Prev
-                </button>
-                
-                {[...Array(totalPages)].map((_, index) => {
-                  const pageNumber = index + 1;
-                  return (
-                    <button
-                      key={pageNumber}
-                      onClick={() => setCurrentPage(pageNumber)}
-                      className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${
-                        currentPage === pageNumber
-                          ? "bg-red-800 text-white shadow-md shadow-red-800/20"
-                          : "border border-soft-oatmeal text-deep-espresso hover:bg-soft-oatmeal/20"
-                      }`}
-                    >
-                      {pageNumber}
-                    </button>
-                  );
-                })}
-                
-                <button
-                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                  disabled={currentPage === totalPages}
-                  className="px-3 py-1.5 rounded-lg border border-soft-oatmeal text-xs font-bold text-deep-espresso hover:bg-soft-oatmeal/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all uppercase tracking-wider"
-                >
-                  Next
-                </button>
-              </div>
-            </div>
-          )}
+          <Pagination page={currentPage} pageSize={itemsPerPage} total={filteredOrders.length} onPageChange={setCurrentPage} />
         </div>
       </div>
 

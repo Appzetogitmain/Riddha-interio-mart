@@ -21,6 +21,7 @@ import {
 import { FiMoreVertical } from "react-icons/fi";
 import api from "../../../shared/utils/api";
 import { toast } from "react-hot-toast";
+import Pagination from '../../../shared/components/Pagination';
 
 const getDocumentUrl = (path) => {
   if (!path) return '';
@@ -1122,57 +1123,7 @@ const ManageSellerListPage = () => {
           )}
         </div>
 
-        {/* Pagination */}
-        {!loading && filteredSellers.length > 0 && (
-          <div className="flex items-center justify-between bg-white px-4 py-2.5 rounded-xl border border-soft-oatmeal shadow-sm">
-            <p className="text-[11px] font-bold text-deep-espresso/60">
-              Showing {(currentPage - 1) * SELLERS_PER_PAGE + 1}
-              –{Math.min(currentPage * SELLERS_PER_PAGE, filteredSellers.length)} of {filteredSellers.length} sellers
-            </p>
-            <div className="flex items-center gap-1.5">
-              <button
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-                className="px-3 py-1.5 rounded-lg border border-soft-oatmeal text-[11px] font-bold text-deep-espresso disabled:opacity-40 disabled:cursor-not-allowed hover:bg-soft-oatmeal/20 transition-colors"
-              >
-                Previous
-              </button>
-              <div className="flex items-center gap-1">
-                {Array.from({ length: totalPages }, (_, i) => i + 1)
-                  .filter((p) => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
-                  .reduce((acc, p, i, arr) => {
-                    if (i > 0 && p - arr[i - 1] > 1) acc.push('...');
-                    acc.push(p);
-                    return acc;
-                  }, [])
-                  .map((p, i) =>
-                    p === '...' ? (
-                      <span key={`ellipsis-${i}`} className="px-2 text-xs font-bold text-deep-espresso/40">…</span>
-                    ) : (
-                      <button
-                        key={p}
-                        onClick={() => setCurrentPage(p)}
-                        className={`w-8 h-8 rounded-lg text-xs font-bold transition-colors ${
-                          p === currentPage
-                            ? 'bg-[#189D91] text-white shadow-sm'
-                            : 'text-deep-espresso/70 hover:bg-soft-oatmeal/20'
-                        }`}
-                      >
-                        {p}
-                      </button>
-                    )
-                  )}
-              </div>
-              <button
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages}
-                className="px-4 py-2 rounded-xl border border-soft-oatmeal text-xs font-bold text-deep-espresso disabled:opacity-40 disabled:cursor-not-allowed hover:bg-soft-oatmeal/20 transition-colors"
-              >
-                Next
-              </button>
-            </div>
-          </div>
-        )}
+        <Pagination page={currentPage} pageSize={SELLERS_PER_PAGE} total={filteredSellers.length} onPageChange={setCurrentPage} className="bg-white rounded-xl border border-soft-oatmeal shadow-sm" />
       </div>
 
       {/* 📱 MOBILE VIEW: Seller Management list */}

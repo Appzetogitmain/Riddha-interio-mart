@@ -23,6 +23,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-hot-toast';
 import ProductFilterBar from '../../../shared/components/ProductFilterBar';
 import { EMPTY_PRODUCT_FILTERS, matchesProductFilters } from '../../../shared/utils/productListFilters';
+import Pagination from '../../../shared/components/Pagination';
 
 const MyProducts = () => {
   const navigate = useNavigate();
@@ -386,45 +387,7 @@ const MyProducts = () => {
           </div>
         )}
 
-        {/* Pagination Controls */}
-        {totalPages > 1 && (
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm mt-8">
-            <span className="text-xs font-bold text-slate-500">
-              Showing <span className="text-slate-800">{(currentPage - 1) * itemsPerPage + 1}</span> to{" "}
-              <span className="text-slate-800">{Math.min(currentPage * itemsPerPage, totalItems)}</span> of{" "}
-              <span className="text-slate-800">{totalItems}</span> products
-            </span>
-            <div className="flex items-center gap-2">
-              <button
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                className="px-4 py-2 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:hover:bg-transparent transition-all cursor-pointer"
-              >
-                Previous
-              </button>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                <button
-                  key={page}
-                  onClick={() => setCurrentPage(page)}
-                  className={`w-9 h-9 rounded-xl text-xs font-black transition-all cursor-pointer ${
-                    currentPage === page
-                      ? "bg-orange-600 text-white shadow-md shadow-orange-600/10"
-                      : "border border-slate-200 text-slate-600 hover:bg-slate-50"
-                  }`}
-                >
-                  {page}
-                </button>
-              ))}
-              <button
-                disabled={currentPage === totalPages}
-                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                className="px-4 py-2 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:hover:bg-transparent transition-all cursor-pointer"
-              >
-                Next
-              </button>
-            </div>
-          </div>
-        )}
+        <Pagination page={currentPage} pageSize={itemsPerPage} total={totalItems} onPageChange={setCurrentPage} className="bg-white rounded-2xl border border-slate-200 shadow-sm mt-6" />
 
         {/* Edit Modal (Removed, moved to full page EditProduct) */}
       </div>

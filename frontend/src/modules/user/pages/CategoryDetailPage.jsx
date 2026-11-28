@@ -1,3 +1,4 @@
+import RequestQuoteButton from '../components/RFQ/RequestQuoteButton';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -217,6 +218,14 @@ const CategoryDetailPage = () => {
             <p className="text-white/80 text-[11px] md:text-sm font-light leading-relaxed max-w-2xl border-l-2 border-warm-sand pl-3 md:pl-4 italic line-clamp-2 md:line-clamp-none">
               {category.description || `Exquisite pieces curated from the world's finest artisans, designed to bring character and timeless elegance to your modern living spaces.`}
             </p>
+            <RequestQuoteButton
+              source="category-page"
+              categoryId={category._id}
+              categoryName={category.name}
+              label={`Request a Quote for ${category.name}`}
+              variant="card"
+              size="sm"
+            />
           </motion.div>
          </div>
         </div>

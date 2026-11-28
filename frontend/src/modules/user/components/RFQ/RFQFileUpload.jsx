@@ -20,7 +20,7 @@ const humanSize = (bytes) => {
  * before a 25MB upload is wasted. Works with the mobile camera roll and file
  * picker — the input is a plain file input, tapped through the drop zone.
  */
-const RFQFileUpload = ({ files = [], onChange, disabled = false }) => {
+const RFQFileUpload = ({ files = [], onChange, disabled = false, hint = '' }) => {
   const inputRef = useRef(null);
   const [dragging, setDragging] = useState(false);
 
@@ -84,6 +84,7 @@ const RFQFileUpload = ({ files = [], onChange, disabled = false }) => {
         <p className="mt-1 text-xs text-dusty-cocoa">
           PDF, XLSX, JPG, PNG or DWG — up to {MAX_FILES} files, 25MB each
         </p>
+        {hint && <p className="mt-1 max-w-xl text-xs font-medium text-deep-espresso/70 whitespace-pre-line">{hint}</p>}
         <input
           ref={inputRef}
           type="file"

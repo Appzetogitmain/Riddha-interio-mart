@@ -4,6 +4,7 @@ import { LuPlus, LuPencil, LuTrash2, LuCheck, LuX, LuZap, LuCrown, LuShieldAlert
 import api from '../../../shared/utils/api';
 import toast from 'react-hot-toast';
 import PageWrapper from '../components/PageWrapper';
+import Pagination, { usePagination } from '../../../shared/components/Pagination';
 
 const ManageProPlans = () => {
   const [plans, setPlans] = useState([]);
@@ -168,6 +169,7 @@ const ManageProPlans = () => {
     }
   };
 
+  const { pageItems: pagedPurchases, paginationProps: pagerPurchases } = usePagination(purchases, 10);
   return (
     <PageWrapper>
       <div className="p-4 md:p-8 w-full space-y-6">
@@ -325,6 +327,7 @@ const ManageProPlans = () => {
               No subscription purchases recorded yet.
             </div>
           ) : (
+            <>
             <div className="overflow-x-auto custom-scrollbar">
               <table className="w-full text-left text-xs">
                 <thead className="bg-gray-50 text-gray-500 font-bold uppercase tracking-wider text-[10px] border-b border-gray-100">
@@ -338,7 +341,7 @@ const ManageProPlans = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50 font-medium text-gray-700">
-                  {purchases.map((sub) => {
+                  {pagedPurchases.map((sub) => {
                     const u = sub.user || {};
                     const isExp = new Date(sub.endDate) < new Date();
                     return (
@@ -378,6 +381,8 @@ const ManageProPlans = () => {
                 </tbody>
               </table>
             </div>
+            <Pagination {...pagerPurchases} />
+            </>
           )}
         </div>
 

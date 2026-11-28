@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import api from '../../../shared/utils/api';
 import { LuPackage, LuCalendar, LuFilter, LuChevronLeft, LuChevronRight } from 'react-icons/lu';
 import { toast } from 'react-hot-toast';
+import Pagination from '../../../shared/components/Pagination';
 
 const DeliveryHistory = () => {
   const [orders, setOrders] = useState([]);
@@ -195,37 +196,7 @@ const DeliveryHistory = () => {
               </AnimatePresence>
             </div>
 
-            {/* Pagination Controls */}
-            {totalPages > 1 && (
-              <div className="flex justify-center items-center gap-4 pt-8">
-                <button
-                  onClick={() => setPage(p => Math.max(1, p - 1))}
-                  disabled={page === 1}
-                  className={`p-3 rounded-xl flex items-center justify-center transition-all shadow-sm ${
-                    page === 1 
-                      ? 'bg-white text-slate-300 border border-slate-100 cursor-not-allowed' 
-                      : 'bg-white text-slate-700 border border-slate-200 hover:border-[#189D91] hover:text-[#189D91]'
-                  }`}
-                >
-                  <LuChevronLeft size={20} />
-                </button>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-bold text-slate-700">Page {page}</span>
-                  <span className="text-sm font-medium text-slate-400">of {totalPages}</span>
-                </div>
-                <button
-                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                  disabled={page === totalPages}
-                  className={`p-3 rounded-xl flex items-center justify-center transition-all shadow-sm ${
-                    page === totalPages 
-                      ? 'bg-white text-slate-300 border border-slate-100 cursor-not-allowed' 
-                      : 'bg-white text-slate-700 border border-slate-200 hover:border-[#189D91] hover:text-[#189D91]'
-                  }`}
-                >
-                  <LuChevronRight size={20} />
-                </button>
-              </div>
-            )}
+            <Pagination page={page} totalPages={totalPages} pageSize={10} onPageChange={setPage} className="mt-6 bg-white rounded-2xl border border-slate-100 shadow-sm" />
           </>
         )}
       </div>

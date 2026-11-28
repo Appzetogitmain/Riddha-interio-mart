@@ -17,6 +17,8 @@ const RequestQuoteButton = ({
   products = [],
   projectId = null,
   projectName = '',
+  categoryId = null,
+  categoryName = '',
   source = 'unknown',
   variant = 'primary',
   size = 'md',
@@ -37,6 +39,8 @@ const RequestQuoteButton = ({
         prefillLineItems: products,
         projectId,
         projectName,
+        categoryId,
+        categoryName,
         source
       }
     });

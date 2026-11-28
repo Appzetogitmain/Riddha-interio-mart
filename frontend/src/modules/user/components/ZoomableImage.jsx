@@ -109,7 +109,7 @@ const ZoomableImage = ({
       />
       {open && createPortal(
         <div
-          className="fixed inset-0 z-[9999] bg-black/90 flex flex-col"
+          className="fixed inset-0 z-[9999] bg-black/95 backdrop-blur-sm flex flex-col"
           onClick={(e) => { e.stopPropagation(); }}
         >
           <div className="flex items-center justify-end gap-2 p-3 text-white">
@@ -131,18 +131,46 @@ const ZoomableImage = ({
               if (Math.abs(dx) > 50) go(dx < 0 ? 1 : -1);
             }}
           >
-            <div className="min-h-full min-w-full flex items-center justify-center">
-              <img
-                key={currentSrc}
-                src={currentSrc}
-                alt={alt}
-                onClick={(e) => { e.stopPropagation(); setLevel(l => (l >= 2 ? 1 : 2)); }}
-                style={{ width: `${level * 100}%`, maxWidth: level === 1 ? '100%' : 'none', maxHeight: level === 1 ? 'calc(100vh - 80px)' : 'none' }}
-                className={`object-contain select-none ${level >= 2 ? 'cursor-zoom-out' : 'cursor-zoom-in'}`}
-                draggable={false}
-              />
+            <div className="min-h-full min-w-full flex items-center justify-center p-4 md:p-8">
+              {/* Framed image */}
+              <div
+                className="bg-white p-2 md:p-3 rounded-xl shadow-2xl ring-1 ring-white/20 max-w-full"
+                style={{ width: level === 1 ? 'auto' : `${level * 100}%` }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <img
+                  key={currentSrc}
+                  src={currentSrc}
+                  alt={alt}
+                  onClick={(e) => { e.stopPropagation(); setLevel(l => (l >= 2 ? 1 : 2)); }}
+                  style={{
+                    width: level === 1 ? 'auto' : '100%',
+                    maxWidth: '100%',
+                    maxHeight: level === 1 ? 'calc(100vh - 230px)' : 'none'
+                  }}
+                  className={`block mx-auto rounded-md object-contain select-none ${level >= 2 ? 'cursor-zoom-out' : 'cursor-zoom-in'}`}
+                  draggable={false}
+                />
+              </div>
             </div>
           </div>
+          {hasMany && (
+            <div className="shrink-0 flex items-center justify-center gap-2 px-4 py-3 overflow-x-auto" onClick={(e) => e.stopPropagation()}>
+              {images.map((url, i) => (
+                <button
+                  key={url + i}
+                  type="button"
+                  aria-label={`Show image ${i + 1}`}
+                  onClick={() => { setIndex(i); setLevel(1); }}
+                  className={`shrink-0 w-14 h-14 md:w-16 md:h-16 rounded-lg overflow-hidden bg-white p-0.5 transition-all ${
+                    i === index ? 'ring-2 ring-white opacity-100' : 'opacity-50 hover:opacity-90'
+                  }`}
+                >
+                  <img src={url} alt="" className="w-full h-full object-cover rounded-md" draggable={false} />
+                </button>
+              ))}
+            </div>
+          )}
           {hasMany && (
             <>
               <button

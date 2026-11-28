@@ -150,8 +150,8 @@ const ClientBriefPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 pt-24 pb-16 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 space-y-8">
+    <div className="w-full">
+      <div className="w-full max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 py-4 md:py-6 pb-16 space-y-6 md:space-y-8">
         {/* Top Navbar Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>

@@ -8,7 +8,7 @@ const AddProductFlowPage = () => {
 
   return (
     <PageWrapper>
-      <div className="max-w-3xl mx-auto space-y-6 py-6 md:py-8 pb-12">
+      <div className="w-full space-y-6 py-6 md:py-8 pb-12">
         {/* Navigation / Back Button */}
         <button 
           onClick={() => navigate('/admin/inventory')}

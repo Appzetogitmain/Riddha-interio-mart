@@ -90,7 +90,7 @@ const AddFavouriteCategoryItemPage = () => {
 
   return (
     <PageWrapper>
-      <div className="max-w-4xl mx-auto">
+      <div className="w-full">
         {/* Navigation / Header */}
         <button
           onClick={() => navigate('/admin/manage-favourites')}

@@ -1,3 +1,4 @@
+import PageWrapper from '../components/PageWrapper';
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -6,6 +7,7 @@ import {
   FiCalendar, FiArrowRight, FiX, FiCheck
 } from 'react-icons/fi';
 import toast from 'react-hot-toast';
+import Pagination, { usePagination } from '../../../shared/components/Pagination';
 
 const statusBtnTheme = {
   pending: 'bg-amber-600 text-white border-amber-600 shadow-lg shadow-amber-100',
@@ -96,8 +98,10 @@ const SellerRecommendationManagement = () => {
     }
   };
 
+  const { pageItems: pagedFilteredRecs, paginationProps: pagerFilteredRecs } = usePagination(filteredRecs, 10);
   return (
-    <div className="p-4 md:p-8 space-y-8 min-h-screen bg-gray-50/50">
+    <PageWrapper>
+    <div className="w-full space-y-8">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
@@ -192,7 +196,7 @@ const SellerRecommendationManagement = () => {
                   </td>
                 </tr>
               ) : (
-                filteredRecs.map((rec, i) => (
+                pagedFilteredRecs.map((rec, i) => (
                   <tr key={rec.id} className="hover:bg-gray-50/50 transition-all group">
                     <td className="px-8 py-6">
                       <div className="flex items-center gap-3">
@@ -240,6 +244,7 @@ const SellerRecommendationManagement = () => {
             </tbody>
           </table>
         </div>
+        <Pagination {...pagerFilteredRecs} />
       </div>
 
       {/* Details Modal */}
@@ -345,6 +350,7 @@ const SellerRecommendationManagement = () => {
         )}
       </AnimatePresence>
     </div>
+    </PageWrapper>
   );
 };
 

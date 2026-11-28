@@ -7,6 +7,7 @@ import {
 import { LuSparkles } from 'react-icons/lu';
 import api from '../../../shared/utils/api';
 import toast from 'react-hot-toast';
+import Pagination, { usePagination } from '../../../shared/components/Pagination';
 
 const BOQSourcingRequestsPage = () => {
   const [loading, setLoading] = useState(true);
@@ -136,6 +137,7 @@ const BOQSourcingRequestsPage = () => {
   const inReviewCount = requests.filter(r => r.sourcingStatus === 'in-review').length;
   const sourcedCount = requests.filter(r => r.sourcingStatus === 'sourced').length;
 
+  const { pageItems: pagedFilteredRequests, paginationProps: pagerFilteredRequests } = usePagination(filteredRequests, 10);
   return (
     <div className="space-y-6 p-4 sm:p-6 lg:p-8 bg-slate-50 min-h-screen">
 
@@ -216,6 +218,7 @@ const BOQSourcingRequestsPage = () => {
         ) : filteredRequests.length === 0 ? (
           <div className="py-16 text-center text-slate-400 text-xs">No sourcing requests match your filters.</div>
         ) : (
+          <>
           <div className="overflow-x-auto">
             <table className="w-full text-xs text-left text-slate-700">
               <thead className="bg-slate-50 text-slate-900 uppercase font-bold text-[11px]">
@@ -230,7 +233,7 @@ const BOQSourcingRequestsPage = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {filteredRequests.map((req, idx) => (
+                {pagedFilteredRequests.map((req, idx) => (
                   <tr key={idx} className="hover:bg-slate-50/60 transition-colors">
                     <td className="px-4 py-3.5 space-y-0.5">
                       <div className="font-bold text-slate-900">{req.client?.fullName || req.client?.name || 'Client'}</div>
@@ -273,6 +276,8 @@ const BOQSourcingRequestsPage = () => {
               </tbody>
             </table>
           </div>
+          <Pagination {...pagerFilteredRequests} />
+          </>
         )}
       </div>
 

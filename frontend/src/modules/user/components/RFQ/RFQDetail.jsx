@@ -196,9 +196,9 @@ const RFQDetail = ({ rfqId, viewerRole = 'user' }) => {
 
       {/* -------------------------------------------------------------- lines */}
       <section className="rounded-2xl border border-soft-oatmeal bg-white p-5">
-        <h2 className="mb-3 font-display text-base font-bold text-deep-espresso">
+        <h3 className="mb-3 font-display text-base leading-snug font-bold text-deep-espresso">
           Requirement ({rfq.lineItems.length} line{rfq.lineItems.length === 1 ? '' : 's'})
-        </h2>
+        </h3>
 
         <div className="overflow-x-auto">
           <table className="w-full min-w-[520px] text-left text-sm">
@@ -268,9 +268,9 @@ const RFQDetail = ({ rfqId, viewerRole = 'user' }) => {
 
       {/* ------------------------------------------------------------- quotes */}
       <section>
-        <h2 className="mb-3 font-display text-base font-bold text-deep-espresso">
+        <h3 className="mb-3 font-display text-base leading-snug font-bold text-deep-espresso">
           Quotations received{quotations.length > 0 ? ` (${quotations.length})` : ''}
-        </h2>
+        </h3>
         <RFQQuoteComparison
           quotations={quotations}
           acceptedQuotationId={rfq.acceptedQuotationId}
@@ -329,7 +329,7 @@ const RFQDetail = ({ rfqId, viewerRole = 'user' }) => {
 
       {/* ------------------------------------------------------- audit history */}
       <section className="rounded-2xl border border-soft-oatmeal bg-white p-5">
-        <h2 className="mb-3 font-display text-base font-bold text-deep-espresso">History</h2>
+        <h3 className="mb-3 font-display text-base leading-snug font-bold text-deep-espresso">History</h3>
         <ol className="space-y-3">
           {(rfq.statusHistory || []).map((entry, index) => (
             <li key={index} className="flex gap-3">

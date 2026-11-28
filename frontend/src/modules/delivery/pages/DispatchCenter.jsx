@@ -21,6 +21,7 @@ import api from '../../../shared/utils/api';
 import { useUser } from '../../user/data/UserContext';
 import { connectSocket, getSocket } from '../../../shared/utils/socket';
 import { toast } from 'react-hot-toast';
+import Pagination, { usePagination } from '../../../shared/components/Pagination';
 
 const DispatchCenter = () => {
   const { user, setUser } = useUser();
@@ -340,6 +341,7 @@ const DispatchCenter = () => {
   const countPercentage = Math.min(100, Math.floor((currentCount / maxCount) * 100));
   const weightPercentage = Math.min(100, Math.floor((currentWeight / maxWeight) * 100));
 
+  const { pageItems: pagedHubs, paginationProps: pagerHubs } = usePagination(hubs, 10);
   if (loading) {
     return (
       <PageWrapper>
@@ -642,7 +644,7 @@ const DispatchCenter = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {hubs.map((hub) => (
+                    {pagedHubs.map((hub) => (
                       <tr key={hub.id} className="hover:bg-slate-50 transition-colors group">
                         <td className="py-3 flex items-center gap-2">
                           <LuStore size={13} className="text-slate-400 group-hover:text-[#189D91] transition-colors" />
@@ -664,6 +666,7 @@ const DispatchCenter = () => {
                   </tbody>
                 </table>
               </div>
+              <Pagination {...pagerHubs} />
             </div>
 
           </div>

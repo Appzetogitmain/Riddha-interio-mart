@@ -21,6 +21,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import api from '../../../shared/utils/api';
 import CatalogFilterBar from '../../../shared/components/CatalogFilterBar';
 import { EMPTY_FILTERS, matchesCatalogFilters, getBrandName } from '../../../shared/utils/catalogFilters';
+import Pagination, { usePagination } from '../../../shared/components/Pagination';
 
 const BrowseCatalog = () => {
   const navigate = useNavigate();
@@ -67,6 +68,7 @@ const BrowseCatalog = () => {
     return inventory.some(p => p.sku === sku);
   };
 
+  const { pageItems: pagedFilteredProducts, paginationProps: pagerFilteredProducts } = usePagination(filteredProducts, 10);
   return (
     <PageWrapper>
       <div className="w-full space-y-8 pb-10">
@@ -146,7 +148,7 @@ const BrowseCatalog = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {filteredProducts.map((product) => {
+                  {pagedFilteredProducts.map((product) => {
                     const alreadyInShop = isProductInInventory(product.sku);
                     return (
                       <tr key={product._id} className="hover:bg-slate-50/50 transition-colors group">
@@ -201,10 +203,11 @@ const BrowseCatalog = () => {
                 </tbody>
               </table>
             </div>
+            <Pagination {...pagerFilteredProducts} />
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredProducts.map((product) => {
+            {pagedFilteredProducts.map((product) => {
               const alreadyInShop = isProductInInventory(product.sku);
               return (
                 <motion.div 

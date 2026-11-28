@@ -6,6 +6,7 @@ import { FiGift, FiUsers, FiSettings, FiCheck, FiX, FiActivity, FiArrowRight, Fi
 import { LuTrendingUp, LuIndianRupee } from 'react-icons/lu';
 import { toast } from 'react-hot-toast';
 import api from '../../../shared/utils/api';
+import Pagination from '../../../shared/components/Pagination';
 
 const ReferralManagement = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -281,26 +282,7 @@ const ReferralManagement = () => {
                    </table>
                  </div>
 
-                 {/* Pagination Controls */}
-                 {totalPages > 1 && (
-                   <div className="flex items-center justify-between px-4 py-3 border-t border-slate-100 bg-slate-50/50">
-                     <button
-                       disabled={page <= 1}
-                       onClick={() => fetchReferralLogs(page - 1)}
-                       className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-55 transition-colors"
-                     >
-                       <FiChevronLeft />
-                     </button>
-                     <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Page {page} of {totalPages}</span>
-                     <button
-                       disabled={page >= totalPages}
-                       onClick={() => fetchReferralLogs(page + 1)}
-                       className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-55 transition-colors"
-                     >
-                       <FiChevronRight />
-                     </button>
-                   </div>
-                 )}
+                 <Pagination page={page} totalPages={totalPages} pageSize={10} onPageChange={fetchReferralLogs} />
               </motion.div>
            )}
 

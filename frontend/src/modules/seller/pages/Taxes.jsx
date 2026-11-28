@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import PageWrapper from '../components/PageWrapper';
 import { LuPercent, LuSearch, LuFilter, LuPen, LuRefreshCw } from 'react-icons/lu';
 import api from '../../../shared/utils/api';
+import Pagination, { usePagination } from '../../../shared/components/Pagination';
 
 const Taxes = () => {
   const [products, setProducts] = useState([]);
@@ -73,6 +74,7 @@ const Taxes = () => {
     (prod.sku && prod.sku.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
+  const { pageItems: pagedFilteredProducts, paginationProps: pagerFilteredProducts } = usePagination(filteredProducts, 10);
   return (
     <PageWrapper>
       <div className="w-full space-y-6">
@@ -136,7 +138,7 @@ const Taxes = () => {
                 </thead>
                 <tbody className="divide-y divide-soft-oatmeal/50">
                   {filteredProducts.length > 0 ? (
-                    filteredProducts.map((prod) => (
+                    pagedFilteredProducts.map((prod) => (
                       <tr key={prod._id} className="hover:bg-soft-oatmeal/5 transition-colors group">
                         <td className="px-6 py-4">
                           <p className="font-bold text-deep-espresso">{prod.name}</p>
@@ -178,6 +180,7 @@ const Taxes = () => {
                 </tbody>
               </table>
             </div>
+            <Pagination {...pagerFilteredProducts} />
           </div>
         )}
 

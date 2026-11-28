@@ -1,3 +1,4 @@
+import PageWrapper from '../components/PageWrapper';
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -7,6 +8,7 @@ import {
 } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import api from '../../../shared/utils/api';
+import Pagination, { usePagination } from '../../../shared/components/Pagination';
 
 const FeedbackManagement = () => {
   const [reviews, setReviews] = useState([]);
@@ -155,8 +157,10 @@ const FeedbackManagement = () => {
     </div>
   );
 
+  const { pageItems: pagedFilteredReviews, paginationProps: pagerFilteredReviews } = usePagination(filteredReviews, 10);
   return (
-    <div className="p-4 md:p-6 space-y-4">
+    <PageWrapper>
+    <div className="w-full space-y-4">
 
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -257,7 +261,7 @@ const FeedbackManagement = () => {
                 </td>
               </tr>
             ) : (
-              filteredReviews.map((review, i) => (
+              pagedFilteredReviews.map((review, i) => (
                 <React.Fragment key={review._id}>
                   <motion.tr
                     initial={{ opacity: 0 }}
@@ -436,6 +440,7 @@ const FeedbackManagement = () => {
             )}
           </div>
         )}
+        {!loading && <Pagination {...pagerFilteredReviews} />}
       </div>
 
       {/* Image Lightbox */}
@@ -533,6 +538,7 @@ const FeedbackManagement = () => {
         </div>
       )}
     </div>
+    </PageWrapper>
   );
 };
 

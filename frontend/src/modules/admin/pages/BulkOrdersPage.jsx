@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FiDownload, FiSearch, FiTrash2, FiUsers, FiX, FiCheckCircle, FiXCircle, FiSend, FiClock, FiEye } from 'react-icons/fi';
 import api from '../../../shared/utils/api';
 import { toast } from 'react-hot-toast';
+import Pagination, { usePagination } from '../../../shared/components/Pagination';
 
 const ASSIGNMENT_STATUS_STYLE = {
   pending: 'bg-yellow-50 text-yellow-700 border-yellow-200',
@@ -443,6 +444,7 @@ const BulkOrdersPage = () => {
     setAssigningOrder(updatedOrder);
   };
 
+  const { pageItems: pagedFilteredOrders, paginationProps: pagerFilteredOrders } = usePagination(filteredOrders, 10);
   return (
     <div className="p-6 bg-white min-h-screen">
       <div className="w-full">
@@ -483,6 +485,7 @@ const BulkOrdersPage = () => {
             ))}
           </div>
         ) : filteredOrders.length > 0 ? (
+          <>
           <div className="border border-gray-200 rounded-lg overflow-hidden overflow-x-auto">
             <table className="w-full text-sm text-left border-collapse min-w-[1100px]">
               <thead className="bg-gray-50 text-gray-700 font-semibold border-b border-gray-200">
@@ -499,7 +502,7 @@ const BulkOrdersPage = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredOrders.map((order) => {
+                {pagedFilteredOrders.map((order) => {
                   const assignments = order.assignments || [];
                   const acceptedCount = assignments.filter(a => a.status === 'accepted').length;
                   return (
@@ -583,6 +586,8 @@ const BulkOrdersPage = () => {
               </tbody>
             </table>
           </div>
+          <Pagination {...pagerFilteredOrders} />
+          </>
         ) : (
           <div className="text-center py-20 border border-dashed border-gray-200 rounded-lg text-gray-400">
             No inquiries found.

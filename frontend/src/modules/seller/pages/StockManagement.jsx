@@ -21,6 +21,7 @@ import {
 import api from '../../../shared/utils/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
+import Pagination, { usePagination } from '../../../shared/components/Pagination';
 
 const StockManagement = () => {
   const navigate = useNavigate();
@@ -80,6 +81,7 @@ const StockManagement = () => {
     outOfStock: products.filter(p => p.countInStock === 0).length,
   };
 
+  const { pageItems: pagedFilteredProducts, paginationProps: pagerFilteredProducts } = usePagination(filteredProducts, 10);
   return (
     <PageWrapper>
       <div className="w-full space-y-8">
@@ -197,6 +199,7 @@ const StockManagement = () => {
               </div>
             </div>
           ) : (
+            <>
             <div className="overflow-x-auto">
               <table className="w-full text-left">
                 <thead className="bg-slate-50/50 border-b border-slate-100">
@@ -209,7 +212,7 @@ const StockManagement = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {filteredProducts.map((product) => {
+                  {pagedFilteredProducts.map((product) => {
                     const isLow = product.countInStock > 0 && product.countInStock <= 10;
                     const isOut = product.countInStock === 0;
 
@@ -302,6 +305,8 @@ const StockManagement = () => {
                 </tbody>
               </table>
             </div>
+            <Pagination {...pagerFilteredProducts} />
+            </>
           )}
         </div>
         

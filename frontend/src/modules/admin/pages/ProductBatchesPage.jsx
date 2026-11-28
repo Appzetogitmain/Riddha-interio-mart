@@ -9,6 +9,7 @@ import { toast } from 'react-hot-toast';
 import api from '../../../shared/utils/api';
 import PageWrapper from '../components/PageWrapper';
 import BatchReviewDrawer from './BatchReviewDrawer';
+import Pagination, { usePagination } from '../../../shared/components/Pagination';
 
 // ── Status meta ──────────────────────────────────────────────────
 const batchStatusMeta = {
@@ -527,6 +528,7 @@ const CustomerBulkOrderTab = () => {
   const contacted = orders.filter(o => o.status === 'Contacted').length;
   const resolved  = orders.filter(o => o.status === 'Resolved').length;
 
+  const { pageItems: pagedFiltered, paginationProps: pagerFiltered } = usePagination(filtered, 10);
   return (
     <div className="space-y-6">
       {/* Stat Cards */}
@@ -570,6 +572,7 @@ const CustomerBulkOrderTab = () => {
           <p className="text-sm text-slate-400 mt-1">Customer bulk order inquiries will appear here.</p>
         </div>
       ) : (
+        <>
         <div className="border border-slate-200 rounded-2xl overflow-hidden overflow-x-auto shadow-sm">
           <table className="w-full text-sm text-left border-collapse min-w-[900px]">
             <thead className="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200 text-xs uppercase tracking-wider">
@@ -585,7 +588,7 @@ const CustomerBulkOrderTab = () => {
               </tr>
             </thead>
             <tbody>
-              {filtered.map(order => (
+              {pagedFiltered.map(order => (
                 <tr key={order._id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
                   <td className="px-4 py-3 text-slate-500 text-xs whitespace-nowrap">
                     {new Date(order.createdAt).toLocaleDateString()}
@@ -645,6 +648,8 @@ const CustomerBulkOrderTab = () => {
             </tbody>
           </table>
         </div>
+        <Pagination {...pagerFiltered} />
+        </>
       )}
 
       {/* Detail Drawer */}

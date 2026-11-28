@@ -31,6 +31,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import OrderCard from "../components/OrderCard";
 import DeliveryMethodModal from "../components/DeliveryMethodModal";
 import { toast } from "react-hot-toast";
+import Pagination, { usePagination } from '../../../shared/components/Pagination';
+import OrderFilterBar from '../../../shared/components/OrderFilterBar';
+import { EMPTY_ORDER_FILTERS, matchesOrderFilters } from '../../../shared/utils/orderListFilters';
 
 const Orders = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -45,6 +48,7 @@ const Orders = () => {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [refreshing, setRefreshing] = useState(false);
+  const [filters, setFilters] = useState({ ...EMPTY_ORDER_FILTERS });
   const navigate = useNavigate();
 
   const exportToExcel = async () => {
@@ -160,9 +164,11 @@ const Orders = () => {
   };
 
   const filteredOrders = orders.filter((order) => {
-    const matchesSearch = order._id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         order.shippingAddress.fullName.toLowerCase().includes(searchTerm.toLowerCase());
+    const q = searchTerm.toLowerCase();
+    const matchesSearch = String(order._id || '').toLowerCase().includes(q) ||
+                         String(order.shippingAddress?.fullName || '').toLowerCase().includes(q);
     const matchesTab = activeTab === 'All' || order.status === activeTab;
+    if (!matchesOrderFilters(order, filters)) return false;
     
     let matchesDate = true;
     if (startDate) {
@@ -195,6 +201,7 @@ const Orders = () => {
     }
   };
 
+  const { pageItems: pagedFilteredOrders, paginationProps: pagerFilteredOrders } = usePagination(filteredOrders, 10, JSON.stringify([filters, searchTerm, activeTab, startDate, endDate]));
   return (
     <PageWrapper>
       <div className="w-full space-y-4 md:space-y-8">
@@ -281,6 +288,8 @@ const Orders = () => {
           </div>
         </div>
 
+        <OrderFilterBar filters={filters} onApply={setFilters} orders={orders} variant="seller" />
+
         {/* Orders Content */}
         <div className="bg-white rounded-[1.5rem] md:rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden">
           {loading ? (
@@ -302,7 +311,7 @@ const Orders = () => {
             <>
               {/* Mobile Card View */}
               <div className="md:hidden p-3 space-y-2.5">
-                {filteredOrders.map((order) => (
+                {pagedFilteredOrders.map((order) => (
                   <OrderCard
                     key={order._id}
                     order={order}
@@ -328,7 +337,7 @@ const Orders = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {filteredOrders.map((order) => (
+                    {pagedFilteredOrders.map((order) => (
                       <tr key={order._id} className="hover:bg-slate-50/50 transition-colors group">
                         <td className="px-6 py-3.5">
                           <div className="flex items-center gap-3">
@@ -432,6 +441,7 @@ const Orders = () => {
                   </tbody>
                 </table>
               </div>
+              <Pagination {...pagerFilteredOrders} />
             </>
           )}
         </div>

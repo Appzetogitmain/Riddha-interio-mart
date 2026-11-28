@@ -14,6 +14,7 @@ import {
   LuShieldCheck
 } from 'react-icons/lu';
 import { FiDownload, FiCheckCircle, FiXCircle } from 'react-icons/fi';
+import Pagination, { usePagination } from '../../../shared/components/Pagination';
 
 const STATUS_TABS = ['all', 'requested', 'completed', 'rejected'];
 
@@ -153,6 +154,7 @@ const SellerPayoutsPage = () => {
     toast.success('Payout report exported.');
   };
 
+  const { pageItems: pagedPayouts, paginationProps: pagerPayouts } = usePagination(payouts, 10);
   return (
     <PageWrapper>
       <div className="w-full space-y-6">
@@ -265,7 +267,7 @@ const SellerPayoutsPage = () => {
                       <p className="text-sm font-bold text-warm-sand">No payout requests found.</p>
                     </td>
                   </tr>
-                ) : payouts.map(p => {
+                ) : pagedPayouts.map(p => {
                   const cfg = statusConfig[p.status] || statusConfig.requested;
                   return (
                     <tr key={p._id} className="hover:bg-soft-oatmeal/5 transition-colors group">
@@ -336,6 +338,7 @@ const SellerPayoutsPage = () => {
               </tbody>
             </table>
           </div>
+          <Pagination {...pagerPayouts} />
         </div>
       </div>
 

@@ -18,6 +18,7 @@ import {
   FiCheckCircle 
 } from 'react-icons/fi';
 import api from '../../../shared/utils/api';
+import Pagination, { usePagination } from '../../../shared/components/Pagination';
 
 const StockManagement = () => {
   const [products, setProducts] = useState([]);
@@ -173,6 +174,7 @@ const StockManagement = () => {
     outOfStock: products.filter(p => p.countInStock === 0).length,
   };
 
+  const { pageItems: pagedFilteredProducts, paginationProps: pagerFilteredProducts } = usePagination(filteredProducts, 10);
   return (
     <PageWrapper>
       <div className="w-full space-y-6 pb-12">
@@ -308,7 +310,7 @@ const StockManagement = () => {
                         </tr>
                       ))
                     ) : filteredProducts.length > 0 ? (
-                      filteredProducts.map((product) => {
+                      pagedFilteredProducts.map((product) => {
                         const isLow = product.countInStock > 0 && product.countInStock <= 10;
                         const isOut = product.countInStock === 0;
                         const reservedCount = product.reservedStock || 0;
@@ -447,6 +449,7 @@ const StockManagement = () => {
                   </tbody>
                 </table>
               </div>
+              <Pagination {...pagerFilteredProducts} />
               
               {/* Footer Block */}
               <div className="p-4 bg-slate-50/50 border-t border-slate-100 flex items-center justify-between">

@@ -42,7 +42,9 @@ const RFQForm = ({
   companyName = '',
   gstin = '',
   onSubmitted,
-  source = 'unknown'
+  source = 'unknown',
+  category = null,
+  instruction = null
 }) => {
   const [lineItems, setLineItems] = useState(() => (
     prefillLineItems.length > 0
@@ -199,6 +201,8 @@ const RFQForm = ({
         deliveryLocation,
         requiredDate,
         projectId,
+        category: category?._id || null,
+        categoryName: category?.name || '',
         projectName: form.projectName,
         specialRequirements: form.specialRequirements,
         budgetRange: {
@@ -237,19 +241,16 @@ const RFQForm = ({
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* ---------------------------------------------------------------- AI */}
       <section className="rounded-2xl border border-soft-oatmeal bg-white p-5">
-        <h2 className="mb-1 flex items-center gap-2 font-display text-lg font-bold text-deep-espresso">
+        <h3 className="mb-3 flex items-center gap-2 font-display text-lg leading-snug font-bold text-deep-espresso">
           <LuSparkles className="h-5 w-5 text-warm-sand" />
-          Have a list already?
-        </h2>
-        <p className="mb-4 text-sm text-dusty-cocoa">
-          Paste your requirement or attach a BOQ spreadsheet and we will turn it into line items for you to check.
-        </p>
+          Paste or upload your list
+        </h3>
 
         <textarea
           value={rawInput}
           onChange={(e) => setRawInput(e.target.value)}
           rows={4}
-          placeholder={'2000 sq.ft vitrified tile 600x600 matt finish for office washroom\n25 nos soft close hinges\n120 sq.ft Italian marble for the reception counter'}
+          placeholder={instruction?.placeholder || '2000 sq.ft vitrified tile 600x600 matt finish for office washroom\n25 nos soft close hinges\n120 sq.ft Italian marble for the reception counter'}
           className={`${inputBase} border-soft-oatmeal bg-white resize-y`}
         />
 
@@ -276,7 +277,7 @@ const RFQForm = ({
       <section className="rounded-2xl border border-soft-oatmeal bg-white p-5">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
           <div>
-            <h2 className="font-display text-lg font-bold text-deep-espresso">Products you need</h2>
+            <h3 className="font-display text-lg leading-snug font-bold text-deep-espresso">Products you need</h3>
             <p className="text-xs text-dusty-cocoa">
               {lineCount} of {MAX_LINES} lines
               {totalQuantity > 0 && ` · ${totalQuantity.toLocaleString('en-IN')} total units`}
@@ -309,7 +310,7 @@ const RFQForm = ({
 
       {/* --------------------------------------------------------- logistics */}
       <section className="rounded-2xl border border-soft-oatmeal bg-white p-5">
-        <h2 className="mb-4 font-display text-lg font-bold text-deep-espresso">Delivery &amp; timeline</h2>
+        <h3 className="mb-4 font-display text-lg leading-snug font-bold text-deep-espresso">Delivery &amp; timeline</h3>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div className="md:col-span-2">
@@ -379,7 +380,7 @@ const RFQForm = ({
 
       {/* ------------------------------------------------------------ context */}
       <section className="rounded-2xl border border-soft-oatmeal bg-white p-5">
-        <h2 className="mb-4 font-display text-lg font-bold text-deep-espresso">Project details</h2>
+        <h3 className="mb-4 font-display text-lg leading-snug font-bold text-deep-espresso">Project details</h3>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div className="md:col-span-2">

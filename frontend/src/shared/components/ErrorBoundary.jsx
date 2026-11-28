@@ -14,7 +14,23 @@ class ErrorBoundary extends React.Component {
     return { hasError: true, error };
   }
 
+  static isChunkError(error) {
+    return /dynamically imported module|Importing a module script failed|Loading chunk|ChunkLoadError/i
+      .test(String(error?.message || error));
+  }
+
   componentDidCatch(error, errorInfo) {
+    // Stale build after a deploy: a full reload fetches the new files (once, to avoid loops)
+    if (ErrorBoundary.isChunkError(error)) {
+      try {
+        const last = Number(sessionStorage.getItem('chunk-reload-at') || 0);
+        if (Date.now() - last > 10000) {
+          sessionStorage.setItem('chunk-reload-at', String(Date.now()));
+          window.location.reload();
+          return;
+        }
+      } catch { /* ignore */ }
+    }
     // Log exception to our centralized monitoring system
     monitoring.logException(error, {
       componentStack: errorInfo.componentStack,
@@ -23,6 +39,10 @@ class ErrorBoundary extends React.Component {
   }
 
   resetErrorBoundary() {
+    if (ErrorBoundary.isChunkError(this.state.error)) {
+      window.location.reload();
+      return;
+    }
     this.setState({ hasError: false, error: null });
     if (this.props.onReset) {
       this.props.onReset();

@@ -546,12 +546,12 @@ const ManageSection = () => {
 
   return (
     <PageWrapper>
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8 space-y-6 md:space-y-8">
+      <div className="w-full px-4 sm:px-6 lg:px-8 py-6 md:py-8 space-y-6 md:space-y-8">
         <div className="rounded-[2rem] border border-soft-oatmeal bg-gradient-to-r from-white via-soft-oatmeal/20 to-white p-6 md:p-8 shadow-sm">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
             <div className="space-y-3">
               <div className="space-y-2">
-                <h1 className="text-3xl md:text-5xl font-display font-bold text-deep-espresso tracking-tight">
+                <h1 className="text-2xl md:text-4xl font-display font-bold text-deep-espresso tracking-tight">
                   Create a Custom Homepage Section
                 </h1>
                 <p className="max-w-3xl text-sm md:text-base leading-relaxed text-deep-espresso/60">
@@ -561,7 +561,7 @@ const ManageSection = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 sm:flex sm:flex-wrap">
+            <div className="grid grid-cols-2 gap-3 sm:flex sm:flex-nowrap shrink-0">
               <div className="rounded-2xl border border-soft-oatmeal bg-white px-4 py-3 shadow-sm">
                 <p className="text-[10px] font-black uppercase tracking-[0.22em] text-warm-sand">Total sections</p>
                 <p className="mt-1 text-2xl font-display font-bold text-deep-espresso">{sections.length}</p>
@@ -606,7 +606,7 @@ const ManageSection = () => {
         )}
 
         {activeTab === 'create' && (
-          <div className="grid grid-cols-1 xl:grid-cols-[1.1fr_0.9fr] gap-8 xl:gap-10 items-start">
+          <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] gap-6 xl:gap-8 items-start">
             <div className="space-y-8">
               <form
                 onSubmit={handleSaveSection}
@@ -1046,7 +1046,7 @@ const ManageSection = () => {
               )}
             </div>
 
-            <div className="space-y-6">
+            <div className="space-y-6 xl:sticky xl:top-4">
               <div className="bg-white p-6 md:p-8 rounded-3xl border border-soft-oatmeal shadow-sm space-y-4">
                 <div>
                   <h3 className="text-lg font-display font-bold text-deep-espresso">Live preview</h3>
@@ -1156,7 +1156,7 @@ const ManageSection = () => {
                 <p className="text-deep-espresso/60 text-sm">Create your first section and it will appear here.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6 items-stretch">
                 {sections.map((section) => {
                   const sectionId = getId(section);
                   const sectionCategoryNames = toIdArray(section.categoryIds)
@@ -1180,7 +1180,7 @@ const ManageSection = () => {
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.35 }}
-                      className="bg-white rounded-3xl border border-soft-oatmeal shadow-sm overflow-hidden"
+                      className="bg-white rounded-3xl border border-soft-oatmeal shadow-sm overflow-hidden flex flex-col h-full"
                     >
                       <div className="p-5 border-b border-soft-oatmeal/40 bg-soft-oatmeal/5 flex items-start justify-between gap-4">
                         <div>
@@ -1210,7 +1210,7 @@ const ManageSection = () => {
                         </div>
                       </div>
 
-                      <div className="p-5 space-y-4">
+                      <div className="p-5 space-y-4 flex-1 flex flex-col">
                         <div className="flex items-center justify-between text-xs uppercase tracking-widest text-deep-espresso font-bold">
                           <span>Section Items</span>
                           <span>
@@ -1257,7 +1257,7 @@ const ManageSection = () => {
                           </div>
                         )}
 
-                        <div className="pt-2 border-t border-soft-oatmeal/60 flex gap-2">
+                        <div className="mt-auto pt-3 border-t border-soft-oatmeal/60 flex gap-2">
                           <button
                             onClick={() => handleEdit(section)}
                             className="flex-1 flex items-center justify-center gap-2 text-sm font-semibold px-3 py-2 rounded-xl bg-soft-oatmeal/30 text-deep-espresso hover:bg-soft-oatmeal/50 transition-all"

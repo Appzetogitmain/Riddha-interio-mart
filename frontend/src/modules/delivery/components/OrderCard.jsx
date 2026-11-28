@@ -333,7 +333,7 @@ const OrderCard = ({ order, onAccept, onReject, onUpdateStatus, onVerifyOtp, onR
             {order.status === 'Out for Return Delivery' && order.isReturn && (
               <button 
                 onClick={() => onUpdateStatus(order.id, 'Returned')}
-                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition-all shadow-sm mt-3"
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[#189D91] text-white text-xs font-bold hover:bg-[#147d74] transition-all shadow-sm mt-3"
               >
                 <LuCheck size={16} /> Complete Return Drop-off
               </button>

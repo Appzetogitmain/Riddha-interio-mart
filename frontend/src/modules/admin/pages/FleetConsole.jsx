@@ -9,6 +9,7 @@ import {
 } from 'react-icons/lu';
 import { FiMoreVertical } from 'react-icons/fi';
 import api from '../../../shared/utils/api';
+import Pagination, { usePagination } from '../../../shared/components/Pagination';
 
 // ─── Tab Configuration ────────────────────────────────────────────────────────
 const TABS = [
@@ -281,6 +282,7 @@ const FleetConsole = () => {
     Rejected:  partners.filter(p => p.approvalStatus === 'Rejected').length,
   };
 
+  const { pageItems: pagedFiltered, paginationProps: pagerFiltered } = usePagination(filtered, 10);
   return (
     <PageWrapper>
       <div className="w-full space-y-6 pb-12">
@@ -360,6 +362,7 @@ const FleetConsole = () => {
               <p className="text-xs text-slate-300 mt-1">Try adjusting your search or tab filter.</p>
             </div>
           ) : (
+            <>
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead className="bg-slate-50 border-b border-slate-200">
@@ -372,7 +375,7 @@ const FleetConsole = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {filtered.map((partner) => (
+                  {pagedFiltered.map((partner) => (
                     <tr key={partner._id} className="hover:bg-slate-50/50 transition-colors group">
                       {/* Name */}
                       <td className="px-5 py-4">
@@ -529,6 +532,8 @@ const FleetConsole = () => {
                 </tbody>
               </table>
             </div>
+            <Pagination {...pagerFiltered} />
+            </>
           )}
         </div>
       </div>

@@ -952,6 +952,22 @@ exports.getProduct = async (req, res, next) => {
       product.category = product.category.name;
     }
 
+    // Resolve subcategory / sub-subcategory names for the storefront breadcrumb
+    if (product.subcategoryName === undefined) {
+      product.subcategoryName = '';
+      product.subsubcategoryName = '';
+      if (product.subcategory && product.categoryId) {
+        const Category = require('../models/Category');
+        const catDoc = await Category.findById(product.categoryId).select('subcategories').lean();
+        const sub = catDoc?.subcategories?.find((x) => String(x._id) === String(product.subcategory));
+        if (sub) {
+          product.subcategoryName = sub.name;
+          const subsub = sub.subsubcategories?.find((x) => String(x._id) === String(product.subsubcategory));
+          if (subsub) product.subsubcategoryName = subsub.name;
+        }
+      }
+    }
+
     // Attach offer pricing
     await attachOfferPricing(product);
 

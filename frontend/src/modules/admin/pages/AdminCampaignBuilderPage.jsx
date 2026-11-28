@@ -69,7 +69,7 @@ const AdminCampaignBuilderPage = () => {
             <LuSparkles className="text-amber-400" />
             <span>Admin Campaign Manager & Gemini AI A/B Tester</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-display font-black text-white tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-display font-black !text-white tracking-tight">
             Notification Campaign Control Center
           </h1>
           <p className="text-slate-200 text-xs sm:text-sm max-w-2xl leading-relaxed">
@@ -149,7 +149,7 @@ const AdminCampaignBuilderPage = () => {
         {/* Gemini A/B Test Variants Result Box */}
         <div className="bg-slate-900 text-white rounded-3xl p-6 border border-slate-800 space-y-4 text-xs">
           <div className="border-b border-slate-800 pb-3 flex items-center justify-between">
-            <h3 className="text-base font-bold text-amber-400 font-display">Gemini AI A/B Test Variants</h3>
+            <h3 className="text-base font-bold !text-amber-400 font-display">Gemini AI A/B Test Variants</h3>
             <span className="text-[10px] font-bold uppercase bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2.5 py-0.5 rounded-full">
               AI Predictor
             </span>

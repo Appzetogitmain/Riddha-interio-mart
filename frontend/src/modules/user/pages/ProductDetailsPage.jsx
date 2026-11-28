@@ -31,6 +31,96 @@ import ZoomableImage from '../components/ZoomableImage';
 import { formatSpecLabel, formatSpecValue } from '../../../shared/utils/textFormat';
 import ProductImage from '../../../shared/components/ProductImage';
 
+// Horizontally scrollable thumbnail row: arrow buttons, touch swipe (native),
+// and mouse click-and-drag. Keeps the active thumbnail in view.
+const ThumbnailStrip = ({ media, activeIndex, onSelect, className = '' }) => {
+  const ref = React.useRef(null);
+  const drag = React.useRef({ down: false, startX: 0, startLeft: 0, moved: false });
+  const [canLeft, setCanLeft] = useState(false);
+  const [canRight, setCanRight] = useState(false);
+
+  const update = () => {
+    const el = ref.current;
+    if (!el) return;
+    setCanLeft(el.scrollLeft > 2);
+    setCanRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 2);
+  };
+
+  useEffect(() => {
+    update();
+    const el = ref.current;
+    if (!el) return;
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [media.length]);
+
+  useEffect(() => {
+    const btn = ref.current?.children[activeIndex];
+    btn?.scrollIntoView?.({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+  }, [activeIndex]);
+
+  const scrollByDir = (dir) => {
+    const el = ref.current;
+    if (el) el.scrollBy({ left: dir * el.clientWidth * 0.7, behavior: 'smooth' });
+  };
+
+  const onMouseDown = (e) => {
+    const el = ref.current;
+    drag.current = { down: true, startX: e.pageX, startLeft: el.scrollLeft, moved: false };
+  };
+  const onMouseMove = (e) => {
+    const d = drag.current;
+    if (!d.down) return;
+    const dx = e.pageX - d.startX;
+    if (Math.abs(dx) > 4) d.moved = true;
+    ref.current.scrollLeft = d.startLeft - dx;
+  };
+  const endDrag = () => { drag.current.down = false; };
+
+  const arrow = 'absolute top-1/2 -translate-y-1/2 z-10 h-7 w-7 rounded-full bg-white shadow border border-gray-200 flex items-center justify-center text-gray-700 hover:bg-gray-100';
+
+  return (
+    <div className={`relative ${className}`}>
+      {canLeft && (
+        <button type="button" aria-label="Previous images" onClick={() => scrollByDir(-1)} className={`${arrow} left-1`}>
+          <FiChevronRight size={16} className="rotate-180" />
+        </button>
+      )}
+      <div
+        ref={ref}
+        onScroll={update}
+        onMouseDown={onMouseDown}
+        onMouseMove={onMouseMove}
+        onMouseUp={endDrag}
+        onMouseLeave={endDrag}
+        className="flex gap-2 overflow-x-auto no-scrollbar cursor-grab active:cursor-grabbing select-none px-0.5 py-0.5"
+        style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x' }}
+      >
+        {media.map((m, i) => (
+          <button
+            key={i}
+            type="button"
+            onClick={() => { if (!drag.current.moved) onSelect(i); }}
+            className={`h-14 w-14 shrink-0 rounded-md border-2 overflow-hidden transition-all ${
+              activeIndex === i ? 'border-[#189D91]' : 'border-gray-200 hover:border-gray-400'
+            }`}
+          >
+            {m?.type === 'video'
+              ? <div className="h-full w-full bg-gray-50 flex items-center justify-center"><FiPlay size={16} className="text-gray-500" /></div>
+              : <img src={m} draggable={false} className="h-full w-full object-cover" alt="" />}
+          </button>
+        ))}
+      </div>
+      {canRight && (
+        <button type="button" aria-label="Next images" onClick={() => scrollByDir(1)} className={`${arrow} right-1`}>
+          <FiChevronRight size={16} />
+        </button>
+      )}
+    </div>
+  );
+};
+
 // Smart bundles that include this product — a thin fetch-and-render row, kept local
 // since it's only used here on the product detail page.
 const BundleSuggestionsRow = ({ productId }) => {
@@ -442,43 +532,12 @@ const ProductDetailsPage = () => {
 
             {/* Thumbnails */}
             {allMedia.length > 1 && (
-              <div className="hidden md:flex gap-2 mt-3 overflow-x-auto no-scrollbar">
-                {allMedia.map((media, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setActiveMediaIndex(i)}
-                    onMouseEnter={() => setActiveMediaIndex(i)}
-                    className={`h-14 w-14 shrink-0 rounded-md border-2 overflow-hidden transition-all ${
-                      activeMediaIndex === i ? 'border-[#189D91]' : 'border-gray-200 hover:border-gray-400'
-                    }`}
-                  >
-                    {media?.type === 'video'
-                      ? <div className="h-full w-full bg-gray-50 flex items-center justify-center"><FiPlay size={16} className="text-gray-500" /></div>
-                      : <img src={media} className="h-full w-full object-cover" alt="" />
-                    }
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {/* Mobile thumbnails */}
-            {allMedia.length > 1 && (
-              <div className="flex md:hidden gap-2.5 py-3 px-5 overflow-x-auto no-scrollbar border-b border-gray-100">
-                {allMedia.map((media, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setActiveMediaIndex(i)}
-                    className={`h-14 w-14 shrink-0 rounded-md overflow-hidden border-2 transition-all ${
-                      activeMediaIndex === i ? 'border-[#189D91]' : 'border-gray-200'
-                    }`}
-                  >
-                    {media?.type === 'video'
-                      ? <div className="h-full w-full bg-gray-50 flex items-center justify-center"><FiPlay size={14} /></div>
-                      : <img src={media} className="h-full w-full object-cover" alt="" />
-                    }
-                  </button>
-                ))}
-              </div>
+              <ThumbnailStrip
+                media={allMedia}
+                activeIndex={activeMediaIndex}
+                onSelect={setActiveMediaIndex}
+                className="mt-3"
+              />
             )}
           </div>
 
@@ -553,7 +612,12 @@ const ProductDetailsPage = () => {
                             }`}
                           >
                             {mainImg && <img src={mainImg} alt="" className="w-9 h-9 rounded-md object-cover" />}
-                            <span>Default</span>
+                            <span>{(() => {
+                              // Prefer the product's own colour name (from specs), else a friendly fallback
+                              const entry = Object.entries(product.specifications || {}).find(([k]) => /colou?r/i.test(k));
+                              const v = entry && typeof entry[1] === 'string' ? entry[1].trim() : '';
+                              return v && v.length <= 20 ? formatSpecValue(v) : 'Classic';
+                            })()}</span>
                           </button>
                         );
                       })()}
